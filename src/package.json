@@ -1,0 +1,29 @@
+{
+    "version": "0.0.1",
+    "name": "Prototyped",
+    "author": "author",
+    "private": true,
+    "main": "http://localhost:8008",
+    "single-instance": true,
+    "window": {
+        "title": "Connection Info",
+        "icon": "assets/favicon.png",
+        "toolbar": false,
+        "frame": false,
+        "width": 1024,
+        "height": 768,
+        "min_width": 800,
+        "min_height": 600,
+        "fullscreen": false,
+        "position": "center",
+        "show_in_taskbar": true,
+        "transparent": false,
+        "kiosk": false
+    },
+    "webkit": {
+        "plugin": false,
+        "page-cache": false
+    },
+    "node-remote": "<local>", // "https://*"
+    "chromium-args": "--child-clean-exit"
+}

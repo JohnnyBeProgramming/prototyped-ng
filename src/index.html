@@ -1,0 +1,71 @@
+﻿<!DOCTYPE html>
+<!--[if lt IE 7]>      <html lang="en" ng-app="myApp" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html lang="en" ng-app="myApp" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html lang="en" ng-app="myApp" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html lang="en" ng:app="myApp" class="no-js">
+<!--<![endif]-->
+<head>
+    <title>Prototyped</title>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="shortcut icon" href="assets/favicon.png">
+    <link rel="stylesheet" href="components/_bower/html5-boilerplate/css/normalize.css">
+    <link rel="stylesheet" href="components/_bower/html5-boilerplate/css/main.css">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="app.css" />
+    <style type="text/css">
+        .ng-cloak, [ng-cloak] {
+            display: none;
+        }
+    </style>
+    <script src="//ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.2.min.js"></script>
+    <script src="//ajax.aspnetcdn.com/ajax/modernizr/modernizr-2.6.2.js"></script>
+</head>
+<body class="ng-cloak">
+    <!--[if lt IE 7]>
+        <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+    <div class="header">
+        <span class="pull-right">
+            <a app:refresh href=""><i class="ctrl glyphicon glyphicon-refresh"></i></a>
+            <a app:debug href=""><i class="ctrl glyphicon glyphicon-wrench"></i></a>
+            <a app:kiosk href=""><i class="ctrl glyphicon glyphicon-fullscreen"></i></a>
+            <a app:close href=""><i class="ctrl glyphicon glyphicon-remove"></i></a>            
+        </span>
+        <h1>
+            Connection Info
+            <small>
+                <ul class="menu">
+                    <li><a href="/" app:nav:link>Home</a></li>
+                    <li><a href="/broken" app:nav:link>!Broken Link!</a></li>
+                    <li><a href="/about" app:nav:link>About</a></li>
+                </ul>
+            </small>
+        </h1>
+    </div>
+    <div class="contents" ng:view ng:cloak>
+        <em>Please wait...</em>
+    </div>
+    <div class="footer">
+        Client Version: <span app:version><em>detecting...</em></span> | Powered by <a href="https://angularjs.org/">AngularJS</a> &amp; <a href="https://github.com/rogerwang/node-webkit">Node Webkit</a>
+    </div>
+
+    <!-- In production use:
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
+    -->
+    <script src="components/_bower/angular/angular.js"></script>
+    <script src="components/_bower/angular-route/angular-route.js"></script>
+    <script src="app.js"></script>
+    <script src="views/home/module.js"></script>
+    <script src="views/about/module.js"></script>
+    <script src="components/version/version.js"></script>
+    <script src="components/version/version-directive.js"></script>
+    <script src="components/version/interpolate-filter.js"></script>
+
+    <!-- //cdn.ravenjs.com/1.1.16/angular,console,jquery,native,require/raven.min.js -->
+    <script src="//cdn.ravenjs.com/1.1.16/angular,jquery,native/raven.min.js"></script>
+</body>
+</html>
