@@ -5,7 +5,7 @@ angular.module('myApp', [
   'ngRoute',
   'myApp.home',
   'myApp.about',
-  'myApp.version'
+  'myApp.version',
 ])
 
     .value('appNode', {
@@ -71,7 +71,9 @@ angular.module('myApp', [
         $locationProvider.html5Mode(appNode.html5);
 
         // Set up default route
-        $routeProvider.otherwise({ redirectTo: '/' });
+        $routeProvider.otherwise({
+            templateUrl: 'views/status/404.html',
+        });
     }])
 
     .directive('appRefresh', ['$window', '$route', 'appNode', function ($window, $route, appNode) {
@@ -164,4 +166,17 @@ angular.module('myApp', [
         };
     }])
 
+
+    .filter('interpolate', ['appNode', function (appNode) {
+        return function (text) {
+            return String(text).replace(/\%VERSION\%/mg, appNode.version);
+        };
+    }])
+
+    .directive('appVersion', ['appNode', function (appNode) {
+        return function (scope, elm, attrs) {
+            elm.text(appNode.version);
+        };
+    }])
+    
 ;
