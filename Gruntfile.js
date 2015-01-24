@@ -11,8 +11,8 @@ module.exports = function (grunt) {
         src: 'src',
         dest: 'app',
         css: 'assets/css',
-        lib: 'assets/js',
-        bin: 'bin',
+        lib: 'assets/lib',
+        bin: 'app/bin',
     };
 
     // Load the NPM tasks to be used
@@ -22,8 +22,10 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-cssmin');
     grunt.loadNpmTasks('grunt-contrib-watch');
+    grunt.loadNpmTasks('grunt-html2js');
     grunt.loadNpmTasks('grunt-devtools');
     grunt.loadNpmTasks('grunt-node-webkit-builder');
+
 
     // DEFINE YOUR PROTOTYPED GRUNT TASKS HERE
     grunt.registerTask('default', [
@@ -43,6 +45,7 @@ module.exports = function (grunt) {
       'cssmin'
     ]);
     grunt.registerTask('build-scripts', [
+      'html2js',
       'uglify',
       'concat'
     ]);
@@ -195,7 +198,7 @@ module.exports = function (grunt) {
             files: [
               'Gruntfile.js',
               '<%= globalConfig.bin %>/**/*.js',
-              '<%= globalConfig.dist %>/**/*.js'
+              '<%= globalConfig.dest %>/**/*.js'
             ],
             options: {
                 // options here to override JSHint defaults
@@ -206,6 +209,92 @@ module.exports = function (grunt) {
                     document: true
                 }
             }
+        },
+
+        html2js: {
+            options: {
+                module: 'myApp.views',
+                singleModule: false,
+                quoteChar: '\'',
+                /* ToDo: Figure out a way to intercept the templates angular side
+                process: function (content, filepath) {
+                    // LZW-compress a string
+                    function lzw_encode(s) {
+                        var dict = {};
+                        var data = (s + "").split("");
+                        var out = [];
+                        var currChar;
+                        var phrase = data[0];
+                        var code = 256;
+                        for (var i = 1; i < data.length; i++) {
+                            currChar = data[i];
+                            if (dict[phrase + currChar] != null) {
+                                phrase += currChar;
+                            }
+                            else {
+                                out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+                                dict[phrase + currChar] = code;
+                                code++;
+                                phrase = currChar;
+                            }
+                        }
+                        out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+                        for (var i = 0; i < out.length; i++) {
+                            out[i] = String.fromCharCode(out[i]);
+                        }
+                        return out.join("");
+                    }
+
+                    // Decompress an LZW-encoded string
+                    function lzw_decode(s) {
+                        var dict = {};
+                        var data = (s + "").split("");
+                        var currChar = data[0];
+                        var oldPhrase = currChar;
+                        var out = [currChar];
+                        var code = 256;
+                        var phrase;
+                        for (var i = 1; i < data.length; i++) {
+                            var currCode = data[i].charCodeAt(0);
+                            if (currCode < 256) {
+                                phrase = data[i];
+                            }
+                            else {
+                                phrase = dict[currCode] ? dict[currCode] : (oldPhrase + currChar);
+                            }
+                            out.push(phrase);
+                            currChar = phrase.charAt(0);
+                            dict[code] = oldPhrase + currChar;
+                            code++;
+                            oldPhrase = phrase;
+                        }
+                        return out.join("");
+                    }
+
+                    var input = content;
+                    var output = lzw_encode(input);
+
+                    return '<script type="text/gzipped" onload="alert(\'Loaded: ' + filepath + '\')">' + output + '</script>';
+                },
+                */
+                htmlmin: {
+                    collapseBooleanAttributes: true,
+                    collapseWhitespace: true,
+                    removeAttributeQuotes: true,
+                    removeComments: true,
+                    removeEmptyAttributes: true,
+                    removeRedundantAttributes: true,
+                    removeScriptTypeAttributes: true,
+                    removeStyleLinkTypeAttributes: true
+                }
+            },
+            views: {
+                src: [
+                    '<%= globalConfig.src %>/views/**/*.jade',
+                    '<%= globalConfig.src %>/views/**/*.tpl.html',
+                ],
+                dest: '<%= globalConfig.src %>/<%= globalConfig.lib %>/templates.js'
+            },
         },
 
         // WATCH FILES FOR CHANGES
@@ -222,6 +311,13 @@ module.exports = function (grunt) {
                   '<%= globalConfig.src %>/**/*.js',
                 ],
                 tasks: ['uglify', 'concat']
+            },
+            tpl: {
+                files: [
+                  '<%= globalConfig.src %>/**/*.jade',
+                  '<%= globalConfig.src %>/**/*.tpl.html',
+                ],
+                tasks: ['html2js']
             }
         }
     });

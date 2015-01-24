@@ -1,6 +1,9 @@
 'use strict';
 
-angular.module('myApp.about', ['ngRoute'])
+angular.module('myApp.about', [
+    'views/about.tpl.html', // Requires template
+    'ngRoute'
+])
 
     .config(['$routeProvider', function ($routeProvider) {
         $routeProvider.when('/about', {

@@ -73,7 +73,7 @@ angular.module('myApp', [
 
         // Set up default route
         $routeProvider.otherwise({
-            templateUrl: 'views/status/404.tpl.html',
+            templateUrl: 'views/status/404.jade',
         });
     }])
 
