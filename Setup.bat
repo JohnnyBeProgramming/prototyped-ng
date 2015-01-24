@@ -39,29 +39,19 @@ echo /* -- Returns [ %errorlevel% ] --------------------------------------------
 
 :npm_install
 echo /* -- [ NPM Install and Update ] ---------------------------------------------- */ >> "%log%"
-rem +++++++++ -express --loglevel warn --save-dev
+call npm run add-globals >> "%log%"
 set npm_args= -express --loglevel error
-set newInstall=0
-set npmDir=%APPDATA%\npm\node_modules
-if not exist "node_modules" set newInstall=1
-:npm_install_globals
-if not exist "%npmDir%\grunt-init\"   call "%npm%" install -g grunt-init 	>> "%log%"
-if not exist "%npmDir%\grunt-cli\"    call "%npm%" install -g grunt-cli  	>> "%log%"
-if not exist "%npmDir%\http-server\"  call "%npm%" install -g http-server  	>> "%log%"
-if "%newInstall%"=="1" goto npm_install_new
-goto npm_install_upgrade
-:npm_install_new
-echo  - Installing the node modules...
-echo -------------------------------------------------------------------------------
-call "%npm%" install %npm_args%  >> "%log%"
-echo  - Installed.
-goto npm_install_post
-:npm_install_upgrade
-echo  - Updating the node modules...
-echo -------------------------------------------------------------------------------
-call "%npm%" update %npm_args% >> "%log%"
-echo  - Updated.
-:npm_install_post
+if not exist "node_modules" (
+	echo  - Installing the node modules...
+	echo -------------------------------------------------------------------------------
+	call "%npm%" install %npm_args%  >> "%log%"
+	echo  - Installed.
+) else (
+	echo  - Updating the node modules...
+	echo -------------------------------------------------------------------------------
+	call "%npm%" update %npm_args% >> "%log%"
+	echo  - Updated.
+)
 echo -------------------------------------------------------------------------------
 call "%npm%" list --depth=0
 echo -------------------------------------------------------------------------------
@@ -71,7 +61,7 @@ echo /* -- Returns [ %errorlevel% ] --------------------------------------------
 
 :npm_grunt
 echo /* -- [ Grunt Tasks ] ------------------------------ */ >> "%log%"
-echo  - Running Grunt Tasks...
+echo  - Running build tasks...
 echo -------------------------------------------------------------------------------
 call grunt build || goto error
 echo /* -- Returns [ %errorlevel% ] ----------------------------------------------- */ >> "%log%"
