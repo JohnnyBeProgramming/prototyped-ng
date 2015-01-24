@@ -3,9 +3,10 @@
 // Declare app level module which depends on views, and components
 angular.module('myApp', [
   'ngRoute',
+  'myApp.version',
+  'myApp.views',
   'myApp.home',
   'myApp.about',
-  'myApp.version',
 ])
 
     .value('appNode', {
@@ -72,7 +73,7 @@ angular.module('myApp', [
 
         // Set up default route
         $routeProvider.otherwise({
-            templateUrl: 'views/status/404.html',
+            templateUrl: 'views/status/404.tpl.html',
         });
     }])
 
