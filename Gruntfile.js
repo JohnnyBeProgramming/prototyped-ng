@@ -6,103 +6,148 @@
 module.exports = function (grunt) {
     'use strict';
 
+    // Load package info
+    var pkg = grunt.file.readJSON('package.json');
+
+    // Define some proto stubs
+    var proto = {
+        constants: {
+            hr: '-------------------------------------------------------------------------------',
+            banner: '/*!\n' +
+                    ' * <%= pkg.name %> v<%= pkg.version %> (<%= pkg.homepage %>)\n' +
+                    ' * Copyright 2014-<%= grunt.template.today("yyyy") %> <%= pkg.author %>\n' +
+                    ' */\n',
+            jsCheck: 'if (typeof jQuery === \'undefined\') { throw new Error(\'Bootstrap\\\'s JavaScript requires jQuery\') }\n\n',
+        },
+    };
+
     // DEFINE PROTOTYPED BUILD 
-    var globalConfig = {
+    var cfg = {
         src: 'src',
         dest: 'app',
         css: 'assets/css',
         lib: 'assets/lib',
         bin: 'app/bin',
+        tasks: {
+            modules: [
+                'grunt-contrib-jshint',
+                'grunt-contrib-concat',
+                'grunt-contrib-less',
+                'grunt-contrib-uglify',
+                'grunt-contrib-cssmin',
+                'grunt-contrib-watch',
+                'grunt-html2js',
+                'grunt-devtools',
+                'grunt-node-webkit-builder'
+            ],
+            defines: [
+                {
+                    // Define default build process                      
+                    key: 'default', 
+                    val: ['build','app-run','watch']
+                },
+                {
+                    // Define main build process
+                    key: 'build', 
+                    val: ['build-styles','build-scripts','test-units']
+                },
+                {
+                    key: 'build-styles', 
+                    val: ['less','cssmin']
+                },
+                {
+                    key: 'build-scripts', 
+                    val: ['html2js','uglify','concat']
+                },
+
+                {
+                    // Add unit tests
+                    key: 'test-units', 
+                    val: [
+                    //'jshint'
+                    ]
+                },
+
+                // Extend tasks for dist env
+                { key: 'build-dist', val: ['build-prod'] },
+                { key: 'tests-dist', val: ['test-units'] },
+            ],
+            customs: [
+                {
+                    key: 'app-run', 
+                    val: function () {
+
+                        // Start the web server prior to opening the window
+                        var httpDone = false;
+                        var httpHost = require('./Server.js');
+                        if (httpHost) {
+                            httpHost.port = 8008;
+                            httpHost.path = cfg.src;
+                            //httpHost.pfxPath = './sample.pfx'; // Enable to allow HTTPS
+                            httpDone = httpHost.start();
+                        }
+                        if (!httpDone) return false;
+
+                        // Start a Node Webkit window and point it to our starting url...
+                        var url = httpHost.baseUrl;
+                        var www = cfg.src;
+                        var cmd = 'call "node_modules\\nodewebkit\\nodewebkit\\nw.exe" "' + www + '"';
+                        var proc = require("child_process");
+                        if (proc) {
+                            console.info(' - Starting node webkit window...');
+                            console.log('-------------------------------------------------------------------------------');
+
+                            proc.exec(cmd, function (error, stdout, stderr) {
+                                console.log('-------------------------------------------------------------------------------');
+                                console.info(' - Node webkit window closed.');
+                                console.info(' - Note: Web server is still active!');
+                                console.info(' - Press [CTRL] + [C] to shutdown...');
+                                if (error) {
+                                    console.error(error);
+                                }
+                            });
+                        }
+                    }
+                },
+            ],
+        },
     };
 
-    // Load the NPM tasks to be used
-    grunt.loadNpmTasks('grunt-contrib-jshint');
-    grunt.loadNpmTasks('grunt-contrib-concat');
-    grunt.loadNpmTasks('grunt-contrib-less');
-    grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.loadNpmTasks('grunt-contrib-cssmin');
-    grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-html2js');
-    grunt.loadNpmTasks('grunt-devtools');
-    grunt.loadNpmTasks('grunt-node-webkit-builder');
+    // Load the NPM tasks (modules) to be used
+    cfg.tasks.modules.forEach(function (entry) {
+        console.log(' - Loading: ' + entry);
+        grunt.loadNpmTasks(entry);
+    });
+    console.log(proto.constants.hr);
 
 
-    // DEFINE YOUR PROTOTYPED GRUNT TASKS HERE
-    grunt.registerTask('default', [
-      // Define default build process
-      'build',
-      'app-run',
-      'watch'
-    ]);
-    grunt.registerTask('build', [
-      // Define main build process
-      'build-styles',
-      'build-scripts',
-      'tests-run',
-    ]);
-    grunt.registerTask('build-styles', [
-      'less',
-      'cssmin'
-    ]);
-    grunt.registerTask('build-scripts', [
-      'html2js',
-      'uglify',
-      'concat'
-    ]);
-    grunt.registerTask('tests-run', [
-      //'jshint'
-    ]);
-
-    // EXTEND TASKS FOR DISTRIBUTION ENVIRONMENT
-    grunt.registerTask('dist-less', ['build-styles']);
-    grunt.registerTask('dist-js', ['build-scripts']);
-    grunt.registerTask('dist-test', ['tests-run']);
-    grunt.registerTask('dist-watch', ['watch']);
-
-    // DEFINE THE APPLICATION RUNTIME
-    grunt.registerTask('app-run', function () {
-
-        // Start the web server prior to opening the window
-        var httpDone = false;
-        var httpHost = require('./Server.js');
-        if (httpHost) {
-            httpHost.port = 8008;
-            httpHost.path = globalConfig.src;
-            //httpHost.pfxPath = './sample.pfx'; // Enable to allow HTTPS
-            httpDone = httpHost.start();
-        }
-        if (!httpDone) return false;
-
-        // Start a Node Webkit window and point it to our starting url...
-        var url = httpHost.baseUrl;
-        var www = globalConfig.src;
-        var cmd = 'call "node_modules\\nodewebkit\\nodewebkit\\nw.exe" "' + www + '"';
-        var proc = require("child_process");
-        if (proc) {
-            console.info(' - Starting node webkit window...');
-            console.log('-------------------------------------------------------------------------------');
-
-            proc.exec(cmd, function (error, stdout, stderr) {
-                console.log('-------------------------------------------------------------------------------');
-                console.info(' - Node webkit window closed.');
-                console.info(' - Note: Web server is still active!');
-                console.info(' - Press [CTRL] + [C] to shutdown...');
-                if (error) {
-                    console.error(error);
-                }
-            });
+    // Load the definitions of your prototyped grunt tasks
+    cfg.tasks.defines.forEach(function (entry, value) {
+        if (entry.key) {
+            console.log(' - Definig: ' + entry.key);
+            grunt.registerTask(entry.key, entry.val);
+        } else {
+            console.warn(' - Warning: Invalid task encountered.');
         }
     });
 
-    // DEFINE YOUR VERSION NAME 	  
+    // Register the custom actions
+    cfg.tasks.customs.forEach(function (entry, value) {
+        if (entry.key) {
+            console.log(' - Register: ' + entry.key);
+            grunt.registerTask(entry.key, entry.val);
+        } else {
+            console.warn(' - Warning: Invalid task encountered.');
+        }
+    });
+    console.log(proto.constants.hr);
+
+    // Define the main task configuration
     grunt.initConfig({
-        globalConfig: globalConfig,
-        pkg: grunt.file.readJSON('package.json'),
-        banner: '/*!\n' +
-                ' * <%= pkg.name %> v<%= pkg.version %> (<%= pkg.homepage %>)\n' +
-                ' * Copyright 2011-<%= grunt.template.today("yyyy") %> <%= pkg.author %>\n' +
-                ' */\n',
-        jqueryCheck: 'if (typeof jQuery === \'undefined\') { throw new Error(\'Bootstrap\\\'s JavaScript requires jQuery\') }\n\n',
+        cfg: cfg,
+        pkg: pkg,
+        banner: proto.constants.banner,
+        jqueryCheck: proto.constants.jsCheck,
 
         // LESS FILE COMPILATION
         less: {
@@ -110,11 +155,11 @@ module.exports = function (grunt) {
                 options: {
                     banner: '<%= banner %>',
                     paths: [
-                      "<%= globalConfig.bin %>"
+                      "<%= cfg.bin %>"
                     ]
                 },
                 files: {
-                    "<%= globalConfig.bin %>/<%= globalConfig.css %>/app.css": "<%= globalConfig.src %>/**/*.less"
+                    "<%= cfg.bin %>/<%= cfg.css %>/app.css": "<%= cfg.src %>/**/*.less"
                 }
             },
             /*
@@ -140,8 +185,8 @@ module.exports = function (grunt) {
             minify: {
                 expand: true,
                 src: ['**/*.css', '!**/*.min.css'],
-                cwd: '<%= globalConfig.bin %>//<%= globalConfig.css %>/',
-                dest: '<%= globalConfig.dest %>/<%= globalConfig.css %>/',
+                cwd: '<%= cfg.bin %>//<%= cfg.css %>/',
+                dest: '<%= cfg.dest %>/<%= cfg.css %>/',
                 extDot: 'last',
                 ext: '.min.css'
             }
@@ -156,7 +201,7 @@ module.exports = function (grunt) {
                 // Because these src-dest file mappings are manually specified, every
                 // time a new file is added or removed, the Gruntfile has to be updated.
                 files: [
-                  { src: '<%= globalConfig.src %>/app.js', dest: '<%= globalConfig.bin %>/<%= globalConfig.lib %>/app.min.js' },
+                  { src: '<%= cfg.src %>/app.js', dest: '<%= cfg.bin %>/<%= cfg.lib %>/app.min.js' },
                 ],
             },
             dynamic_mappings: {
@@ -171,8 +216,8 @@ module.exports = function (grunt) {
                         '!**/*.min.js',
                         '!**/*.backup.js'
                       ],
-                      cwd: '<%= globalConfig.src %>/',      // Src matches are relative to this path.
-                      dest: '<%= globalConfig.bin %>/<%= globalConfig.lib %>/',  // Destination path prefix.
+                      cwd: '<%= cfg.src %>/',      // Src matches are relative to this path.
+                      dest: '<%= cfg.bin %>/<%= cfg.lib %>/',  // Destination path prefix.
                       ext: '.min.js',                       // Dest filepaths will have this extension.
                       extDot: 'first'                       // Extensions in filenames begin after the first dot
                   },
@@ -187,8 +232,8 @@ module.exports = function (grunt) {
             },
             js: {
                 files: [{
-                    src: ['<%= globalConfig.bin %>/**/*.js'],
-                    dest: '<%= globalConfig.dest %>/<%= globalConfig.lib %>/app.min.js'
+                    src: ['<%= cfg.bin %>/**/*.js'],
+                    dest: '<%= cfg.dest %>/<%= cfg.lib %>/app.min.js'
                 }]
             }
         },
@@ -197,8 +242,8 @@ module.exports = function (grunt) {
         jshint: {
             files: [
               'Gruntfile.js',
-              '<%= globalConfig.bin %>/**/*.js',
-              '<%= globalConfig.dest %>/**/*.js'
+              '<%= cfg.bin %>/**/*.js',
+              '<%= cfg.dest %>/**/*.js'
             ],
             options: {
                 // options here to override JSHint defaults
@@ -290,10 +335,10 @@ module.exports = function (grunt) {
             },
             views: {
                 src: [
-                    '<%= globalConfig.src %>/views/**/*.jade',
-                    '<%= globalConfig.src %>/views/**/*.tpl.html',
+                    '<%= cfg.src %>/views/**/*.jade',
+                    '<%= cfg.src %>/views/**/*.tpl.html',
                 ],
-                dest: '<%= globalConfig.src %>/<%= globalConfig.lib %>/templates.js'
+                dest: '<%= cfg.src %>/<%= cfg.lib %>/templates.js'
             },
         },
 
@@ -301,21 +346,21 @@ module.exports = function (grunt) {
         watch: {
             css: {
                 files: [
-                  '<%= globalConfig.src %>/**/*.less',
-                  '<%= globalConfig.src %>/**/*.css',
+                  '<%= cfg.src %>/**/*.less',
+                  '<%= cfg.src %>/**/*.css',
                 ],
                 tasks: ['less', 'cssmin']
             },
             js: {
                 files: [
-                  '<%= globalConfig.src %>/**/*.js',
+                  '<%= cfg.src %>/**/*.js',
                 ],
                 tasks: ['uglify', 'concat']
             },
             tpl: {
                 files: [
-                  '<%= globalConfig.src %>/**/*.jade',
-                  '<%= globalConfig.src %>/**/*.tpl.html',
+                  '<%= cfg.src %>/**/*.jade',
+                  '<%= cfg.src %>/**/*.tpl.html',
                 ],
                 tasks: ['html2js']
             }
