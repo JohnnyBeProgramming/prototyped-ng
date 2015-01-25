@@ -39,17 +39,15 @@ echo /* -- Returns [ %errorlevel% ] --------------------------------------------
 
 :npm_install
 echo /* -- [ NPM Install and Update ] ---------------------------------------------- */ >> "%log%"
-call npm run add-globals >> "%log%"
+call npm run add:globals >> "%log%"
 set npm_args= -express --loglevel error
 if not exist "node_modules" (
 	echo  - Installing the node modules...
-	echo -------------------------------------------------------------------------------
 	call "%npm%" install %npm_args%  >> "%log%"
 	echo  - Installed.
 ) else (
 	echo  - Updating the node modules...
-	echo -------------------------------------------------------------------------------
-	call "%npm%" update %npm_args% >> "%log%"
+	call "%npm%" update package %npm_args% >> "%log%"
 	echo  - Updated.
 )
 echo -------------------------------------------------------------------------------
@@ -61,7 +59,7 @@ echo /* -- Returns [ %errorlevel% ] --------------------------------------------
 
 :npm_grunt
 echo /* -- [ Grunt Tasks ] ------------------------------ */ >> "%log%"
-echo  - Running build tasks...
+echo  - Running Tasks...
 echo -------------------------------------------------------------------------------
 call grunt build || goto error
 echo /* -- Returns [ %errorlevel% ] ----------------------------------------------- */ >> "%log%"

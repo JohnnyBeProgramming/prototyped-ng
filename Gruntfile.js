@@ -30,39 +30,40 @@ module.exports = function (grunt) {
         bin: 'app/bin',
         tasks: {
             modules: [
+                'grunt-contrib-less',
                 'grunt-contrib-jshint',
                 'grunt-contrib-concat',
-                'grunt-contrib-less',
                 'grunt-contrib-uglify',
                 'grunt-contrib-cssmin',
                 'grunt-contrib-watch',
+                'grunt-contrib-copy',
+                'grunt-usemin',
                 'grunt-html2js',
-                'grunt-devtools',
-                'grunt-node-webkit-builder'
+                'grunt-devtools'
             ],
             defines: [
                 {
                     // Define default build process                      
-                    key: 'default', 
-                    val: ['build','app-run','watch']
+                    key: 'default',
+                    val: ['build', 'app-run', 'watch']
                 },
                 {
                     // Define main build process
-                    key: 'build', 
-                    val: ['build-styles','build-scripts','test-units']
+                    key: 'build',
+                    val: ['useminPrepare', 'build-styles', 'build-scripts', 'copy', 'usemin', 'test-units']
                 },
                 {
-                    key: 'build-styles', 
-                    val: ['less','cssmin']
+                    key: 'build-styles',
+                    val: ['less', 'cssmin']
                 },
                 {
-                    key: 'build-scripts', 
-                    val: ['html2js','uglify','concat']
+                    key: 'build-scripts',
+                    val: ['html2js', 'uglify', 'concat']
                 },
 
                 {
                     // Add unit tests
-                    key: 'test-units', 
+                    key: 'test-units',
                     val: [
                     //'jshint'
                     ]
@@ -74,7 +75,7 @@ module.exports = function (grunt) {
             ],
             customs: [
                 {
-                    key: 'app-run', 
+                    key: 'app-run',
                     val: function () {
 
                         // Start the web server prior to opening the window
@@ -91,7 +92,7 @@ module.exports = function (grunt) {
                         // Start a Node Webkit window and point it to our starting url...
                         var url = httpHost.baseUrl;
                         var www = cfg.src;
-                        var cmd = 'call "node_modules\\nodewebkit\\nodewebkit\\nw.exe" "' + www + '"';
+                        var cmd = 'nodewebkit "' + www + '"';
                         var proc = require("child_process");
                         if (proc) {
                             console.info(' - Starting node webkit window...');
@@ -151,45 +152,37 @@ module.exports = function (grunt) {
 
         // LESS FILE COMPILATION
         less: {
-            development: {
-                options: {
-                    banner: '<%= banner %>',
-                    paths: [
-                      "<%= cfg.bin %>"
-                    ]
+            options: {
+                cleancss: true,
+                /*
+                modifyVars: {
+                    imgPath: '"http://mycdn.com/path/to/images"',
+                    bgColor: 'red'
                 },
+                */
+                banner: '<%= banner %>',
+                paths: ["<%= cfg.src %>"]
+            },
+            src: {
                 files: {
-                    "<%= cfg.bin %>/<%= cfg.css %>/app.css": "<%= cfg.src %>/**/*.less"
+                    "<%= cfg.src %>/<%= cfg.css %>/app.css": "<%= cfg.src %>/<%= cfg.css %>/app.less",
                 }
             },
-            /*
-            production: {
-              options: {
-                banner: '<%= banner %>',
-                paths: ["assets/css"],
-                cleancss: true,
-                modifyVars: {
-                  imgPath: '"http://mycdn.com/path/to/images"',
-                  bgColor: 'red'
-                }
-              },
-              files: {
-                "path/to/result.css": "path/to/source.less"
-              }
-            }
-            */
         },
 
         // MINIFY CSS
         cssmin: {
-            minify: {
+            src: {
                 expand: true,
-                src: ['**/*.css', '!**/*.min.css'],
-                cwd: '<%= cfg.bin %>//<%= cfg.css %>/',
-                dest: '<%= cfg.dest %>/<%= cfg.css %>/',
+                cwd: '<%= cfg.src %>/<%= cfg.css %>/',
+                src: [
+                    '**/*.css',
+                    '!**/*.min.css'
+                ],
+                dest: '<%= cfg.src %>/<%= cfg.css %>/',
                 extDot: 'last',
                 ext: '.min.css'
-            }
+            },
         },
 
         // MINIFY JS FILE
@@ -197,14 +190,15 @@ module.exports = function (grunt) {
             options: {
                 banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - <%= grunt.template.today("yyyy-mm-dd") %> */'
             },
-            static_mappings: {
+            statics: {
                 // Because these src-dest file mappings are manually specified, every
                 // time a new file is added or removed, the Gruntfile has to be updated.
                 files: [
-                  { src: '<%= cfg.src %>/app.js', dest: '<%= cfg.bin %>/<%= cfg.lib %>/app.min.js' },
+                    { src: '<%= cfg.src %>/<%= cfg.lib %>/app.js', dest: '<%= cfg.dest %>/<%= cfg.lib %>/app.min.js' },
+                    { src: '<%= cfg.src %>/<%= cfg.lib %>/app.templates.js', dest: '<%= cfg.dest %>/<%= cfg.lib %>/app.templates.min.js' },
                 ],
             },
-            dynamic_mappings: {
+            dynamics: {
                 // Grunt will search for "**/*.js" under "lib/" when the "uglify" task
                 // runs and build the appropriate src-dest file mappings then, so you
                 // don't need to update the Gruntfile when files are added or removed.
@@ -212,14 +206,14 @@ module.exports = function (grunt) {
                   {
                       expand: true, // Enable dynamic expansion.
                       src: [
-                        '**/*.js',
+                        '**/*.ng.js',
                         '!**/*.min.js',
                         '!**/*.backup.js'
                       ],
-                      cwd: '<%= cfg.src %>/',      // Src matches are relative to this path.
-                      dest: '<%= cfg.bin %>/<%= cfg.lib %>/',  // Destination path prefix.
-                      ext: '.min.js',                       // Dest filepaths will have this extension.
-                      extDot: 'first'                       // Extensions in filenames begin after the first dot
+                      cwd: '<%= cfg.src %>/modules/',   // Src matches are relative to this path.
+                      dest: '<%= cfg.dest %>/modules',  // Destination path prefix.
+                      ext: '.min.js',                   // Dest filepaths will have this extension.
+                      extDot: 'last'                    // Extensions in filenames begin after the first dot
                   },
                 ],
             },
@@ -232,9 +226,45 @@ module.exports = function (grunt) {
             },
             js: {
                 files: [{
-                    src: ['<%= cfg.bin %>/**/*.js'],
-                    dest: '<%= cfg.dest %>/<%= cfg.lib %>/app.min.js'
+                    src: ['<%= cfg.dest %>/modules/**/*.js'],
+                    dest: '<%= cfg.dest %>/<%= cfg.lib %>/app.modules.js'
                 }]
+            },
+            cdn: {
+                files: [
+                  {
+                      dest: '<%= cfg.dest %>/<%= cfg.lib %>/app.cdn.min.js',
+                      src: [
+                        'https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.2.min.js',
+                        'https://ajax.aspnetcdn.com/ajax/modernizr/modernizr-2.6.2.js',
+                      ]
+                  }
+                ]
+            }
+        },
+
+        useminPrepare: {
+            html: '<%= cfg.dest %>/index.html',
+            options: {
+                flow: {
+                    steps: {
+                        js: ['concat']
+                    },
+                    post: {}
+                }
+            }
+        },
+        usemin: {
+            dest: {
+                html: '<%= cfg.dest %>/index.html',
+                options: {
+                    flow: {
+                        steps: {
+                            js: ['concat']
+                        },
+                        post: {}
+                    }
+                }
             }
         },
 
@@ -338,7 +368,33 @@ module.exports = function (grunt) {
                     '<%= cfg.src %>/views/**/*.jade',
                     '<%= cfg.src %>/views/**/*.tpl.html',
                 ],
-                dest: '<%= cfg.src %>/<%= cfg.lib %>/templates.js'
+                dest: '<%= cfg.src %>/<%= cfg.lib %>/app.templates.js'
+            },
+        },
+
+        copy: {
+            dest: {
+                files: [
+                  // includes files within path
+                  {
+                      expand: true,
+                      src: [
+                          'index.html',
+                          '**/package.json',
+                          'assets/**/*.min.css',
+                          'assets/**/*.ico',
+                          'assets/**/*.png',
+                          'assets/**/*.jpg',
+                          'assets/**/*.bmp',
+                          'assets/**/*.svg',
+                          'assets/**/*.woff',
+                          'assets/**/*.json',
+                      ],
+                      cwd: '<%= cfg.src %>/',
+                      dest: '<%= cfg.dest %>/',
+                      filter: 'isFile'
+                  },
+                ],
             },
         },
 

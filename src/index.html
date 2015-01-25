@@ -17,18 +17,20 @@
         }
     </style>
     <link rel="shortcut icon" href="assets/favicon.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css">
-    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
-    <link rel="stylesheet" href="assets/css/app.css" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">    
+    <link rel="stylesheet" href="assets/css/app.min.css" />
+    <!-- build:js ../app/assets/lib/app.cdn.min.js -->
     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.2.min.js"></script>
     <script src="https://ajax.aspnetcdn.com/ajax/modernizr/modernizr-2.6.2.js"></script>    
+    <!-- endbuild -->
     <script>
         var appConfig = {
             libs: [
                 'modules/home.ng.js',
                 'modules/about.ng.js',
                 'assets/lib/version.js',
-                'assets/lib/templates.js',
+                'assets/lib/app.templates.js',
                 'assets/lib/app.js',
             ],
             init: function () {
