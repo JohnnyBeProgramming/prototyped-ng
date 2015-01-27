@@ -17,12 +17,12 @@
         }
     </style>
     <link rel="shortcut icon" href="assets/favicon.png">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css">
-    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/css/app.min.css" />
     <!-- build:js ../app/assets/lib/app.cdn.min.js -->
     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.2.min.js"></script>
-    <script src="https://ajax.aspnetcdn.com/ajax/modernizr/modernizr-2.6.2.js"></script>    
+    <script src="https://ajax.aspnetcdn.com/ajax/modernizr/modernizr-2.6.2.js"></script>
     <!-- endbuild -->
     <script>
         var appConfig = {
@@ -45,25 +45,42 @@
     <!--[if lt IE 7]>
         <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
-    <div class="header">
-        <span class="pull-right">
-            <a ng:cloak app:refresh href=""><i class="ctrl glyphicon glyphicon-refresh"></i></a>
-            <a ng:cloak app:debug href=""><i class="ctrl glyphicon glyphicon-wrench"></i></a>
-            <a ng:cloak app:kiosk href=""><i class="ctrl glyphicon glyphicon-fullscreen"></i></a>
-            <a ng:cloak app:close href=""><i class="ctrl glyphicon glyphicon-remove"></i></a>
-        </span>
-        <h1>
-            Connection Info
-            <small>
-                <ul class="menu">
-                    <li><a href="/" app:nav:link>Home</a></li>
-                    <li><a href="/about" app:nav:link>About</a></li>
-                </ul>
-            </small>
-        </h1>
-    </div>
-    <div class="contents" ng:view ng:cloak>
-        <em class="app-loading">Please wait...</em>
+    <header class="navbar navbar-default navbar-fixed-top">
+        <div class="navbar-inner">
+            <div class="container">
+                <nav class="">
+                    <ul class="nav navbar-nav">
+                        <a href="" role="button" class="navbar-brand">
+                            Prototyped
+                        </a>
+                        <li><a href="/" app:nav:link>Home</a></li>
+                        <li><a href="/about" app:nav:link>About</a></li>
+                        <!--li class="dropdown" dropdown>
+                            <a href class="dropdown-toggle" on-toggle dropdown-toggle>
+                                More... <b class="caret"></b>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/" app:nav:link>Home</a></li>
+                                <li><a href="/about" app:nav:link>About</a></li>
+                            </ul>
+                        </li-->
+                    </ul>
+                </nav>
+                <nav class="pull-right">
+                    <ul class="nav navbar-nav">
+                        <li><a ng:cloak app:refresh href=""><i class="glyphicon glyphicon-refresh"></i></a></li>
+                        <li><a ng:cloak app:debug href=""><i class="glyphicon glyphicon-wrench"></i></a></li>
+                        <li><a ng:cloak app:kiosk href=""><i class="glyphicon glyphicon-fullscreen"></i></a></li>
+                        <li><a ng:cloak app:close href=""><i class="glyphicon glyphicon-remove"></i></a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+    <div class="container">
+        <div class="row contents" ng:view ng:cloak>
+            <em class="app-loading">Please wait...</em>
+        </div>
     </div>
     <div class="footer">
         Client Version: <span app:version><em>Loading...</em></span> | Powered by <a href="https://angularjs.org/">AngularJS</a> &amp; <a href="https://github.com/rogerwang/node-webkit">Node Webkit</a>
@@ -72,6 +89,7 @@
     <!-- Load AngularJS and all the required libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-route.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-utils/0.1.1/angular-ui-utils.min.js"></script>
     <script>
         /*!
          * $script.js v1.3
