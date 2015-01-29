@@ -3,15 +3,16 @@
 // Declare app level module which depends on views, and components
 angular.module('myApp', [
   'ngRoute',
+  'ui.router',
   'ui.utils',
   'myApp.version',
   'myApp.views',
-  'myApp.home',
+  'myApp.default',
   'myApp.about',
 ])
 
-    .value('appNode', {
-        html5: false,
+    .constant('appNode', {
+        html5: true,
         active: typeof require !== 'undefined',
         ui: function () {
             if (typeof require !== 'undefined') {
@@ -68,14 +69,15 @@ angular.module('myApp', [
         },
     })
 
-    .config(['$locationProvider', '$routeProvider', 'appNodeProvider', function ($locationProvider, $routeProvider, appNode) {
+    .config(['$locationProvider', '$routeProvider', '$stateProvider', '$urlRouterProvider', 'appNode', function ($locationProvider, $routeProvider, $stateProvider, $urlRouterProvider, appNode) {
         // Disable hastags
         $locationProvider.html5Mode(appNode.html5);
 
-        // Set up default route
+        // Set up default routes
         $routeProvider.otherwise({
             templateUrl: 'views/status/404.jade',
         });
+        $urlRouterProvider.when('', '/');
     }])
 
     .directive('appRefresh', ['$window', '$route', 'appNode', function ($window, $route, appNode) {
@@ -131,6 +133,13 @@ angular.module('myApp', [
         var className = 'ctrl-active';
 
         function linkCheckActive(scope, elm, attrs) {
+            /*
+            var loc = $(elm).attr('href');
+            if (loc.indexOf('#') == 0) {
+                loc = loc.substring(1);
+            }
+            */
+
             var loc = $(elm).attr('href');
             if (loc.indexOf('#') == 0) {
                 loc = loc.substring(1);
@@ -168,6 +177,11 @@ angular.module('myApp', [
         };
     }])
 
+    .directive('appVersion', ['appNode', function (appNode) {
+        return function (scope, elm, attrs) {
+            elm.text(appNode.version);
+        };
+    }])
 
     .filter('interpolate', ['appNode', function (appNode) {
         return function (text) {
@@ -175,10 +189,7 @@ angular.module('myApp', [
         };
     }])
 
-    .directive('appVersion', ['appNode', function (appNode) {
-        return function (scope, elm, attrs) {
-            elm.text(appNode.version);
-        };
-    }])
-    
-;
+    .run(['$rootScope', '$state', function ($rootScope, $state) {
+        // Attach the state to the root scope
+        $rootScope.$state = $state;
+    }]);

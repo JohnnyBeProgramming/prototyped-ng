@@ -2,16 +2,44 @@
 @import 'https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css';
 @import 'https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css';
 
+html, body {
+    height: 100%;
+}
+
 body {
     color: #333;
     font-size: 11px;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
+
+.main {
+    flex-grow: 1;
+    flex-shrink: 1;
+    display: flex;
+    height: 100%;
+}
+
+.sidebar {
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: 200px;
+    margin: 3px;
+}
+
 .contents {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin: 3px;
     padding: 8px;
-    margin-top: 50px;
-    margin-bottom: 16px;
+}
+
+
+.viewport {
+    padding: 0;
+    margin: 50px auto 16px;
+    height: 100%;
+    width: 100%;
 
     h2 {
         margin: 0;
