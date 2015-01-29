@@ -18,8 +18,6 @@
         }
     </style>
     <link rel="shortcut icon" href="assets/favicon.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css">
-    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/css/app.min.css" />
     <!-- build:js ../app/assets/lib/app.cdn.min.js -->
     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.2.min.js"></script>
@@ -77,8 +75,8 @@
         </div>
     </div>
     <div class="main viewport">
-        <div class="sidebar" ng:cloak ui:view="left" ng-show="$state.current.views['left'] || $state.current.views['left@']"></div>
-        <div class="contents" ng:cloak ui:view="main">
+        <div class="sidebar slide" ng:cloak ui:view="left" ng-show="$state.current.views['left'] || $state.current.views['left@']"></div>
+        <div class="contents slide" ng:cloak ui:view="main">
             <em class="app-loading">Please wait...</em>
         </div>
     </div>
