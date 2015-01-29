@@ -133,13 +133,6 @@ angular.module('myApp', [
         var className = 'ctrl-active';
 
         function linkCheckActive(scope, elm, attrs) {
-            /*
-            var loc = $(elm).attr('href');
-            if (loc.indexOf('#') == 0) {
-                loc = loc.substring(1);
-            }
-            */
-
             var loc = $(elm).attr('href');
             if (loc.indexOf('#') == 0) {
                 loc = loc.substring(1);
