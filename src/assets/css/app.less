@@ -1,6 +1,12 @@
-/* app css stylesheet */
+/*
+    Import styles from online resources
+*/
 @import 'https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css';
-@import 'https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css';
+@import 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css';
+/*
+    Import customised styling resources
+*/
+@import 'styles.less';
 
 html, body {
     height: 100%;
@@ -12,7 +18,7 @@ body {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
-.main {
+.docked {
     flex-grow: 1;
     flex-shrink: 1;
     display: flex;
@@ -20,10 +26,44 @@ body {
 }
 
 .sidebar {
+    margin: 0;
     flex-grow: 0;
     flex-shrink: 0;
     flex-basis: 200px;
-    margin: 3px;
+    background-color: #f6f6f6;
+    -webkit-box-shadow: inset 0px 0px 16px 1px rgba(0,0,0,0.15);
+    -moz-box-shadow: inset 0px 0px 16px 1px rgba(0,0,0,0.15);
+    box-shadow: inset 0px 0px 16px 1px rgba(0,0,0,0.15);
+
+    .list-group {
+        border-radius: 0;
+
+        .list-group-item {
+            border-radius: 0;
+            box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+            text-shadow: 0 -1px 0 #e6e3e3;
+
+            a, a:hover, a:focus {
+                color: #6b6b6b;                                
+                text-decoration: none;
+            }
+
+            &.active, &.active:focus, &.active:hover {
+                //border: none;
+                border-right: none;
+                border-color: #e6e3e3;
+                background-image: none !important;
+                background-color: #FFF !important;
+
+                a {
+                    font-weight: bolder;
+                    color: #000;
+                }
+            }
+        }
+    }
 }
 
 .contents {
@@ -32,7 +72,6 @@ body {
     margin: 3px;
     padding: 8px;
 }
-
 
 .viewport {
     padding: 0;

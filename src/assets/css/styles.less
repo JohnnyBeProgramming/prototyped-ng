@@ -1,0 +1,116 @@
+﻿@import 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css';
+@import 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css';
+/*
+    Standard Bootstrap Themes:
+    - http://bootswatch.com/
+    
+    Free Online Bootstrap Themes:    
+     - @import 'https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.2/yeti/bootstrap.css';
+     - @import 'http://ironsummitmedia.github.io/startbootstrap-sb-admin-2/dist/css/sb-admin-2.css';
+*/
+
+body {
+    .results {
+        min-width: 480px;
+        display: flex;
+    }
+
+    .results .icon {
+        margin: 0 8px;
+        font-size: 128px;
+        width: 128px !important;
+        height: 128px !important;
+        position: relative;
+        flex-grow: 0;
+        flex-shrink: 0;
+    }
+
+    .results .icon .sub-icon {
+        font-size: 64px !important;
+        width: 64px !important;
+        height: 64px !important;
+        position: absolute;
+        right: 0;
+        top: 0;
+        margin-top: 100px;
+    }
+
+    .results .icon .sub-icon.success {
+        color: #080;
+    }
+
+    .results .icon .sub-icon.error {
+        color: #D00;
+    }
+
+    .results .icon .sub-icon.warning {
+        color: #0094ff;
+    }
+
+    .results .icon .sub-icon.busy {
+        color: #0094ff;
+    }
+
+    .results .info {
+        margin: 0 16px;
+        min-height: 128px;
+        min-width: 300px;
+        display: inline-block;
+        flex-grow: 1;
+        flex-shrink: 1;
+    }
+
+    .results .info h4 {
+        text-wrap: avoid;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .results .info h4 a {
+        color: black;
+    }
+
+    .results .info .ctrl-sm {
+        font-size: larger;
+        margin-left: 8px;
+        color: black;
+    }
+
+    .info-row {
+        display: flex;
+    }
+
+    .info-row-links {
+        color: silver;
+    }
+
+    .info-row-links a {
+        color: #4a4a4a;
+        margin-left: 8px;
+    }
+
+    .info-row-links a:hover {
+        color: #000000;
+    }
+
+    .info-col-primary {
+        flex-grow: 1;
+        flex-shrink: 1;
+    }
+
+    .info-col-secondary {
+        flex-grow: 0;
+        flex-shrink: 0;
+    }
+
+    .iframe-body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .iframe-body iframe {
+        margin: 0;
+        padding: 0;
+    }
+}

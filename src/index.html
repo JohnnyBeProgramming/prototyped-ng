@@ -49,10 +49,12 @@
             <nav class="">
                 <ul class="nav navbar-nav">
                     <li>
-                        <a href="/" class="navbar-brand" role="button">Prototyped</a>
+                        <a href="/" class="navbar-brand" role="button">
+                            <i class="fa fa-cubes"></i> Prototyped
+                        </a>
                     </li>
-                    <li><a app:nav-link ui:sref="home">Home</a></li>
-                    <li><a app:nav-link ui:sref="about">About</a></li>
+                    <li><a app:nav-link ui:sref="home"><i class="fa fa-home"></i> Home</a></li>
+                    <li><a app:nav-link ui:sref="about"><i class="fa fa-info"></i> About</a></li>
                     <!--li class="dropdown" dropdown>
                         <a href class="dropdown-toggle" on-toggle dropdown-toggle>
                             More... <b class="caret"></b>
@@ -74,7 +76,7 @@
             </nav>
         </div>
     </div>
-    <div class="main viewport">
+    <div class="docked viewport">
         <div class="sidebar slide" ng:cloak ui:view="left" ng-show="$state.current.views['left'] || $state.current.views['left@']"></div>
         <div class="contents slide" ng:cloak ui:view="main">
             <em class="app-loading">Please wait...</em>
@@ -85,6 +87,7 @@
     </div>
 
     <!-- Load AngularJS and all the required libraries -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-route.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-utils/0.1.1/angular-ui-utils.min.js"></script>

@@ -74,10 +74,35 @@ angular.module('myApp', [
         $locationProvider.html5Mode(appNode.html5);
 
         // Set up default routes
-        $routeProvider.otherwise({
-            templateUrl: 'views/status/404.jade',
-        });
-        $urlRouterProvider.when('', '/');
+        $routeProvider
+            .otherwise({
+                //templateUrl: 'error/404',
+                templateUrl: '/',
+            });
+
+        $urlRouterProvider
+            .when('', '/')
+
+        // Now set up the states
+        $stateProvider
+            .state('error', {
+                url: '/error',
+                resolve: {
+                    errorObj: [function () {
+                        return this.self.error;
+                    }]
+                },
+                views: {
+                    'main@': { templateUrl: 'views/status/default.jade' },
+                },
+            })
+            .state('error.404', {
+                url: '/404',
+                views: {
+                    'main@': { templateUrl: 'views/status/404.jade' },
+                }
+            })
+        
     }])
 
     .directive('appRefresh', ['$window', '$route', 'appNode', function ($window, $route, appNode) {
@@ -130,11 +155,11 @@ angular.module('myApp', [
     }])
 
     .directive('appNavLink', ['$location', '$timeout', function ($location, $timeout) {
-        var className = 'ctrl-active';
+        var className = 'active';
 
         function linkCheckActive(scope, elm, attrs) {
             var loc = $(elm).attr('href');
-            if (loc.indexOf('#') == 0) {
+            if (loc && loc.indexOf('#') == 0) {
                 loc = loc.substring(1);
             }
 
@@ -147,6 +172,7 @@ angular.module('myApp', [
                 $(elm).addClass(className);
                 return true;
             }
+
             return false;
         }
 
