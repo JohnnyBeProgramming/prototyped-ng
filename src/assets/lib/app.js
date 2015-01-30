@@ -69,6 +69,47 @@ angular.module('myApp', [
         },
     })
 
+    .value('appMenu', {
+        options: {
+            showRoot: true,
+        },
+        items: [
+                {
+                    label: 'Home',
+                    icon: 'fa fa-home',
+                    value: 'home',
+                },
+                {
+                    label: 'Views',
+                    icon: 'fa fa-share-alt',
+                    shown: false,
+                    value: [
+                        {
+                            label: 'Home',
+                            icon: 'fa fa-phone',
+                            value: 'home',
+                        },
+                        {
+                            label: 'About',
+                            icon: 'fa fa-backward',
+                            value: 'about.info',
+                        },
+                        { divider: true },
+                        {
+                            label: 'Exit',
+                            icon: 'fa fa-exit',
+                            value: 'about',
+                        },
+                    ],
+                },
+                {
+                    label: 'About',
+                    icon: 'fa fa-info',
+                    value: 'about.info',
+                },
+        ],
+    })
+
     .config(['$locationProvider', '$routeProvider', '$stateProvider', '$urlRouterProvider', 'appNode', function ($locationProvider, $routeProvider, $stateProvider, $urlRouterProvider, appNode) {
         // Disable hastags
         $locationProvider.html5Mode(appNode.html5);
@@ -102,7 +143,7 @@ angular.module('myApp', [
                     'main@': { templateUrl: 'views/status/404.jade' },
                 }
             })
-        
+
     }])
 
     .directive('appRefresh', ['$window', '$route', 'appNode', function ($window, $route, appNode) {
@@ -196,6 +237,18 @@ angular.module('myApp', [
         };
     }])
 
+    .directive('appMenu', ['$timeout', function ($location, $timeout) {
+        return {
+            restrict: 'A',
+
+            scope: {
+                list: '=appMenu'
+            },
+            transclude: false,
+            templateUrl: 'views/partials/appMenu.html'
+        };
+    }])
+
     .directive('appVersion', ['appNode', function (appNode) {
         return function (scope, elm, attrs) {
             elm.text(appNode.version);
@@ -208,7 +261,27 @@ angular.module('myApp', [
         };
     }])
 
-    .run(['$rootScope', '$state', function ($rootScope, $state) {
+    .filter('isArray', function () {
+        return function (input) {
+            return angular.isArray(input);
+        };
+    })
+    .filter('isNotArray', function () {
+        return function (input) {
+            return !angular.isArray(input);
+        };
+    })
+
+    .run(['$rootScope', '$state', 'appMenu', function ($rootScope, $state, appMenu) {
         // Attach the state to the root scope
         $rootScope.$state = $state;
+
+        // Define the main toolbar menu
+        $rootScope.appMenu = appMenu;
+
+        $rootScope.not = function (func) {
+            return function (item) {
+                return !func(item);
+            }
+        };
     }]);

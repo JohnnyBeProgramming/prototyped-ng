@@ -46,39 +46,29 @@
     <![endif]-->
     <div class="navbar navbar-default navbar-fixed-top">
         <div class="navbar-inner">
-            <nav class="">
-                <ul class="nav navbar-nav">
-                    <li>
-                        <a href="/" class="navbar-brand" role="button">
-                            <i class="fa fa-cubes"></i> Prototyped
-                        </a>
-                    </li>
-                    <li><a app:nav-link ui:sref="home"><i class="fa fa-home"></i> Home</a></li>
-                    <li><a app:nav-link ui:sref="about"><i class="fa fa-info"></i> About</a></li>
-                    <!--li class="dropdown" dropdown>
-                        <a href class="dropdown-toggle" on-toggle dropdown-toggle>
-                            More... <b class="caret"></b>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/" app:nav:link>Home</a></li>
-                            <li><a href="/about" app:nav:link>About</a></li>
-                        </ul>
-                    </li-->
-                </ul>
-            </nav>
-            <nav class="pull-right">
-                <ul class="nav navbar-nav">
-                    <li><a ng:cloak app:refresh href=""><i class="glyphicon glyphicon-refresh"></i></a></li>
-                    <li><a ng:cloak app:debug href=""><i class="glyphicon glyphicon-wrench"></i></a></li>
-                    <li><a ng:cloak app:kiosk href=""><i class="glyphicon glyphicon-fullscreen"></i></a></li>
-                    <li><a ng:cloak app:close href=""><i class="glyphicon glyphicon-remove"></i></a></li>
-                </ul>
-            </nav>
+            <ul class="nav navbar-nav">
+                <li>
+                    <a href="/" class="navbar-brand" role="button">
+                        <i class="fa fa-cubes"></i> Prototyped
+                    </a>
+                </li>
+            </ul>
+            <span ui:view="menu">
+                <!-- Begin: Default menu toolbar -->
+                <ul class="nav navbar-nav" app:menu="appMenu.items"></ul>
+                <!-- End: Default menu toolbar -->
+            </span>
+            <ul class="nav navbar-nav pull-right">
+                <li><a ng:cloak app:refresh href=""><i class="glyphicon glyphicon-refresh"></i></a></li>
+                <li><a ng:cloak app:debug href=""><i class="glyphicon glyphicon-wrench"></i></a></li>
+                <li><a ng:cloak app:kiosk href=""><i class="glyphicon glyphicon-fullscreen"></i></a></li>
+                <li><a ng:cloak app:close href=""><i class="glyphicon glyphicon-remove"></i></a></li>
+            </ul>
         </div>
     </div>
     <div class="docked viewport">
-        <div class="sidebar slide" ng:cloak ui:view="left" ng-show="$state.current.views['left'] || $state.current.views['left@']"></div>
-        <div class="contents slide" ng:cloak ui:view="main">
+        <div class="sidebar" ng:cloak ui:view="left" ng:show="$state.current.views['left'] || $state.current.views['left@']"></div>
+        <div class="contents docked" ng:cloak ui:view="main">
             <em class="app-loading">Please wait...</em>
         </div>
     </div>

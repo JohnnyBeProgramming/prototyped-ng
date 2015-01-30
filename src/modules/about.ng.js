@@ -10,14 +10,12 @@ angular.module('myApp.about', [
         $stateProvider
           .state('about', {
               url: '/about',
-              views: {
-                  'left@': { templateUrl: 'views/about/left.html' },
-                  'main@': { templateUrl: 'views/about/info.html' },
-              }
+              abstract: true,              
           })
           .state('about.info', {
-              url: '',
+              url: '/info',
               views: {
+                  'menu@': { templateUrl: 'views/about/menu.html' },
                   'left@': { templateUrl: 'views/about/left.html' },
                   'main@': { templateUrl: 'views/about/info.html' },
               }
@@ -25,6 +23,7 @@ angular.module('myApp.about', [
           .state('about.contact', {
               url: '^/contact',
               views: {
+                  'menu@': { templateUrl: 'views/about/menu.html' },
                   'left@': { templateUrl: 'views/about/left.html' },
                   'main@': { templateUrl: 'views/about/contact.html' },
               }

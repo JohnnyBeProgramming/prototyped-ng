@@ -6,6 +6,7 @@
 /*
     Import customised styling resources
 */
+@import 'scrollbar.less';
 @import 'styles.less';
 
 html, body {
@@ -23,6 +24,7 @@ body {
     flex-shrink: 1;
     display: flex;
     height: 100%;
+    overflow: none;
 }
 
 .sidebar {
@@ -34,6 +36,7 @@ body {
     -webkit-box-shadow: inset 0px 0px 16px 1px rgba(0,0,0,0.15);
     -moz-box-shadow: inset 0px 0px 16px 1px rgba(0,0,0,0.15);
     box-shadow: inset 0px 0px 16px 1px rgba(0,0,0,0.15);
+    overflow: auto;
 
     .list-group {
         border-radius: 0;
@@ -46,7 +49,7 @@ body {
             text-shadow: 0 -1px 0 #e6e3e3;
 
             a, a:hover, a:focus {
-                color: #6b6b6b;                                
+                color: #6b6b6b;
                 text-decoration: none;
             }
 
@@ -71,13 +74,17 @@ body {
     flex-shrink: 1;
     margin: 3px;
     padding: 8px;
+    overflow: auto;
 }
 
 .viewport {
     padding: 0;
-    margin: 50px auto 16px;
-    height: 100%;
-    width: 100%;
+    margin: 0;
+    position: fixed;
+    top: 50px;
+    left: 0;
+    right: 0;
+    bottom: 16px;
 
     h2 {
         margin: 0;

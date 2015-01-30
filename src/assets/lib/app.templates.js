@@ -12,5 +12,5 @@ angular.module('views/status/default.jade', []).run(['$templateCache', function(
 
 angular.module('views/default.tpl.html', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('views/default.tpl.html',
-    '<h4>Home Page <small>Landing page for your web app</small></h4><div ng:cloak><div class="alert alert-info"><i class="glyphicon glyphicon-comment"></i> <b>ToDo:</b> <em>Replace this text with your implementation code</em></div></div>');
+    '<div class=container><h4>Home Page <small>Landing page for your web app</small></h4><div ng:cloak><div class="alert alert-info"><i class="glyphicon glyphicon-comment"></i> <b>ToDo:</b> <em>Replace this text with your implementation code</em></div></div></div>');
 }]);

@@ -1,0 +1,15 @@
+﻿<li ui:sref-active="open" ng-if="item.shown !== false" ng:repeat="item in list">
+    <a ng:if="item.value && (item.value | isNotArray)" app:nav-link ui:sref="{{item.value}}">
+        <i ng-if="item.icon" class="{{item.icon}}"></i> {{item.label}}
+    </a>
+    <a ng:if="item.value | isArray" class="dropdown-toggle" href="/" data-toggle="dropdown" role="button" aria-expanded="false">
+        <i class="{{item.icon}}"></i> {{item.label}} <span class="caret"></span>
+    </a>
+    <ul ng:if="item.value | isArray" class="dropdown-menu" role="menu">
+        <li ng-repeat="child in item.value" ng:class="{ 'divider': child.divider }">
+            <a app:nav-link ng:if="!child.divider && child.value && !child.value.hide && (child.value | isNotArray)" ui:sref="{{child.value}}">
+                <span ng-if="child.icon"><i class="{{child.icon}}"></i> &nbsp;</span> {{child.label}}
+            </a>
+        </li>
+    </ul>
+</li>
