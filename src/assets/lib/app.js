@@ -5,6 +5,7 @@ angular.module('myApp', [
   'ngRoute',
   'ui.router',
   'ui.utils',
+  'ui.bootstrap',
   'angularMoment',
   'myApp.version',
   'myApp.views',
@@ -70,6 +71,18 @@ angular.module('myApp', [
         },
     })
 
+    .constant('appStatus', {
+        logs: [],
+        show: {
+            all: true,
+            log: false,
+            info: true,
+            warn: true,
+            error: true,
+            debug: false,
+        },
+    })
+
     .value('appMenu', {
         options: {
             showRoot: true,
@@ -81,7 +94,7 @@ angular.module('myApp', [
                     value: 'home',
                 },
                 {
-                    shown: true,
+                    shown: false,
                     label: 'Explore',
                     icon: 'fa fa-share-alt',
                     value: [
@@ -135,46 +148,49 @@ angular.module('myApp', [
 
     }])
 
-    .directive('appClean', ['$rootScope', '$window', '$route', '$state', 'appNode', function ($rootScope, $window, $route, $state, appNode) {
+    .directive('appClean', ['$rootScope', '$window', '$route', '$state', 'appNode', 'appStatus', function ($rootScope, $window, $route, $state, appNode, appStatus) {
         return function (scope, elem, attrs) {
             var keyCtrl = false;
             var keyShift = false;
             var keyEvent = $(document).on('keyup keydown', function (e) {
-                // Capture key states
-                keyCtrl = e.ctrlKey;
-                keyShift = e.shiftKey;
-
-                // Show UI hints
-                $(elem).find('i').toggleClass('glow-orange', keyShift);
-                $(elem).find('i').toggleClass('glow-blue', !keyShift && keyCtrl);
+                // Update key states
+                var hasChanges = false;
+                if (keyCtrl != e.ctrlKey) {
+                    hasChanges = true;
+                    keyCtrl = e.ctrlKey;
+                }
+                if (keyShift != e.shiftKey) {
+                    hasChanges = true;
+                    keyShift = e.shiftKey;
+                }
+                if (hasChanges) {
+                    $(elem).find('i').toggleClass('glow-blue', !keyShift && keyCtrl);
+                    $(elem).find('i').toggleClass('glow-orange', keyShift);
+                }
             });
             $(elem).click(function (e) {
-
-                // Clear all previous status messages
-                angular.extend($rootScope.status, {
-                    info: [],
-                    warn: [],
-                    error: [],
-                });
-
                 if (keyShift) {
                     // Full page reload
                     if (appNode.active) {
-                        console.debug(' - Refresh Node Webkit...');
+                        console.debug(' - Reload Node Webkit...');
                         appNode.reload();
                     } else {
-                        console.debug(' - Reloading page...');
+                        console.debug(' - Reload page...');
                         $window.location.reload(true);
                     }
                 } else if (keyCtrl) {
                     // Fast route reload
-                    console.debug(' - Reloading route...');
+                    console.debug(' - Reload route...');
                     $route.reload();
                 } else {
                     // Fast state reload
-                    console.debug(' - Reloading state...');
+                    console.debug(' - Refresh state...');
                     $state.reload();
                 }
+
+                // Clear all previous status messages
+                appStatus.logs = [];
+                console.clear();
             });
             scope.$on('$destroy', function () {
                 $(elem).off('click');
@@ -264,7 +280,6 @@ angular.module('myApp', [
     .directive('appMenu', ['$timeout', function ($location, $timeout) {
         return {
             restrict: 'A',
-
             scope: {
                 list: '=appMenu'
             },
@@ -286,7 +301,16 @@ angular.module('myApp', [
     }])
     .filter('fromNow', function () {
         return function (dateString, format) {
-            return moment(dateString).fromNow(format);
+            try {
+                if (typeof moment !== 'undefined') {
+                    return moment(dateString).fromNow(format);
+                } else {
+                    return dateString;
+                }
+            } catch (ex) {
+                console.error(ex);
+                return 'error';
+            }
         };
     })
     .filter('isArray', function () {
@@ -298,36 +322,60 @@ angular.module('myApp', [
         return function (input) {
             return !angular.isArray(input);
         };
+    })    
+    .filter('typeCount', ['appStatus', function (appStatus) {
+        return function (input, type) {
+            var count = 0;
+            if (input.length > 0) {
+                input.forEach(function (itm) {
+                    if (!itm) return;
+                    if (!itm.type) return;
+                    if (itm.type == type) count++;
+                });
+            }
+            return count;
+        };
+    }])
+    .filter('listReverse', function () {
+        return function (input) {
+            var result = [];
+            var length = input.length;
+            if (length) {
+                for (var i = length - 1; i !== 0; i--) {
+                    result.push(input[i]);
+                }
+            }
+            return result;
+        };
     })
+    
 
-    .run(['$rootScope', '$state', 'appNode', 'appMenu', function ($rootScope, $state, appNode, appMenu) {
-        // Set root scope (global) vars
+    .run(['$rootScope', '$state', '$filter', 'appNode', 'appStatus', 'appMenu', function ($rootScope, $state, $filter, appNode, appStatus, appMenu) {
+
+        // Extend root scope with (global) vars
         angular.extend($rootScope, {
-            $state: $state,
+            state: $state,
             appNode: appNode,
             appMenu: appMenu,
-            status: {
-                info: [],
-                warn: [],
-                error: [],
-                getColor: function () {
-                    var css = '';
-                    var status = $rootScope.status;
-                    if (status.info.length > 0) {
-                        css = 'glow-blue';
-                    }
-                    if (appNode.active) {
-                        css = 'glow-green';
-                    }
-                    if (status.warn.length > 0) {
-                        css = 'glow-orange';
-                    }
-                    if (status.error.length > 0) {
-                        css = 'glow-red';
-                    }
-                    return css;
-                },
-            },
+            status: appStatus,
             startAt: Date.now(),
         });
+
+        // Hook extended function(s)
+        appStatus.getColor = function () {
+            var logs = appStatus.logs;
+            if ($filter('typeCount')(logs, 'error')) {
+                return 'glow-red';
+            }
+            if ($filter('typeCount')(logs, 'warn')) {
+                return 'glow-orange';
+            }
+            if ($filter('typeCount')(logs, 'info')) {
+                return 'glow-blue';
+            }            
+            if (appNode.active > 0) {
+                return 'glow-green';
+            }
+            return '';
+        }
     }]);

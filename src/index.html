@@ -59,7 +59,7 @@
                 <!-- End: Default menu toolbar -->
             </span>
             <ul class="nav navbar-nav pull-right">
-                <li><a ng:cloak app:clean href=""><i class="glyphicon glyphicon-refresh"></i></a></li>
+                <li><a ng:cloak app:clean href="" tooltip="Refresh" tooltip-placement="bottom"><i class="glyphicon glyphicon-refresh"></i></a></li>
                 <li><a ng:cloak app:debug href=""><i class="glyphicon glyphicon-wrench"></i></a></li>
                 <li><a ng:cloak app:kiosk href=""><i class="glyphicon glyphicon-fullscreen"></i></a></li>
                 <li><a ng:cloak app:close href=""><i class="glyphicon glyphicon-remove"></i></a></li>
@@ -67,19 +67,29 @@
         </div>
     </div>
     <div class="docked viewport">
-        <div class="sidebar" ng:cloak ui:view="left" ng:show="$state.current.views['left'] || $state.current.views['left@']"></div>
+        <div class="sidebar" ng:cloak ui:view="left" ng:show="state.current.views['left'] || state.current.views['left@']"></div>
         <div class="contents docked" ng:cloak ui:view="main">
             <em class="app-loading">Please wait...</em>
         </div>
     </div>
     <div class="footer">
+        <span class="pull-left">
+            <label ng:show="status.logs | typeCount:'error'">
+                <i class="glyphicon glyphicon-exclamation-sign glow-red"></i>
+                <a ng:cloak href="">Errors ({{ status.logs | typeCount:'error' }})</a>
+            </label>
+            <label ng:show="status.logs | typeCount:'warn'" ng:cloak>
+                <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
+                <a ng:cloak href="">Warnings ({{ status.logs | typeCount:'warn' }})</a>
+            </label>
+        </span>
         <span ng:if="true">
-            Client Version: <span app:version><em>Loading...</em></span> | 
-        </span> 
+            Client Version: <span app:version><em>Loading...</em></span> |
+        </span>
         <span ui:view="foot">
             Powered by <a href="https://angularjs.org/">AngularJS</a> &amp; <a href="https://github.com/rogerwang/node-webkit">Node Webkit</a>
         </span>
-        <span ng:if="startAt" ng:cloak>| Started {{ startAt | fromNow }}</span>
+        <span ng:if="startAt" ng:cloak>| Started {{ startAt | date: 'HH:mm:ss' | fromNow }}</span>
     </div>
 
     <!-- Load AngularJS and all the required libraries -->
@@ -88,6 +98,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-route.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-utils/0.1.1/angular-ui-utils.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.13/angular-ui-router.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.0/ui-bootstrap-tpls.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.min.js"></script>
     <script>
