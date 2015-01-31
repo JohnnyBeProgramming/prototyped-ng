@@ -8,6 +8,22 @@
      - @import 'https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.2/yeti/bootstrap.css';
      - @import 'http://ironsummitmedia.github.io/startbootstrap-sb-admin-2/dist/css/sb-admin-2.css';
 */
+body .glow-green {
+  color: #00b500;
+  text-shadow: 0 0 2px #00b500;
+}
+body .glow-red {
+  color: #D00;
+  text-shadow: 0 0 2px #D00;
+}
+body .glow-orange {
+  color: #ff8d00;
+  text-shadow: 0 0 2px #ff8d00;
+}
+body .glow-blue {
+  color: #0094ff;
+  text-shadow: 0 0 2px #0094ff;
+}
 body .results {
   min-width: 480px;
   display: flex;
@@ -29,18 +45,6 @@ body .results .icon .sub-icon {
   right: 0;
   top: 0;
   margin-top: 100px;
-}
-body .results .icon .sub-icon.success {
-  color: #080;
-}
-body .results .icon .sub-icon.error {
-  color: #D00;
-}
-body .results .icon .sub-icon.warning {
-  color: #0094ff;
-}
-body .results .icon .sub-icon.busy {
-  color: #0094ff;
 }
 body .results .info {
   margin: 0 16px;

@@ -49,7 +49,7 @@
             <ul class="nav navbar-nav">
                 <li>
                     <a href="/" class="navbar-brand" role="button">
-                        <i class="fa fa-cubes"></i> Prototyped
+                        <i class="fa fa-cubes" ng:class="status.getColor()"></i> <span>Prototyped</span>
                     </a>
                 </li>
             </ul>
@@ -59,7 +59,7 @@
                 <!-- End: Default menu toolbar -->
             </span>
             <ul class="nav navbar-nav pull-right">
-                <li><a ng:cloak app:refresh href=""><i class="glyphicon glyphicon-refresh"></i></a></li>
+                <li><a ng:cloak app:clean href=""><i class="glyphicon glyphicon-refresh"></i></a></li>
                 <li><a ng:cloak app:debug href=""><i class="glyphicon glyphicon-wrench"></i></a></li>
                 <li><a ng:cloak app:kiosk href=""><i class="glyphicon glyphicon-fullscreen"></i></a></li>
                 <li><a ng:cloak app:close href=""><i class="glyphicon glyphicon-remove"></i></a></li>
@@ -73,7 +73,13 @@
         </div>
     </div>
     <div class="footer">
-        Client Version: <span app:version><em>Loading...</em></span> | Powered by <a href="https://angularjs.org/">AngularJS</a> &amp; <a href="https://github.com/rogerwang/node-webkit">Node Webkit</a>
+        <span ng:if="true">
+            Client Version: <span app:version><em>Loading...</em></span> | 
+        </span> 
+        <span ui:view="foot">
+            Powered by <a href="https://angularjs.org/">AngularJS</a> &amp; <a href="https://github.com/rogerwang/node-webkit">Node Webkit</a>
+        </span>
+        <span ng:if="startAt" ng:cloak>| Started {{ startAt | fromNow }}</span>
     </div>
 
     <!-- Load AngularJS and all the required libraries -->
@@ -82,6 +88,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-route.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-utils/0.1.1/angular-ui-utils.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.13/angular-ui-router.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.min.js"></script>
     <script>
         /*!
          * $script.js v1.3

@@ -5,6 +5,7 @@ angular.module('myApp', [
   'ngRoute',
   'ui.router',
   'ui.utils',
+  'angularMoment',
   'myApp.version',
   'myApp.views',
   'myApp.default',
@@ -80,26 +81,14 @@ angular.module('myApp', [
                     value: 'home',
                 },
                 {
-                    label: 'Views',
+                    shown: true,
+                    label: 'Explore',
                     icon: 'fa fa-share-alt',
-                    shown: false,
                     value: [
-                        {
-                            label: 'Home',
-                            icon: 'fa fa-phone',
-                            value: 'home',
-                        },
-                        {
-                            label: 'About',
-                            icon: 'fa fa-backward',
-                            value: 'about.info',
-                        },
+                        { label: 'Sample A', icon: 'fa fa-phone', value: 'home', },
+                        { label: 'Sample B', icon: 'fa fa-backward', value: 'about.info', },
                         { divider: true },
-                        {
-                            label: 'Exit',
-                            icon: 'fa fa-exit',
-                            value: 'about',
-                        },
+                        { label: 'Exit', icon: 'fa fa-shutdown', value: 'about', },
                     ],
                 },
                 {
@@ -146,15 +135,50 @@ angular.module('myApp', [
 
     }])
 
-    .directive('appRefresh', ['$window', '$route', 'appNode', function ($window, $route, appNode) {
+    .directive('appClean', ['$rootScope', '$window', '$route', '$state', 'appNode', function ($rootScope, $window, $route, $state, appNode) {
         return function (scope, elem, attrs) {
-            $(elem).click(function () {
-                if (appNode.active) {
-                    appNode.reload();
+            var keyCtrl = false;
+            var keyShift = false;
+            var keyEvent = $(document).on('keyup keydown', function (e) {
+                // Capture key states
+                keyCtrl = e.ctrlKey;
+                keyShift = e.shiftKey;
+
+                // Show UI hints
+                $(elem).find('i').toggleClass('glow-orange', keyShift);
+                $(elem).find('i').toggleClass('glow-blue', !keyShift && keyCtrl);
+            });
+            $(elem).click(function (e) {
+
+                // Clear all previous status messages
+                angular.extend($rootScope.status, {
+                    info: [],
+                    warn: [],
+                    error: [],
+                });
+
+                if (keyShift) {
+                    // Full page reload
+                    if (appNode.active) {
+                        console.debug(' - Refresh Node Webkit...');
+                        appNode.reload();
+                    } else {
+                        console.debug(' - Reloading page...');
+                        $window.location.reload(true);
+                    }
+                } else if (keyCtrl) {
+                    // Fast route reload
+                    console.debug(' - Reloading route...');
+                    $route.reload();
                 } else {
-                    //$route.reload(true);
-                    $window.location.reload();
+                    // Fast state reload
+                    console.debug(' - Reloading state...');
+                    $state.reload();
                 }
+            });
+            scope.$on('$destroy', function () {
+                $(elem).off('click');
+                keyEvent.off('keyup keydown');
             });
         };
     }])
@@ -260,7 +284,11 @@ angular.module('myApp', [
             return String(text).replace(/\%VERSION\%/mg, appNode.version);
         };
     }])
-
+    .filter('fromNow', function () {
+        return function (dateString, format) {
+            return moment(dateString).fromNow(format);
+        };
+    })
     .filter('isArray', function () {
         return function (input) {
             return angular.isArray(input);
@@ -272,16 +300,34 @@ angular.module('myApp', [
         };
     })
 
-    .run(['$rootScope', '$state', 'appMenu', function ($rootScope, $state, appMenu) {
-        // Attach the state to the root scope
-        $rootScope.$state = $state;
-
-        // Define the main toolbar menu
-        $rootScope.appMenu = appMenu;
-
-        $rootScope.not = function (func) {
-            return function (item) {
-                return !func(item);
-            }
-        };
+    .run(['$rootScope', '$state', 'appNode', 'appMenu', function ($rootScope, $state, appNode, appMenu) {
+        // Set root scope (global) vars
+        angular.extend($rootScope, {
+            $state: $state,
+            appNode: appNode,
+            appMenu: appMenu,
+            status: {
+                info: [],
+                warn: [],
+                error: [],
+                getColor: function () {
+                    var css = '';
+                    var status = $rootScope.status;
+                    if (status.info.length > 0) {
+                        css = 'glow-blue';
+                    }
+                    if (appNode.active) {
+                        css = 'glow-green';
+                    }
+                    if (status.warn.length > 0) {
+                        css = 'glow-orange';
+                    }
+                    if (status.error.length > 0) {
+                        css = 'glow-red';
+                    }
+                    return css;
+                },
+            },
+            startAt: Date.now(),
+        });
     }]);
