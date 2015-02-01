@@ -1,19 +1,252 @@
 ﻿<div class="container">
-    <h4>
-        About
-        <small> Application</small>
-    </h4>
-    <hr />
-    <p>
-        <i class="fa fa-gear"></i> Build Version: <b app:version>loading...</b>
-    </p>
-    <p>
-        <i class="fa fa-book"></i> Inspired by these technologies:
-        <ul style="margin: 6px; list-style-type:square;">
-            <li><b>AngularJS</b> - <a target="_blank" href="https://angularjs.org/">https://angularjs.org/</a></li>
-            <li><b>Node Webkit</b> - <a target="_blank" href="https://github.com/nwjs/nw.js">https://github.com/nwjs/nw.js</a></li>
-        </ul>
-        <br class="clearfix" />
-    </p>
-    <hr />
+    <div class="row">
+        <div class="col-md-8 info-overview">
+            <h4>
+                About
+                <small> your current status and application architecture</small>
+            </h4>
+            <hr />
+            <div class="row">
+                <div class="col-md-3 panel-left">
+                    <p>
+                        <i class="fa fa-gear"></i>
+                        Client: v<b app:version>loading...</b>
+                    </p>
+                </div>
+                <div class="col-md-6 panel-mid">
+                    Current Application Status: <b class="text-danger">Offline</b>
+                </div>
+                <div class="col-md-3 panel-right">
+                    <p>
+                        <i class="fa fa-gear"></i> Server: <b app:version="server">requesting...</b>
+                    </p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 panel-left">
+                    <p>
+                        XXX
+                    </p>
+                </div>
+                <div class="col-md-6 panel-mid">
+                    ...
+                </div>
+                <div class="col-md-3 panel-right">
+                    <p>
+                        YYYY
+                    </p>
+                </div>
+            </div>
+            <hr />
+            <div>
+                <img src="http://yomotsu.net/works/2010-09-23_cssnite-shizuoka-1/demos/svg/embed/ie6logo.svg" width="24" height="24" />
+                <img src="http://upload.wikimedia.org/wikipedia/en/e/e3/Firefox-logo.svg" width="24" height="24" />
+                <img src="http://images3.wikia.nocookie.net/__cb20120330024139/logopedia/images/d/d7/Google_Chrome_logo_2011.svg" width="24" height="24" />
+                <img src="http://upload.wikimedia.org/wikipedia/commons/d/d0/Opera_O.svg" width="24" height="24" />
+                <img src="http://upload.wikimedia.org/wikipedia/commons/e/ee/Compass_icon_matte.svg" width="24" height="24" />
+                <img src="http://upload.wikimedia.org/wikipedia/en/b/b8/MSUSpartans_Logo.svg" width="24" height="24" />
+                <img src="http://upload.wikimedia.org/wikipedia/commons/5/5f/Chromium_11_Logo.svg" width="24" height="24" />
+            </div>
+            <div>
+                <img src="http://upload.wikimedia.org/wikipedia/en/1/14/Windows_logo_-_2006.svg" width="32" height="32" />
+                <img src="http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg" width="32" height="32" />
+                <img src="http://png-5.findicons.com/files/icons/986/aeon/128/mac_logo.png" width="32" height="32" />
+                <img src="http://www.logoeps.com/wp-content/uploads/2011/05/apple-3d-vector-logo-200x200.png" width="32" height="32" />
+            </div>
+        </div>
+        <div class="col-md-4" ng:init="info.showUnavailable = false">
+            <h4>
+                Inspirations
+                <small> come from great technologies</small>
+            </h4>
+            <hr />
+            <div class="app-info-aside"
+                 ng:class="{ 'info-disabled': !info.versions.ng }"
+                 ng:hide="!info.showUnavailable && !info.versions.ng">
+                <a class="app-info-icon" target="_blank" href="https://angularjs.org/">
+                    <div ng:if="true" class="clip-img" style="background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/15309/angular-logo.svg')"></div>
+                </a>
+                <div class="app-info-info">
+                    <h5>
+                        Angular JS <small>
+                            <span ng:if="info.versions.ng">@ v{{info.versions.ng}}</span>
+                            <span ng:if="!info.versions.ng"><em>not found</em></span>
+                        </small>
+                    </h5>
+                    <p ng:if="info.detects.ngUiUtils" class="text-success">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Utils found.
+                    </p>
+                    <p ng:if="info.detects.ngUiRouter" class="text-success">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Router found.
+                    </p>
+                    <p ng:if="info.detects.ngUiBootstrap" class="text-success">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Bootrap found.
+                    </p>
+                    <p ng:if="info.detects.ngAnimate" class="text-success">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> Angular Animations active.
+                    </p>
+                </div>
+            </div>
+            <div class="app-info-aside"
+                 ng:class="{ 'info-disabled': !info.versions.nw }"
+                 ng:hide="!info.showUnavailable && !info.versions.nw">
+                <a class="app-info-icon" target="_blank" href="http://nwjs.io/">
+                    <div ng:if="true" class="clip-img" style="background-image: url('http://nwjs.io/images/nw.png')"></div>
+                </a>
+                <div class="app-info-info">
+                    <h5>
+                        Node Webkit <small>
+                            <span ng:if="info.versions.nw">@ v{{info.versions.nw}}</span>
+                            <span ng:if="!info.versions.nw"><em>not available</em></span>
+                        </small>
+                    </h5>
+                    <p ng:if="!info.versions.nw">
+                        <i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target="_blank" href="http://nwjs.io/">nwjs.io</a> for more info.
+                    </p>
+                    <p ng:if="info.versions.nw">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> You are connected to node webkit.
+                    </p>
+                    <p ng:if="info.versions.chromium">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> You are running Chromium @ {{ info.versions.chromium }}.
+                    </p>
+                </div>
+            </div>
+            <div class="app-info-aside"
+                 ng:class="{ 'info-disabled': !info.versions.njs }"
+                 ng:hide="!info.showUnavailable && !info.versions.njs">
+                <a class="app-info-icon" target="_blank" href="http://www.nodejs.org">
+                    <div ng:if="true" class="clip-img" style="background-image: url('https://cdn.rawgit.com/ferventcoder/chocolatey-packages/master/icons/nodejs.png')"></div>
+                </a>
+                <div class="app-info-info">
+                    <h5>
+                        Node JS <small>
+                            <span ng:if="info.versions.njs">@ v{{info.versions.njs}}</span>
+                            <span ng:if="!info.versions.njs"><em>not available</em></span>
+                        </small>
+                    </h5>
+                    <p ng:if="!info.versions.njs">
+                        <i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target="_blank" href="http://www.nodejs.org">NodeJS.org</a> for more info.
+                    </p>
+                    <p ng:if="info.versions.njs">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> You are inside a node js runtime.
+                    </p>
+                    <p ng:if="info.versions.v8">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> You are running V8 @ {{ info.versions.v8 }}.
+                    </p>
+                    <p ng:if="info.versions.openssl">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> You are running OpenSSL @ {{ info.versions.openssl }}.
+                    </p>
+                </div>
+            </div>
+            <div class="appp-aside-collapser">
+                <a href="" ng:show="!info.showUnavailable" ng-click="info.showUnavailable = !info.showUnavailable">
+                    Show More
+                </a>
+                <a href="" ng:show="info.showUnavailable" ng-click="info.showUnavailable = !info.showUnavailable">
+                    Hide Inactive
+                </a>
+            </div>
+            <hr />
+            <div class="app-info-aside" ng-class="{ 'info-disabled': !info.versions.html }">
+                <div class="app-info-icon">
+                    <div ng:if="!info.versions.ie.active" class="clip-img" style="background-image: url('http://john-dugan.com/wp-content/themes/v2b/img/build/html5-logo.svg')"></div>
+                    <div ng:if="info.versions.ie.active" class="clip-img" style="background-image: url('http://html5readiness.com/assets/HTML5_Logo.svg')"></div>
+                </div>
+                <div>{{info.versions.ie}}</div>
+                <div class="app-info-info">
+                    <h5>
+                        HTML Rendering Mode <small>
+                            <span ng-if="info.versions.html">@ v{{ info.versions.html }}</span>
+                            <span ng-if="!info.versions.html"><em>unknown</em></span>
+                        </small>
+                    </h5>
+                    <p ng:if="info.versions.html >= '5.0'" class="text-success">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> You are running a modern browser.
+                    </p>
+                    <p ng:if="info.versions.html < '5.0'" class="text-warning">
+                        <i class="glyphicon glyphicon-warning-sign glow-orange"></i> Your browser is out of date. Try upgrading.
+                    </p>
+                </div>
+            </div>
+            <div class="app-info-aside" ng-class="{ 'info-disabled': !info.versions.js }">
+                <div class="app-info-icon">
+                    <div ng:if="!info.versions.v8" class="clip-img" style="background-image: url('http://www.blueberrysoftech.com/technology/images/image-js5.png')"></div>
+                    <div ng:if="info.versions.v8" class="clip-img" style="background-image: url('http://john-dugan.com/wp-content/themes/v2b/img/build/js-logo.svg')"></div>
+                </div>
+                <div class="app-info-info">
+                    <h5>
+                        Javascript Engine<small>
+                            <span ng:if="info.versions.js">@ v{{ info.versions.js  }}</span>
+                            <span ng:if="!info.versions.js"><em>not found</em></span>
+                        </small>
+                    </h5>
+                    <p ng:if="info.versions.js >= '5.0'" class="text-success">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> You have a modern javascript engine.
+                    </p>
+                    <p ng:if="info.versions.js < '5.0'" class="text-warning">
+                        <i class="glyphicon glyphicon-warning-sign glow-orange"></i> Javascript is out of date.
+                    </p>
+                    <p ng:if="info.versions.v8" class="text-success">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> Javascript V8 engine, build v{{info.versions.v8}}.
+                    </p>
+                    <p ng:if="info.detects.bootstrap" class="text-success">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> Bootstrap and/or UI Componets found.
+                    </p>
+                </div>
+            </div>
+            <div class="app-info-aside" ng-class="{ 'info-disabled': info.versions.css <= '3.0' }">
+                <div class="app-info-icon">
+                    <div ng:if="true" class="clip-img" style="background-image: url('http://john-dugan.com/wp-content/themes/v2b/img/build/css3-logo.svg')"></div>
+                </div>
+                <div class="app-info-info">
+                    <h5>
+                        Cascading Style Sheets <small>
+                            <span ng:if="info.versions.css >= '3.0'">@ v{{ info.versions.css }}</span>
+                            <span ng:if="info.versions.css < '3.0'"><b class="text-danger">pre v3.0</b></span>
+                        </small>
+                    </h5>
+                    <p ng:if="info.versions.css >= '3.0'">
+                        <i class="glyphicon glyphicon-ok glow-green"></i>
+                        <span>You have an up-to-date style engine.</span>
+                    </p>
+                    <p ng:if="info.versions.css < '3.0'">
+                        <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
+                        <span>CSS out of date. Styling might be broken.</span>
+                    </p>
+                    <p ng:if="info.cssExist.boostrap2">
+                        <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
+                        <span>Bootstrap 2 is depricated. Upgrade to 3.x.</span>
+                    </p>
+                    <p ng:if="info.cssExist.boostrap3">
+                        <i class="glyphicon glyphicon-ok glow-green"></i>
+                        <span>Bootstrap and/or UI componets found.</span>
+                    </p>
+                    <p ng:if="info.detects.less">
+                        <i class="glyphicon glyphicon-ok glow-green"></i>
+                        <span>Support for LESS has been detected.</span>
+                    </p>
+                </div>
+            </div>
+            <div class="app-info-aside" ng-class="{ 'info-disabled': !info.versions.jqry }">
+                <div class="app-info-icon">
+                    <div ng:if="true" class="clip-img" style="background-image: url('http://martin-calvert.com/assets/img/jquery.gif')"></div>
+                </div>
+                <div class="app-info-info">
+                    <h5>
+                        jQuery <small>
+                            <span ng:if="info.versions.jqry">@ v{{ info.versions.jqry }}</span>
+                            <span ng:if="!info.versions.jqry"><em>not found</em></span>
+                        </small>
+                    </h5>
+                    <p ng:if="info.versions.jqry" class="text-success">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> jQuery or jqLite is loaded.
+                    </p>
+                    <p ng:if="info.versions.jqry < '1.10'" class="text-danger">
+                        <i class="glyphicon glyphicon-warning-sign glow-orange"></i> jQuery is out of date!
+                    </p>
+                </div>
+            </div>
+            <hr />
+        </div>
+    </div>
 </div>

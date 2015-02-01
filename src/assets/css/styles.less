@@ -9,6 +9,33 @@
      - @import 'http://ironsummitmedia.github.io/startbootstrap-sb-admin-2/dist/css/sb-admin-2.css';
 */
 
+#myLoader {
+    padding: 6px;
+    left: 0;
+    right: 0;
+    bottom: 16px;
+    position: fixed;
+    background-color: rgba(220, 220, 220, 0.85);
+    border-top: solid 1px silver;
+    border-bottom: solid 1px silver;
+    z-index: 1400;
+
+    .progress {
+        height: 8px;
+        margin: 0;
+        padding: 0;
+    }
+
+    .progress-bar {
+        margin: 0;
+        padding: 0;
+        transition: width 1s ease-in-out;
+    }
+}
+
+#myApp {
+}
+
 body {
     .glow-green {
         color: #00b500;
@@ -33,52 +60,47 @@ body {
     .results {
         min-width: 480px;
         display: flex;
-    }
 
-    .results .icon {
-        margin: 0 8px;
-        font-size: 128px;
-        width: 128px !important;
-        height: 128px !important;
-        position: relative;
-        flex-grow: 0;
-        flex-shrink: 0;
-    }
+        .icon {
+            margin: 0 8px;
+            font-size: 128px;
+            width: 128px !important;
+            height: 128px !important;
+            position: relative;
+            flex-grow: 0;
+            flex-shrink: 0;
 
-    .results .icon .sub-icon {
-        font-size: 64px !important;
-        width: 64px !important;
-        height: 64px !important;
-        position: absolute;
-        right: 0;
-        top: 0;
-        margin-top: 100px;
-    }
+            .sub-icon {
+                font-size: 64px !important;
+                width: 64px !important;
+                height: 64px !important;
+                position: absolute;
+                right: 0;
+                top: 0;
+                margin-top: 100px;
+            }
+        }
 
-    .results .info {
-        margin: 0 16px;
-        min-height: 128px;
-        min-width: 300px;
-        display: inline-block;
-        flex-grow: 1;
-        flex-shrink: 1;
-    }
+        .info {
+            margin: 0 16px;
+            min-height: 128px;
+            min-width: 300px;
+            display: inline-block;
+            flex-grow: 1;
+            flex-shrink: 1;
 
-    .results .info h4 {
-        text-wrap: avoid;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-    }
 
-    .results .info h4 a {
-        color: black;
-    }
+            h4 {
+                text-wrap: avoid;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
 
-    .results .info .ctrl-sm {
-        font-size: larger;
-        margin-left: 8px;
-        color: black;
+                a {
+                    color: black;
+                }
+            }
+        }
     }
 
     .info-row {
@@ -87,15 +109,15 @@ body {
 
     .info-row-links {
         color: silver;
-    }
 
-    .info-row-links a {
-        color: #4a4a4a;
-        margin-left: 8px;
-    }
+        a {
+            color: #4a4a4a;
+            margin-left: 8px;
+        }
 
-    .info-row-links a:hover {
-        color: #000000;
+        a:hover {
+            color: #000000;
+        }
     }
 
     .info-col-primary {
@@ -108,13 +130,96 @@ body {
         flex-shrink: 0;
     }
 
+    .info-overview {
+        vertical-align: top;
+
+        .panel-left {
+        }
+
+        .panel-mid {
+            text-align: center;
+        }
+
+        .panel-right {
+        }
+    }
+
+    .app-info-aside {
+        display: flex;
+        margin-bottom: 12px;
+
+        .app-info-icon {
+            flex-grow: 0;
+            flex-shrink: 0;
+            flex-basis: 64px;
+            vertical-align: top;
+
+            .clip-img {
+                width: 48px;
+                height: 48px;
+                padding: 0;
+                margin: 3px auto;
+                text-align: center;
+                background-repeat: no-repeat;
+                background-size: auto 48px;
+                background-position: top center;
+            }
+        }
+
+        .app-info-info {
+            flex-grow: 1;
+            flex-shrink: 1;
+            text-align: left;
+            vertical-align: top;
+
+            h5 {
+                margin: 0;
+                padding: 3px;
+                border-bottom: solid 1px #f2f2f2;
+                font-weight: bolder;
+            }
+
+            p {
+                margin: 0;
+                padding: 3px;
+                color: #6d6d6d;
+            }
+        }
+
+        &.info-disabled {
+
+            .app-info-icon {
+                opacity: 0.75;
+                -webkit-filter: grayscale(100%) opacity(0.5);
+                -moz-filter: grayscale(100%) opacity(0.5);
+                -o-filter: grayscale(100%) opacity(0.5);
+                filter: grayscale(100%) opacity(0.5);
+            }
+        }
+    }
+
+    .appp-aside-collapser {
+        a {
+            padding: 0;
+            margin: 0;
+            color: silver;
+            display: block;
+            text-align: center;
+            text-decoration: none;
+
+            &:hover {
+                color: #808080;
+            }
+        }
+    }
+
     .iframe-body {
         margin: 0;
         padding: 0;
-    }
 
-    .iframe-body iframe {
-        margin: 0;
-        padding: 0;
+        iframe {
+            margin: 0;
+            padding: 0;
+        }
     }
 }

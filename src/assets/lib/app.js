@@ -3,16 +3,18 @@
 // Declare app level module which depends on views, and components
 angular.module('myApp', [
   'ngRoute',
+  'ngAnimate',
   'ui.router',
   'ui.utils',
   'ui.bootstrap',
+  //'angular-loading-bar',
   'angularMoment',
-  'myApp.version',
   'myApp.views',
   'myApp.default',
   'myApp.about',
 ])
 
+    .value('version', '1.0.0.0')
     .constant('appNode', {
         html5: true,
         active: typeof require !== 'undefined',
@@ -168,6 +170,8 @@ angular.module('myApp', [
                     $(elem).find('i').toggleClass('glow-orange', keyShift);
                 }
             });
+            $(elem).attr('tooltip', 'Refresh');
+            $(elem).attr('tooltip-placement', 'bottom');
             $(elem).click(function (e) {
                 if (keyShift) {
                     // Full page reload
@@ -288,9 +292,40 @@ angular.module('myApp', [
         };
     }])
 
-    .directive('appVersion', ['appNode', function (appNode) {
+    .directive('appVersion', ['version', 'appNode', function (version, appNode) {
+
+        function getVersionInfo(ident) {
+            try {
+                if (typeof process !== 'undefined' && process.versions) {
+                    return process.versions[ident];
+                }
+            } catch (ex) { }
+            return null;
+        }
+
         return function (scope, elm, attrs) {
-            elm.text(appNode.version);
+            var targ = attrs['appVersion'];
+            var val = 'not available';
+            if (!targ) {
+                val = version;
+            }
+            switch (targ) {
+                case 'angular':
+                    val = angular.version.full;
+                    break;
+                case 'nodeweb-kit':
+                    val = getVersionInfo('node-webkit');
+                    break;
+                case 'node':
+                    val = getVersionInfo('node');
+                    break;
+                default:
+                    val = getVersionInfo(targ) || val;
+                    // Not found....
+                    break;
+
+            }
+            $(elm).text(val);
         };
     }])
 
@@ -299,20 +334,20 @@ angular.module('myApp', [
             return String(text).replace(/\%VERSION\%/mg, appNode.version);
         };
     }])
-    .filter('fromNow', function () {
+    .filter('fromNow', ['$filter', function ($filter) {
         return function (dateString, format) {
             try {
                 if (typeof moment !== 'undefined') {
                     return moment(dateString).fromNow(format);
                 } else {
-                    return dateString;
+                    return ' at ' + $filter('date')(dateString, 'HH:mm:ss');
                 }
             } catch (ex) {
                 console.error(ex);
                 return 'error';
             }
         };
-    })
+    }])
     .filter('isArray', function () {
         return function (input) {
             return angular.isArray(input);
@@ -322,7 +357,7 @@ angular.module('myApp', [
         return function (input) {
             return !angular.isArray(input);
         };
-    })    
+    })
     .filter('typeCount', ['appStatus', function (appStatus) {
         return function (input, type) {
             var count = 0;
@@ -348,7 +383,7 @@ angular.module('myApp', [
             return result;
         };
     })
-    
+
 
     .run(['$rootScope', '$state', '$filter', 'appNode', 'appStatus', 'appMenu', function ($rootScope, $state, $filter, appNode, appStatus, appMenu) {
 
@@ -372,7 +407,7 @@ angular.module('myApp', [
             }
             if ($filter('typeCount')(logs, 'info')) {
                 return 'glow-blue';
-            }            
+            }
             if (appNode.active > 0) {
                 return 'glow-green';
             }
