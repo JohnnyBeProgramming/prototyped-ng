@@ -1,8 +1,7 @@
 ﻿<!DOCTYPE html>
-<!--[if lt IE 7]>      <html lang="en" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html lang="en" class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html lang="en" class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!-->
+<!--[if lt IE 10]>  <html lang="en" class="no-js lt-ie-edge lt-ie-10"> <![endif]-->
+<!--[if IE 10]>     <html lang="en" class="no-js lt-ie-edge"> <![endif]-->
+<!--[if gt IE 10]><!-->
 <html lang="en" class="no-js">
 <!--<![endif]-->
 <head>
@@ -13,17 +12,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <style type="text/css">
+        /* Define cloak style (hides un-parsed content) */
         .ng-cloak, [ng-cloak], ng-cloak, [xng\3A cloak] {
             display: none;
         }
+
+        /* Lets define some basic styling for our IE friends */
+        body.lt-ie-10 {
+            margin: 0;
+            padding: 16px;
+            font-size: 14px;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            background-color: white;
+        }
+
+        .lt-ie-10 .footer, .lt-ie-10 #myLoader {
+            display: none;
+        }
+
+        .lt-ie-10 #preLoader.app-error {
+            color: #ff0000;
+            padding-left: 16px;
+            margin: 0;
+        }
+
+        .browsehappy {
+            margin: 0;
+            padding: 16px;
+            color: #808080;
+            border: solid 1px silver;
+            background-color: rgb(240, 240, 240);
+        }
+
+        /* Just to be safe, define basic styling (helps when css is still loading) */
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #myApp .navbar-fixed-top ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+            #myApp .navbar-fixed-top ul li {
+                padding: 0;
+                list-style: none;
+            }
+
+        .sidebar ul {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            list-style: none;
+            display: inline-block;
+        }
     </style>
     <link href="assets/favicon.png" rel="shortcut icon">
-    <link href="assets/css/app.min.css" rel="stylesheet" />
+    <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" />
+
     <!-- build:js ../app/assets/lib/app.cdn.min.js -->
     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.2.min.js"></script>
     <script src="https://ajax.aspnetcdn.com/ajax/modernizr/modernizr-2.6.2.js"></script>
     <!-- endbuild -->
+    <!--[if gt IE 10]><!-->
     <script>
+
+        // Define configuration
         var appConfig = {
             wait: true,
             done: false,
@@ -51,34 +107,41 @@
                 countLibs: function () { return !appConfig.done ? 0 : appConfig.libs.length },
             },
             loaderInit: function () {
-                // Define required vendor libraries...
-                appConfig.pass = null;
-                appConfig.wait = true;
-                appConfig.vend = (appConfig.vend || []).concat([
-                    'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js',
-                    'https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.min.js',
-                ]);
+                try {
 
-                // Bootstrap the angular loading app (pre-loading)
-                angular.module('myLoader', ['angular-loading-bar', 'ngAnimate'])
-                    .config(['cfpLoadingBarProvider', function (loader) {
-                        loader.includeSpinner = false;
-                        loader.includeBar = true;
-                    }])
-                    .run(['$rootScope', function ($rootScope) {
+                    // Define required vendor libraries...
+                    appConfig.pass = null;
+                    appConfig.wait = true;
+                    appConfig.vend = (appConfig.vend || []).concat([
+                        'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js',
+                        'https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.min.js',
+                    ]);
 
-                        // Add the loader config to the root scope
-                        $rootScope.cfg = appConfig;
-                        console.debug(' - Application Loader started.');
+                    // Bootstrap the angular loading app (pre-loading)
+                    angular.module('myLoader', ['angular-loading-bar', 'ngAnimate'])
+                        .config(['cfpLoadingBarProvider', function (loader) {
+                            loader.includeSpinner = false;
+                            loader.includeBar = true;
+                        }])
+                        .run(['$rootScope', function ($rootScope) {
 
-                        // Set a timer to check forupdates
-                        appConfig.progress.timerIntvl = setInterval(function () {
-                            $rootScope.$apply(function () {
-                                appConfig.loaderChecker();
-                            });
-                        }, appConfig.progress.timerDelay);
-                    }]);
-                angular.bootstrap($('#myLoader'), ['myLoader']);
+                            // Add the loader config to the root scope
+                            $rootScope.cfg = appConfig;
+                            console.debug(' - Application Loader started.');
+
+                            // Set a timer to check forupdates
+                            appConfig.progress.timerIntvl = setInterval(function () {
+                                $rootScope.$apply(function () {
+                                    appConfig.loaderChecker();
+                                });
+                            }, appConfig.progress.timerDelay);
+                        }]);
+                    angular.bootstrap($('#myLoader'), ['myLoader']);
+
+                } catch (ex) {
+                    return false; // Loader failed to initialise
+                }
+                return true; // Initialised loader...
             },
             loaderChecker: function () {
                 var prog = appConfig.progress;
@@ -146,9 +209,89 @@
             },
         };
     </script>
+    <!--<![endif]-->
 </head>
 <body>
-    <!--[if lt IE 11]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p><![endif]-->
+    <!--[if lt IE 10]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a target="_self" href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p><![endif]-->
+
+    <div id="myApp" class="docked">
+        <div class="navbar navbar-default navbar-fixed-top">
+            <div class="navbar-inner">
+                <ul class="nav navbar-nav navheading ng-cloak">
+                    <li class="dock-fill">
+                        <a href="/" class="navbar-brand" role="button">
+                            <i class="fa fa-cubes" ng:class="status.getColor()"></i> <span>Prototyped</span>
+                        </a>
+                    </li>
+                    <li class="dock-tight ng-cloak" ng:show="state.current.name != 'home'">
+                        <a app:nav-link ui:sref="home" class="pull-right">
+                            <i class="glyphicon glyphicon-chevron-left"></i>
+                        </a>
+                    </li>
+                </ul>
+                <span ui:view="menu" class="ng-cloak">
+                    <!-- Begin: Default menu toolbar -->
+                    <ul class="nav navbar-nav" app:menu="appMenu.items"></ul>
+                    <!-- End: Default menu toolbar -->
+                </span>
+                <ul class="nav navbar-nav pull-right">
+                    <li class="ng-cloak"><a app:clean href=""><i class="glyphicon glyphicon-refresh"></i></a></li>
+                    <li class="ng-cloak"><a app:debug href=""><i class="glyphicon glyphicon-wrench"></i></a></li>
+                    <li class="ng-cloak"><a app:kiosk href=""><i class="glyphicon glyphicon-fullscreen"></i></a></li>
+                    <li class="ng-cloak" id="btnCloseWindow">
+                        <a app:close href=""><i class="glyphicon glyphicon-remove"></i></a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="docked viewport">
+            <div class="sidebar ng-cloak" ui:view="left" ng:show="state.current.views['left'] || state.current.views['left@']"></div>
+            <div class="contents docked" ui:view="main">
+
+                <!-- This loader is used as a place-holder for main contents  -->
+                <div id="preLoader" class="app-loading">
+                    <div class="loadtext">
+                        <label id="preLoaderText">Loading, please wait...</label>
+                        <div class="spinner">
+                            <div class="rect1"></div>
+                            <div class="rect2"></div>
+                            <div class="rect3"></div>
+                            <div class="rect4"></div>
+                            <div class="rect5"></div>
+                            <div class="rect7"></div>
+                            <div class="rect7"></div>
+                            <div class="rect8"></div>
+                            <div class="rect9"></div>
+                            <div class="rect10"></div>
+                            <div class="rect11"></div>
+                            <div class="rect12"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="footer">
+            <span class="pull-left">
+                <label ng:show="status.logs | typeCount:'error'">
+                    <i class="glyphicon glyphicon-exclamation-sign glow-red"></i>
+                    <a href="" class="ng-cloak">Errors ({{ status.logs | typeCount:'error' }})</a>
+                </label>
+                <label ng:show="status.logs | typeCount:'warn'" class="ng-cloak">
+                    <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
+                    <a href="">Warnings ({{ status.logs | typeCount:'warn' }})</a>
+                </label>
+            </span>
+            <span ng:if="true" class="ng-cloak">
+                Client Version: <span app:version><em>Loading...</em></span> |
+            </span>
+            <span ui:view="foot">
+                Powered by <a href="https://angularjs.org/">AngularJS</a> &amp; <a href="https://github.com/rogerwang/node-webkit">Node Webkit</a>
+            </span>
+            <span ng:if="startAt" class="ng-cloak">| Started {{ startAt | fromNow }}</span>
+        </div>
+    </div>
+
     <div id="myLoader" class="ng-cloak" ng:show="false">
         <div class="active progress progress-striped">
             <div ng:init="progC = 0.15" role="progressbar" aria-valuenow="{{ progC }}" aria-valuemin="0" aria-valuemax="100"
@@ -168,102 +311,53 @@
             </div>
         </div>
     </div>
-    <div id="myApp" class="docked">
-        <div class="navbar navbar-default navbar-fixed-top">
-            <div class="navbar-inner">
-                <ul class="nav navbar-nav">
-                    <li>
-                        <a href="/" class="navbar-brand" role="button">
-                            <i class="fa fa-cubes" ng:class="status.getColor()"></i> <span>Prototyped</span>
-                        </a>
-                    </li>
-                </ul>
-                <span ui:view="menu">
-                    <!-- Begin: Default menu toolbar -->
-                    <ul class="nav navbar-nav" app:menu="appMenu.items"></ul>
-                    <!-- End: Default menu toolbar -->
-                </span>
-                <ul class="nav navbar-nav pull-right">
-                    <li><a app:clean href=""><i class="glyphicon glyphicon-refresh"></i></a></li>
-                    <li><a app:debug href="" class="ng-cloak"><i class="glyphicon glyphicon-wrench"></i></a></li>
-                    <li><a app:kiosk href="" class="ng-cloak"><i class="glyphicon glyphicon-fullscreen"></i></a></li>
-                    <li><a id="btnCloseWindow" app:close href="" class="ng-cloak"><i class="glyphicon glyphicon-remove"></i></a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="docked viewport">
-            <div class="sidebar ng-cloak" ui:view="left" ng:show="state.current.views['left'] || state.current.views['left@']"></div>
-            <div class="contents docked" ui:view="main">
-                <div class="app-loading">
-                    <div class="loadtext">
-                        <label>Loading, please wait...</label>
-                        <div class="spinner">
-                            <div class="rect1"></div>
-                            <div class="rect2"></div>
-                            <div class="rect3"></div>
-                            <div class="rect4"></div>
-                            <div class="rect5"></div>
-                            <div class="rect7"></div>
-                            <div class="rect7"></div>
-                            <div class="rect8"></div>
-                            <div class="rect9"></div>
-                            <div class="rect10"></div>
-                            <div class="rect11"></div>
-                            <div class="rect12"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer">
-            <span class="pull-left">
-                <label ng:show="status.logs | typeCount:'error'">
-                    <i class="glyphicon glyphicon-exclamation-sign glow-red"></i>
-                    <a href="" class="ng-cloak">Errors ({{ status.logs | typeCount:'error' }})</a>
-                </label>
-                <label ng:show="status.logs | typeCount:'warn'" class="ng-cloak">
-                    <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
-                    <a href="">Warnings ({{ status.logs | typeCount:'warn' }})</a>
-                </label>
-            </span>
-            <span ng:if="true">
-                Client Version: <span app:version><em>Loading...</em></span> |
-            </span>
-            <span ui:view="foot">
-                Powered by <a href="https://angularjs.org/">AngularJS</a> &amp; <a href="https://github.com/rogerwang/node-webkit">Node Webkit</a>
-            </span>
-            <span ng:if="startAt" class="ng-cloak">| Started {{ startAt | fromNow }}</span>
-        </div>
-    </div>
 
     <!-- Load AngularJS and all the required libraries -->
+    <!--[if gt IE 10]><!-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/less.js/2.3.1/less.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-route.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-animate.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.js"></script>
+    <script src="assets/lib/app.loader.js"></script>
+    <!--<![endif]-->
     <script>
-        /*!
-         * $script.js v1.3
-         * https://github.com/ded/script.js
-         * Copyright: @ded & @fat - Dustin Diaz, Jacob Thornton 2011
-         * Follow our software http://twitter.com/dedfat
-         * License: MIT
-         */
-        !function (a, b, c) { function t(a, c) { var e = b.createElement("script"), f = j; e.onload = e.onerror = e[o] = function () { e[m] && !/^c|loade/.test(e[m]) || f || (e.onload = e[o] = null, f = 1, c()) }, e.async = 1, e.src = a, d.insertBefore(e, d.firstChild) } function q(a, b) { p(a, function (a) { return !b(a) }) } var d = b.getElementsByTagName("head")[0], e = {}, f = {}, g = {}, h = {}, i = "string", j = !1, k = "push", l = "DOMContentLoaded", m = "readyState", n = "addEventListener", o = "onreadystatechange", p = function (a, b) { for (var c = 0, d = a.length; c < d; ++c) if (!b(a[c])) return j; return 1 }; !b[m] && b[n] && (b[n](l, function r() { b.removeEventListener(l, r, j), b[m] = "complete" }, j), b[m] = "loading"); var s = function (a, b, d) { function o() { if (!--m) { e[l] = 1, j && j(); for (var a in g) p(a.split("|"), n) && !q(g[a], n) && (g[a] = []) } } function n(a) { return a.call ? a() : e[a] } a = a[k] ? a : [a]; var i = b && b.call, j = i ? b : d, l = i ? a.join("") : b, m = a.length; c(function () { q(a, function (a) { h[a] ? (l && (f[l] = 1), o()) : (h[a] = 1, l && (f[l] = 1), t(s.path ? s.path + a + ".js" : a, o)) }) }, 0); return s }; s.get = t, s.ready = function (a, b, c) { a = a[k] ? a : [a]; var d = []; !q(a, function (a) { e[a] || d[k](a) }) && p(a, function (a) { return e[a] }) ? b() : !function (a) { g[a] = g[a] || [], g[a][k](b), c && c(d) }(a.join("|")); return s }; var u = a.$script; s.noConflict = function () { a.$script = u; return this }, typeof module != "undefined" && module.exports ? module.exports = s : a.$script = s }(this, document, setTimeout)
 
-        // Initialise the loader
-        appConfig.loaderInit();
+        // Define helper method to set error meesage
+        function setMessage(message, css) {
+            var elemBody = document.getElementById('preLoader');
+            if (elemBody && css) elemBody.className += ' ' + css;
 
-        // Load all vendor dependencies asynchronously.
-        $script(appConfig.vend, function () {
-            // Initialise
-            appConfig.loading();
+            var elemLabel = document.getElementById('preLoaderText');
+            if (elemLabel) elemLabel.innerHTML = '<b>Error:</b> ' + message;
+        }
 
-            // Load all of the dependencies asynchronously.
-            $script(appConfig.libs, appConfig.starting);
-        });
+        // Only bootstrap if loader is available...
+        var isAvailable = typeof $script !== 'undefined';
+        if (isAvailable) {
+
+            // Initialise the app loader
+            if (appConfig.loaderInit()) {
+
+                // Load all dependencies asynchronously.
+                $script(appConfig.vend, function () {
+                    // Initialise
+                    appConfig.loading();
+
+                    // Load all of the dependencies asynchronously.
+                    $script(appConfig.libs, appConfig.starting);
+                });
+
+            } else {
+                // Script loader or a required dependency missing
+                setMessage('Required libraries missing!', 'app-error');
+            }
+        } else {
+            // The current browser is not supported
+            setMessage('Application failed to load!', 'app-error');
+        }
+
     </script>
 </body>
 </html>

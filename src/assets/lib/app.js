@@ -14,7 +14,10 @@ angular.module('myApp', [
   'myApp.about',
 ])
 
-    .value('version', '1.0.0.0')
+    .constant('appInfo', {
+        version: '0.0.0.1',
+    })
+
     .constant('appNode', {
         html5: true,
         active: typeof require !== 'undefined',
@@ -90,31 +93,26 @@ angular.module('myApp', [
             showRoot: true,
         },
         items: [
-                {
-                    label: 'Home',
-                    icon: 'fa fa-home',
-                    value: 'home',
-                },
-                {
-                    shown: false,
-                    label: 'Explore',
-                    icon: 'fa fa-share-alt',
-                    value: [
-                        { label: 'Sample A', icon: 'fa fa-phone', value: 'home', },
-                        { label: 'Sample B', icon: 'fa fa-backward', value: 'about.info', },
-                        { divider: true },
-                        { label: 'Exit', icon: 'fa fa-shutdown', value: 'about', },
-                    ],
-                },
-                {
-                    label: 'About',
-                    icon: 'fa fa-info',
-                    value: 'about.info',
-                },
+            {
+                shown: false,
+                label: 'Explore',
+                icon: 'fa fa-share-alt',
+                value: [
+                    { label: 'Sample A', icon: 'fa fa-phone', value: 'home', },
+                    { label: 'Sample B', icon: 'fa fa-backward', value: 'about.info', },
+                    { divider: true },
+                    { label: 'Exit', icon: 'fa fa-shutdown', value: 'about', },
+                ],
+            },
+            {
+                label: 'About',
+                icon: 'fa fa-info',
+                value: 'about.info',
+            },
         ],
     })
 
-    .config(['$locationProvider', '$routeProvider', '$stateProvider', '$urlRouterProvider', 'appNode', function ($locationProvider, $routeProvider, $stateProvider, $urlRouterProvider, appNode) {
+    .config(['$locationProvider', '$routeProvider', '$stateProvider', '$urlRouterProvider', 'appInfo', 'appNode', function ($locationProvider, $routeProvider, $stateProvider, $urlRouterProvider, appInfo, appNode) {
         // Disable hastags
         $locationProvider.html5Mode(appNode.html5);
 
@@ -292,7 +290,7 @@ angular.module('myApp', [
         };
     }])
 
-    .directive('appVersion', ['version', 'appNode', function (version, appNode) {
+    .directive('appVersion', ['appInfo', 'appNode', function (appInfo, appNode) {
 
         function getVersionInfo(ident) {
             try {
@@ -305,11 +303,10 @@ angular.module('myApp', [
 
         return function (scope, elm, attrs) {
             var targ = attrs['appVersion'];
-            var val = 'not available';
+            var val = null;
             if (!targ) {
-                val = version;
-            }
-            switch (targ) {
+                val = appInfo.version;
+            } else switch (targ) {
                 case 'angular':
                     val = angular.version.full;
                     break;
@@ -323,9 +320,13 @@ angular.module('myApp', [
                     val = getVersionInfo(targ) || val;
                     // Not found....
                     break;
-
             }
-            $(elm).text(val);
+            if (!val && attrs['defaultText']) {
+                val = attrs['defaultText'];
+            }
+            if (val) {
+                $(elm).text(val);
+            }
         };
     }])
 
@@ -385,11 +386,12 @@ angular.module('myApp', [
     })
 
 
-    .run(['$rootScope', '$state', '$filter', 'appNode', 'appStatus', 'appMenu', function ($rootScope, $state, $filter, appNode, appStatus, appMenu) {
+    .run(['$rootScope', '$state', '$filter', 'appInfo', 'appNode', 'appStatus', 'appMenu', function ($rootScope, $state, $filter, appInfo, appNode, appStatus, appMenu) {
 
         // Extend root scope with (global) vars
         angular.extend($rootScope, {
             state: $state,
+            appInfo: appInfo,
             appNode: appNode,
             appMenu: appMenu,
             status: appStatus,

@@ -34,7 +34,7 @@ angular.module('myApp.about', [
 
     }])
 
-    .controller('AboutInfoController', ['$scope', function ($scope) {
+    .controller('AboutInfoController', ['$scope', '$location', function ($scope, $location) {
 
         function css(a) {
             var sheets = document.styleSheets, o = [];
@@ -69,8 +69,9 @@ angular.module('myApp.about', [
             $scope.detectBrowserInfo = function () {
                 var info = {
                     versions: {
-                        html: 0.0,
-                        css: 0.0,
+                        js: null,
+                        html: null,
+                        css: null,
                         jqry: null,
                     },
                     detects: {},
@@ -78,6 +79,11 @@ angular.module('myApp.about', [
                     codeName: navigator.appCodeName,
                     userAgent: navigator.userAgent,
                 };
+
+                // Get IE version (if defined)
+                if (!!window.ActiveXObject) {
+                    info.versions.ie = 10;
+                }
 
                 // Sanitize codeName and userAgentt
                 var cn = info.codeName;
@@ -116,23 +122,64 @@ angular.module('myApp.about', [
                 info.versions.openssl = getVersionInfo('openssl');
                 info.versions.chromium = getVersionInfo('chromium');
 
-                // Get IE version (if defined)
-                if (!!window.ActiveXObject) {
-                    info.versions.ie = {                        
-                        active: true,
-                    };
-                }
-
+                // Check for CSS extensions
                 info.cssExist.boostrap2 = selectorExists('hero-unit');
                 info.cssExist.boostrap3 = selectorExists('jumbotron');
+
+                // Detect selected features and availability
+                info.features = {
+                    hdd: { type: null },
+                    os: { type: null },
+                    browser: {
+                    },
+                    server: {
+                        url: $location.$$absUrl,
+                    },
+                };
+
+                // Detect the operating system
+                var osName = 'Unknown OS';
+                var appVer = navigator.appVersion;
+                if (appVer) {
+                    if (appVer.indexOf("Win") != -1) osName = 'Windows';
+                    if (appVer.indexOf("Mac") != -1) osName = 'MacOS';
+                    if (appVer.indexOf("X11") != -1) osName = 'UNIX';
+                    if (appVer.indexOf("Linux") != -1) osName = 'Linux';
+                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
+                }
+                info.features.os.name = osName;
+
+                try {
+                    // Send a loaded package to the server to inspect
+                    /*
+                    (function () {
+                        var p = [], w = window, d = document, e = f = 0; p.push('ua=' + encodeURIComponent(navigator.userAgent)); e |= w.ActiveXObject ? 1 : 0; e |= w.opera ? 2 : 0; e |= w.chrome ? 4 : 0;
+                        e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0; e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
+                        e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0; p.push('e=' + e); f |= 'sandbox' in d.createElement('iframe') ? 1 : 0; f |= 'WebSocket' in w ? 2 : 0;
+                        f |= w.Worker ? 4 : 0; f |= w.applicationCache ? 8 : 0; f |= w.history && history.pushState ? 16 : 0; f |= d.documentElement.webkitRequestFullScreen ? 32 : 0; f |= 'FileReader' in w ? 64 : 0;
+                        p.push('f=' + f); p.push('r=' + Math.random().toString(36).substring(7)); p.push('w=' + screen.width); p.push('h=' + screen.height); var s = d.createElement('script');
+                        s.src = 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&'); d.getElementsByTagName('head')[0].appendChild(s);
+                    })();
+                    */
+                    // Package sent...
+                    //console.log(WhichBrowser);
+
+                    // Set browser name to IE (if defined)
+                    if (navigator.appName == 'Microsoft Internet Explorer') {
+                        info.features.browser.name = 'MS IE';
+                    }
+
+                } catch (ex) {
+                    // Browser detection failed
+                    console.warn('Could not detect browser feature set...');
+                    info.features.browser.lastError = ex.message;
+                }
 
                 // Check for general header and body scripts
                 var scripts = [];
                 $("script").each(function () {
                     var src = $(this).attr("src");
-                    if (src) {
-                        scripts.push(src);
-                    }
+                    if (src) scripts.push(src);
                 });
 
                 // Check for known types

@@ -6,13 +6,12 @@
     
     Free Online Bootstrap Themes:    
      - @import 'https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.2/yeti/bootstrap.css';
-     - @import 'http://ironsummitmedia.github.io/startbootstrap-sb-admin-2/dist/css/sb-admin-2.css';
 */
 #myLoader {
-  padding: 6px;
   left: 0;
   right: 0;
   bottom: 16px;
+  padding: 6px;
   position: fixed;
   background-color: rgba(220, 220, 220, 0.85);
   border-top: solid 1px silver;
@@ -29,27 +28,35 @@
   padding: 0;
   transition: width 1s ease-in-out;
 }
-body .glow-green {
+#myApp .inactive-gray {
+  opacity: 0.50;
+  filter: alpha(opacity=50);
+  filter: grayscale(100%) opacity(0.5);
+  -webkit-filter: grayscale(100%) opacity(0.5);
+  -moz-filter: alpha(opacity=50);
+  -o-filter: alpha(opacity=50);
+}
+#myApp .glow-green {
   color: #00b500;
   text-shadow: 0 0 2px #00b500;
 }
-body .glow-red {
+#myApp .glow-red {
   color: #D00;
   text-shadow: 0 0 2px #D00;
 }
-body .glow-orange {
+#myApp .glow-orange {
   color: #ff8d00;
   text-shadow: 0 0 2px #ff8d00;
 }
-body .glow-blue {
+#myApp .glow-blue {
   color: #0094ff;
   text-shadow: 0 0 2px #0094ff;
 }
-body .results {
+#myApp .results {
   min-width: 480px;
   display: flex;
 }
-body .results .icon {
+#myApp .results .icon {
   margin: 0 8px;
   font-size: 128px;
   width: 128px !important;
@@ -58,7 +65,7 @@ body .results .icon {
   flex-grow: 0;
   flex-shrink: 0;
 }
-body .results .icon .sub-icon {
+#myApp .results .icon .sub-icon {
   font-size: 64px !important;
   width: 64px !important;
   height: 64px !important;
@@ -67,7 +74,7 @@ body .results .icon .sub-icon {
   top: 0;
   margin-top: 100px;
 }
-body .results .info {
+#myApp .results .info {
   margin: 0 16px;
   min-height: 128px;
   min-width: 300px;
@@ -75,53 +82,97 @@ body .results .info {
   flex-grow: 1;
   flex-shrink: 1;
 }
-body .results .info h4 {
+#myApp .results .info h4 {
   text-wrap: avoid;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-body .results .info h4 a {
+#myApp .results .info h4 a {
   color: black;
 }
-body .info-row {
+#myApp .info-row {
   display: flex;
 }
-body .info-row-links {
+#myApp .info-row-links {
   color: silver;
 }
-body .info-row-links a {
+#myApp .info-row-links a {
   color: #4a4a4a;
   margin-left: 8px;
 }
-body .info-row-links a:hover {
+#myApp .info-row-links a:hover {
   color: #000000;
 }
-body .info-col-primary {
+#myApp .info-col-primary {
   flex-grow: 1;
   flex-shrink: 1;
 }
-body .info-col-secondary {
+#myApp .info-col-secondary {
   flex-grow: 0;
   flex-shrink: 0;
 }
-body .info-overview {
+#myApp .info-overview {
   vertical-align: top;
 }
-body .info-overview .panel-mid {
+#myApp .info-overview .panel-icon-lg {
+  width: 128px;
+  height: 128px;
+  padding: 0;
+  margin: 0 auto 10px;
+  display: block;
+  position: relative;
+  background-repeat: no-repeat;
+  background-size: auto 128px;
+  background-position: top center;
+}
+#myApp .info-overview .panel-icon-lg .panel-icon-inner {
+  width: 92px;
+  height: 92px;
+  margin: 6px auto;
+  background-repeat: no-repeat;
+  background-size: auto 86px;
+  background-position: center center;
+}
+#myApp .info-overview .panel-icon-lg .panel-icon-inset {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  left: 24px;
+  bottom: 0;
+  position: absolute;
+  background-repeat: no-repeat;
+  background-size: auto 40px;
+  background-position: center center;
+}
+#myApp .info-overview .panel-icon-lg .panel-icon-overlay {
+  right: 0;
+  bottom: 0;
+  width: 48px;
+  height: 48px;
+  position: absolute;
+  background-repeat: no-repeat;
+  background-size: auto 48px;
+  background-position: top center;
+}
+#myApp .info-overview .panel-label {
+  margin: 6px auto;
   text-align: center;
 }
-body .app-info-aside {
+#myApp .info-overview .panel-mid {
+  text-align: center;
+}
+#myApp .app-info-aside {
   display: flex;
   margin-bottom: 12px;
 }
-body .app-info-aside .app-info-icon {
+#myApp .app-info-aside .app-info-icon {
   flex-grow: 0;
   flex-shrink: 0;
   flex-basis: 64px;
   vertical-align: top;
 }
-body .app-info-aside .app-info-icon .clip-img {
+#myApp .app-info-aside .app-info-icon .clip-img {
   width: 48px;
   height: 48px;
   padding: 0;
@@ -131,46 +182,35 @@ body .app-info-aside .app-info-icon .clip-img {
   background-size: auto 48px;
   background-position: top center;
 }
-body .app-info-aside .app-info-info {
+#myApp .app-info-aside .app-info-info {
   flex-grow: 1;
   flex-shrink: 1;
   text-align: left;
   vertical-align: top;
 }
-body .app-info-aside .app-info-info h5 {
-  margin: 0;
-  padding: 3px;
-  border-bottom: solid 1px #f2f2f2;
-  font-weight: bolder;
-}
-body .app-info-aside .app-info-info p {
-  margin: 0;
-  padding: 3px;
-  color: #6d6d6d;
-}
-body .app-info-aside.info-disabled .app-info-icon {
-  opacity: 0.75;
-  -webkit-filter: grayscale(100%) opacity(0.5);
-  -moz-filter: grayscale(100%) opacity(0.5);
-  -o-filter: grayscale(100%) opacity(0.5);
+#myApp .app-info-aside.info-disabled .app-info-icon {
+  opacity: 0.50;
+  filter: alpha(opacity=50);
   filter: grayscale(100%) opacity(0.5);
+  -webkit-filter: grayscale(100%) opacity(0.5);
+  -moz-filter: alpha(opacity=50);
+  -o-filter: alpha(opacity=50);
 }
-body .appp-aside-collapser a {
-  padding: 0;
+#myApp .app-aside-collapser a {
   margin: 0;
-  color: silver;
+  padding: 0;
   display: block;
-  text-align: center;
+  color: silver;
   text-decoration: none;
 }
-body .appp-aside-collapser a:hover {
+#myApp .app-aside-collapser a:hover {
   color: #808080;
 }
-body .iframe-body {
+#myApp .iframe-body {
   margin: 0;
   padding: 0;
 }
-body .iframe-body iframe {
+#myApp .iframe-body iframe {
   margin: 0;
   padding: 0;
 }

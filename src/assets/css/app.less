@@ -9,8 +9,8 @@
     Import customised styling resources
 */
 @import 'scrollbar.less';
-@import 'animate.less';
 @import 'styles.less';
+@import 'animate.less';
 
 html, body {
     height: 100%;
@@ -31,6 +31,44 @@ body {
             position: fixed;
             z-index: 2400;
         }
+    }
+
+    h5 {
+        margin: 0 0 6px 0;
+        padding: 3px;
+        border-bottom: solid 1px #f2f2f2;
+        font-weight: bolder;
+    }
+
+    p {
+        margin: 0;
+        padding: 3px;
+        color: #6d6d6d;
+    }
+
+    .docked {
+        flex-grow: 1;
+        flex-shrink: 1;
+        display: flex;
+        height: 100%;
+        overflow: none;
+    }
+
+    .dock-tight {
+        flex-grow: 0;
+        flex-shrink: 0;
+    }
+
+    .dock-fill {
+        flex-grow: 1;
+        flex-shrink: 1;
+    }
+
+    .ellipsis {
+        text-wrap: avoid;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
     .app-loading {
@@ -173,131 +211,127 @@ body {
             }
         }
     }
-}
 
-.docked {
-    flex-grow: 1;
-    flex-shrink: 1;
-    display: flex;
-    height: 100%;
-    overflow: none;
-}
+    .navheading {
+        width: 200px;
+        display: flex;
 
-.sidebar {
-    margin: 0;
-    flex-grow: 0;
-    flex-shrink: 0;
-    flex-basis: 200px;
-    background-color: #f6f6f6;
-    -webkit-box-shadow: inset 0px 0px 16px 1px rgba(0,0,0,0.15);
-    -moz-box-shadow: inset 0px 0px 16px 1px rgba(0,0,0,0.15);
-    box-shadow: inset 0px 0px 16px 1px rgba(0,0,0,0.15);
-    overflow: auto;
+        li.dock-tight a {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
 
-    .list-group {
-        border-radius: 0;
+        li.dock-fill a {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+    }
 
-        .list-group-item {
-            border-radius: 0;
-            box-sizing: border-box;
-            -moz-box-sizing: border-box;
-            -webkit-box-sizing: border-box;
-            text-shadow: 0 -1px 0 #e6e3e3;
+    .viewport {
+        padding: 0;
+        margin: 0;
+        position: fixed;
+        top: 50px;
+        left: 0;
+        right: 0;
+        bottom: 16px;
 
-            a, a:hover, a:focus {
-                color: #6b6b6b;
-                text-decoration: none;
+        h2 {
+            margin: 0;
+            padding: 3px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .sidebar {
+            margin: 0;
+            flex-grow: 0;
+            flex-shrink: 0;
+            flex-basis: 200px;
+            background-color: #f6f6f6;
+            -webkit-box-shadow: inset 0px 0px 16px 1px rgba(0,0,0,0.15);
+            -moz-box-shadow: inset 0px 0px 16px 1px rgba(0,0,0,0.15);
+            box-shadow: inset 0px 0px 16px 1px rgba(0,0,0,0.15);
+            overflow: auto;
+
+            ul {
+                list-style: none;
+                display: inline-block;
             }
 
-            &.active, &.active:focus, &.active:hover {
-                //border: none;
-                border-right: none;
-                border-color: #e6e3e3;
-                background-image: none !important;
-                background-color: #FFF !important;
+            .list-group {
+                border-radius: 0;
 
-                a {
-                    font-weight: bolder;
-                    color: #000;
+                .list-group-item {
+                    border-radius: 0;
+                    box-sizing: border-box;
+                    -moz-box-sizing: border-box;
+                    -webkit-box-sizing: border-box;
+                    text-shadow: 0 -1px 0 #e6e3e3;
+
+                    a, a:hover, a:focus {
+                        color: #6b6b6b;
+                        text-decoration: none;
+                    }
+
+                    &.active, &.active:focus, &.active:hover {
+                        //border: none;
+                        border-right: none;
+                        border-color: #e6e3e3;
+                        background-image: none !important;
+                        background-color: #FFF !important;
+
+                        a {
+                            font-weight: bolder;
+                            color: #000;
+                        }
+                    }
                 }
             }
         }
-    }
-}
 
-.contents {
-    flex-grow: 1;
-    flex-shrink: 1;
-    margin: 3px;
-    padding: 8px;
-    overflow: auto;
-}
-
-.viewport {
-    padding: 0;
-    margin: 0;
-    position: fixed;
-    top: 50px;
-    left: 0;
-    right: 0;
-    bottom: 16px;
-
-    h2 {
-        margin: 0;
-        padding: 3px 0;
-        font-size: 18px;
-        font-weight: bold;
-    }
-
-    .container {
-        height: 90%;
-        overflow: auto;
-
-        hr {
-            margin: 8px 0;
+        .contents {
+            flex-grow: 1;
+            flex-shrink: 1;
+            margin: 3px;
+            padding: 8px;
+            overflow: auto;
         }
-    }
-}
 
-.footer {
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 16px;
-    font-size: 10px;
-    color: #9b9b9b;
-    position: fixed;
-    text-align: center;
-    border-top: dotted 1px #e6e3e3;
-    background-color: #f6f6f6;
+        .container {
+            width: 100%;
+            height: 90%;
+            overflow: auto;
 
-    a {
-        color: #6b6b6b;
-    }
+            hr {
+                margin: 8px 0;
+            }
+        }
 
-    label {
-        padding: 1px 6px;
-    }
-}
-
-.lt-ie9 {
-
-    body {
-        padding: 16px;
-        font-size: 14px;
-        font-family: 'Courier New';
-        background-color: white;
-    }
-
-    #myLoader, #myApp {
-        display: none;
+        .centered {
+            text-align: center;
+        }
     }
 
     .footer {
-    }
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 16px;
+        font-size: 10px;
+        color: #9b9b9b;
+        position: fixed;
+        text-align: center;
+        border-top: dotted 1px #e6e3e3;
+        background-color: #f6f6f6;
 
-    .browsehappy {
-        border: solid 1px silver;
-        background-color: rgba(220, 220, 220, 0.85);
+        a {
+            color: #6b6b6b;
+        }
+
+        label {
+            padding: 1px 6px;
+        }
     }
 }

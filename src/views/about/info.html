@@ -8,56 +8,132 @@
             <hr />
             <div class="row">
                 <div class="col-md-3 panel-left">
-                    <p>
+                    <h5>
                         <i class="fa fa-gear"></i>
-                        Client: v<b app:version>loading...</b>
-                    </p>
+                        My Client <small>
+                            <span ng-if="true" class="ng-cloak">
+                                <b app:version ng-class="{ 'text-success glow-green': appInfo.version }">loading...</b>
+                            </span>
+                            <span ng-if="false"><b class="text-danger glow-red"><i class="glyphicon glyphicon-remove"></i> Offline</b></span>
+                        </small>
+                    </h5>
                 </div>
                 <div class="col-md-6 panel-mid">
-                    Current Application Status: <b class="text-danger">Offline</b>
+                    <h5>
+                        Current Status <small>
+                            <span ng-if="!info.features.server">
+                                <b class="text-danger glow-red">Offline</b>, faulty or disconnected.
+                            </span>
+                            <span ng-if="info.features.server && !appNode.active">
+                                Connected via <a class="text-success glow-orange">web client</a>.
+                            </span>
+                            <span ng-if="info.features.server && appNode.active">
+                                <b class="text-success glow-green">Online</b> and fully operational.
+                            </span>
+                        </small>
+                    </h5>
                 </div>
                 <div class="col-md-3 panel-right">
-                    <p>
-                        <i class="fa fa-gear"></i> Server: <b app:version="server">requesting...</b>
-                    </p>
+                    <h5>
+                        <i class="fa fa-gear"></i>
+                        Web Server <small>
+                            <span ng-if="true" class="ng-cloak">
+                                <b ng-class="{ 'text-success glow-green': info.features.server, 'text-danger glow-red': !info.features.server }" app:version="server" default-text="{{ info.features.server ? 'Online' : 'Offline' }}">requesting...</b>
+                            </span>
+                            <span ng-if="false">
+                                <b class="text-danger glow-red"><i class="glyphicon glyphicon-remove"></i> Offline</b>
+                            </span>
+                        </small>
+                    </h5>
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-3 panel-left">
-                    <p>
-                        XXX
+                    <div ng:if="true">
+                        <a class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/2212/carpelinx/128/server.png)">
+
+                            <div ng:if="info.features.browser.name == 'Firefox'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/en/e/e3/Firefox-logo.svg)"></div>
+                            <div ng:if="info.features.browser.name == 'MS IE'" class="panel-icon-inner" style="background-image: url(http://yomotsu.net/works/2010-09-23_cssnite-shizuoka-1/demos/svg/embed/ie6logo.svg)"></div>
+                            <div ng:if="info.features.browser.name == 'Chrome'" class="panel-icon-inner" style="background-image: url(http://images3.wikia.nocookie.net/__cb20120330024139/logopedia/images/d/d7/Google_Chrome_logo_2011.svg)"></div>
+                            <div ng:if="info.features.browser.name == 'Opera'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/d/d0/Opera_O.svg)"></div>
+                            <div ng:if="info.features.browser.name == 'Navigator'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/e/ee/Compass_icon_matte.svg)"></div>
+                            <div ng:if="info.features.browser.name == 'Chromium'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/5/5f/Chromium_11_Logo.svg)"></div>
+                            <div ng:if="info.features.browser.name == 'Spartan'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/en/b/b8/MSUSpartans_Logo.svg)"></div>
+
+                            <div ng:if="info.features.os.name == 'Windows'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/en/1/14/Windows_logo_-_2006.svg)"></div>
+                            <div ng:if="info.features.os.name == 'MacOS'" class="panel-icon-overlay" style="background-image: url(http://png-5.findicons.com/files/icons/986/aeon/128/mac_logo.png)"></div>
+                            <div ng:if="info.features.os.name == 'Apple'" class="panel-icon-overlay" style="background-image: url(http://www.logoeps.com/wp-content/uploads/2011/05/apple-3d-vector-logo-200x200.png)"></div>
+                            <div ng:if="info.features.os.name == 'UNIX'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
+                            <div ng:if="info.features.os.name == 'Linux'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
+
+                        </a>
+                        <p class="panel-label" ng:if="info.features.os.name">
+                            Host System: <b>{{ info.features.os.name }}</b>
+                        </p>
+                        <p class="panel-label" ng:if="info.features.browser.name">
+                            User Agent: <b>{{ info.features.browser.name }}</b>
+                        </p>
+                    </div>
+                    <div ng-switch="info.features.hdd.type">
+                        <a ng-switch-default class="panel-icon-lg inactive-gray" style="background-image: url(http://png.findicons.com/files/icons/749/slick_drives_remake/128/generic_slick_drives_remake_icon.png)"></a>
+                        <a ng-switch-when="true" class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/749/slick_drives_remake/128/generic_slick_drives_remake_icon.png)"></a>
+                        <a ng-switch-when="onl" class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/749/slick_drives_remake/128/server_slick_drives_remake_icon.png)"></a>
+                        <a ng-switch-when="usb" class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/749/slick_drives_remake/128/usb_hd_slick_drives_remake_icon.png)"></a>
+                        <a ng-switch-when="ssd" class="panel-icon-lg" style="background-image: url(http://png-2.findicons.com/files/icons/749/slick_drives_remake/128/ssd_slick_drives_remake_icon.png)"></a>
+                        <a ng-switch-when="web" class="panel-icon-lg" style="background-image: url(http://png-1.findicons.com/files/icons/749/slick_drives_remake/128/idisk_slick_drives_remake_icon.png)"></a>
+                        <a ng-switch-when="mac" class="panel-icon-lg" style="background-image: url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/apple_slick_drives_remake_icon.png)"></a>
+                        <a ng-switch-when="warn" class="panel-icon-lg" style="background-image: url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/idisk_user_slick_drives_remake_icon.png)"></a>
+                        <a ng-switch-when="hist" class="panel-icon-lg" style="background-image: url(http://png-5.findicons.com/files/icons/749/slick_drives_remake/128/time_machine_slick_drives_remake_icon.png)"></a>
+                        <a ng-switch-when="wifi" class="panel-icon-lg" style="background-image: url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/airport_disc_slick_drives_remake_icon.png)"></a>
+                    </div>
+                    <p ng:if="info.features.hdd.type" class="panel-label">
+                        Storage is <b class="glow-green">Online</b>
+                    </p>
+                    <p ng:if="!info.features.hdd.type" class="panel-label text-muted">
+                        <em>No storage device</em>
                     </p>
                 </div>
                 <div class="col-md-6 panel-mid">
-                    ...
+                    <p class="ellipsis" ng:if="info.features.server.url">
+                        Server Url: <a target="_blank" ng-href="{{ info.features.server.url }}">{{ info.features.server.url }}</a>
+                    </p>
+                    <p>
+                        Some more features...
+                    </p>
+                    <pre>HDD: {{ info.features.hdd }}</pre>
+                    <pre>OS: {{ info.features.os }}</pre>
+                    <pre>Browser: {{ info.features.browser }}</pre>
+                    <pre>Server: {{ info.features.server }}</pre>
                 </div>
                 <div class="col-md-3 panel-right">
-                    <p>
-                        YYYY
-                    </p>
+                    <div ng:if="!info.features.server">
+                        <a class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/1389/g5_system/128/network_file_server.png)"></a>
+                    </div>
+                    <div ng:if="info.features.server">
+                        <a class="panel-icon-lg" style="background-image: url(http://png-1.findicons.com/files/icons/719/crystal_clear_actions/128/server_256.png)">
+
+                            <div ng:if="info.features.server.type == 'iis'" class="panel-icon-inset" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/5/5f/Windows_logo_-_2012.svg)"></div>
+                            <div ng:if="info.features.server.type == 'node'" class="panel-icon-inset" style="background-image: url(https://cdn.rawgit.com/ferventcoder/chocolatey-packages/master/icons/nodejs.png)"></div>
+                            <div ng:if="info.features.server.type == 'apache'" class="panel-icon-inset" style="background-image: url(http://www.easyicon.net/api/resize_png_new.php?id=540327&size=128)"></div>
+
+                            <div ng:if="info.features.server.name == 'Windows'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/en/1/14/Windows_logo_-_2006.svg)"></div>
+                            <div ng:if="info.features.server.name == 'MacOS'" class="panel-icon-overlay" style="background-image: url(http://png-5.findicons.com/files/icons/986/aeon/128/mac_logo.png)"></div>
+                            <div ng:if="info.features.server.name == 'Apple'" class="panel-icon-overlay" style="background-image: url(http://www.logoeps.com/wp-content/uploads/2011/05/apple-3d-vector-logo-200x200.png)"></div>
+                            <div ng:if="info.features.server.name == 'UNIX'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
+                            <div ng:if="info.features.server.name == 'Linux'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
+                        </a>
+
+                        <a ng:if="info.features.sql" class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)"></a>
+
+                    </div>
                 </div>
             </div>
             <hr />
-            <div>
-                <img src="http://yomotsu.net/works/2010-09-23_cssnite-shizuoka-1/demos/svg/embed/ie6logo.svg" width="24" height="24" />
-                <img src="http://upload.wikimedia.org/wikipedia/en/e/e3/Firefox-logo.svg" width="24" height="24" />
-                <img src="http://images3.wikia.nocookie.net/__cb20120330024139/logopedia/images/d/d7/Google_Chrome_logo_2011.svg" width="24" height="24" />
-                <img src="http://upload.wikimedia.org/wikipedia/commons/d/d0/Opera_O.svg" width="24" height="24" />
-                <img src="http://upload.wikimedia.org/wikipedia/commons/e/ee/Compass_icon_matte.svg" width="24" height="24" />
-                <img src="http://upload.wikimedia.org/wikipedia/en/b/b8/MSUSpartans_Logo.svg" width="24" height="24" />
-                <img src="http://upload.wikimedia.org/wikipedia/commons/5/5f/Chromium_11_Logo.svg" width="24" height="24" />
-            </div>
-            <div>
-                <img src="http://upload.wikimedia.org/wikipedia/en/1/14/Windows_logo_-_2006.svg" width="32" height="32" />
-                <img src="http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg" width="32" height="32" />
-                <img src="http://png-5.findicons.com/files/icons/986/aeon/128/mac_logo.png" width="32" height="32" />
-                <img src="http://www.logoeps.com/wp-content/uploads/2011/05/apple-3d-vector-logo-200x200.png" width="32" height="32" />
-            </div>
         </div>
         <div class="col-md-4" ng:init="info.showUnavailable = false">
             <h4>
                 Inspirations
-                <small> come from great technologies</small>
+                <small> come from great ideas</small>
             </h4>
             <hr />
             <div class="app-info-aside"
@@ -100,13 +176,13 @@
                             <span ng:if="!info.versions.nw"><em>not available</em></span>
                         </small>
                     </h5>
-                    <p ng:if="!info.versions.nw">
+                    <p ng:if="!info.versions.nw" class="text-muted">
                         <i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target="_blank" href="http://nwjs.io/">nwjs.io</a> for more info.
                     </p>
-                    <p ng:if="info.versions.nw">
+                    <p ng:if="info.versions.nw" class="text-success">
                         <i class="glyphicon glyphicon-ok glow-green"></i> You are connected to node webkit.
                     </p>
-                    <p ng:if="info.versions.chromium">
+                    <p ng:if="info.versions.chromium" class="text-success">
                         <i class="glyphicon glyphicon-ok glow-green"></i> You are running Chromium @ {{ info.versions.chromium }}.
                     </p>
                 </div>
@@ -124,21 +200,21 @@
                             <span ng:if="!info.versions.njs"><em>not available</em></span>
                         </small>
                     </h5>
-                    <p ng:if="!info.versions.njs">
+                    <p ng:if="!info.versions.njs" class="text-muted">
                         <i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target="_blank" href="http://www.nodejs.org">NodeJS.org</a> for more info.
                     </p>
-                    <p ng:if="info.versions.njs">
+                    <p ng:if="info.versions.njs" class="text-success">
                         <i class="glyphicon glyphicon-ok glow-green"></i> You are inside a node js runtime.
                     </p>
-                    <p ng:if="info.versions.v8">
+                    <p ng:if="info.versions.v8" class="text-success">
                         <i class="glyphicon glyphicon-ok glow-green"></i> You are running V8 @ {{ info.versions.v8 }}.
                     </p>
-                    <p ng:if="info.versions.openssl">
+                    <p ng:if="info.versions.openssl" class="text-success">
                         <i class="glyphicon glyphicon-ok glow-green"></i> You are running OpenSSL @ {{ info.versions.openssl }}.
                     </p>
                 </div>
             </div>
-            <div class="appp-aside-collapser">
+            <div class="app-aside-collapser centered" ng-if="!appNode.active">
                 <a href="" ng:show="!info.showUnavailable" ng-click="info.showUnavailable = !info.showUnavailable">
                     Show More
                 </a>
@@ -149,10 +225,9 @@
             <hr />
             <div class="app-info-aside" ng-class="{ 'info-disabled': !info.versions.html }">
                 <div class="app-info-icon">
-                    <div ng:if="!info.versions.ie.active" class="clip-img" style="background-image: url('http://john-dugan.com/wp-content/themes/v2b/img/build/html5-logo.svg')"></div>
-                    <div ng:if="info.versions.ie.active" class="clip-img" style="background-image: url('http://html5readiness.com/assets/HTML5_Logo.svg')"></div>
+                    <div ng:if="info.features.browser.name != 'MS IE'" class="clip-img" style="background-image: url('http://john-dugan.com/wp-content/themes/v2b/img/build/html5-logo.svg')"></div>
+                    <div ng:if="info.features.browser.name == 'MS IE'" class="clip-img" style="background-image: url('http://html5readiness.com/assets/HTML5_Logo.svg')"></div>
                 </div>
-                <div>{{info.versions.ie}}</div>
                 <div class="app-info-info">
                     <h5>
                         HTML Rendering Mode <small>
@@ -200,28 +275,28 @@
                 </div>
                 <div class="app-info-info">
                     <h5>
-                        Cascading Style Sheets <small>
-                            <span ng:if="info.versions.css >= '3.0'">@ v{{ info.versions.css }}</span>
-                            <span ng:if="info.versions.css < '3.0'"><b class="text-danger">pre v3.0</b></span>
+                        Cascading Styles <small>
+                            <span ng:if="info.versions.css">@ v{{ info.versions.css }}</span>
+                            <span ng:if="!info.versions.css"><em class="text-muted">not found</em></span>
                         </small>
                     </h5>
-                    <p ng:if="info.versions.css >= '3.0'">
+                    <p ng:if="info.versions.css >= '3.0'" class="text-success">
                         <i class="glyphicon glyphicon-ok glow-green"></i>
                         <span>You have an up-to-date style engine.</span>
                     </p>
-                    <p ng:if="info.versions.css < '3.0'">
+                    <p ng:if="info.versions.css < '3.0'" class="text-warning">
                         <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
                         <span>CSS out of date. Styling might be broken.</span>
                     </p>
-                    <p ng:if="info.cssExist.boostrap2">
+                    <p ng:if="info.cssExist.boostrap2" class="text-warning">
                         <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
                         <span>Bootstrap 2 is depricated. Upgrade to 3.x.</span>
                     </p>
-                    <p ng:if="info.cssExist.boostrap3">
+                    <p ng:if="info.cssExist.boostrap3" class="text-success">
                         <i class="glyphicon glyphicon-ok glow-green"></i>
                         <span>Bootstrap and/or UI componets found.</span>
                     </p>
-                    <p ng:if="info.detects.less">
+                    <p ng:if="info.detects.less" class="text-success">
                         <i class="glyphicon glyphicon-ok glow-green"></i>
                         <span>Support for LESS has been detected.</span>
                     </p>

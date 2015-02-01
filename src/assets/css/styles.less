@@ -6,14 +6,13 @@
     
     Free Online Bootstrap Themes:    
      - @import 'https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.2/yeti/bootstrap.css';
-     - @import 'http://ironsummitmedia.github.io/startbootstrap-sb-admin-2/dist/css/sb-admin-2.css';
 */
 
 #myLoader {
-    padding: 6px;
     left: 0;
     right: 0;
     bottom: 16px;
+    padding: 6px;
     position: fixed;
     background-color: rgba(220, 220, 220, 0.85);
     border-top: solid 1px silver;
@@ -34,9 +33,15 @@
 }
 
 #myApp {
-}
+    .inactive-gray {
+        opacity: 0.50;
+        filter: alpha(opacity=50);
+        filter: grayscale(100%) opacity(0.50);
+        -webkit-filter: grayscale(100%) opacity(0.50);
+        -moz-filter: alpha(opacity=50);
+        -o-filter: alpha(opacity=50);
+    }
 
-body {
     .glow-green {
         color: #00b500;
         text-shadow: 0 0 2px #00b500;
@@ -133,6 +138,55 @@ body {
     .info-overview {
         vertical-align: top;
 
+        .panel-icon-lg {
+            width: 128px;
+            height: 128px;
+            padding: 0;
+            margin: 0 auto 10px;
+            display: block;
+            position: relative;
+            background-repeat: no-repeat;
+            background-size: auto 128px;
+            background-position: top center;
+
+            .panel-icon-inner {
+                width: 92px;
+                height: 92px;
+                margin: 6px auto;
+                background-repeat: no-repeat;
+                background-size: auto 86px;
+                background-position: center center;
+            }
+
+            .panel-icon-inset {
+                width: 40px;
+                height: 40px;
+                margin: 0;
+                left:24px;
+                bottom:0;
+                position: absolute;
+                background-repeat: no-repeat;
+                background-size: auto 40px;
+                background-position: center center;
+            }
+
+            .panel-icon-overlay {
+                right: 0;
+                bottom: 0;
+                width: 48px;
+                height: 48px;
+                position: absolute;
+                background-repeat: no-repeat;
+                background-size: auto 48px;
+                background-position: top center;
+            }
+        }
+
+        .panel-label {
+            margin: 6px auto;
+            text-align: center;
+        }
+
         .panel-left {
         }
 
@@ -171,40 +225,22 @@ body {
             flex-shrink: 1;
             text-align: left;
             vertical-align: top;
-
-            h5 {
-                margin: 0;
-                padding: 3px;
-                border-bottom: solid 1px #f2f2f2;
-                font-weight: bolder;
-            }
-
-            p {
-                margin: 0;
-                padding: 3px;
-                color: #6d6d6d;
-            }
         }
 
         &.info-disabled {
 
             .app-info-icon {
-                opacity: 0.75;
-                -webkit-filter: grayscale(100%) opacity(0.5);
-                -moz-filter: grayscale(100%) opacity(0.5);
-                -o-filter: grayscale(100%) opacity(0.5);
-                filter: grayscale(100%) opacity(0.5);
+                .inactive-gray();
             }
         }
     }
 
-    .appp-aside-collapser {
+    .app-aside-collapser {
         a {
-            padding: 0;
             margin: 0;
-            color: silver;
+            padding: 0;
             display: block;
-            text-align: center;
+            color: silver;
             text-decoration: none;
 
             &:hover {
