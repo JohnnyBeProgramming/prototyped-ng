@@ -21,13 +21,13 @@
                 <div class="col-md-6 panel-mid">
                     <h5>
                         Current Status <small>
-                            <span ng-if="!info.features.server">
+                            <span ng-if="!info.about.server">
                                 <b class="text-danger glow-red">Offline</b>, faulty or disconnected.
                             </span>
-                            <span ng-if="info.features.server && !appNode.active">
-                                Connected via <a class="text-success glow-orange">web client</a>.
+                            <span ng-if="info.about.server && !appNode.active">
+                                Connected via <b class="text-warning glow-orange">web client</b>.
                             </span>
-                            <span ng-if="info.features.server && appNode.active">
+                            <span ng-if="info.about.server && appNode.active">
                                 <b class="text-success glow-green">Online</b> and fully operational.
                             </span>
                         </small>
@@ -38,7 +38,7 @@
                         <i class="fa fa-gear"></i>
                         Web Server <small>
                             <span ng-if="true" class="ng-cloak">
-                                <b ng-class="{ 'text-success glow-green': info.features.server, 'text-danger glow-red': !info.features.server }" app:version="server" default-text="{{ info.features.server ? 'Online' : 'Offline' }}">requesting...</b>
+                                <b ng-class="{ 'text-success glow-green': info.about.server, 'text-danger glow-red': !info.about.server }" app:version="server" default-text="{{ info.about.server ? 'Online' : 'Offline' }}">requesting...</b>
                             </span>
                             <span ng-if="false">
                                 <b class="text-danger glow-red"><i class="glyphicon glyphicon-remove"></i> Offline</b>
@@ -52,29 +52,34 @@
                     <div ng:if="true">
                         <a class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/2212/carpelinx/128/server.png)">
 
-                            <div ng:if="info.features.browser.name == 'Firefox'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/en/e/e3/Firefox-logo.svg)"></div>
-                            <div ng:if="info.features.browser.name == 'MS IE'" class="panel-icon-inner" style="background-image: url(http://yomotsu.net/works/2010-09-23_cssnite-shizuoka-1/demos/svg/embed/ie6logo.svg)"></div>
-                            <div ng:if="info.features.browser.name == 'Chrome'" class="panel-icon-inner" style="background-image: url(http://images3.wikia.nocookie.net/__cb20120330024139/logopedia/images/d/d7/Google_Chrome_logo_2011.svg)"></div>
-                            <div ng:if="info.features.browser.name == 'Opera'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/d/d0/Opera_O.svg)"></div>
-                            <div ng:if="info.features.browser.name == 'Navigator'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/e/ee/Compass_icon_matte.svg)"></div>
-                            <div ng:if="info.features.browser.name == 'Chromium'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/5/5f/Chromium_11_Logo.svg)"></div>
-                            <div ng:if="info.features.browser.name == 'Spartan'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/en/b/b8/MSUSpartans_Logo.svg)"></div>
+                            <div ng:if="info.about.browser.name == 'Chrome'" class="panel-icon-inner" style="background-image: url(http://images3.wikia.nocookie.net/__cb20120330024139/logopedia/images/d/d7/Google_Chrome_logo_2011.svg)"></div>
+                            <div ng:if="info.about.browser.name == 'Chromium'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/5/5f/Chromium_11_Logo.svg)"></div>
+                            <div ng:if="info.about.browser.name == 'Firefox'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/en/e/e3/Firefox-logo.svg)"></div>
+                            <div ng:if="info.about.browser.name == 'Internet Explorer'" class="panel-icon-inner" style="background-image: url(http://yomotsu.net/works/2010-09-23_cssnite-shizuoka-1/demos/svg/embed/ie6logo.svg)"></div>
+                            <div ng:if="info.about.browser.name == 'Opera'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/d/d0/Opera_O.svg)"></div>
+                            <div ng:if="info.about.browser.name == 'Safari'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/e/ee/Compass_icon_matte.svg)"></div>
+                            <div ng:if="info.about.browser.name == 'SeaMonkey'" class="panel-icon-inner" style="background-image: url(https://fullmetallinux.files.wordpress.com/2012/01/seamonkey.png)"></div>
+                            <div ng:if="info.about.browser.name == 'Spartan'" class="panel-icon-inner" style="background-image: url(http://upload.wikimedia.org/wikipedia/en/b/b8/MSUSpartans_Logo.svg)"></div>
 
-                            <div ng:if="info.features.os.name == 'Windows'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/en/1/14/Windows_logo_-_2006.svg)"></div>
-                            <div ng:if="info.features.os.name == 'MacOS'" class="panel-icon-overlay" style="background-image: url(http://png-5.findicons.com/files/icons/986/aeon/128/mac_logo.png)"></div>
-                            <div ng:if="info.features.os.name == 'Apple'" class="panel-icon-overlay" style="background-image: url(http://www.logoeps.com/wp-content/uploads/2011/05/apple-3d-vector-logo-200x200.png)"></div>
-                            <div ng:if="info.features.os.name == 'UNIX'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
-                            <div ng:if="info.features.os.name == 'Linux'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
+                            <div ng:if="info.about.os.name == 'Windows'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/en/1/14/Windows_logo_-_2006.svg)"></div>
+                            <div ng:if="info.about.os.name == 'MacOS'" class="panel-icon-overlay" style="background-image: url(http://png-5.findicons.com/files/icons/986/aeon/128/mac_logo.png)"></div>
+                            <div ng:if="info.about.os.name == 'Apple'" class="panel-icon-overlay" style="background-image: url(http://www.logoeps.com/wp-content/uploads/2011/05/apple-3d-vector-logo-200x200.png)"></div>
+                            <div ng:if="info.about.os.name == 'UNIX'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
+                            <div ng:if="info.about.os.name == 'Linux'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
 
                         </a>
-                        <p class="panel-label" ng:if="info.features.os.name">
-                            Host System: <b>{{ info.features.os.name }}</b>
+                        <p class="panel-label" ng:if="info.about.os.name"
+                           title="{{ info.about.os.name }} @ {{ info.about.os.version.alias }}">
+                            Host System: <b>{{ info.about.os.name }}</b>
+                            <span ng:if="info.about.os.version">@ {{ info.about.os.version.alias }}</span>
                         </p>
-                        <p class="panel-label" ng:if="info.features.browser.name">
-                            User Agent: <b>{{ info.features.browser.name }}</b>
+                        <p class="panel-label" ng:if="info.about.browser.name"
+                           title="{{ info.about.browser.name }} @ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? '.' + info.about.browser.version.build : '' }}">
+                            User Agent: <b>{{ info.about.browser.name }}</b>
+                            <span ng:if="info.about.browser.version">@ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? '.' + info.about.browser.version.build : '' }}</span>
                         </p>
                     </div>
-                    <div ng-switch="info.features.hdd.type">
+                    <div ng-switch="info.about.hdd.type" class="panel-icon-lg">
                         <a ng-switch-default class="panel-icon-lg inactive-gray" style="background-image: url(http://png.findicons.com/files/icons/749/slick_drives_remake/128/generic_slick_drives_remake_icon.png)"></a>
                         <a ng-switch-when="true" class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/749/slick_drives_remake/128/generic_slick_drives_remake_icon.png)"></a>
                         <a ng-switch-when="onl" class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/749/slick_drives_remake/128/server_slick_drives_remake_icon.png)"></a>
@@ -85,46 +90,69 @@
                         <a ng-switch-when="warn" class="panel-icon-lg" style="background-image: url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/idisk_user_slick_drives_remake_icon.png)"></a>
                         <a ng-switch-when="hist" class="panel-icon-lg" style="background-image: url(http://png-5.findicons.com/files/icons/749/slick_drives_remake/128/time_machine_slick_drives_remake_icon.png)"></a>
                         <a ng-switch-when="wifi" class="panel-icon-lg" style="background-image: url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/airport_disc_slick_drives_remake_icon.png)"></a>
+
+                        <div ng:if="info.about.webdb.active" class="panel-icon-inset-bl" style="background-image: url(http://png.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)"></div>
                     </div>
-                    <p ng:if="info.features.hdd.type" class="panel-label">
-                        Storage is <b class="glow-green">Online</b>
+                    <p ng:if="info.about.webdb.active" class="panel-label ellipsis">
+                        Local databsse is <b class="glow-green">Online</b>
                     </p>
-                    <p ng:if="!info.features.hdd.type" class="panel-label text-muted">
-                        <em>No storage device</em>
+                    <p ng:if="!info.about.webdb.active" class="panel-label text-muted ellipsis">
+                        <em>No local storage found</em>
+                    </p>
+                    <p ng:if="!info.about.webdb.active" class="panel-label text-muted">
+                        <div class="progress" ng-style="{ height: '10px' }" title="{{(100 * progA) + '%'}} ( {{info.about.webdb.used}} / {{info.about.webdb.size}} )">
+                            <div ng:init="progA = (info.about.webdb.size > 0) ? (info.about.webdb.used||0)/info.about.webdb.size : 0"
+                                 class="progress-bar" ng-class="'progress-bar-info'"
+                                 role="progressbar" aria-valuenow="{{ progA }}" aria-valuemin="0" aria-valuemax="100"
+                                 ng-style="{width: (100 * progA) + '%'}" aria-valuetext="{{ (100.0 * progA) + ' %' }}%">
+                            </div>
+                        </div>
                     </p>
                 </div>
-                <div class="col-md-6 panel-mid">
-                    <p class="ellipsis" ng:if="info.features.server.url">
-                        Server Url: <a target="_blank" ng-href="{{ info.features.server.url }}">{{ info.features.server.url }}</a>
+                <div ng-init="tabOverviewMain = 0" ng-switch="tabOverviewMain" class="col-md-6 panel-mid">
+                    <p class="ellipsis" ng:if="info.about.server.url">
+                        Server Url: <a target="_blank" ng-class="{ 'glow-green':appNode.active || info.about.protocol == 'https', 'glow-blue':!appNode.active && info.about.protocol == 'http', 'glow-red':info.about.protocol == 'file' }" ng-href="{{ info.about.server.url }}">{{ info.about.server.url }}</a>
                     </p>
                     <p>
-                        Some more features...
+                        <a ng-click="tabOverviewMain = 0">Summary</a> |
+                        <a ng-click="tabOverviewMain = 1">Details</a>
                     </p>
-                    <pre>HDD: {{ info.features.hdd }}</pre>
-                    <pre>OS: {{ info.features.os }}</pre>
-                    <pre>Browser: {{ info.features.browser }}</pre>
-                    <pre>Server: {{ info.features.server }}</pre>
+                    <div>
+                        <div ng-switch-default>
+                            <em>Loading...</em>
+                        </div>
+                        <div ng-switch-when="0">
+                            <p>
+                                ...
+                            </p>
+                        </div>
+                        <div ng-switch-when="1">
+                            <pre>OS: {{ info.about.os }}</pre>
+                            <pre>Browser: {{ info.about.browser }}</pre>
+                            <pre>Server: {{ info.about.server }}</pre>
+                            <pre>WebDB: {{ info.about.webdb }}</pre>
+                            <pre>HDD: {{ info.about.hdd }}</pre>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-3 panel-right">
-                    <div ng:if="!info.features.server">
+                    <div ng:if="!info.about.server">
                         <a class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/1389/g5_system/128/network_file_server.png)"></a>
                     </div>
-                    <div ng:if="info.features.server">
+                    <div ng:if="info.about.server">
                         <a class="panel-icon-lg" style="background-image: url(http://png-1.findicons.com/files/icons/719/crystal_clear_actions/128/server_256.png)">
 
-                            <div ng:if="info.features.server.type == 'iis'" class="panel-icon-inset" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/5/5f/Windows_logo_-_2012.svg)"></div>
-                            <div ng:if="info.features.server.type == 'node'" class="panel-icon-inset" style="background-image: url(https://cdn.rawgit.com/ferventcoder/chocolatey-packages/master/icons/nodejs.png)"></div>
-                            <div ng:if="info.features.server.type == 'apache'" class="panel-icon-inset" style="background-image: url(http://www.easyicon.net/api/resize_png_new.php?id=540327&size=128)"></div>
+                            <div ng:if="info.about.server.type == 'iis'" class="panel-icon-inset" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/5/5f/Windows_logo_-_2012.svg)"></div>
+                            <div ng:if="info.about.server.type == 'node'" class="panel-icon-inset" style="background-image: url(https://cdn.rawgit.com/ferventcoder/chocolatey-packages/master/icons/nodejs.png)"></div>
+                            <div ng:if="info.about.server.type == 'apache'" class="panel-icon-inset" style="background-image: url(http://www.easyicon.net/api/resize_png_new.php?id=540327&size=128)"></div>
 
-                            <div ng:if="info.features.server.name == 'Windows'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/en/1/14/Windows_logo_-_2006.svg)"></div>
-                            <div ng:if="info.features.server.name == 'MacOS'" class="panel-icon-overlay" style="background-image: url(http://png-5.findicons.com/files/icons/986/aeon/128/mac_logo.png)"></div>
-                            <div ng:if="info.features.server.name == 'Apple'" class="panel-icon-overlay" style="background-image: url(http://www.logoeps.com/wp-content/uploads/2011/05/apple-3d-vector-logo-200x200.png)"></div>
-                            <div ng:if="info.features.server.name == 'UNIX'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
-                            <div ng:if="info.features.server.name == 'Linux'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
+                            <div ng:if="info.about.server.name == 'Windows'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/en/1/14/Windows_logo_-_2006.svg)"></div>
+                            <div ng:if="info.about.server.name == 'MacOS'" class="panel-icon-overlay" style="background-image: url(http://png-5.findicons.com/files/icons/986/aeon/128/mac_logo.png)"></div>
+                            <div ng:if="info.about.server.name == 'Apple'" class="panel-icon-overlay" style="background-image: url(http://www.logoeps.com/wp-content/uploads/2011/05/apple-3d-vector-logo-200x200.png)"></div>
+                            <div ng:if="info.about.server.name == 'UNIX'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
+                            <div ng:if="info.about.server.name == 'Linux'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
                         </a>
-
-                        <a ng:if="info.features.sql" class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)"></a>
-
+                        <div ng:if="info.about.sql" class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)"></div>                        
                     </div>
                 </div>
             </div>
@@ -225,8 +253,8 @@
             <hr />
             <div class="app-info-aside" ng-class="{ 'info-disabled': !info.versions.html }">
                 <div class="app-info-icon">
-                    <div ng:if="info.features.browser.name != 'MS IE'" class="clip-img" style="background-image: url('http://john-dugan.com/wp-content/themes/v2b/img/build/html5-logo.svg')"></div>
-                    <div ng:if="info.features.browser.name == 'MS IE'" class="clip-img" style="background-image: url('http://html5readiness.com/assets/HTML5_Logo.svg')"></div>
+                    <div ng:if="info.about.browser.name != 'Internet Explorer'" class="clip-img" style="background-image: url('http://john-dugan.com/wp-content/themes/v2b/img/build/html5-logo.svg')"></div>
+                    <div ng:if="info.about.browser.name == 'Internet Explorer'" class="clip-img" style="background-image: url('http://html5readiness.com/assets/HTML5_Logo.svg')"></div>
                 </div>
                 <div class="app-info-info">
                     <h5>
@@ -288,11 +316,11 @@
                         <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
                         <span>CSS out of date. Styling might be broken.</span>
                     </p>
-                    <p ng:if="info.cssExist.boostrap2" class="text-warning">
+                    <p ng:if="info.css.boostrap2" class="text-warning">
                         <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
                         <span>Bootstrap 2 is depricated. Upgrade to 3.x.</span>
                     </p>
-                    <p ng:if="info.cssExist.boostrap3" class="text-success">
+                    <p ng:if="info.css.boostrap3" class="text-success">
                         <i class="glyphicon glyphicon-ok glow-green"></i>
                         <span>Bootstrap and/or UI componets found.</span>
                     </p>

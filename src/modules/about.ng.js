@@ -34,7 +34,7 @@ angular.module('myApp.about', [
 
     }])
 
-    .controller('AboutInfoController', ['$scope', '$location', function ($scope, $location) {
+    .controller('AboutInfoController', ['$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
 
         function css(a) {
             var sheets = document.styleSheets, o = [];
@@ -64,22 +64,17 @@ angular.module('myApp.about', [
             return null;
         }
 
-        try {
-            // Define a function to detect the capabilities
-            $scope.detectBrowserInfo = function () {
-                var info = {
-                    versions: {
-                        js: null,
-                        html: null,
-                        css: null,
-                        jqry: null,
-                    },
-                    detects: {},
-                    cssExist: {},
-                    codeName: navigator.appCodeName,
-                    userAgent: navigator.userAgent,
-                };
+        // Define a function to detect the capabilities
+        $scope.detectBrowserInfo = function () {
+            var info = {
+                versions: {},
+                detects: {},
+                css: {},
+                codeName: navigator.appCodeName,
+                userAgent: navigator.userAgent,
+            };
 
+            try {
                 // Get IE version (if defined)
                 if (!!window.ActiveXObject) {
                     info.versions.ie = 10;
@@ -123,18 +118,19 @@ angular.module('myApp.about', [
                 info.versions.chromium = getVersionInfo('chromium');
 
                 // Check for CSS extensions
-                info.cssExist.boostrap2 = selectorExists('hero-unit');
-                info.cssExist.boostrap3 = selectorExists('jumbotron');
+                info.css.boostrap2 = selectorExists('hero-unit');
+                info.css.boostrap3 = selectorExists('jumbotron');
 
                 // Detect selected features and availability
-                info.features = {
-                    hdd: { type: null },
-                    os: { type: null },
+                info.about = {
+                    protocol: $location.$$protocol,
                     browser: {
                     },
                     server: {
                         url: $location.$$absUrl,
                     },
+                    os: {},
+                    hdd: { type: null },
                 };
 
                 // Detect the operating system
@@ -147,73 +143,93 @@ angular.module('myApp.about', [
                     if (appVer.indexOf("Linux") != -1) osName = 'Linux';
                     //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
                 }
-                info.features.os.name = osName;
-
-                try {
-                    // Send a loaded package to the server to inspect
-                    /*
-                    (function () {
-                        var p = [], w = window, d = document, e = f = 0; p.push('ua=' + encodeURIComponent(navigator.userAgent)); e |= w.ActiveXObject ? 1 : 0; e |= w.opera ? 2 : 0; e |= w.chrome ? 4 : 0;
-                        e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0; e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
-                        e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0; p.push('e=' + e); f |= 'sandbox' in d.createElement('iframe') ? 1 : 0; f |= 'WebSocket' in w ? 2 : 0;
-                        f |= w.Worker ? 4 : 0; f |= w.applicationCache ? 8 : 0; f |= w.history && history.pushState ? 16 : 0; f |= d.documentElement.webkitRequestFullScreen ? 32 : 0; f |= 'FileReader' in w ? 64 : 0;
-                        p.push('f=' + f); p.push('r=' + Math.random().toString(36).substring(7)); p.push('w=' + screen.width); p.push('h=' + screen.height); var s = d.createElement('script');
-                        s.src = 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&'); d.getElementsByTagName('head')[0].appendChild(s);
-                    })();
-                    */
-                    // Package sent...
-                    //console.log(WhichBrowser);
-
-                    // Set browser name to IE (if defined)
-                    if (navigator.appName == 'Microsoft Internet Explorer') {
-                        info.features.browser.name = 'MS IE';
-                    }
-
-                } catch (ex) {
-                    // Browser detection failed
-                    console.warn('Could not detect browser feature set...');
-                    info.features.browser.lastError = ex.message;
-                }
-
-                // Check for general header and body scripts
-                var scripts = [];
-                $("script").each(function () {
-                    var src = $(this).attr("src");
-                    if (src) scripts.push(src);
-                });
-
-                // Check for known types
-                scripts.forEach(function (src) {
-                    if (/(.*)(less.*js)(.*)/.test(src)) {
-                        info.detects.less = true;
-                    }
-                    if (/(.*)(bootstrap)(.*)/.test(src)) {
-                        info.detects.bootstrap = true;
-                    }
-                    if (/(.*)(angular\-animate)(.*)/.test(src)) {
-                        info.detects.ngAnimate = true;
-                    }
-                    if (/(.*)(angular\-ui\-router)(.*)/.test(src)) {
-                        info.detects.ngUiRouter = true;
-                    }
-                    if (/(.*)(angular\-ui\-utils)(.*)/.test(src)) {
-                        info.detects.ngUiUtils = true;
-                    }
-                    if (/(.*)(angular\-ui\-bootstrap)(.*)/.test(src)) {
-                        info.detects.ngUiBootstrap = true;
-                    }
-                });
-
+                info.about.os.name = osName;
 
                 // Check for jQuery
                 info.detects.jqry = typeof jQuery !== 'undefined';
 
-                return info;
+                // Check for general header and body scripts
+                $("script").each(function () {
+                    var src = $(this).attr("src");
+                    if (src) {
+                        // Fast check on known script names
+                        info.detects.less |= /(.*)(less.*js)(.*)/.test(src);
+                        info.detects.bootstrap |= /(.*)(bootstrap)(.*)/.test(src);
+                        info.detects.ngAnimate |= /(.*)(angular\-animate)(.*)/.test(src);
+                        info.detects.ngUiRouter |= /(.*)(angular\-ui\-router)(.*)/.test(src);
+                        info.detects.ngUiUtils |= /(.*)(angular\-ui\-utils)(.*)/.test(src);
+                        info.detects.ngUiBootstrap |= /(.*)(angular\-ui\-bootstrap)(.*)/.test(src);
+                    }
+                });
+
+                // Get the client browser details (build a url string)
+                var detectUrl = (function () {
+                    var p = [], w = window, d = document, e = 0, f = 0; p.push('ua=' + encodeURIComponent(navigator.userAgent)); e |= w.ActiveXObject ? 1 : 0; e |= w.opera ? 2 : 0; e |= w.chrome ? 4 : 0;
+                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0; e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
+                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0; p.push('e=' + e); f |= 'sandbox' in d.createElement('iframe') ? 1 : 0; f |= 'WebSocket' in w ? 2 : 0;
+                    f |= w.Worker ? 4 : 0; f |= w.applicationCache ? 8 : 0; f |= w.history && history.pushState ? 16 : 0; f |= d.documentElement.webkitRequestFullScreen ? 32 : 0; f |= 'FileReader' in w ? 64 : 0;
+                    p.push('f=' + f); p.push('r=' + Math.random().toString(36).substring(7)); p.push('w=' + screen.width); p.push('h=' + screen.height); var s = d.createElement('script');
+                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
+                })();
+
+                // Send a loaded package to a server to detect more features
+                $.getScript(detectUrl)
+                    .done(function (script, textStatus) {
+                        $rootScope.$applyAsync(function () {
+                            // Browser info and details loaded
+                            var browserInfo = new WhichBrowser();
+                            angular.extend(info.about, browserInfo);
+                        });
+                    })
+                    .fail(function (jqxhr, settings, exception) {
+                        console.error(exception);
+                    });
+
+                // Set browser name to IE (if defined)
+                if (navigator.appName == 'Microsoft Internet Explorer') {
+                    info.about.browser.name = 'Internet Explorer';
+                }
+
+                // Check if the browser supports web db's
+                var webDB = info.about.webdb = {
+                    db: null,
+                    version: '1',
+                    active: null,
+                    size: 5 * 1024 * 1024, // 5MB max
+                    test: function (name, desc, dbVer, dbSize) {
+                        try {
+                            // Try and open a web db
+                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
+                            webDB.onSuccess(null, null);
+                        } catch (ex) {
+                            // Nope, something went wrong
+                            webDB.onError(null, null);
+                        }
+                    },
+                    onSuccess: function (tx, r) {
+                        console.warn(' - [ WebDB ] Connected: ' + JSON.stringify(r));
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = true;
+                            webDB.used = JSON.stringify(webDB.db).length;
+                        });
+                    },
+                    onError: function (tx, e) {
+                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = false;
+                        });
+                    },
+                };
+                info.about.webdb.test();
+
+            } catch (ex) {
+                console.error(ex);
             }
 
-            // Define the state
-            $scope.info = $scope.detectBrowserInfo();
-        } catch (ex) {
-            console.error(ex);
+            // Return the preliminary info
+            return info;
         }
+
+        // Define the state
+        $scope.info = $scope.detectBrowserInfo();
     }]);

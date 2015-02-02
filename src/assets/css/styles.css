@@ -134,6 +134,16 @@
   background-size: auto 86px;
   background-position: center center;
 }
+#myApp .info-overview .panel-icon-lg .panel-icon-overlay {
+  right: 0;
+  bottom: 0;
+  width: 48px;
+  height: 48px;
+  position: absolute;
+  background-repeat: no-repeat;
+  background-size: auto 48px;
+  background-position: top center;
+}
 #myApp .info-overview .panel-icon-lg .panel-icon-inset {
   width: 40px;
   height: 40px;
@@ -145,19 +155,29 @@
   background-size: auto 40px;
   background-position: center center;
 }
-#myApp .info-overview .panel-icon-lg .panel-icon-overlay {
-  right: 0;
+#myApp .info-overview .panel-icon-lg .panel-icon-inset-bl {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  left: 24px;
   bottom: 0;
-  width: 48px;
-  height: 48px;
   position: absolute;
   background-repeat: no-repeat;
-  background-size: auto 48px;
-  background-position: top center;
+  background-size: auto 40px;
+  background-position: center center;
+  width: 64px;
+  height: 64px;
+  left: 10px;
+  bottom: 10px;
+  background-size: auto 64px;
 }
 #myApp .info-overview .panel-label {
   margin: 6px auto;
   text-align: center;
+  text-wrap: avoid;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 #myApp .info-overview .panel-mid {
   text-align: center;

@@ -158,18 +158,6 @@
                 background-position: center center;
             }
 
-            .panel-icon-inset {
-                width: 40px;
-                height: 40px;
-                margin: 0;
-                left:24px;
-                bottom:0;
-                position: absolute;
-                background-repeat: no-repeat;
-                background-size: auto 40px;
-                background-position: center center;
-            }
-
             .panel-icon-overlay {
                 right: 0;
                 bottom: 0;
@@ -180,11 +168,36 @@
                 background-size: auto 48px;
                 background-position: top center;
             }
+
+            .panel-icon-inset {
+                width: 40px;
+                height: 40px;
+                margin: 0;
+                left: 24px;
+                bottom: 0;
+                position: absolute;
+                background-repeat: no-repeat;
+                background-size: auto 40px;
+                background-position: center center;
+            }
+
+            .panel-icon-inset-bl {
+                .panel-icon-inset;
+                width: 64px;
+                height: 64px;
+                left: 10px;
+                bottom: 10px;
+                background-size: auto 64px;
+            }
         }
 
         .panel-label {
             margin: 6px auto;
             text-align: center;
+            text-wrap: avoid;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
 
         .panel-left {
