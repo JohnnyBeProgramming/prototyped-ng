@@ -68,32 +68,6 @@
             list-style: none;
             display: inline-block;
         }
-
-        .top-hint {
-            text-align: center;
-        }
-
-            .top-hint .tab {
-                top: 0;
-                width: 320px;
-                height: 24px;
-                padding: 2px 6px;
-                margin-left: -160px;
-                z-index: 4000;
-                text-wrap: avoid;
-                border-top: none;
-                position: absolute;
-                border-radius: 0 0 10px 10px;
-                overflow: hidden;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-            }
-
-                .top-hint .tab a {
-                    color: black;
-                }
-
-        }
     </style>
     <link href="assets/favicon.png" rel="shortcut icon">
     <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" />
@@ -145,7 +119,7 @@
 
                     // Bootstrap the angular loading app (pre-loading)
                     angular.module('myLoader', ['angular-loading-bar', 'ngAnimate'])
-
+                        
                         .run(['$rootScope', function ($rootScope) {
 
                             // Add the loader config to the root scope
@@ -236,14 +210,13 @@
 </head>
 <body>
     <!--[if lt IE 10]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a target="_self" href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p><![endif]-->
-
     <div id="myApp" class="docked">
         <div class="navbar navbar-default navbar-fixed-top">
             <div class="navbar-inner">
                 <ul class="nav navbar-nav navheading ng-cloak">
                     <li class="dock-fill">
-                        <a app:clean href="" class="navbar-brand" role="button">
-                            <i class="fa fa-cubes" ng:class="status.getColor()"></i> <span>Prototyped</span>
+                        <a href="/" class="navbar-brand" role="button">
+                            <i class="fa fa-cubes" ng:class="status.getColor()"></i> <span>Debugging</span>
                         </a>
                     </li>
                     <li class="dock-tight ng-cloak" ng:show="state.current.name != 'home'">
@@ -309,13 +282,14 @@
                 Client Version: <span app:version><em>Loading...</em></span> |
             </span>
             <span ui:view="foot">
-                Powered by <a href="https://angularjs.org/">AngularJS</a> &amp; <a href="https://github.com/rogerwang/node-webkit">Node Webkit</a>
+                <b class="glow-orange">Debug Mode is active.</b>
             </span>
             <span ng:if="startAt" class="ng-cloak">| Started {{ startAt | fromNow }}</span>
         </div>
     </div>
 
-    <div id="myLoader" class="ng-cloak" ng:show="false">
+    <div id="myLoader" class="ng-cloak" ng:show="true">
+        <div class="alert alert-warning"><i class="fa fa-warning"></i> <b>Please Node:</b> You are now in <em class="glow-orange">debug mode</em>...</div>
         <div class="active progress progress-striped">
             <div ng:init="progC = 0.15" role="progressbar" aria-valuenow="{{ progC }}" aria-valuemin="0" aria-valuemax="100"
                  class="progress-bar" ng-class="'progress-bar-warning'"

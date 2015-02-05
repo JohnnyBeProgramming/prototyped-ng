@@ -20,14 +20,19 @@
                 </div>
                 <div class="col-md-6 panel-mid">
                     <h5>
-                        Current Status <small>
+                        <span ng-if="info.about.server.active == undefined">Checking...</span>
+                        <span ng-if="info.about.server.active != undefined">Current Status</span>
+                        <small>
                             <span ng-if="!info.about.server">
+                                <em class="text-muted">checking...</em>
+                            </span>
+                            <span ng-if="info.about.server.active === false">
                                 <b class="text-danger glow-red">Offline</b>, faulty or disconnected.
                             </span>
-                            <span ng-if="info.about.server && !appNode.active">
+                            <span ng-if="info.about.server.active && appNode.active">
                                 Connected via <b class="text-warning glow-orange">web client</b>.
                             </span>
-                            <span ng-if="info.about.server && appNode.active">
+                            <span ng-if="info.about.server.active && !appNode.active">
                                 <b class="text-success glow-green">Online</b> and fully operational.
                             </span>
                         </small>
@@ -37,11 +42,8 @@
                     <h5>
                         <i class="fa fa-gear"></i>
                         Web Server <small>
-                            <span ng-if="true" class="ng-cloak">
-                                <b ng-class="{ 'text-success glow-green': info.about.server, 'text-danger glow-red': !info.about.server }" app:version="server" default-text="{{ info.about.server ? 'Online' : 'Offline' }}">requesting...</b>
-                            </span>
-                            <span ng-if="false">
-                                <b class="text-danger glow-red"><i class="glyphicon glyphicon-remove"></i> Offline</b>
+                            <span class="ng-cloak">
+                                <b ng-class="{ 'text-success glow-green': info.about.server.active, 'text-danger glow-red': info.about.server.active == false }" app:version="server" default-text="{{ info.about.server.active ? (info.about.server.active ? 'Online' : 'Offline') : 'n.a.' }}">requesting...</b>
                             </span>
                         </small>
                     </h5>
@@ -68,14 +70,16 @@
                             <div ng:if="info.about.os.name == 'Linux'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
 
                         </a>
-                        <p class="panel-label" ng:if="info.about.os.name"
-                           title="{{ info.about.os.name }} @ {{ info.about.os.version.alias }}">
-                            Host System: <b>{{ info.about.os.name }}</b>
-                            <span ng:if="info.about.os.version">@ {{ info.about.os.version.alias }}</span>
+                        <p class="panel-label" title="{{ info.about.os.name }} @ {{ info.about.os.version.alias }}">
+                            Host System:
+                            <b ng:if="info.about.os.name">{{ info.about.os.name }}</b>
+                            <em ng:if="!info.about.os.name">checking...</em>
+                            <span ng:if="info.about.os.version.alias">@ {{ info.about.os.version.alias }}</span>
                         </p>
-                        <p class="panel-label" ng:if="info.about.browser.name"
-                           title="{{ info.about.browser.name }} @ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? '.' + info.about.browser.version.build : '' }}">
-                            User Agent: <b>{{ info.about.browser.name }}</b>
+                        <p class="panel-label" title="{{ info.about.browser.name }} @ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? '.' + info.about.browser.version.build : '' }}">
+                            User Agent:
+                            <b ng:if="info.about.browser.name">{{ info.about.browser.name }}</b>
+                            <em ng:if="!info.about.browser.name">detecting...</em>
                             <span ng:if="info.about.browser.version">@ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? '.' + info.about.browser.version.build : '' }}</span>
                         </p>
                     </div>
@@ -114,8 +118,8 @@
                         Server Url: <a target="_blank" ng-class="{ 'glow-green':appNode.active || info.about.protocol == 'https', 'glow-blue':!appNode.active && info.about.protocol == 'http', 'glow-red':info.about.protocol == 'file' }" ng-href="{{ info.about.server.url }}">{{ info.about.server.url }}</a>
                     </p>
                     <p>
-                        <a ng-click="tabOverviewMain = 0">Summary</a> |
-                        <a ng-click="tabOverviewMain = 1">Details</a>
+                        <a href="" ng-click="tabOverviewMain = 0">Summary</a> |
+                        <a href="" ng-click="tabOverviewMain = 1">Details</a> 
                     </p>
                     <div>
                         <div ng-switch-default>
@@ -133,13 +137,17 @@
                             <pre>WebDB: {{ info.about.webdb }}</pre>
                             <pre>HDD: {{ info.about.hdd }}</pre>
                         </div>
+                        <div ng-switch-when="2">
+                            <p class="glow-orange" to-html="[ info.about.hdd, info.about.webdb ]"></p>
+                            <p class="glow-blue">toXml:'pre' - {{ [ info.about.hdd, info.about.webdb ] | toXml:'pre'  }}</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3 panel-right">
-                    <div ng:if="!info.about.server">
+                    <div ng:if="info.about.server.local">
                         <a class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/1389/g5_system/128/network_file_server.png)"></a>
                     </div>
-                    <div ng:if="info.about.server">
+                    <div ng:if="!info.about.server.local" ng-class="{ 'inactive-gray': true || info.versions.jqry }">
                         <a class="panel-icon-lg" style="background-image: url(http://png-1.findicons.com/files/icons/719/crystal_clear_actions/128/server_256.png)">
 
                             <div ng:if="info.about.server.type == 'iis'" class="panel-icon-inset" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/5/5f/Windows_logo_-_2012.svg)"></div>
@@ -152,7 +160,7 @@
                             <div ng:if="info.about.server.name == 'UNIX'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
                             <div ng:if="info.about.server.name == 'Linux'" class="panel-icon-overlay" style="background-image: url(http://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)"></div>
                         </a>
-                        <div ng:if="info.about.sql" class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)"></div>                        
+                        <div ng:if="info.about.sql" class="panel-icon-lg" style="background-image: url(http://png.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)"></div>
                     </div>
                 </div>
             </div>
@@ -177,6 +185,9 @@
                             <span ng:if="!info.versions.ng"><em>not found</em></span>
                         </small>
                     </h5>
+                    <p ng:if="!info.versions.ng" class="text-muted">
+                        <i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target="_blank" href="https://angularjs.org//">angularjs.org</a> for more info.
+                    </p>
                     <p ng:if="info.detects.ngUiUtils" class="text-success">
                         <i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Utils found.
                     </p>
@@ -297,7 +308,7 @@
                     </p>
                 </div>
             </div>
-            <div class="app-info-aside" ng-class="{ 'info-disabled': info.versions.css <= '3.0' }">
+            <div class="app-info-aside" ng-class="{ 'info-disabled': !info.versions.css }">
                 <div class="app-info-icon">
                     <div ng:if="true" class="clip-img" style="background-image: url('http://john-dugan.com/wp-content/themes/v2b/img/build/css3-logo.svg')"></div>
                 </div>

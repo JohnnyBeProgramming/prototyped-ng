@@ -127,6 +127,7 @@ angular.module('myApp.about', [
                     browser: {
                     },
                     server: {
+                        active: undefined,
                         url: $location.$$absUrl,
                     },
                     os: {},
@@ -207,7 +208,15 @@ angular.module('myApp.about', [
                         }
                     },
                     onSuccess: function (tx, r) {
-                        console.warn(' - [ WebDB ] Connected: ' + JSON.stringify(r));
+                        if (tx) {
+                            if (r) {
+                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
+                            }
+                            if (tx)
+                            {
+                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
+                            }
+                        }
                         $rootScope.$applyAsync(function () {
                             webDB.active = true;
                             webDB.used = JSON.stringify(webDB.db).length;

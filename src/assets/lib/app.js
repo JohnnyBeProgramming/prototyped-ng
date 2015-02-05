@@ -2,20 +2,23 @@
 
 // Declare app level module which depends on views, and components
 angular.module('myApp', [
+  // Vendor modules...
   'ngRoute',
   'ngAnimate',
   'ui.router',
   'ui.utils',
   'ui.bootstrap',
-  //'angular-loading-bar',
+  'angular-loading-bar',
   'angularMoment',
+
+  // My modules...
   'myApp.views',
   'myApp.default',
   'myApp.about',
 ])
 
     .constant('appInfo', {
-        version: '0.0.0.1',
+        version: '1.0.0.0',
     })
 
     .constant('appNode', {
@@ -112,19 +115,120 @@ angular.module('myApp', [
         ],
     })
 
-    .config(['$locationProvider', '$routeProvider', '$stateProvider', '$urlRouterProvider', 'appInfo', 'appNode', function ($locationProvider, $routeProvider, $stateProvider, $urlRouterProvider, appInfo, appNode) {
-        // Disable hastags
-        $locationProvider.html5Mode(appNode.html5);
+    .config(['$locationProvider', 'appNode', function ($locationProvider, appNode) {
+        // Try and figure out router mode from the initial url
+        var pageLocation = typeof window !== 'undefined' ? window.location.href : '';
+        if (pageLocation.indexOf('#') >= 0) {
+            var routePrefix = '';
+            var routeProxies = [
+                '/!test!',
+                '/!debug!',
+            ];
 
-        // Set up default routes
-        $routeProvider
-            .otherwise({
-                //templateUrl: 'error/404',
-                templateUrl: '/',
+            // Check for specific routing prefixes
+            routeProxies.forEach(function (name) {
+                if (pageLocation.indexOf('#' + name) >= 0) {
+                    routePrefix = name;
+                    return;
+                }
             });
 
+            // Override the default behaviour (only if required)
+            if (routePrefix) {
+                $locationProvider.hashPrefix(routePrefix);
+            }
+            appNode.proxy = routePrefix;
+            appNode.html5 = !routePrefix;
+
+            // Show a hint message to the  user
+            var proxyName = appNode.proxy;
+            if (proxyName) {
+                var checkName = /\/!(\w+)!/.exec(proxyName);
+                if (checkName) proxyName = checkName[1];
+
+                console.debug(' - Proxy Active: ' + proxyName);
+
+                var text = '<b>Warning:</b> Proxy router is active: <b>' + proxyName + '</b>.';
+                var icon = '<i class="glyphicon glyphicon-warning-sign"></i> ';
+                var link = '<a href="./" class="pull-right glyphicon glyphicon-remove" style="text-decoration: none; padding: 3px;"></a>';
+                var span = '<span class="tab alert alert-warning">' + link + icon + text + '</span>';
+                var div = $(document.body).append('<div class="top-hint">' + span + '</div>');
+            }
+        }
+
+        // Configure the pretty urls for HTML5 mode
+        $locationProvider.html5Mode(appNode.html5);
+
+    }])
+
+    .config(['cfpLoadingBarProvider', function (loader) {
+        loader.includeSpinner = false;
+        loader.includeBar = true;
+    }])
+
+    // Define Jade interceptors...
+    .factory('jadeRequestInterceptor', ['$q', function ($q) {
+        var requestInterceptor = {
+            request: function (config) {
+                var deferred = $q.defer();
+                /*
+                someAsyncService.doAsyncOperation().then(function() {
+                    // Asynchronous operation succeeded, modify config accordingly
+                    ...
+                    deferred.resolve(config);
+                }, function() {
+                    // Asynchronous operation failed, modify config accordingly
+                    ...
+                    deferred.resolve(config);
+                });
+                */
+                // Temp, just allow
+                console.info(config);
+                deferred.resolve(config);
+
+                return deferred.promise;
+            }
+        };
+        return requestInterceptor;
+    }])
+    .factory('jadeResponseInterceptor', ['$q', function ($q) {
+        var responseInterceptor = {
+            response: function (response) {
+                var deferred = $q.defer();
+                /*
+                someAsyncService.doAsyncOperation().then(function() {
+                    // Asynchronous operation succeeded, modify response accordingly
+                    ...
+                    deferred.resolve(response);
+                }, function() {
+                    // Asynchronous operation failed, modify response accordingly
+                    ...
+                    deferred.resolve(response);
+                });
+                */
+                console.debug(config);
+                deferred.resolve(config);
+
+                return deferred.promise;
+            }
+        };
+
+        return responseInterceptor;
+    }])
+    .config(['$httpProvider', function ($httpProvider) {
+        //$httpProvider.interceptors.push('jadeRequestInterceptor');
+        //$httpProvider.interceptors.push('jadeResponseInterceptor');
+    }])
+
+    .config(['$routeProvider', '$stateProvider', '$urlRouterProvider', function ($routeProvider, $stateProvider, $urlRouterProvider) {
+        // Set up default routes
+        $routeProvider.otherwise({
+            //templateUrl: '/',
+            templateUrl: 'error/404',
+        });
         $urlRouterProvider
             .when('', '/')
+        //.otherwise('error/404')
 
         // Now set up the states
         $stateProvider
@@ -385,6 +489,81 @@ angular.module('myApp', [
         };
     })
 
+    .directive('toHtml', ['$sce', '$filter', function ($sce, $filter) {
+        function getHtml(obj) {
+            try {
+                return 'toHtml:\'pre\' - ' + $filter('toXml')(obj, 'pre');
+            } catch (ex) {
+                return 'toHtml:error - ' + ex.message;
+            }
+        }
+        return {
+            restrict: 'EA',
+            scope: {
+                toHtml: '&',
+            },
+            transclude: false,
+            controller: function ($scope, $sce) {
+                var val = $scope.toHtml();
+                var html = getHtml(val);
+                $scope.myHtml = $sce.trustAsHtml(html);
+            },
+            template: '<div ng-bind-html="myHtml"></div>'
+        }
+    }])
+    .filter('toXml', [function () { // My custom filter
+        function toXmlString(name, input, expanded, childExpanded) {
+            var val = '';
+            var sep = '';
+            var attr = '';
+            if ($.isArray(input)) {
+                if (expanded) {
+                    for (var i = 0; i < input.length; i++) {
+                        val += toXmlString(null, input[i], childExpanded);
+                    }
+                } else {
+                    name = 'Array';
+                    attr += sep + ' length="' + input.length + '"';
+                    val = 'Array[' + input.length + ']';
+                }
+            } else if ($.isPlainObject(input)) {
+                if (expanded) {
+                    for (var id in input) {
+                        if (input.hasOwnProperty(id)) {
+                            var child = input[id];
+                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                val = toXmlString(id, child, childExpanded);
+                            } else {
+                                sep = ' ';
+                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                            }
+                        }
+                    }
+                } else {
+                    name = 'Object';
+                    for (var id in input) {
+                        if (input.hasOwnProperty(id)) {
+                            var child = input[id];
+                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                val += toXmlString(id, child, childExpanded);
+                            } else {
+                                sep = ' ';
+                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                            }
+                        }
+                    }
+                    //val = 'Object[ ' + JSON.stringify(input) + ' ]';
+                }
+            }
+            if (name) {
+                val = '<' + name + '' + attr + '>' + val + '</' + name + '>';
+            }
+            return val;
+        }
+        return function (input, rootName) {
+            return toXmlString(rootName || 'xml', input, true);
+        }
+    }])
 
     .run(['$rootScope', '$state', '$filter', 'appInfo', 'appNode', 'appStatus', 'appMenu', function ($rootScope, $state, $filter, appInfo, appNode, appStatus, appMenu) {
 
