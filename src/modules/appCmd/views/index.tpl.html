@@ -76,7 +76,7 @@
                         </li>
                         <li ng-repeat="item in appCmd.target.list" style="list-style: none; padding: 0; margin: 0;">
                             <i class="glyphicon" ng-class="appCmd.utils.icon(path, item)"></i>
-                            <a href="">{{item}}</a>
+                            <a href="" ng-click="appCmd.utils.call(path, item)">{{item}}</a>
                         </li>
                     </ul>
                 </li>

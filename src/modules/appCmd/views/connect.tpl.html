@@ -1,0 +1,36 @@
+﻿<div class="container">
+    <h4>
+        Prototyping SQL Server
+        <small ng:if="!sqlCmd.path">Explore local Data Sources to continue...</small>
+        <small ng:if="sqlCmd.path">{{ sqlCmd.path }}</small>
+    </h4>
+    <div ng:cloak>
+        <div ng:if="sqlCmd.busy">
+            <em>Loading...</em>
+        </div>
+        <div ng:if="!sqlCmd.busy">
+            <div ng:if="!appNode.active" class="alert alert-warning">
+                <i class="fa fa-warning"></i> <b>Not Available:</b>
+                Application requires a NodeJS (or CommonJS) runtime. Web browsers do not have access to these advanced features...
+            </div>
+            <div ng:if="sqlCmd.active && !sqlCmd.error" class="alert alert-success">
+                <i class="fa fa-share-square"></i> <b>Connected!</b>
+                You are now conncted to the local SQL Server Database Engine...
+            </div>
+            <div ng:if="sqlCmd.error" class="alert alert-danger">
+                <i class="fa fa-share-square"></i> <b>Error:</b>
+                {{ sqlCmd.error.message }}
+            </div>
+            <div ng:if="false" class="alert alert-info">
+                <i class="fa fa-share-square"></i> <b>Info:</b>
+            </div>
+        </div>
+        <div ng:if="sqlCmd.result">
+            <h5>Results <small>...</small></h5>
+            <p>
+                ...
+            </p>
+            <pre>{{ sqlCmd.result }}</pre>
+        </div>
+    </div>
+</div>
