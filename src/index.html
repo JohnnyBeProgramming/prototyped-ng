@@ -117,7 +117,6 @@
             ],
             libs: [
                 // Define the required libraries
-                'assets/lib/version.js',
                 'assets/lib/app.templates.js',
                 'assets/lib/app.js',
             ],
@@ -145,7 +144,6 @@
 
                     // Bootstrap the angular loading app (pre-loading)
                     angular.module('myLoader', ['angular-loading-bar', 'ngAnimate'])
-
                         .run(['$rootScope', function ($rootScope) {
 
                             // Add the loader config to the root scope
@@ -217,6 +215,7 @@
                 appConfig.libs = [
                     'modules/default.ng.js',
                     'modules/about.ng.js',
+                    'modules/appCmd/module.ng.js',
                 ].concat(appConfig.libs);
 
                 // Clear waiting flag
@@ -252,12 +251,12 @@
                         </a>
                     </li>
                 </ul>
-                <span ui:view="menu" class="ng-cloak">
+                <span ui:view="menu" class="ng-cloak hidden-xs">
                     <!-- Begin: Default menu toolbar -->
                     <ul class="nav navbar-nav" app:menu="appMenu.items"></ul>
                     <!-- End: Default menu toolbar -->
                 </span>
-                <ul class="nav navbar-nav pull-right toolbar-ctrls">
+                <ul class="nav navbar-nav pull-right toolbar-ctrls hidden-xs">
                     <li class="ng-cloak"><a app:clean href=""><i class="glyphicon glyphicon-refresh"></i></a></li>
                     <li class="ng-cloak"><a app:debug href=""><i class="glyphicon glyphicon-wrench"></i></a></li>
                     <li class="ng-cloak"><a app:kiosk href=""><i class="glyphicon glyphicon-fullscreen"></i></a></li>

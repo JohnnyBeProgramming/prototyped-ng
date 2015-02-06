@@ -56,10 +56,13 @@ var httpServer = {
         fs.exists(filename, function (exists) {
 
             if (!exists) {
+                /*
                 response.writeHead(404, { "Content-Type": "text/plain" });
                 response.write("404 Not Found\n");
                 response.end();
                 return;
+                */
+                filename = path.join(httpServer.path, 'index.html');
             }
 
             if (fs.statSync(filename).isDirectory()) {

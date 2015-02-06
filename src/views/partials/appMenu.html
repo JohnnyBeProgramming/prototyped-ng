@@ -1,6 +1,6 @@
 ﻿<li ui:sref-active="open" ng-if="item.shown !== false" ng:repeat="item in list">
     <a ng:if="item.value && (item.value | isNotArray)" app:nav-link ui:sref="{{item.value}}">
-        <i ng-if="item.icon" class="{{item.icon}}"></i> {{item.label}}
+        <i ng-if="item.icon" class="{{item.icon}}"></i>&nbsp; {{item.label}}
     </a>
     <a ng:if="item.value | isArray" class="dropdown-toggle" href="/" data-toggle="dropdown" role="button" aria-expanded="false">
         <i class="{{item.icon}}"></i> {{item.label}} <span class="caret"></span>

@@ -23,7 +23,7 @@ angular.module('myApp.about', [
                   },
               }
           })
-          .state('about.contact', {
+          .state('about.online', {
               url: '^/contact',
               views: {
                   'menu@': { templateUrl: 'views/about/menu.html' },

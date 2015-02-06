@@ -238,6 +238,13 @@
             flex-shrink: 1;
             text-align: left;
             vertical-align: top;
+
+            p {
+                text-wrap: avoid;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
         }
 
         &.info-disabled {

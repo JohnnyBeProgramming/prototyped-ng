@@ -15,6 +15,7 @@ angular.module('myApp', [
   'myApp.views',
   'myApp.default',
   'myApp.about',
+  'myApp.appCmd',
 ])
 
     .constant('appInfo', {
@@ -97,19 +98,22 @@ angular.module('myApp', [
         },
         items: [
             {
-                shown: false,
-                label: 'Explore',
+                shown: true,
+                label: 'Discover Local Features',
                 icon: 'fa fa-share-alt',
+                value: 'appCmd.discover',
+                /*
                 value: [
-                    { label: 'Sample A', icon: 'fa fa-phone', value: 'home', },
-                    { label: 'Sample B', icon: 'fa fa-backward', value: 'about.info', },
+                    { label: 'Discovery', icon: 'fa fa-refresh', value: 'appCmd.discover', },
+                    { label: 'Connnect', icon: 'fa fa-gears', value: 'appCmd.connect', },
                     { divider: true },
-                    { label: 'Exit', icon: 'fa fa-shutdown', value: 'about', },
+                    { label: 'Clean & Exit', icon: 'fa fa-recycle', value: 'appCmd.clear', },
                 ],
+                */
             },
             {
-                label: 'About',
-                icon: 'fa fa-info',
+                label: 'About this app',
+                icon: 'fa fa-info-circle',
                 value: 'about.info',
             },
         ],
@@ -341,6 +345,16 @@ angular.module('myApp', [
         };
     }])
 
+    .directive('appMenu', ['$timeout', function ($location, $timeout) {
+        return {
+            restrict: 'A',
+            scope: {
+                list: '=appMenu'
+            },
+            transclude: false,
+            templateUrl: 'views/partials/appMenu.html'
+        };
+    }])
     .directive('appNavLink', ['$location', '$timeout', function ($location, $timeout) {
         var className = 'active';
 
@@ -375,25 +389,12 @@ angular.module('myApp', [
             $(elm).attr('href', href);
             $(elm).click(function () {
                 $timeout(function () {
-                    $('.' + className).removeClass(className);
                     linkCheckActive(scope, elm, attrs);
                 });
             });
             linkCheckActive(scope, elm, attrs);
         };
     }])
-
-    .directive('appMenu', ['$timeout', function ($location, $timeout) {
-        return {
-            restrict: 'A',
-            scope: {
-                list: '=appMenu'
-            },
-            transclude: false,
-            templateUrl: 'views/partials/appMenu.html'
-        };
-    }])
-
     .directive('appVersion', ['appInfo', 'appNode', function (appInfo, appNode) {
 
         function getVersionInfo(ident) {
@@ -562,6 +563,38 @@ angular.module('myApp', [
         }
         return function (input, rootName) {
             return toXmlString(rootName || 'xml', input, true);
+        }
+    }])
+
+    .directive('eatClickIf', ['$parse', '$rootScope', function ($parse, $rootScope) {
+        return {            
+            priority: 100, // this ensure eatClickIf be compiled before ngClick
+            restrict: 'A',
+            compile: function ($element, attr) {
+                var fn = $parse(attr.eatClickIf);
+                return {
+                    pre: function link(scope, element) {
+                        var eventName = 'click';
+                        element.on(eventName, function (event) {
+                            var callback = function () {
+                                if (fn(scope, { $event: event })) {
+                                    // prevents ng-click to be executed
+                                    event.stopImmediatePropagation();
+                                    // prevents href 
+                                    event.preventDefault();
+                                    return false;
+                                }
+                            };
+                            if ($rootScope.$$phase) {
+                                scope.$evalAsync(callback);
+                            } else {
+                                scope.$apply(callback);
+                            }
+                        });
+                    },
+                    post: function () { }
+                }
+            }
         }
     }])
 

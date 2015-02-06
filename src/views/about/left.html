@@ -1,8 +1,12 @@
 ﻿<ul class="list-group">
-    <li class="list-group-item" ui-sref-active="active">
-        <a ui:sref="about.info">About this application</a>
+    <li class="list-group-item" ui:sref-active="active">
+        <a app:nav-link ui:sref="about.info">
+            <i class="fa fa-info-circle"></i>&nbsp; About this app
+        </a>
     </li>
-    <li class="list-group-item" ui-sref-active="active">
-        <a ui:sref="about.contact">Contact us online</a>
+    <li class="list-group-item" ui:sref-active="active">
+        <a app:nav-link ui:sref="about.online">
+            <i class="fa fa-globe"></i>&nbsp; Visit us online
+        </a>
     </li>    
 </ul>
