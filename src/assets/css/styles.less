@@ -42,6 +42,15 @@
         -o-filter: alpha(opacity=50);
     }
 
+    .inactive-ctrl {
+        opacity: 0.65;
+        filter: alpha(opacity=65);
+        filter: grayscale(100%) opacity(0.65);
+        -webkit-filter: grayscale(100%) opacity(0.65);
+        -moz-filter: alpha(opacity=65);
+        -o-filter: alpha(opacity=65);
+    }
+
     .glow-green {
         color: #00b500;
         text-shadow: 0 0 2px #00b500;
@@ -211,6 +220,29 @@
         }
     }
 
+    .info-tabs {
+        .trim-top {
+            padding: 10px;
+            border-top: none;
+            min-height: 380px;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+        .tab-content {
+        }
+    }
+
+    .img-clipper {
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        margin: 3px auto;
+        text-align: center;
+        background-repeat: no-repeat;
+        background-size: auto 48px;
+        background-position: top center;
+    }
+
     .app-info-aside {
         display: flex;
         margin-bottom: 12px;
@@ -220,17 +252,6 @@
             flex-shrink: 0;
             flex-basis: 64px;
             vertical-align: top;
-
-            .clip-img {
-                width: 48px;
-                height: 48px;
-                padding: 0;
-                margin: 3px auto;
-                text-align: center;
-                background-repeat: no-repeat;
-                background-size: auto 48px;
-                background-position: top center;
-            }
         }
 
         .app-info-info {

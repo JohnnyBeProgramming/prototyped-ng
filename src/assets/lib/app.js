@@ -489,6 +489,36 @@ angular.module('myApp', [
             return result;
         };
     })
+    .filter('toBytes', function () {
+        return function (bytes, precision) {
+            if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) return '-';
+            if (typeof precision === 'undefined') precision = 1;
+            var units = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'],
+                number = Math.floor(Math.log(bytes) / Math.log(1024));
+            return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) + ' ' + units[number];
+        }
+    })
+    .filter('parseBytes', function () {
+        return function (bytesDesc, precision) {
+            var match = /(\d+) (\w+)/i.exec(bytesDesc);
+            if (match && (match.length > 2)) {
+                var bytes = match[1];
+                if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) return '[?]';
+                if (typeof precision === 'undefined') precision = 1;
+                var units = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'];
+                var number = Math.floor(Math.log(bytes) / Math.log(1024));
+                var pow = -1;
+                units.forEach(function (itm, i) {
+                    if (itm && itm.toLowerCase().indexOf(match[2].toLowerCase()) >= 0) pow = i;
+                });
+                if (pow > 0) {
+                    var ret = (bytes * Math.pow(1024, pow)).toFixed(precision);
+                    return ret;
+                }
+            }
+            return bytesDesc;
+        }
+    })
 
     .directive('toHtml', ['$sce', '$filter', function ($sce, $filter) {
         function getHtml(obj) {
@@ -567,7 +597,7 @@ angular.module('myApp', [
     }])
 
     .directive('eatClickIf', ['$parse', '$rootScope', function ($parse, $rootScope) {
-        return {            
+        return {
             priority: 100, // this ensure eatClickIf be compiled before ngClick
             restrict: 'A',
             compile: function ($element, attr) {
@@ -611,6 +641,16 @@ angular.module('myApp', [
         });
 
         // Hook extended function(s)
+        appStatus.getIcon = function () {
+            var match = /\/!(\w+)!/i.exec(appNode.proxy || '');
+            if (match && match.length > 1) {
+                switch (match[1]) {
+                    case 'test': return 'fa fa-life-ring';
+                    case 'debug': return 'fa fa-bug';
+                }
+            }
+            return 'fa-cubes';
+        }
         appStatus.getColor = function () {
             var logs = appStatus.logs;
             if ($filter('typeCount')(logs, 'error')) {
@@ -627,4 +667,6 @@ angular.module('myApp', [
             }
             return '';
         }
+
+
     }]);

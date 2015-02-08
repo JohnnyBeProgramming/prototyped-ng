@@ -242,7 +242,7 @@
                 <ul class="nav navbar-nav navheading ng-cloak">
                     <li class="dock-fill">
                         <a app:clean href="" class="navbar-brand" role="button">
-                            <i class="fa fa-cubes" ng:class="status.getColor()"></i> <span>Prototyped</span>
+                            <i class="fa" ng:class="status.getIcon() + ' ' + status.getColor()"></i> <span>Prototyped</span>
                         </a>
                     </li>
                     <li class="dock-tight ng-cloak" ng:show="state.current.name != 'home'">
@@ -295,13 +295,13 @@
         </div>
         <div class="footer">
             <span class="pull-left">
-                <label ng:show="status.logs | typeCount:'error'">
+                <label ng:show="status.logs | typeCount:'error'" class="ng-cloak">
                     <i class="glyphicon glyphicon-exclamation-sign glow-red"></i>
-                    <a href="" class="ng-cloak">Errors ({{ status.logs | typeCount:'error' }})</a>
+                    <a href="" >Errors ({{ status.logs | typeCount:'error' }})</a>
                 </label>
-                <label ng:show="status.logs | typeCount:'warn'" class="ng-cloak">
+                <label ng:show="status.logs | typeCount:'warn'">
                     <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
-                    <a href="">Warnings ({{ status.logs | typeCount:'warn' }})</a>
+                    <a href="" class="ng-cloak">Warnings ({{ status.logs | typeCount:'warn' }})</a>
                 </label>
             </span>
             <span ng:if="true" class="ng-cloak">

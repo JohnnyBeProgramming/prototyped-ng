@@ -36,6 +36,14 @@
   -moz-filter: alpha(opacity=50);
   -o-filter: alpha(opacity=50);
 }
+#myApp .inactive-ctrl {
+  opacity: 0.65;
+  filter: alpha(opacity=65);
+  filter: grayscale(100%) opacity(0.65);
+  -webkit-filter: grayscale(100%) opacity(0.65);
+  -moz-filter: alpha(opacity=65);
+  -o-filter: alpha(opacity=65);
+}
 #myApp .glow-green {
   color: #00b500;
   text-shadow: 0 0 2px #00b500;
@@ -182,6 +190,20 @@
 #myApp .info-overview .panel-mid {
   text-align: center;
 }
+#myApp .info-tabs .tab-content {
+  border: 1px solid silver;
+  border-top: none;
+}
+#myApp .img-clipper {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  margin: 3px auto;
+  text-align: center;
+  background-repeat: no-repeat;
+  background-size: auto 48px;
+  background-position: top center;
+}
 #myApp .app-info-aside {
   display: flex;
   margin-bottom: 12px;
@@ -192,21 +214,17 @@
   flex-basis: 64px;
   vertical-align: top;
 }
-#myApp .app-info-aside .app-info-icon .clip-img {
-  width: 48px;
-  height: 48px;
-  padding: 0;
-  margin: 3px auto;
-  text-align: center;
-  background-repeat: no-repeat;
-  background-size: auto 48px;
-  background-position: top center;
-}
 #myApp .app-info-aside .app-info-info {
   flex-grow: 1;
   flex-shrink: 1;
   text-align: left;
   vertical-align: top;
+}
+#myApp .app-info-aside .app-info-info p {
+  text-wrap: avoid;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 #myApp .app-info-aside.info-disabled .app-info-icon {
   opacity: 0.50;

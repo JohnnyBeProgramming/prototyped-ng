@@ -5,13 +5,13 @@
             Discover Local Features
         </a>        
     </li>
-    <li class="list-group-item" ng:if="sqlCmd" ui:sref-active="active" ng-class="{ 'disabled': !appNode.active }">
+    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appNode.active }">
         <a app:nav-link ui:sref="appCmd.connect" data:eat-click-if="!appNode.active">
             <i class="fa fa-gears"></i> Connect to Data Source
         </a>
     </li>
     <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appNode.active }">
-        <a app:nav-link ui:sref="appCmd.clear" data:eat-click-if="!appNode.active">
+        <a app:nav-link ui:sref="home" data:eat-click-if="!appNode.active">
             <i class="fa fa-recycle"></i> Clear Session and Exit
         </a>
     </li>

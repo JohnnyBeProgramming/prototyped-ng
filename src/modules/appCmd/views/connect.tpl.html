@@ -1,13 +1,32 @@
 ﻿<div class="container">
     <h4>
         Prototyping SQL Server
-        <small ng:if="!sqlCmd.path">Explore local Data Sources to continue...</small>
+        <small ng:if="!sqlCmd.path">Exploring locally available Data Sources...</small>
         <small ng:if="sqlCmd.path">{{ sqlCmd.path }}</small>
     </h4>
-    <div ng:cloak>
-        <div ng:if="sqlCmd.busy">
-            <em>Loading...</em>
+    <div ng:if="!sqlCmd.path">
+        <div ng:if="!sqlCmd.error" class="alert alert-warning">
+            <i class="glyphicon glyphicon-warning-sign"></i>
+            <b>Warning: </b> Path to SQLCMD.exe not specified. To continue, you will need to locate it manually.
         </div>
+        <div ng:if="sqlCmd.error" class="alert alert-danger">
+            <i class="fa fa-share-square"></i> <b>Error:</b>
+            {{ sqlCmd.error.message }}
+        </div>
+        <h5>
+            Specify path to SQLCMD.exe
+        </h5>
+        <p>
+            <input class="inpSqlCmd" ng:click="sqlCmd.utils.find()" type="file" accept=".exe,.cmd" nwdirectory>
+        </p>
+    </div>
+    <div ng:if="sqlCmd.path" ng:cloak>
+        <p ng:if="sqlCmd.busy">
+            <em>Loading...</em>
+        </p>
+        <p ng:if="!sqlCmd.busy">
+            ...
+        </p>
         <div ng:if="!sqlCmd.busy">
             <div ng:if="!appNode.active" class="alert alert-warning">
                 <i class="fa fa-warning"></i> <b>Not Available:</b>
@@ -26,11 +45,74 @@
             </div>
         </div>
         <div ng:if="sqlCmd.result">
-            <h5>Results <small>...</small></h5>
-            <p>
-                ...
-            </p>
-            <pre>{{ sqlCmd.result }}</pre>
+            <h5>
+                Local Data Sources
+                <small ng:if="sqlCmd.result.list.length > 0">( {{sqlCmd.result.list.length}} databases )</small>
+            </h5>
+            <div class="row">
+                <a href="" ng:click="sqlCmd.utils.select(db)" style="color: black; text-decoration:none;"
+                   class="col-lg-3 col-md-4 col-sm-6"
+                   ng-repeat="db in sqlCmd.result.list">
+                    <div class="info-row thumbnail">
+                        <div class="info-col-secondary img-clipper" style="flex-basis: 50px; background-image: url(http://png.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)"></div>
+                        <div class="info-col-primary">
+                            <h5>
+                                {{ db.DATABASE_NAME }}
+                                <small>{{ db.size.files.total | toBytes }}</small>
+                            </h5>
+                            <div ng:if="db.size.files">
+                                <div class="progress" ng-class="{ 'progress-striped active': db.busy }" style="height: 10px; margin-bottom:3px;">
+                                    <div ng:init="prog = sqlCmd.utils.getSizeLogs(db)" role="progressbar"
+                                         title="Database Logs - {{ prog.perct | number:2 }}% ( {{ prog.value | toBytes:1 }} / {{ prog.total | toBytes:1 }} )"
+                                         class="progress-bar" ng-style="{width: (prog.perct | number:2) + '%'}"
+                                         ng-class="{ 'progress-bar-primary inactive-ctrl':true }"
+                                         aria-valuenow="{{ (prog.perct | number:2) }}"
+                                         aria-valuetext="{{ (prog.perct | number:2) }}%"
+                                         aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                    <div ng:if="db.busy"
+                                         ng:init="progData = sqlCmd.utils.getSizeData(db)" role="progressbar"
+                                         title="Database Tables - {{ progData.perct | number:2 }}% ( {{ progData.value | toBytes:1 }} / {{ progData.total | toBytes:1 }} )"
+                                         class="progress-bar" ng-style="{width: (progData.perct | number:2) + '%'}"
+                                         ng-class="{ 'progress-bar-warning inactive-ctrl':true  }"
+                                         aria-valuenow="{{ (progData.perct | number:2) }}"
+                                         aria-valuetext="{{ (progData.perct | number:2) }}%"
+                                         aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                    <div ng:if="db.size.index"
+                                         ng:init="progIndex = sqlCmd.utils.getSizeIndex(db)" role="progressbar"
+                                         title="Table Indexes - {{ progIndex.perct | number:2 }}% ( {{ progIndex.value | toBytes:1 }} / {{ progIndex.total | toBytes:1 }} )"
+                                         class="progress-bar" ng-style="{width: (progIndex.perct | number:2) + '%'}"
+                                         ng-class="{ 'progress-bar-info':true }"
+                                         aria-valuenow="{{ (progIndex.perct | number:2) }}"
+                                         aria-valuetext="{{ (progIndex.perct | number:2) }}%"
+                                         aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                    <div ng:if="db.size.table"
+                                         ng:init="progTables = sqlCmd.utils.getSizeTables(db)" role="progressbar"
+                                         title="Table Data - {{ progTables.perct | number:2 }}% ( {{ progTables.value | toBytes:1 }} / {{ progTables.total | toBytes:1 }} )"
+                                         class="progress-bar" ng-style="{width: (progTables.perct | number:2) + '%'}"
+                                         ng-class="{ 'progress-bar-primary':true }"
+                                         aria-valuenow="{{ (progTables.perct | number:2) }}"
+                                         aria-valuetext="{{ (progTables.perct | number:2) }}%"
+                                         aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </div>
+                            <div ng:if="!db.tables && !db.views">
+                                <em>Loading...</em>
+                            </div>
+                            <div ng:if="db">
+                                <span ng:if="db.tables.length"><b>{{ db.tables.length }}</b> Tables</span>
+                                <span ng:if="db.views.length">, <b>{{ db.views.length }}</b> Views</span>
+                            </div>
+                            <div ng:if="db.REMARKS != 'NULL'">
+                                <em>Remarks: {{ db.REMARKS }}</em>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
         </div>
     </div>
 </div>
