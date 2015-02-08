@@ -1,0 +1,12 @@
+﻿body .animate-show {
+  opacity: 1;
+}
+body .animate-show.ng-hide-add.ng-hide-add-active,
+body .animate-show.ng-hide-remove.ng-hide-remove-active {
+  -webkit-transition: all linear 0.5s;
+  transition: all linear 0.5s;
+}
+body .animate-show.ng-hide {
+  opacity: 0;
+}
+/*# sourceMappingURL=animate.css.map */

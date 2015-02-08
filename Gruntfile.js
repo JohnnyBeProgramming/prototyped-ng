@@ -172,7 +172,7 @@ module.exports = function (grunt) {
             },
             src: {
                 files: {
-                    "<%= cfg.src %>/<%= cfg.css %>/app.css": "<%= cfg.src %>/<%= cfg.css %>/app.less",
+                    "<%= cfg.src %>/<%= cfg.css %>/app.css": "<%= cfg.src %>/assets/less/app.less",
                 }
             },
         },

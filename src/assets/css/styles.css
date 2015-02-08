@@ -190,9 +190,12 @@
 #myApp .info-overview .panel-mid {
   text-align: center;
 }
-#myApp .info-tabs .tab-content {
-  border: 1px solid silver;
+#myApp .info-tabs .trim-top {
+  padding: 10px;
   border-top: none;
+  min-height: 380px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 #myApp .img-clipper {
   width: 48px;
