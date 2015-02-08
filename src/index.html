@@ -13,7 +13,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <style type="text/css">
         /* Define cloak style (hides un-parsed content) */
-        .ng-cloak, [ng-cloak], ng-cloak, [ng\3A cloak] {
+        .ng-cloak, [ng-cloak], ng-cloak, [ng\3Acloak] {
             display: none;
         }
 
@@ -136,7 +136,9 @@
             </div>
         </div>
         <div class="docked viewport">
-            <div class="sidebar ng-cloak" ui:view="left" ng:show="state.current.views['left'] || state.current.views['left@']"></div>
+            <div class="sidebar ng-cloak" ui:view="left"
+                 ng-class="{ 'slide-in' : true }"
+                 ng:show="state.current.views['left'] || state.current.views['left@']"></div>
             <div class="contents docked" ui:view="main">
 
                 <!-- This loader is used as a place-holder for main contents  -->

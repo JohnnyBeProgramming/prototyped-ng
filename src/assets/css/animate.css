@@ -9,4 +9,70 @@ body .animate-show.ng-hide-remove.ng-hide-remove-active {
 body .animate-show.ng-hide {
   opacity: 0;
 }
+body [ui-view].sidebar.slide-in.ng-enter,
+body [ui\3Aview].sidebar.slide-in.ng-enter,
+body [ui-view].sidebar.slide-in.ng-leave,
+body [ui\3Aview].sidebar.slide-in.ng-leave {
+  flex-grow: 0;
+  flex-shrink: 0;
+  -webkit-transition: all 0.5s ease-in-out;
+  -moz-transition: all 0.5s ease-in-out;
+  -o-transition: all 0.5s ease-in-out;
+  transition: all 0.5s ease-in-out;
+}
+body [ui-view].sidebar.slide-in.ng-enter .list-group,
+body [ui\3Aview].sidebar.slide-in.ng-enter .list-group,
+body [ui-view].sidebar.slide-in.ng-leave .list-group,
+body [ui\3Aview].sidebar.slide-in.ng-leave .list-group {
+  display: none;
+}
+body [ui-view].sidebar.slide-in.ng-enter,
+body [ui\3Aview].sidebar.slide-in.ng-enter,
+body [ui-view].sidebar.slide-in.ng-leave-active,
+body [ui\3Aview].sidebar.slide-in.ng-leave-active {
+  flex-basis: 0;
+  opacity: 0;
+}
+body [ui-view].sidebar.slide-in.ng-enter-active,
+body [ui\3Aview].sidebar.slide-in.ng-enter-active {
+  flex-basis: 200px;
+  opacity: 1;
+}
+body [ui-view].sidebar.slide-in.ng-leave,
+body [ui\3Aview].sidebar.slide-in.ng-leave {
+  flex-basis: 200px;
+  opacity: 1;
+}
+body [ui-view].sidebar.slide-in.ng-leave-active,
+body [ui\3Aview].sidebar.slide-in.ng-leave-active {
+  flex-basis: 0;
+  opacity: 0;
+}
+body [ui-view].contents,
+body [ui\3Aview].contents {
+  /*
+            &.ng-enter, &.ng-leave {
+                -webkit-transition: all .5s ease-in-out;
+                -moz-transition: all .5s ease-in-out;
+                -o-transition: all .5s ease-in-out;
+                transition: all .5s ease-in-out;
+            }
+
+            &.ng-enter, &.ng-leave-active {
+                opacity: 0;
+            }
+
+            &.ng-enter-active {
+                opacity: 1;
+            }
+
+            &.ng-leave {
+                opacity: 1;
+            }
+
+            &.ng-leave-active {
+                opacity: 0;
+            }
+            */
+}
 /*# sourceMappingURL=animate.css.map */
