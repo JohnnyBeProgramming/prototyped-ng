@@ -107,9 +107,6 @@
 
         // Define configuration
         var appConfig = {
-            wait: true,
-            done: false,
-            pass: null,
             vend: [
                 'https://cdnjs.cloudflare.com/ajax/libs/angular-ui-utils/0.1.1/angular-ui-utils.min.js',
                 'https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.13/angular-ui-router.min.js',
@@ -117,60 +114,80 @@
             ],
             libs: [
                 // Define the required libraries
-                'assets/lib/app.templates.js',
-                'assets/lib/app.js',
+                'assets/app.templates.js',
+                'assets/app.js',
             ],
-            progress: {
-                timerSteps: 0,
-                timerCount: 120, // 2m = 2 * 60s = 120s
-                timerPercn: 0.2,
-                timerIntvl: null,
-                timerDelay: 500,
-                percentage: function (fraction, total) { return (100.0 * fraction) / total },
-                countTotal: function () { return appConfig.vend.length + appConfig.libs.length + appConfig.progress.timerCount },
-                countVend: function () { return appConfig.wait ? 0 : appConfig.vend.length },
-                countLibs: function () { return !appConfig.done ? 0 : appConfig.libs.length },
-            },
-            loaderInit: function () {
+            wait: true,
+            done: false,
+            pass: null,
+            init: function (vendorLibs) {
                 try {
-
-                    // Define required vendor libraries...
+                    // Clear flags...
                     appConfig.pass = null;
                     appConfig.wait = true;
-                    appConfig.vend = (appConfig.vend || []).concat([
-                        'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js',
-                        'https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.min.js',
-                    ]);
 
-                    // Bootstrap the angular loading app (pre-loading)
-                    angular.module('myLoader', ['angular-loading-bar', 'ngAnimate'])
-                        .run(['$rootScope', function ($rootScope) {
+                    // Add additional vendor libraries (before verdor libs start loading)...
+                    if (vendorLibs && vendorLibs.length > 0) {
+                        appConfig.vend = (appConfig.vend || []).concat(vendorLibs);
+                    }
 
-                            // Add the loader config to the root scope
-                            $rootScope.cfg = appConfig;
-                            console.debug(' - Application Loader started.');
-
-                            // Set a timer to check forupdates
-                            appConfig.progress.timerIntvl = setInterval(function () {
-                                $rootScope.$apply(function () {
-                                    appConfig.loaderChecker();
-                                });
-                            }, appConfig.progress.timerDelay);
-                        }]);
-                    angular.bootstrap($('#myLoader'), ['myLoader']);
+                    // Bootstrap the angular loading app (for pre-loading progress feedback)
+                    var elemLoader = $('#myLoader');
+                    if (elemLoader) {
+                        appConfig.bootstrap(elemLoader);
+                    }
 
                 } catch (ex) {
                     return false; // Loader failed to initialise
                 }
                 return true; // Initialised loader...
             },
-            loaderChecker: function () {
+            bootstrap: function (elemLoader) {
+                // Define the loader module
+                angular.module('myLoader', ['angular-loading-bar', 'ngAnimate'])
+
+                    // Define the loader runtime.
+                    .run(['$rootScope', function ($rootScope) {
+                        // Add the loader config to the root scope
+                        $rootScope.cfg = appConfig;
+                        console.debug(' - Application Loader started.');
+
+                        // Set a timer to check for updates (or failures)
+                        appConfig.progress.timerIntvl = setInterval(function () {
+                            $rootScope.$apply(function () {
+                                appConfig.check();
+                            });
+                        }, appConfig.progress.timerDelay);
+                    }]);
+
+                angular.bootstrap(elemLoader, ['myLoader']);
+            },
+            preLoad: function (moduleLibs) {
+
+                // Add additional application libs (before app files start downloading)...
+                if (moduleLibs && moduleLibs.length > 0) {
+                    // Concat before the main module loads (ensures availability)
+                    appConfig.libs = moduleLibs.concat(appConfig.libs);
+                }
+
+                // Clear waiting flag
+                appConfig.wait = false;
+            },
+            success: function () {
+                // When all is done, bootstrap our angular app
+                console.debug(' - Start AngularJS...');
+                angular.bootstrap($('#myApp'), ['myApp']);
+
+                // Set done flag
+                appConfig.done = true;
+            },
+            check: function () {
                 var prog = appConfig.progress;
                 var max = appConfig.progress.countTotal();
 
                 // Check for timeout
                 if (prog.timerSteps >= prog.timerCount) {
-                    appConfig.loaderFailed();
+                    appConfig.failed();
                 }
 
                 // Check if done
@@ -187,9 +204,8 @@
                     }
                 }
             },
-            loaderFailed: function () {
+            failed: function () {
                 var msg = 'Resources missing or unavailable';
-                console.warn(' - Warning: ' + msg);
                 $('.app-loading').addClass('app-error');
                 $('.app-loading label').html(msg);
                 if (typeof require !== 'undefined') {
@@ -204,30 +220,23 @@
                         return false;
                     });
                 }
+                console.warn(' - Warning: ' + msg);
 
                 // Clear waiting/done flags
                 appConfig.wait = false;
                 appConfig.done = true;
                 appConfig.pass = false;
             },
-            loading: function () {
-                // Load additional JS libraries here...
-                appConfig.libs = [
-                    'modules/default.ng.js',
-                    'modules/about.ng.js',
-                    'modules/appCmd/module.ng.js',
-                ].concat(appConfig.libs);
-
-                // Clear waiting flag
-                appConfig.wait = false;
-            },
-            starting: function () {
-                // When all is done, bootstrap our angular app
-                console.debug(' - Start AngularJS...');
-                angular.bootstrap($('#myApp'), ['myApp']);
-
-                // Set done flag
-                appConfig.done = true;
+            progress: {
+                timerSteps: 0,
+                timerCount: 120, // 2m = 2 * 60s = 120s
+                timerPercn: 0.2,
+                timerIntvl: null,
+                timerDelay: 500,
+                percentage: function (fraction, total) { return (100.0 * fraction) / total },
+                countTotal: function () { return appConfig.vend.length + appConfig.libs.length + appConfig.progress.timerCount },
+                countVend: function () { return appConfig.wait ? 0 : appConfig.vend.length },
+                countLibs: function () { return !appConfig.done ? 0 : appConfig.libs.length },
             },
         };
     </script>
@@ -297,7 +306,7 @@
             <span class="pull-left">
                 <label ng:show="status.logs | typeCount:'error'" class="ng-cloak">
                     <i class="glyphicon glyphicon-exclamation-sign glow-red"></i>
-                    <a href="" >Errors ({{ status.logs | typeCount:'error' }})</a>
+                    <a href="">Errors ({{ status.logs | typeCount:'error' }})</a>
                 </label>
                 <label ng:show="status.logs | typeCount:'warn'">
                     <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
@@ -342,15 +351,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-route.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-animate.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.js"></script>
-    <script src="assets/lib/app.loader.js"></script>
     <!--<![endif]-->
+
+    <script src="assets/app.loader.js"></script>
     <script>
 
         // Define helper method to set error meesage
         function setMessage(message, css) {
+            // Use old-school javascript in case jQuery not loaded
             var elemBody = document.getElementById('preLoader');
             if (elemBody && css) elemBody.className += ' ' + css;
-
             var elemLabel = document.getElementById('preLoaderText');
             if (elemLabel) elemLabel.innerHTML = '<b>Error:</b> ' + message;
         }
@@ -359,16 +369,27 @@
         var isAvailable = typeof $script !== 'undefined';
         if (isAvailable) {
 
-            // Initialise the app loader
-            if (appConfig.loaderInit()) {
+            // Init the loader + add some libs...
+            if (appConfig.init([
+                'assets/lib/mousetrap.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js',
+                'https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.min.js',
+            ])) {
 
                 // Load all dependencies asynchronously.
                 $script(appConfig.vend, function () {
-                    // Initialise
-                    appConfig.loading();
+
+                    // Start loading the main application files
+                    appConfig.preLoad([
+                        'modules/default.ng.js',
+                        'modules/appCmd/module.ng.js',
+                        'modules/about.ng.js',
+                    ]);
 
                     // Load all of the dependencies asynchronously.
-                    $script(appConfig.libs, appConfig.starting);
+                    $script(appConfig.libs, function () {
+                        appConfig.success();
+                    });
                 });
 
             } else {
