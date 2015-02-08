@@ -53,26 +53,32 @@ var httpServer = {
 
         console.log(' > ' + path.relative('\\', uri));
 
-        fs.exists(filename, function (exists) {
+        // Redirect to proxy routers (if needed)
+        if (/(.*)(debug!)/i.exec(request.url)) {
+            response.writeHead(302, { 'Location': httpServer.baseUrl + '#/!debug!/' });
+            response.end();
+            return;
+        } else if (/(.*)(test!)/i.exec(request.url)) {
+            response.writeHead(302, { 'Location': httpServer.baseUrl + '#/!test!/' });
+            response.end();
+            return;
+        } else {
+            fs.exists(filename, function (exists) {
 
-            if (!exists) {
-                /*
-                response.writeHead(404, { "Content-Type": "text/plain" });
-                response.write("404 Not Found\n");
-                response.end();
-                return;
-                */
-                filename = path.join(httpServer.path, 'index.html');
-            }
+                if (!exists) {
+                    // Default document path
+                    filename = path.join(httpServer.path, httpServer.defaultDocument);
+                }
 
-            if (fs.statSync(filename).isDirectory()) {
-                filename = path.join(filename, httpServer.defaultDocument);
-            }
+                if (fs.statSync(filename).isDirectory()) {
+                    filename = path.join(filename, httpServer.defaultDocument);
+                }
 
-            fs.readFile(filename, "binary", function (err, file) {
-                httpServer.respond(response, filename, err, file);
+                fs.readFile(filename, "binary", function (err, file) {
+                    httpServer.respond(response, filename, err, file);
+                });
             });
-        });
+        }
     },
     respond: function (response, filename, err, file) {
         if (err) {

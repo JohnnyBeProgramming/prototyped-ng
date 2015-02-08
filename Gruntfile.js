@@ -50,7 +50,14 @@ module.exports = function (grunt) {
                 {
                     // Define main build process
                     key: 'build',
-                    val: ['useminPrepare', 'build-styles', 'build-scripts', 'copy', 'usemin', 'test-units']
+                    val: [
+                        //'useminPrepare',
+                        'build-styles',
+                        'build-scripts',
+                        'copy',
+                        //'usemin',
+                        'test-units'
+                    ]
                 },
                 {
                     key: 'build-styles',
@@ -194,8 +201,9 @@ module.exports = function (grunt) {
                 // Because these src-dest file mappings are manually specified, every
                 // time a new file is added or removed, the Gruntfile has to be updated.
                 files: [
-                    { src: '<%= cfg.src %>/<%= cfg.lib %>/app.js', dest: '<%= cfg.dest %>/<%= cfg.lib %>/app.min.js' },
-                    { src: '<%= cfg.src %>/<%= cfg.lib %>/app.templates.js', dest: '<%= cfg.dest %>/<%= cfg.lib %>/app.templates.min.js' },
+                    { src: '<%= cfg.src %>/assets/app.js', dest: '<%= cfg.dest %>/assets/app.min.js' },
+                    { src: '<%= cfg.src %>/assets/app.loader.js', dest: '<%= cfg.dest %>/assets/app.loader.min.js' },
+                    { src: '<%= cfg.src %>/assets/app.templates.js', dest: '<%= cfg.dest %>/assets/app.templates.min.js' },
                 ],
             },
             dynamics: {
@@ -224,23 +232,26 @@ module.exports = function (grunt) {
             options: {
                 separator: ';'
             },
-            js: {
+            
+            modules: {
                 files: [{
                     src: ['<%= cfg.dest %>/modules/**/*.js'],
-                    dest: '<%= cfg.dest %>/<%= cfg.lib %>/app.modules.js'
+                    dest: '<%= cfg.dest %>/assets/app.modules.min.js'
                 }]
             },
-            cdn: {
+            /*
+            loader: {
                 files: [
                   {
-                      dest: '<%= cfg.dest %>/<%= cfg.lib %>/app.cdn.min.js',
+                      dest: '<%= cfg.dest %>/assets/app.loader.dll.js',
                       src: [
-                        'https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.2.min.js',
-                        'https://ajax.aspnetcdn.com/ajax/modernizr/modernizr-2.6.2.js',
+                        'assets/app.loader.js',
+                        'assets/lib/mousetrap.js',
                       ]
                   }
                 ]
-            }
+            },
+            */
         },
 
         useminPrepare: {
@@ -248,22 +259,20 @@ module.exports = function (grunt) {
             options: {
                 flow: {
                     steps: {
-                        js: ['concat']
+                        loader: ['concat']
                     },
                     post: {}
                 }
             }
         },
         usemin: {
-            dest: {
-                html: '<%= cfg.dest %>/index.html',
-                options: {
-                    flow: {
-                        steps: {
-                            js: ['concat']
-                        },
-                        post: {}
-                    }
+            html: '<%= cfg.dest %>/index.html',
+            options: {
+                flow: {
+                    steps: {
+                        loader: ['concat']
+                    },
+                    post: {}
                 }
             }
         },
@@ -368,7 +377,7 @@ module.exports = function (grunt) {
                     '<%= cfg.src %>/views/**/*.jade',
                     '<%= cfg.src %>/views/**/*.tpl.html',
                 ],
-                dest: '<%= cfg.src %>/<%= cfg.lib %>/app.templates.js'
+                dest: '<%= cfg.src %>/assets/app.templates.js'
             },
         },
 
@@ -381,7 +390,6 @@ module.exports = function (grunt) {
                       src: [
                           'index.html',
                           '**/package.json',
-                          'assets/**/*.min.css',
                           'assets/**/*.ico',
                           'assets/**/*.png',
                           'assets/**/*.jpg',
@@ -389,6 +397,8 @@ module.exports = function (grunt) {
                           'assets/**/*.svg',
                           'assets/**/*.woff',
                           'assets/**/*.json',
+                          'assets/**/*.min.css',
+                          'assets/lib/*.min.js',
                       ],
                       cwd: '<%= cfg.src %>/',
                       dest: '<%= cfg.dest %>/',

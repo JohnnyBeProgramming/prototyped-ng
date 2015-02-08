@@ -628,7 +628,7 @@ angular.module('myApp', [
         }
     }])
 
-    .run(['$rootScope', '$state', '$filter', 'appInfo', 'appNode', 'appStatus', 'appMenu', function ($rootScope, $state, $filter, appInfo, appNode, appStatus, appMenu) {
+    .run(['$rootScope', '$state', '$window', '$filter', 'appInfo', 'appNode', 'appStatus', 'appMenu', function ($rootScope, $state, $window, $filter, appInfo, appNode, appStatus, appMenu) {
 
         // Extend root scope with (global) vars
         angular.extend($rootScope, {
@@ -640,13 +640,28 @@ angular.module('myApp', [
             startAt: Date.now(),
         });
 
+        // Hook some keyboard shortcuts (if available)
+        if (typeof Mousetrap !== 'undefined') {
+            Mousetrap.bind('CTRL + SHIFT + C', function () {
+                console.log(' - Debug!');
+            }, 'keyup');
+            Mousetrap.bind('p r o t o t e s t', function () {
+                console.log(' - Entering test mode!');
+                $window.location.href = ($window.location.href.indexOf('?') > 0 ? '&' : '?') + 'test!';
+            });
+            Mousetrap.bind('p r o t o d e b u g', function () {
+                console.log(' - Entering debug mode!');
+                $window.location.href = ($window.location.href.indexOf('?') > 0 ? '&' : '?') + 'debug!';
+            });
+        }
+
         // Hook extended function(s)
         appStatus.getIcon = function () {
             var match = /\/!(\w+)!/i.exec(appNode.proxy || '');
             if (match && match.length > 1) {
                 switch (match[1]) {
-                    case 'test': return 'fa fa-life-ring';
-                    case 'debug': return 'fa fa-bug';
+                    case 'test': return 'fa fa-puzzle-piece glow-orange';
+                    case 'debug': return 'fa fa-bug glow-orange';
                 }
             }
             return 'fa-cubes';
