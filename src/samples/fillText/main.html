@@ -1,0 +1,60 @@
+﻿<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <span class="pull-right">
+                <a href="" ng-disabled="filltext.busy" ng-click="filltext.test()" class="btn btn-primary">
+                    Fetch Sample Data
+                </a>
+            </span>
+            <h4>
+                Online Sample Data
+                <small>Directly from the cloud! Supplied by this awesome API: <a href="http://www.filltext.com/" target="_blank">http://www.filltext.com/</a></small>
+            </h4>
+            <hr />
+            <div ng:if="filltext.error" class="alert alert-danger">
+                <b>Error: </b>
+                {{ filltext.error.message || 'Something went wrong. :(' }}
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <h5>
+                        Define Fields
+                        <small>( {{ filltext.args.length }} defined )</small>
+                        <small class="pull-right">
+                            <a href="" ng-click="filltext.args.push({ id: 'myField', val: ''})"><i class="fa fa-plus"></i></a>
+                        </small>
+                    </h5>
+                    <div class="input-group" ng-repeat="arg in filltext.args">
+                        <span class="input-group-addon">
+                            <input checked="checked" type="checkbox" ng-click="filltext.args.splice(array.indexOf(arg)+1, 1)" aria-label="...">
+                        </span>
+                        <input type="text" class="form-control input-group-addon" aria-label="..."
+                               ng-model="arg.id">
+                        <input type="text" class="form-control" aria-label="..."
+                               ng-model="arg.val">
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <h5>Results View <small ng:if="filltext.resp.length">( {{ filltext.resp.length }} total )</small></h5>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th ng-repeat="arg in filltext.args">{{ arg.id }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-if="!filltext.resp">
+                                <td colspan="{{ filltext.args.length }}">
+                                    <em>Nothing to show yet. Fetch some data first...</em>
+                                </td>
+                            </tr>
+                            <tr ng-repeat="row in filltext.resp">
+                                <td ng-repeat="arg in filltext.args">{{ row[arg.id] }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

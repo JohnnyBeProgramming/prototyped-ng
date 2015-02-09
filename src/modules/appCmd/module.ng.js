@@ -401,7 +401,7 @@ angular.module('myApp.appCmd', [
                 },
                 exec: function (sql, opts, callback, errorHandler) {
                     var fs = require('fs');
-                    var dir = './sql/tmp';
+                    var dir = './scripts/sql/tmp';
                     if (!fs.existsSync(dir)) {
                         fs.mkdirSync(dir);
                     }

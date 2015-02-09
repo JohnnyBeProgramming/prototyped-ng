@@ -14,8 +14,9 @@ angular.module('myApp', [
   // My modules...
   'myApp.views',
   'myApp.default',
+  'myApp.samples',
+  'myApp.appCmd', // ToDo: Rename to 'myApp.modules'
   'myApp.about',
-  'myApp.appCmd',
 ])
 
     .constant('appInfo', {
@@ -97,6 +98,11 @@ angular.module('myApp', [
             showRoot: true,
         },
         items: [
+            {
+                label: 'Samples',
+                icon: 'fa fa-cubes',
+                value: 'samples.info',
+            },
             {
                 shown: true,
                 label: 'Discover Local Features',
@@ -664,7 +670,7 @@ angular.module('myApp', [
                     case 'debug': return 'fa fa-bug glow-orange animate-glow';
                 }
             }
-            return 'fa-cubes';
+            return 'fa-cube';
         }
         appStatus.getColor = function () {
             var logs = appStatus.logs;
