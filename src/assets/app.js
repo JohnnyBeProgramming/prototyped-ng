@@ -660,8 +660,8 @@ angular.module('myApp', [
             var match = /\/!(\w+)!/i.exec(appNode.proxy || '');
             if (match && match.length > 1) {
                 switch (match[1]) {
-                    case 'test': return 'fa fa-puzzle-piece glow-orange';
-                    case 'debug': return 'fa fa-bug glow-orange';
+                    case 'test': return 'fa fa-puzzle-piece glow-blue animate-glow';
+                    case 'debug': return 'fa fa-bug glow-orange animate-glow';
                 }
             }
             return 'fa-cubes';

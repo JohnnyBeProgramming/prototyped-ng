@@ -75,4 +75,12 @@ body [ui\3Aview].contents {
             }
             */
 }
+body .animate-glow {
+  -webkit-animation: glowing 1.5s infinite ease-in-out;
+}
+@-webkit-keyframes glowing {
+  50% {
+    text-shadow: none;
+  }
+}
 /*# sourceMappingURL=animate.css.map */
