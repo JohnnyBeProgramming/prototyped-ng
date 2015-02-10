@@ -2,9 +2,11 @@
 
 // Declare app level module which depends on views, and components
 angular.module('myApp', [
-  // Vendor modules...
+  // Angular extenders
   'ngRoute',
   'ngAnimate',
+
+  // Vendor modules...
   'ui.router',
   'ui.utils',
   'ui.bootstrap',
@@ -13,10 +15,8 @@ angular.module('myApp', [
 
   // My modules...
   'myApp.views',
-  'myApp.default',
+  'myApp.modules',
   'myApp.samples',
-  'myApp.appCmd', // ToDo: Rename to 'myApp.modules'
-  'myApp.about',
 ])
 
     .constant('appInfo', {
@@ -105,15 +105,15 @@ angular.module('myApp', [
             },
             {
                 shown: true,
-                label: 'Discover Local Features',
+                label: 'Discover Features',
                 icon: 'fa fa-share-alt',
-                value: 'appCmd.discover',
+                value: 'prototyped.cmd',
                 /*
                 value: [
-                    { label: 'Discovery', icon: 'fa fa-refresh', value: 'appCmd.discover', },
-                    { label: 'Connnect', icon: 'fa fa-gears', value: 'appCmd.connect', },
+                    { label: 'Discovery', icon: 'fa fa-refresh', value: 'modules.discover', },
+                    { label: 'Connnect', icon: 'fa fa-gears', value: 'modules.connect', },
                     { divider: true },
-                    { label: 'Clean & Exit', icon: 'fa fa-recycle', value: 'appCmd.clear', },
+                    { label: 'Clean & Exit', icon: 'fa fa-recycle', value: 'modules.clear', },
                 ],
                 */
             },

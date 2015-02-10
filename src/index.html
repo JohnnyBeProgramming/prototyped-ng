@@ -247,11 +247,16 @@
                 $script(appConfig.vend, function () {
 
                     // Start loading the main application files
+                    // Note: Sub modules needs to be loaded before parent(s)
                     appConfig.preLoad([
-                        // Load the app modules 
+
+                        // Load the required modules 
+                        'modules/sqlcmd.exe/module.ng.js',
+                        'modules/prototyped/cmd/module.ng.js',
+                        'modules/prototyped/module.ng.js',
                         'modules/default.ng.js',
                         'modules/about.ng.js',
-                        'modules/appCmd/module.ng.js',
+                        'modules/module.ng.js',
 
                         // Load some samples as well
                         'samples/filltext/module.ng.js',
@@ -262,6 +267,7 @@
                     $script(appConfig.libs, function () {
                         appConfig.success();
                     });
+
                 });
 
             } else {

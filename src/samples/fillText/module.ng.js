@@ -9,7 +9,6 @@ angular.module('myApp.samples.fillText', [])
             .state('samples.fillText', {
                 url: '/filltext',
                 views: {
-                    //'menu@': { templateUrl: 'modules/appCmd/views/menu.html' },
                     'left@': { templateUrl: 'samples/left.html' },
                     'main@': {
                         templateUrl: 'samples/fillText/main.html',

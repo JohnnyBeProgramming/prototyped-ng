@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('myApp.about', [
-    'ngRoute'
+    'ui.router'
 ])
 
     .config(['$stateProvider', function ($stateProvider) {

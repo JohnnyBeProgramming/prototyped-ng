@@ -4,7 +4,7 @@
         <small>Discover features and command line utilities</small>
     </h4>
     <div ng:cloak>
-        <div ng:if="appCmd.busy">
+        <div ng:if="cmd.busy">
             <div class="app-loading">
                 <div class="loadtext">
                     <label id="preLoaderText">Loading, please wait...</label>
@@ -25,58 +25,58 @@
                 </div>
             </div>
         </div>
-        <div ng:if="!appCmd.busy">
+        <div ng:if="!cmd.busy">
             <div ng:if="!appNode.active" class="alert alert-warning">
                 <i class="fa fa-warning"></i> <b>Not Available:</b>
                 Application requires a NodeJS (or CommonJS) runtime. Web browsers do not have access to these advanced features...
             </div>
-            <div ng:if="appCmd.active && !appCmd.result.stderr" class="alert alert-success">
+            <div ng:if="cmd.active && !cmd.result.stderr" class="alert alert-success">
                 <i class="fa fa-share-square"></i> <b>Success!</b>
                 You are now conncted to the local host machine...
             </div>
-            <div ng:if="appCmd.result.stderr" class="alert alert-danger">
+            <div ng:if="cmd.result.stderr" class="alert alert-danger">
                 <i class="fa fa-share-square"></i> <b>Error:</b>
-                {{ appCmd.result.stderr }}
+                {{ cmd.result.stderr }}
             </div>
             <div ng:if="false" class="alert alert-info">
                 <i class="fa fa-share-square"></i> <b>Info:</b>
             </div>
         </div>
-        <div ng:if="appCmd.cwd">
-            <h5>Current Working Directory <small>{{ appCmd.cwd.path }}</small></h5>
-            <ul ng:if="appCmd.cwd.list" style="padding: 12px; margin: 0;">
-                <li ng-repeat="path in appCmd.cwd.list" style="list-style: none; padding: 0; margin: 0;">
-                    <i class="glyphicon" ng-class="appCmd.utils.icon(appCmd.cwd.path, path)"></i>&nbsp;
-                    <a href="" ng-click="appCmd.utils.list(appCmd.cwd.path)" ng-class="{ 'glow-blue': path == appCmd.target.path }">
+        <div ng:if="cmd.cwd">
+            <h5>Current Working Directory <small>{{ cmd.cwd.path }}</small></h5>
+            <ul ng:if="cmd.cwd.list" style="padding: 12px; margin: 0;">
+                <li ng-repeat="path in cmd.cwd.list" style="list-style: none; padding: 0; margin: 0;">
+                    <i class="glyphicon" ng-class="cmd.utils.icon(cmd.cwd.path, path)"></i>&nbsp;
+                    <a href="" ng-click="cmd.utils.list(cmd.cwd.path)" ng-class="{ 'glow-blue': path == cmd.target.path }">
                         {{ path }}
                     </a>
-                    <ul ng:if="false && appCmd.cwd.path == appCmd.target.path" style="padding: 0 0 0 8px; margin: 8px;">
-                        <li ng:if="appCmd.cwd.list.length == 0" style="list-style: none; padding: 0; margin: 0;">
+                    <ul ng:if="false && cmd.cwd.path == cmd.target.path" style="padding: 0 0 0 8px; margin: 8px;">
+                        <li ng:if="cmd.cwd.list.length == 0" style="list-style: none; padding: 0; margin: 0;">
                             <em>Nothing to display...</em>
                         </li>
-                        <li ng-repeat="item in appCmd.cwd.list" style="list-style: none; padding: 0; margin: 0;">
-                            <i class="glyphicon" ng-class="appCmd.utils.icon(path, item)"></i>
+                        <li ng-repeat="item in cmd.cwd.list" style="list-style: none; padding: 0; margin: 0;">
+                            <i class="glyphicon" ng-class="cmd.utils.icon(path, item)"></i>
                             <a href="">{{item}}</a>
                         </li>
                     </ul>
                 </li>
             </ul>
         </div>
-        <div ng:if="appCmd.result">
+        <div ng:if="cmd.result">
             <h5>Additional System Paths</h5>
-            <ul ng:if="appCmd.result.paths" style="padding: 12px; margin: 0;">
-                <li ng-repeat="path in appCmd.result.paths" style="list-style: none; padding: 0; margin: 0;">
-                    <i class="glyphicon" ng-class="appCmd.utils.icon(path, null)"></i>&nbsp;
-                    <a href="" ng-click="appCmd.utils.list(path)" ng-class="{ 'glow-blue': path == appCmd.target.path }">
+            <ul ng:if="cmd.result.paths" style="padding: 12px; margin: 0;">
+                <li ng-repeat="path in cmd.result.paths" style="list-style: none; padding: 0; margin: 0;">
+                    <i class="glyphicon" ng-class="cmd.utils.icon(path, null)"></i>&nbsp;
+                    <a href="" ng-click="cmd.utils.list(path)" ng-class="{ 'glow-blue': path == cmd.target.path }">
                         {{ path }}
                     </a>
-                    <ul ng:if="path == appCmd.target.path" style="padding: 0 0 0 8px; margin: 8px;">
-                        <li ng:if="appCmd.target.list.length == 0" style="list-style: none; padding: 0; margin: 0;">
+                    <ul ng:if="path == cmd.target.path" style="padding: 0 0 0 8px; margin: 8px;">
+                        <li ng:if="cmd.target.list.length == 0" style="list-style: none; padding: 0; margin: 0;">
                             <em>Nothing to display...</em>
                         </li>
-                        <li ng-repeat="item in appCmd.target.list" style="list-style: none; padding: 0; margin: 0;">
-                            <i class="glyphicon" ng-class="appCmd.utils.icon(path, item)"></i>
-                            <a href="" ng-click="appCmd.utils.call(path, item)">{{item}}</a>
+                        <li ng-repeat="item in cmd.target.list" style="list-style: none; padding: 0; margin: 0;">
+                            <i class="glyphicon" ng-class="cmd.utils.icon(path, item)"></i>
+                            <a href="" ng-click="cmd.utils.call(path, item)">{{item}}</a>
                         </li>
                     </ul>
                 </li>

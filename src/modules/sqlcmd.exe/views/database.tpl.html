@@ -46,7 +46,7 @@
         </div>
         <div ng:if="sqlCmd.dbname">
             <h5>
-                <a ui:sref="appCmd.connect" href="" style="text-decoration: none; color: #dedede;"><i class="glyphicon glyphicon-backward"></i>&nbsp;</a>
+                <a ui:sref="sqlcmd.connect" href="" style="text-decoration: none; color: #dedede;"><i class="glyphicon glyphicon-backward"></i>&nbsp;</a>
                 {{ sqlCmd.dbname }}
                 <small>
                     ( {{ sqlCmd.target.size.files.total | toBytes }}
@@ -111,7 +111,7 @@
                                     <div ng:if="sqlCmd.target" class="ellipsis">
                                         <span ng:if="!sqlCmd.busy" class="dropdown" style="position: relative;">
                                             <a href="" style="color: #808080; text-decoration:none;"
-                                               ng-click="sqlCmd.utils.openModalWindow('modules/appCmd/views/dialogs/dbActions.html')">
+                                               ng-click="sqlCmd.utils.openModalWindow('modules/sqlcmd.exe/views/dialogs/dbActions.html')">
                                                 &nbsp; <i class="glyphicon glyphicon-expand"></i> Actions
                                             </a>
                                         </span>

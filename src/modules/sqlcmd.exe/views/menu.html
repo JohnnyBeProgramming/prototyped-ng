@@ -1,0 +1,13 @@
+﻿<ul class="nav navbar-nav">
+    <li ui:sref-active="open">
+        <a app:nav-link ui:sref="prototyped.cmd">
+            <i class="fa fa-desktop"></i>&nbsp;
+            Discover Local Features
+        </a>
+    </li>
+    <li ui:sref-active="open" ng-class="{ 'disabled': !appNode.active }">
+        <a app:nav-link ui:sref="sqlcmd.connect" data:eat-click-if="!appNode.active">
+            <i class="fa fa-database"></i> Connect to Data Source
+        </a>
+    </li>
+</ul>

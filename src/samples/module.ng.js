@@ -12,7 +12,7 @@ angular.module('myApp.samples', [
                 abstract: true,
             })
             .state('samples.info', {
-                url: '/info',
+                url: '',
                 views: {
                     'left@': { templateUrl: 'samples/left.html' },
                     'main@': {
@@ -26,15 +26,15 @@ angular.module('myApp.samples', [
 
     .controller('sampleViewController', ['$rootScope', '$scope', '$state', function ($rootScope, $scope, $state) {
         // Define the model
-        var context = $scope.samples = {
+        var context = $scope.sample = {
             busy: true,
             utils: {
                 list: function (path, callback) {
                     var list = [];
                     try {
                     } catch (ex) {
+                        context.error = ex;
                         console.error(ex.message);
-                        $scope.appCmd.error = ex;
                     }
                     return list;
                 }

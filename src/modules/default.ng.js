@@ -2,7 +2,7 @@
 
 angular.module('myApp.default', [
     'views/default.tpl.html', // Requires template
-    'ngRoute',
+    'ui.router',
 ])
 
     .config(['$stateProvider', function ($stateProvider) {
