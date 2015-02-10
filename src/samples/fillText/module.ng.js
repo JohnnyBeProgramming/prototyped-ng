@@ -9,9 +9,9 @@ angular.module('myApp.samples.fillText', [])
             .state('samples.fillText', {
                 url: '/filltext',
                 views: {
-                    'left@': { templateUrl: 'samples/left.html' },
+                    'left@': { templateUrl: 'samples/left.tpl.html' },
                     'main@': {
-                        templateUrl: 'samples/fillText/main.html',
+                        templateUrl: 'samples/fillText/main.tpl.html',
                         controller: 'sampleFillTextController'
                     },
                 }

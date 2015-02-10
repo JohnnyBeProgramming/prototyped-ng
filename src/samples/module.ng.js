@@ -14,9 +14,9 @@ angular.module('myApp.samples', [
             .state('samples.info', {
                 url: '',
                 views: {
-                    'left@': { templateUrl: 'samples/left.html' },
+                    'left@': { templateUrl: 'samples/left.tpl.html' },
                     'main@': {
-                        templateUrl: 'samples/main.html',
+                        templateUrl: 'samples/main.tpl.html',
                         controller: 'sampleViewController'
                     },
                 }

@@ -214,6 +214,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-route.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-animate.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.min.js"></script>
     <!--<![endif]-->
 
     <!-- build:loader ../app/assets/lib/app.loader.dll.js -->
@@ -236,11 +238,9 @@
         var isAvailable = typeof $script !== 'undefined';
         if (isAvailable) {
 
-            // Init the loader + add some libs...
+            // Init the loader + add vendor libs...
             if (appConfig.init([
-                //'assets/lib/mousetrap.min.js',
-                'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js',
-                'https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.min.js',
+                //'assets/lib/mousetrap.js',
             ])) {
 
                 // Load all dependencies asynchronously.
@@ -249,14 +249,14 @@
                     // Start loading the main application files
                     // Note: Sub modules needs to be loaded before parent(s)
                     appConfig.preLoad([
-
-                        // Load the required modules 
-                        'modules/sqlcmd.exe/module.ng.js',
-                        'modules/prototyped/cmd/module.ng.js',
-                        'modules/prototyped/module.ng.js',
+                        'modules/module.ng.js',
                         'modules/default.ng.js',
                         'modules/about.ng.js',
-                        'modules/module.ng.js',
+
+                        // Load the required module libraries
+                        'modules/prototyped/module.ng.js',
+                        'modules/prototyped/cmd/module.ng.js',
+                        'modules/sqlcmd.exe/module.ng.js',
 
                         // Load some samples as well
                         'samples/filltext/module.ng.js',

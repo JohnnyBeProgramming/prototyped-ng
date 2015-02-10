@@ -358,7 +358,7 @@ angular.module('myApp', [
                 list: '=appMenu'
             },
             transclude: false,
-            templateUrl: 'views/partials/appMenu.html'
+            templateUrl: 'views/partials/appMenu.tpl.html'
         };
     }])
     .directive('appNavLink', ['$location', '$timeout', function ($location, $timeout) {

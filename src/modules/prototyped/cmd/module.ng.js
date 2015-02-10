@@ -11,8 +11,8 @@ angular.module('prototyped.cmd', ['ui.router',
             .state('prototyped.cmd', {
                 url: '/cmd',
                 views: {
-                    'menu@': { templateUrl: 'modules/prototyped/cmd/views/menu.html' },
-                    'left@': { templateUrl: 'modules/prototyped/cmd/views/left.html' },
+                    'menu@': { templateUrl: 'modules/prototyped/cmd/views/menu.tpl.html' },
+                    'left@': { templateUrl: 'modules/prototyped/cmd/views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/prototyped/cmd/views/index.tpl.html',
                         controller: 'systemCmdViewController'
@@ -22,8 +22,8 @@ angular.module('prototyped.cmd', ['ui.router',
             .state('prototyped.clear', {
                 url: '/clear',
                 views: {
-                    'menu@': { templateUrl: 'modules/prototyped/cmd/views/menu.html' },
-                    'left@': { templateUrl: 'modules/prototyped/cmd/views/left.html' },
+                    'menu@': { templateUrl: 'modules/prototyped/cmd/views/menu.tpl.html' },
+                    'left@': { templateUrl: 'modules/prototyped/cmd/views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/prototyped/cmd/views/index.tpl.html',
                         controller: 'systemCmdViewController'

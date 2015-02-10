@@ -15,10 +15,10 @@ angular.module('myApp.about', [
           .state('about.info', {
               url: '/info',
               views: {
-                  'menu@': { templateUrl: 'views/about/menu.html' },
-                  'left@': { templateUrl: 'views/about/left.html' },
+                  'menu@': { templateUrl: 'views/about/menu.tpl.html' },
+                  'left@': { templateUrl: 'views/about/left.tpl.html' },
                   'main@': {
-                      templateUrl: 'views/about/info.html',
+                      templateUrl: 'views/about/info.tpl.html',
                       controller: 'AboutInfoController',
                   },
               }
@@ -26,9 +26,9 @@ angular.module('myApp.about', [
           .state('about.online', {
               url: '^/contact',
               views: {
-                  'menu@': { templateUrl: 'views/about/menu.html' },
-                  'left@': { templateUrl: 'views/about/left.html' },
-                  'main@': { templateUrl: 'views/about/contact.html' },
+                  'menu@': { templateUrl: 'views/about/menu.tpl.html' },
+                  'left@': { templateUrl: 'views/about/left.tpl.html' },
+                  'main@': { templateUrl: 'views/about/contact.tpl.html' },
               }
           })
 
