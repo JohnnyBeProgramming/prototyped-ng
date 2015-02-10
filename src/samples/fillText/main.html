@@ -24,14 +24,18 @@
                             <a href="" ng-click="filltext.args.push({ id: 'myField', val: ''})"><i class="fa fa-plus"></i></a>
                         </small>
                     </h5>
-                    <div class="input-group" ng-repeat="arg in filltext.args">
-                        <span class="input-group-addon">
-                            <input checked="checked" type="checkbox" ng-click="filltext.args.splice(array.indexOf(arg)+1, 1)" aria-label="...">
-                        </span>
-                        <input type="text" class="form-control input-group-addon" aria-label="..."
-                               ng-model="arg.id">
-                        <input type="text" class="form-control" aria-label="..."
-                               ng-model="arg.val">
+                    <div class="thumbnail">
+                        <div style="display: flex; width: auto; padding: 3px;" ng-repeat="arg in filltext.args">
+                            <span style="flex-basis: 20px; flex-grow:0; flex-shrink:0;">
+                                <input checked="checked" type="checkbox" ng-click="filltext.args.splice(filltext.args.indexOf(arg), 1)" aria-label="...">
+                            </span>
+                            <div style="flex-basis: 64px; flex-grow:0; flex-shrink:0;">
+                                <input type="text" style="width: 100%;" aria-label="..." ng-model="arg.id">
+                            </div>
+                            <div style="flex-grow:1; flex-shrink:1;">
+                                <input type="text" style="width: 100%" aria-label="..." ng-model="arg.val">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-9">

@@ -27,13 +27,13 @@ angular.module('myApp.samples.fillText', [])
             busy: true,
             rows: 10,
             args: [
+                { id: 'business', val: '{business}' },
                 { id: 'firstname', val: '{firstName}' },
                 { id: 'lastname', val: '{lastName}' },
                 { id: 'email', val: '{email}' },
-                { id: 'business', val: '{business}' },
-                { id: 'streetAddress', val: '{streetAddress}' },
-                { id: 'city', val: '{city}' },
                 { id: 'tel', val: '{phone|format}' },
+                { id: 'city', val: '{city}' },
+                { id: 'active', val: '{bool|n}' },
             ],
             test: function () {
                 try {
@@ -72,7 +72,7 @@ angular.module('myApp.samples.fillText', [])
                 }
             },
             fetch: function (data) {
-                var url = "http://www.filltext.com/?callback=?";
+                var url = "http://www.filltext.com/?delay=0&callback=?";
                 var deferred = $q.defer();
 
                 $.getJSON(url, data)
