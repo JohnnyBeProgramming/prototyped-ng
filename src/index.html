@@ -209,13 +209,13 @@
     <!-- Load AngularJS and all the required libraries (exclude IE < 10 from the party) -->
     <!--[if gt IE 9]><!-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/less.js/2.3.1/less.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-route.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-animate.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-route.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-animate.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.js"></script>
+    <script src="https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.js"></script>
     <!--<![endif]-->
 
     <!-- build:loader ../app/assets/lib/app.loader.dll.js -->
@@ -259,8 +259,9 @@
                         'modules/sqlcmd.exe/module.ng.js',
 
                         // Load some samples as well
-                        'samples/filltext/module.ng.js',
                         'samples/module.ng.js',
+                        'samples/filltext/module.ng.js',
+                        'samples/decorators/module.ng.js',
                     ]);
 
                     // Load all of the dependencies asynchronously.

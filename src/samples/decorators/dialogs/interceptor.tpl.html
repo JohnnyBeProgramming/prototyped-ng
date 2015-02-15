@@ -1,0 +1,60 @@
+﻿<div class="modal-body" style="min-height: 180px; padding: 6px;">
+    <ul class="nav nav-tabs">
+        <li role="presentation" ng-class="{ 'active' : (modalAction == 'req') }">
+            <a href="" ng-click="modalAction = 'req'">Request Details</a>
+        </li>
+        <li role="presentation" ng-class="{ 'active' : (modalAction == 'resp') }">
+            <a href="" ng-click="modalAction = 'resp'">Return Result</a>
+        </li>
+    </ul>
+    <div class="thumbnail" style="border-top: none; margin-bottom: 0; border-top-left-radius: 0; border-top-right-radius: 0;">
+        <form ng-switch="modalAction" style="margin-top: 6px;">
+            <div ng-if="statusMsg" class="alert alert-warning" style="padding: 8px; margin: 0;">
+                {{ statusMsg }}
+            </div>
+            <div ng-switch-default class="docked">
+                <em class="text-muted" style="padding: 6px; margin: 50px auto;">Select an action to start with...</em>
+            </div>
+            <div ng-switch-when="req">
+                <h5>Request Details <small>More about the source</small></h5>
+                <p>
+                    ...
+                </p>
+            </div>
+            <div ng-switch-when="resp">
+                <h5>
+                    Result Returned
+                    <small ng-if="!status" class="text-danger pull-right"><i class="fa fa-close"></i> Rejected</small>
+                    <small ng-if="status" class="text-success pull-right"><i class="fa fa-check"></i> Responded</small>
+                </h5>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-addon" id="sizing-addon3">Type</span>
+                    <input type="text" class="form-control" ng-value="getType()" ng-readonly="true" placeholder="undefined" aria-describedby="sizing-addon3">
+                    <span class="input-group-btn">
+                        <button type="button" ng-disabled="true" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                            Edit <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                            <li><a href="#">Accepted Reply</a></li>
+                            <li><a href="#">Rejection Reason</a></li>
+                            <li class="divider"></li>
+                            <li><a href="#">Reset to Defaults</a></li>
+                        </ul>
+                    </span>
+                </div>
+                <textarea ng-class="{ 'alert alert-danger':!getStatus(), 'alert alert-success':getStatus() }"
+                          ng-readonly="true" ng-bind="getBody()" style="width: 100%; min-height: 160px; margin:0;"></textarea>
+                <div class="input-group">
+                    <div ng-click="setToggle(!allowEmpty)" style="padding-left: 8px;">
+                        <i class="fa" ng-class="{ 'fa-check':allowEmpty, 'fa-close':!allowEmpty }"></i>
+                        <span>Allow empty value as return value</span>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="modal-footer">
+    <button id="btnCancel" ng-disabled="!allowEmpty && !rejectValue" class="btn btn-danger pull-left" ng-click="cancel()">Reject Action</button>
+    <button id="btnUpdate" ng-disabled="!allowEmpty && !promisedValue" class="btn btn-success pull-right" ng-click="ok()">Complete Action</button>
+</div>

@@ -2,6 +2,7 @@
 
 angular.module('myApp.samples', [
     'myApp.samples.fillText',
+    'myApp.samples.decorators',
 ])
 
     .config(['$stateProvider', function ($stateProvider) {

@@ -230,15 +230,11 @@ angular.module('myApp', [
         //$httpProvider.interceptors.push('jadeResponseInterceptor');
     }])
 
-    .config(['$routeProvider', '$stateProvider', '$urlRouterProvider', function ($routeProvider, $stateProvider, $urlRouterProvider) {
+    .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
         // Set up default routes
-        $routeProvider.otherwise({
-            //templateUrl: '/',
-            templateUrl: 'error/404',
-        });
         $urlRouterProvider
             .when('', '/')
-        //.otherwise('error/404')
+            .otherwise('error/404')
 
         // Now set up the states
         $stateProvider
