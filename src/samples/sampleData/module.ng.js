@@ -1,28 +1,28 @@
 'use strict';
 
-angular.module('myApp.samples.fillText', [])
+angular.module('myApp.samples.sampleData', [])
 
     .config(['$stateProvider', function ($stateProvider) {
 
         // Now set up the states
         $stateProvider
-            .state('samples.fillText', {
-                url: '/filltext',
+            .state('samples.sampleData', {
+                url: '/sampleData',
                 views: {
                     'left@': { templateUrl: 'samples/left.tpl.html' },
                     'main@': {
-                        templateUrl: 'samples/fillText/main.tpl.html',
-                        controller: 'sampleFillTextController'
+                        templateUrl: 'samples/sampleData/main.tpl.html',
+                        controller: 'sampleDataController'
                     },
                 }
             })
 
     }])
 
-    .controller('sampleFillTextController', ['$rootScope', '$scope', '$state', '$stateParams', '$q', function ($rootScope, $scope, $state, $stateParams, $q) {
+    .controller('sampleDataController', ['$rootScope', '$scope', '$state', '$stateParams', '$q', function ($rootScope, $scope, $state, $stateParams, $q) {
 
         // Define the model
-        var context = $scope.filltext = {
+        var context = $scope.sampleData = {
             busy: true,
             rows: 10,
             args: [

@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('myApp.samples', [
-    'myApp.samples.fillText',
+    'myApp.samples.sampleData',
     'myApp.samples.decorators',
 ])
 
