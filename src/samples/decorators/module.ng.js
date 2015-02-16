@@ -19,7 +19,7 @@ angular.module('myApp.samples.decorators', [])
     }])
 
     .constant('interceptorConfig', {
-        debug: true,
+        debug: false,
         enabled: false,
         filters: [
             function (include, item) {
@@ -411,18 +411,9 @@ angular.module('myApp.samples.decorators', [])
             }
         }
 
-        /*
-        var $cookies;
-        angular.injector(['ngCookies']).invoke(function (_$cookies_) {
-            $cookies = _$cookies_;
-
-        });
-        */
-
         // Register a decorator for the $q service.
         cfg.enabled = cfg.getPersisted('monkeyPatching.enabled') == '1';
         if (cfg.enabled) {
-            alert('monkeyPatching.enabled');
             $provide.decorator("$q", decorateQService);
         }
 
@@ -437,22 +428,10 @@ angular.module('myApp.samples.decorators', [])
                 var val = cfg.enabled ? '0' : '1';
                 cfg.setPersisted('monkeyPatching.enabled', val);
                 $window.location.reload(true);
-                /*
-                context.patched = true;
-                context
-                    .openModalWindow(cfg.template, true, { busy: true }).result
-                    .then(function (result) {
-                        context.lastStatus = true;
-                        context.lastResult = result;
-                    }, function (reason) {
-                        // Modal dismissed                         
-                        context.lastStatus = false;
-                        context.lastResult = reason;
-                    });
-                */
             },
             fcall: function () {
                 // Clear last result
+                context.error = null;
                 context.fcallState = null;
 
                 // Invoke the loadSomething() method with given arguments - .fcall() will
@@ -466,6 +445,7 @@ angular.module('myApp.samples.decorators', [])
                         },
                         function handleReject(error) {
                             context.fcallState = 'Rejected';
+                            context.error = error;
                             console.warn("Rejected!");
                             console.warn(error);
                         }
@@ -484,8 +464,12 @@ angular.module('myApp.samples.decorators', [])
                     return ($q.when("someValue"));
                 }
             },
+            isPatched: function () {
+                return cfg.enabled;
+            },
             runPromiseAction: function () {
-                // Remove last result
+                // Clear last result
+                context.error = null;
                 context.lastResult = null;
 
                 // Add new promised action
@@ -544,9 +528,6 @@ angular.module('myApp.samples.decorators', [])
                     busy: false,
                     hasNode: true,
                 };
-
-                // Check for a patch
-                context.patched = cfg.enabled;
             } else {
                 // Not available
                 updates.hasNode = false;
@@ -564,7 +545,7 @@ angular.module('myApp.samples.decorators', [])
 
     .run(['$modal', 'interceptorConfig', function ($modal, cfg) {
         //console.warn(' - Started: ', cfg);
-        
+
         // Hook the interceptor function
         if (cfg.enabled) {
             cfg.promptme = function (status, result) {

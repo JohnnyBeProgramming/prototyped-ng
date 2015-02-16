@@ -3,8 +3,8 @@
         <div class="col-md-12">
             <span class="pull-right">
                 <a href="" ng-disabled="decorators.busy" ng-click="decorators.apply()"
-                   class="btn" ng-class="{ 'btn-primary': !decorators.patched, 'btn-success': decorators.patched }">
-                    {{ decorators.patched ? 'Application Patched!' : 'Apply Monkey Patches' }}
+                   class="btn" ng-class="{ 'btn-primary': !decorators.isPatched(), 'btn-success': decorators.isPatched() }">
+                    {{ decorators.isPatched() ? 'Application Patched!' : 'Apply Monkey Patches' }}
                 </a>
             </span>
             <h4>
@@ -33,21 +33,23 @@
                 <br />
                 - The idea to use stack traces was inspired from <a target="_blank" href="http://www.codeovertones.com/2011/08/how-to-print-stack-trace-anywhere-in.html">this awesome blog post</a>.
             </p>
-            <div ng:if="decorators.error" class="alert alert-danger">
-                <b>Error: </b>
-                {{ decorators.error.message || 'Something went wrong. :(' }}
-            </div>
             <hr />
             <p>
                 <a class="btn btn-default" ng-class="{ 'btn-success': (decorators.lastStatus && decorators.lastResult), 'btn-danger': (!decorators.lastStatus && decorators.lastResult.message) }" href="" ng-click="decorators.runPromiseAction()">Run Promised Action</a>
-                <a class="btn btn-warning" ng-class="{ 'btn-success': decorators.fcallState == 'Resolved', 'btn-danger': decorators.fcallState == 'Rejected' }" href="" ng-click="decorators.fcall()">Call Marshalled Function</a>
+                <a class="btn btn-default" ng-class="{ 'btn-warning':decorators.isPatched(), 'btn-success': decorators.fcallState == 'Resolved', 'btn-danger': decorators.fcallState == 'Rejected' }" href="" ng-click="decorators.fcall()" ng-disabled="!decorators.isPatched()">Call Marshalled Function</a>
             </p>
             <hr />
-            <div class="alert alert-success" ng-if="decorators.lastStatus === true">
-                <b>Accepted:</b> {{ decorators.lastResult || 'No additional information specified.' }}
+            <div ng:if="decorators.error" class="alert alert-danger">
+                <b>Error: </b>
+                {{ decorators.error.message || 'Something went wrong.' }}
             </div>
-            <div class="alert alert-danger" ng-if="decorators.lastStatus === false">
-                <b>Rejected:</b> {{ (decorators.lastResult.message || decorators.lastResult) || 'No additional information specified.' }}
+            <div ng:if="!decorators.error">
+                <div class="alert alert-success" ng-if="decorators.lastStatus === true">
+                    <b>Accepted:</b> {{ decorators.lastResult || 'No additional information specified.' }}
+                </div>
+                <div class="alert alert-danger" ng-if="decorators.lastStatus === false">
+                    <b>Rejected:</b> {{ (decorators.lastResult.message || decorators.lastResult) || 'No additional information specified.' }}
+                </div>
             </div>
         </div>
     </div>
