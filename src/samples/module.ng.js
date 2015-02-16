@@ -3,6 +3,8 @@
 angular.module('myApp.samples', [
     'myApp.samples.sampleData',
     'myApp.samples.decorators',
+    'myApp.samples.interceptors',
+    'myApp.samples.notifications',
 ])
 
     .config(['$stateProvider', function ($stateProvider) {

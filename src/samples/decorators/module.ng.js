@@ -18,7 +18,7 @@ angular.module('myApp.samples.decorators', [])
 
     }])
 
-    .constant('interceptorConfig', {
+    .constant('decoratorConfig', {
         debug: false,
         enabled: false,
         filters: [
@@ -108,7 +108,7 @@ angular.module('myApp.samples.decorators', [])
             document.cookie = cname + "=" + cvalue + "; " + expires;
         }
     })
-    .config(['$provide', 'interceptorConfig', function ($provide, cfg) {
+    .config(['$provide', 'decoratorConfig', function ($provide, cfg) {
         // Our decorator will get called when / if the $q service needs to be
         // instantiated in the application. It is made available as the
         // "$delegate" reference (made available as an override in the "locals"
@@ -419,7 +419,7 @@ angular.module('myApp.samples.decorators', [])
 
     }])
 
-    .controller('decoratorsController', ['$rootScope', '$scope', '$state', '$stateParams', '$modal', '$q', '$timeout', '$window', 'interceptorConfig', function ($rootScope, $scope, $state, $stateParams, $modal, $q, $timeout, $window, cfg) {
+    .controller('decoratorsController', ['$rootScope', '$scope', '$state', '$stateParams', '$modal', '$q', '$timeout', '$window', 'decoratorConfig', function ($rootScope, $scope, $state, $stateParams, $modal, $q, $timeout, $window, cfg) {
         // Define the model
         var context = $scope.decorators = {
             busy: true,
@@ -543,7 +543,7 @@ angular.module('myApp.samples.decorators', [])
 
     }])
 
-    .run(['$modal', 'interceptorConfig', function ($modal, cfg) {
+    .run(['$modal', 'decoratorConfig', function ($modal, cfg) {
         //console.warn(' - Started: ', cfg);
 
         // Hook the interceptor function
