@@ -124,7 +124,7 @@ angular.module('myApp.samples.decorators', [])
             // Monkey-patch our fcall() method.
             $q.fcall = fcall;
 
-            var proxy, stub;
+            var proxy;
             proxy = $q.defer; $q.defer = function () {
                 var result, value;
                 var info = {
