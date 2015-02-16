@@ -3,7 +3,7 @@
         <a app:nav-link ui:sref="samples.info">
             <i class="fa" ng-class="{ 'fa-refresh glow-blue animate-glow': samples.busy, 'fa-cubes glow-green': !samples.busy, 'fa-warning glow-red animate-glow': samples.error }"></i>&nbsp;
             Samples Home Page
-        </a>        
+        </a>
     </li>
     <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': false }">
         <a app:nav-link ui:sref="samples.sampleData">
@@ -23,6 +23,11 @@
     <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': false }">
         <a app:nav-link ui:sref="samples.decorators">
             <i class="fa fa-plug"></i> Service Decorators
+        </a>
+    </li>
+    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': false }">
+        <a app:nav-link ui:sref="samples.compression">
+            <i class="fa fa-file-archive-o"></i> Compressing Text
         </a>
     </li>
 </ul>

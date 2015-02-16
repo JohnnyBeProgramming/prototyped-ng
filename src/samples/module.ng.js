@@ -5,6 +5,7 @@ angular.module('myApp.samples', [
     'myApp.samples.decorators',
     'myApp.samples.interceptors',
     'myApp.samples.notifications',
+    'myApp.samples.compression',
 ])
 
     .config(['$stateProvider', function ($stateProvider) {
@@ -31,6 +32,7 @@ angular.module('myApp.samples', [
         // Define the model
         var context = $scope.sample = {
             busy: true,
+            text: '',
             utils: {
                 list: function (path, callback) {
                     var list = [];
