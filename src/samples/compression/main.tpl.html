@@ -15,20 +15,24 @@
             </span>
             <h4>
                 Dynamic Compression
-                <small>Packing strings and urls into more compact packages.</small>
+                <small>Encode strings and urls into more compact forms.</small>
             </h4>
             <hr />
-            <div ng-if="!compression.result">
-                <h5>Enter text to compress: <small ng-if="compression.text.length">{{ compression.text.length }} bytes, uncompressed</small></h5>
-                <textarea ng-model="compression.text" style="width: 100%; min-height: 240px;" placeholder="Enter some text here..."></textarea>
-            </div>
-            <div ng-if="compression.result">
-                <h5>Compressed Text: <small ng-if="compression.result.length">{{ compression.result.length }} bytes, {{ compression.getPercentage() | number:2 }}% reduction</small></h5>
-                <pre style="width: 100%; min-height: 240px;">{{compression.result}}</pre>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Enter text to compress: <small ng-if="compression.text.length">{{ compression.text.length }} bytes, uncompressed</small></h5>
+                    <textarea ng-model="compression.text" ng-disabled="compression.result"
+                              style="width: 100%; min-height: 240px;" placeholder="Enter some text here..."></textarea>
+                </div>
+                <div class="col-md-6">
+                    <h5>Compressed Text: <small ng-if="compression.result.length">{{ compression.result.length }} bytes, {{ compression.getPercentage() | number:2 }}% reduction</small></h5>
+                    <textarea ng-model="compression.result" ng-disabled="!compression.result"
+                              style="width: 100%; min-height: 240px;" readonly></textarea>
+                </div>
             </div>
             <hr />
             <p>
-                <a class="btn btn-default" ng-class="{ 'btn-primary': !compression.ready && compression.text.length }"
+                <a class="btn btn-default" ng-class="{ 'btn-primary': !compression.ready && compression.text.length, 'btn-danger': context.lastStatus === false }"
                    href="" ng-click="compression.compressText(compression.text)" ng-disabled="!compression.text.length">Compress Text</a>
                 <a class="btn btn-default" href="" ng-click="compression.clearResult()" ng-if="compression.ready">Cancel</a>
             </p>
