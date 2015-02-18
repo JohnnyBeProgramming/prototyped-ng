@@ -76,6 +76,14 @@ angular.module('myApp.samples.compression', [])
         // Define the compressor
         var compressor = {
             lzw: lzwCompressor,
+            scsu: {
+                encode: function (input) {
+                    return new SCSU().compress(input);
+                },
+                decode: function (input) {
+                    return new SCSU().decompress(input);
+                }
+            }
         };
 
         function stripComments(stringIN) {
@@ -225,34 +233,32 @@ angular.module('myApp.samples.compression', [])
         String.prototype[''] = function (callback) {
             var input = this;
             var extender = this[''];
-            if (typeof extender.isReady === 'undefined') {
-                extender.val = input;
-                extender.encoders = {
-                    lzw: lzwCompressor,
-                };
-                extender.eval = function (callback) {
-                    var val = eval(extender.val);
-                    if (typeof callback === 'function') {
-                        callback(val);
-                    }
-                    return val;
-                },
-                extender.compress = function (encoder) {
-                    if (!encoder) encoder = 'lzw';
-                    if (extender.encoders.hasOwnProperty(encoder)) {
-                        var worker = extender.encoders[encoder];
-                        return worker.encode(extender.val);
-                    } else throw new Error('Compression Failed. Encoder: ' + encoder);
-                },
-                extender.decompress = function (encoder) {
-                    if (!encoder) encoder = 'lzw';
-                    if (extender.encoders.hasOwnProperty(encoder)) {
-                        var worker = extender.encoders[encoder];
-                        return worker.decode(extender.val);
-                    } else throw new Error('Decompression Failed. Encoder: ' + encoder);
+            //if (typeof extender.isReady === 'undefined') {
+            extender.val = input;
+            extender.encoders = compressor;
+            extender.eval = function (callback) {
+                var val = eval(input);
+                if (typeof callback === 'function') {
+                    callback(val);
                 }
-                extender.isReady = true;
+                return val;
+            },
+            extender.compress = function (encoder) {
+                if (!encoder) encoder = 'lzw';
+                if (extender.encoders.hasOwnProperty(encoder)) {
+                    var worker = extender.encoders[encoder];
+                    return worker.encode(input);
+                } else throw new Error('Compression Failed. Encoder: ' + encoder);
+            },
+            extender.decompress = function (encoder) {
+                if (!encoder) encoder = 'lzw';
+                if (extender.encoders.hasOwnProperty(encoder)) {
+                    var worker = extender.encoders[encoder];
+                    return worker.decode(input);
+                } else throw new Error('Decompression Failed. Encoder: ' + encoder);
             }
+            extender.isReady = true;
+            //}
 
             // Run callback with self (if needed)
             if (typeof callback === 'function') {
@@ -282,16 +288,18 @@ angular.module('myApp.samples.compression', [])
                     */
 
                     // Run the compression (if required)
-                    var worker = compressor[context.target];
+                    var ident = context.target || 'lzw';
+                    var worker = compressor[ident];
                     if (worker && worker.encode) {
                         // Compress payload
                         payload = worker.encode(payload);
                     }
 
                     payload = JSON.stringify(payload);
-                    payload = 'var obj = eval(' + payload + "['']().decompress()); alert(obj);";
+                    payload = '' + payload + "['']().decompress('" + ident + "')['']().eval()";
 
                     // Compress text...
+                    context.resType = context.target;
                     context.result = payload;
                     context.ready = true;
 
@@ -338,6 +346,14 @@ angular.module('myApp.samples.compression', [])
                 return 100 - (100.0 * context.result.length / context.text.length);
             },
         };
+
+        $scope.$watch('compression.target', function () {
+            if (context.result && context.resType != context.target) {
+                // Update compressed result with new compression type
+                context.compressText(context.text);
+            }
+        });
+
 
         // Apply updates (including async)
         var updates = {};
