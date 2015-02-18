@@ -86,188 +86,6 @@ angular.module('myApp.samples.compression', [])
             }
         };
 
-        function stripComments(stringIN) {
-            var SLASH = '/';
-            var BACK_SLASH = '\\';
-            var STAR = '*';
-            var DOUBLE_QUOTE = '"';
-            var SINGLE_QUOTE = "'";
-            var NEW_LINE = '\n';
-            var CARRIAGE_RETURN = '\r';
-
-            var string = stringIN;
-            var length = string.length;
-            var position = 0;
-            var output = [];
-
-            function getCurrentCharacter() {
-                return string.charAt(position);
-            }
-
-            function getPreviousCharacter() {
-                return string.charAt(position - 1);
-            }
-
-            function getNextCharacter() {
-                return string.charAt(position + 1);
-            }
-
-            function add() {
-                output.push(getCurrentCharacter());
-            }
-
-            function next() {
-                position++;
-            }
-
-            function atEnd() {
-                return position >= length;
-            }
-
-            function isEscaping() {
-                if (getPreviousCharacter() == BACK_SLASH) {
-                    var caret = position - 1;
-                    var escaped = true;
-                    while (caret-- > 0) {
-                        if (string.charAt(caret) != BACK_SLASH) {
-                            return escaped;
-                        }
-                        escaped = !escaped;
-                    }
-                    return escaped;
-                }
-                return false;
-            }
-
-            function processSingleQuotedString() {
-                if (getCurrentCharacter() == SINGLE_QUOTE) {
-                    add();
-                    next();
-                    while (!atEnd()) {
-                        if (getCurrentCharacter() == SINGLE_QUOTE && !isEscaping()) {
-                            return;
-                        }
-                        add();
-                        next();
-                    }
-                }
-            }
-
-            function processDoubleQuotedString() {
-                if (getCurrentCharacter() == DOUBLE_QUOTE) {
-                    add();
-                    next();
-                    while (!atEnd()) {
-                        if (getCurrentCharacter() == DOUBLE_QUOTE && !isEscaping()) {
-                            return;
-                        }
-                        add();
-                        next();
-                    }
-                }
-            }
-
-            function processSingleLineComment() {
-                if (getCurrentCharacter() == SLASH) {
-                    if (getNextCharacter() == SLASH) {
-                        next();
-                        while (!atEnd()) {
-                            next();
-                            if (getCurrentCharacter() == NEW_LINE || getCurrentCharacter() == CARRIAGE_RETURN) {
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-
-            function processMultiLineComment() {
-                if (getCurrentCharacter() == SLASH) {
-                    if (getNextCharacter() == STAR) {
-                        next();
-                        next();
-                        while (!atEnd()) {
-                            next();
-                            if (getCurrentCharacter() == STAR) {
-                                if (getNextCharacter() == SLASH) {
-                                    next();
-                                    next();
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            function processRegularExpression() {
-                if (getCurrentCharacter() == SLASH) {
-                    add();
-                    next();
-                    while (!atEnd()) {
-                        if (getCurrentCharacter() == SLASH && !isEscaping()) {
-                            return;
-                        }
-                        add();
-                        next();
-                    }
-                }
-            }
-
-            while (!atEnd()) {
-                processDoubleQuotedString();
-                processSingleQuotedString();
-                processSingleLineComment();
-                processMultiLineComment();
-                processRegularExpression();
-                if (!atEnd()) {
-                    add();
-                    next();
-                }
-            }
-            return output.join('');
-
-        };
-
-        // Extend string with some functionality
-        String.prototype[''] = function (callback) {
-            var input = this;
-            var extender = this[''];
-            //if (typeof extender.isReady === 'undefined') {
-            extender.val = input;
-            extender.encoders = compressor;
-            extender.eval = function (callback) {
-                var val = eval(input);
-                if (typeof callback === 'function') {
-                    callback(val);
-                }
-                return val;
-            },
-            extender.compress = function (encoder) {
-                if (!encoder) encoder = 'lzw';
-                if (extender.encoders.hasOwnProperty(encoder)) {
-                    var worker = extender.encoders[encoder];
-                    return worker.encode(input);
-                } else throw new Error('Compression Failed. Encoder: ' + encoder);
-            },
-            extender.decompress = function (encoder) {
-                if (!encoder) encoder = 'lzw';
-                if (extender.encoders.hasOwnProperty(encoder)) {
-                    var worker = extender.encoders[encoder];
-                    return worker.decode(input);
-                } else throw new Error('Decompression Failed. Encoder: ' + encoder);
-            }
-            extender.isReady = true;
-            //}
-
-            // Run callback with self (if needed)
-            if (typeof callback === 'function') {
-                callback(input);
-            }
-
-            return extender;
-        };
-
         // Define the model
         var context = $scope.compression = {
             busy: true,
@@ -276,16 +94,8 @@ angular.module('myApp.samples.compression', [])
                 $rootScope.$applyAsync(function () {
                     console.groupCollapsed(' - Compressing text: ' + text.length + ' bytes...');
 
-                    // Strip all comments, whitespaces, newlines...
+                    // Get the raw text payload
                     var payload = context.text;
-                    /*
-                    if (payload && payload.length) {
-                        payload = stripComments(payload);
-                        payload = payload.replace(/\r?\n|\r/g, ' '); // Remove Line Breaks
-                        payload = payload.replace(/\s+/g, ' '); // Reduce Whitespace
-                        payload = payload.trim();
-                    }
-                    */
 
                     // Run the compression (if required)
                     var ident = context.target || 'lzw';
@@ -295,16 +105,15 @@ angular.module('myApp.samples.compression', [])
                         payload = worker.encode(payload);
                     }
 
-                    payload = JSON.stringify(payload);
-                    payload = '' + payload + "['']().decompress('" + ident + "')['']().eval()";
+                    var enc = (ident == 'lzw') ? '' : ',"' + ident + '"';
 
-                    // Compress text...
+                    // Set the result
                     context.resType = context.target;
                     context.result = payload;
                     context.ready = true;
 
                     // Build a url of the script
-                    var url = 'javascript:' + payload;
+                    var url = 'javascript:try { ' + JSON.stringify(payload) + "['']().decompress(alert" + enc + ")" + ' } catch (ex) { alert(ex.message) }';
                     context.scriptUrl = url;
 
                     var btnTrigger = $('#runAsScript');
@@ -345,6 +154,20 @@ angular.module('myApp.samples.compression', [])
             getPercentage: function () {
                 return 100 - (100.0 * context.result.length / context.text.length);
             },
+            getSampleText: function (url) {
+                // Get some sample text
+                var request = $.ajax({
+                    url: url,
+                    type: 'GET',
+                    dataType: 'text',
+                    success: function (data) {
+                        // Update text box with text
+                        $rootScope.$applyAsync(function () {
+                            context.text = data;
+                        });
+                    }
+                });
+            },
         };
 
         $scope.$watch('compression.target', function () {
@@ -354,28 +177,11 @@ angular.module('myApp.samples.compression', [])
             }
         });
 
-
         // Apply updates (including async)
         var updates = {};
         try {
-
-            updates.text = "\
-/* -----------------------------------------------      \r\n\
- * Prototyped sample script                             \r\n\
- * ----------------------------------------------- */   \r\n\
-var ctx = \"www.prototyped.info\"['']();                \r\n\
-if (ctx.isReady) {                                      \r\n\
-    ctx.compress()[''](function (result)                \r\n\
-    {                                                   \r\n\
-        // Callback reply when compressed...            \r\n\
-        console.log(' - Compressed: ', result.length);  \r\n\
-    })                                                  \r\n\
-    .decompress()[''](function (result)                 \r\n\
-    {                                                   \r\n\
-        // Callback reply when decompressed...          \r\n\
-        console.log(' - Decompressed: ', result.length);\r\n\
-    }).val;	                                            \r\n\
-}";
+            // Get some sample text
+            context.getSampleText('assets/lib/test.js');
 
             // Check for required libraries
             if (typeof require !== 'undefined') {

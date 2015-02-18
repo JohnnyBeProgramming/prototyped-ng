@@ -20,12 +20,24 @@
             <hr />
             <div class="row">
                 <div class="col-md-6">
+                    <div class="btn-group pull-right">
+                        <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+                            Samples <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a href="" ng-click="compression.getSampleText('assets/lib/sp.js')">JavaScript #1</a></li>
+                            <li><a href="" ng-click="compression.getSampleText('assets/lib/test.js')">JavaScript #2</a></li>
+                            <li><a href="" ng-click="compression.getSampleText('assets/css/test.css')">CSS Styles #1</a></li>
+                            <li><a href="" ng-click="compression.getSampleText('assets/css/test.min.css')">CSS Styles #2</a></li>
+                        </ul>
+                    </div>
+
                     <h5>
                         Enter text to compress:
-                        <small ng-if="compression.text.length">{{ compression.text.length }} bytes, uncompressed</small>
+                        <small ng-if="compression.text.length">{{ compression.text.length | toBytes }}, uncompressed</small>
                     </h5>
                     <textarea ng-model="compression.text" ng-disabled="compression.result"
-                              style="width: 100%; min-height: 240px;" placeholder="Enter some text here..."></textarea>
+                              style="width: 100%; min-height: 480px;" placeholder="Enter some text here..."></textarea>
                 </div>
                 <div class="col-md-6">
                     <span class="pull-right">
@@ -37,10 +49,10 @@
                     </span>
                     <h5>
                         Compressed Text:
-                        <small ng-if="compression.result.length">{{ compression.result.length }} bytes, {{ compression.getPercentage() | number:2 }}% reduction</small>
+                        <small ng-if="compression.result.length">{{ compression.result.length | toBytes }}, {{ compression.getPercentage() | number:2 }}% reduction</small>
                     </h5>
                     <textarea ng-model="compression.result" ng-disabled="!compression.result"
-                              style="width: 100%; min-height: 240px;" readonly></textarea>
+                              style="width: 100%; min-height: 480px;" readonly></textarea>
                 </div>
             </div>
             <hr />

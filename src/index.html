@@ -98,8 +98,8 @@
     </style>
     <link href="assets/favicon.png" rel="shortcut icon">
     <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.2.min.js"></script>
-    <script src="https://ajax.aspnetcdn.com/ajax/modernizr/modernizr-2.6.2.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
 </head>
 <body>
     <!--[if lt IE 9]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a target="_self" href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p><![endif]-->
@@ -219,10 +219,30 @@
     <!--<![endif]-->
     <!-- build:loader ../app/assets/lib/app.loader.dll.js -->
     <script src="assets/app.loader.js"></script>
+    <script src="assets/app.settings.js"></script>
     <script src="assets/lib/mousetrap.js"></script>
     <!-- endbuild -->
 
     <script>
+        // Define the modules to load
+        var modules = [
+            'modules/module.ng.js',
+            'modules/default.ng.js',
+            'modules/about.ng.js',
+
+            // Load the required module libraries
+            'modules/prototyped/module.ng.js',
+            'modules/prototyped/cmd/module.ng.js',
+            'modules/sqlcmd.exe/module.ng.js',
+
+            // Load some samples as well
+            'samples/module.ng.js',
+            'samples/sampleData/module.ng.js',
+            'samples/decorators/module.ng.js',
+            'samples/interceptors/module.ng.js',
+            'samples/notifications/module.ng.js',
+            'samples/compression/module.ng.js',
+        ];
 
         // Define helper method to set error meesage
         function setMessage(message, css) {
@@ -239,33 +259,15 @@
 
             // Init the loader + add vendor libs...
             if (appConfig.init([
-                //'assets/lib/mousetrap.js',
                 'assets/lib/scsu.js',
+                'assets/lib/sp.js',
             ])) {
 
                 // Load all dependencies asynchronously.
                 $script(appConfig.vend, function () {
 
                     // Start loading the main application files
-                    // Note: Sub modules needs to be loaded before parent(s)
-                    appConfig.preLoad([
-                        'modules/module.ng.js',
-                        'modules/default.ng.js',
-                        'modules/about.ng.js',
-
-                        // Load the required module libraries
-                        'modules/prototyped/module.ng.js',
-                        'modules/prototyped/cmd/module.ng.js',
-                        'modules/sqlcmd.exe/module.ng.js',
-
-                        // Load some samples as well
-                        'samples/module.ng.js',
-                        'samples/sampleData/module.ng.js',
-                        'samples/decorators/module.ng.js',
-                        'samples/interceptors/module.ng.js',
-                        'samples/notifications/module.ng.js',
-                        'samples/compression/module.ng.js',
-                    ]);
+                    appConfig.preLoad(modules);
 
                     // Load all of the dependencies asynchronously.
                     $script(appConfig.libs, function () {
