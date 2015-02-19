@@ -6,6 +6,7 @@ angular.module('myApp.samples', [
     'myApp.samples.interceptors',
     'myApp.samples.notifications',
     'myApp.samples.compression',
+    'myApp.samples.styles3d',
 ])
 
     .config(['$stateProvider', function ($stateProvider) {

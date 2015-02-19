@@ -1,0 +1,103 @@
+﻿<div id="mainview">
+    <div>
+        Inspired by this post:
+        <a href="http://www.dhteumeuleu.com/apparently-transparent/source">http://www.dhteumeuleu.com/apparently-transparent/source</a>
+    </div>
+    <div id="screen">
+        <div id="scene">
+            <div class="f sky" data-transform="rotateX(-90deg) translateZ(-300px)"></div>
+            <div class="wall" data-transform="translateZ(-500px)"></div>
+            <div class="wall" data-transform="rotateY(-90deg) translateZ(-500px)"></div>
+            <div class="wall" data-transform="rotateY(90deg) translateZ(-500px)"></div>
+            <div class="wall" data-transform="rotateY(180deg) translateZ(-500px)"></div>
+            <div class="f bottom" data-transform="rotateX(90deg) translateZ(-300px)"></div>
+        </div>
+    </div>
+</div>
+<style>
+    html {
+        -ms-touch-action: none;
+        -ms-content-zooming: none;
+    }
+
+    .sky {
+        width: 1000px;
+        height: 1000px;
+        visibility: visible;
+        background-image: url(http://thegirlbythesea.com/wp-content/uploads/2010/03/prairie-sky-2.jpg);
+        transform: perspective(499.99999496775px) rotateX(0deg) rotateY(0deg) translateX(-1.53080851434101e-14px) translateY(0px) translateZ(251.000002516125px) rotateX(-90deg) translateZ(-300px);
+        -webkit-transform: perspective(499.99999496775px) rotateX(0deg) rotateY(0deg) translateX(-1.53080851434101e-14px) translateY(0px) translateZ(251.000002516125px) rotateX(-90deg) translateZ(-300px);
+    }
+
+    .bottom {
+        width: 1000px;
+        height: 1000px;
+        visibility: visible;
+        background-image: url(http://www.momorialcards.com/images/light_textured_backround.jpg);
+        transform: perspective(499.99999496775px) rotateX(0deg) rotateY(0deg) translateX(-1.53080851434101e-14px) translateY(0px) translateZ(251.000002516125px) rotateX(90deg) translateZ(-300px);
+        -webkit-transform: perspective(499.99999496775px) rotateX(0deg) rotateY(0deg) translateX(-1.53080851434101e-14px) translateY(0px) translateZ(251.000002516125px) rotateX(90deg) translateZ(-300px);
+    }
+
+    .wall {
+        width: 1000px;
+        height: 600px;
+        visibility: visible;
+        background-image: url(http://www.myownspace.co.za/pix/Backgrounds/3d-black-cubes-backgrounds-wallpapers1.jpg);
+        transform: perspective(499.99999496775px) rotateX(0deg) rotateY(0deg) translateX(-1.53080851434101e-14px) translateY(0px) translateZ(251.000002516125px) translateZ(-500px);
+        -webkit-transform: perspective(499.99999496775px) rotateX(0deg) rotateY(0deg) translateX(-1.53080851434101e-14px) translateY(0px) translateZ(251.000002516125px) translateZ(-500px);        
+    }
+
+    #mainview {
+        top: -8px;
+        left: -8px;
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+    #screen {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        cursor: pointer;
+        background: #000;
+        user-select: none;
+        overflow: hidden;
+    }
+
+    #scene {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        transform: translateZ(1000px);
+        -webkit-transform: translateZ(1000px);
+    }
+
+        #scene [data-transform] {
+            position: absolute;
+            visibility: hidden;
+            margin: -300px -500px;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            image-rendering: optimizeSpeed;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -o-crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: optimize-contrast;
+            -ms-interpolation-mode: nearest-neighbor;
+        }
+
+        #scene .f {
+            margin: -500px -500px;
+        }
+
+        #scene .s {
+            width: 252px;
+            height: 600px;
+            margin: -300px -126px;
+        }
+</style>
