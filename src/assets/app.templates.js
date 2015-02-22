@@ -1,4 +1,4 @@
-angular.module('myApp.views', ['views/status/404.jade', 'views/status/default.jade', 'views/about/contact.tpl.html', 'views/about/info.tpl.html', 'views/about/left.tpl.html', 'views/about/menu.tpl.html', 'views/default.tpl.html', 'views/partials/appMenu.tpl.html']);
+angular.module('myApp.views', ['views/status/404.jade', 'views/status/default.jade', 'views/about/connections.tpl.html', 'views/about/contact.tpl.html', 'views/about/info.tpl.html', 'views/about/left.tpl.html', 'views/about/menu.tpl.html', 'views/default.tpl.html', 'views/partials/appMenu.tpl.html']);
 
 angular.module('views/status/404.jade', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('views/status/404.jade',
@@ -8,6 +8,113 @@ angular.module('views/status/404.jade', []).run(['$templateCache', function($tem
 angular.module('views/status/default.jade', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('views/status/default.jade',
     '<style>::-moz-selection{background:#b3d4fc;text-shadow:none}::selection{background:#b3d4fc;text-shadow:none}body{background:#f0f0f0}.status-view{padding:30px 10px;font-size:16px;line-height:1.4;color:#737373;background:#f0f0f0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}.status-view,.status-view input{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}.status-view .container{max-width:500px;padding:30px 20px 50px;border:1px solid #b3b3b3;border-radius:4px;margin:0 auto;box-shadow:0 1px 10px #a7a7a7,inset 0 1px 0 #fff;background:#fcfcfc}h1{margin:0 10px;font-size:50px;text-align:center}h1 span{color:#bbb}h3{margin:1.5em 0 .5em}p{margin:1em 0}ul{padding:0 0 0 40px;margin:1em 0}.container{max-width:380px;margin:0 auto}#goog-fixurl ul{list-style:none;padding:0;margin:0}#goog-fixurl form{margin:0}#goog-wm-qt,#goog-wm-sb{border:1px solid #bbb;font-size:16px;line-height:normal;vertical-align:top;color:#444;border-radius:2px}#goog-wm-qt{width:220px;height:20px;padding:5px;margin:5px 10px 0 0;box-shadow:inset 0 1px 1px #ccc}#goog-wm-sb{display:inline-block;height:32px;padding:0 10px;margin:5px 0 0;white-space:nowrap;cursor:pointer;background-color:#f5f5f5;background-image:-webkit-linear-gradient(rgba(255,255,255,0),#f1f1f1);background-image:-moz-linear-gradient(rgba(255,255,255,0),#f1f1f1);background-image:-ms-linear-gradient(rgba(255,255,255,0),#f1f1f1);background-image:-o-linear-gradient(rgba(255,255,255,0),#f1f1f1);-webkit-appearance:none;-moz-appearance:none;appearance:none}#goog-wm-sb:focus,#goog-wm-sb:hover{border-color:#aaa;box-shadow:0 1px 1px rgba(0,0,0,.1);background-color:#f8f8f8}#goog-wm-qt:focus,#goog-wm-qt:hover{border-color:#105cb6;outline:0;color:#222}input::-moz-focus-inner{padding:0;border:0}.contents{padding:0;margin:0;border:0}</style><div style=width:100%><div class=status-view><div class=container><h1>Aww snap!<br><small>You broke it :(</small></h1><ul style="padding-left: 24px; list-style-type: square" class=thumbnail><li>Sorry, but the something went wrong.</li><li>We have sent out a raven to investigate the problem.</li></ul></div></div></div>');
+}]);
+
+angular.module('views/about/connections.tpl.html', []).run(['$templateCache', function($templateCache) {
+  $templateCache.put('views/about/connections.tpl.html',
+    '<div class=container ng:cloak><div ng-if=!state.showRaw class=results ng-init=detect()><div class="icon pull-left left"><i class="glyphicon glyphicon-globe"></i> <i class="sub-icon glyphicon" ng-class=getStatusColor()></i></div><div class="info pull-left"><div><div class=pull-right><a class=ctrl-sm ng-click="state.editMode = true" href=""><i class="glyphicon glyphicon-pencil"></i></a></div><h4 ng-if=!state.editMode><a href="{{ state.location }}">{{ state.location }}</a></h4></div><div ng-if=!state.editMode><div ng-if=state.location><p class=info-row><div class="info-col-primary pull-left">Protocol: <span class="btn-group btn-group-xs" role=group aria-label=...><button type=button ng-disabled=state.requireHttps class="btn btn-default" ng-click="setProtocol(\'http\')" ng-class="state.requireHttps ? \'disabled\' : getProtocolStyle(\'http\', \'btn-warning\')"><i class=glyphicon ng-class="getStatusIcon(\'glyphicon-eye-open\')" ng-if="state.location.indexOf(\'http://\') == 0"></i> HTTP</button> <button type=button class="btn btn-default" ng-click="setProtocol(\'https\')" ng-class="getProtocolStyle(\'https\')"><i class=glyphicon ng-class="getStatusIcon(\'glyphicon-eye-close\')" ng-if="state.location.indexOf(\'https://\') == 0"></i> HTTPS</button></span></div><div class="info-col-secondary pull-right"><span class="btn-group btn-group-xs" role=group><a ng-if=result.info class="btn btn-default" href="" ng-click="state.activeTab = (state.activeTab == \'result\') ? null : \'result\'" ng-class="{\'btn-info\':(state.activeTab == \'result\'), \'btn-default\':(state.activeTab != \'result\')}"><i class="glyphicon glyphicon-file"></i> View Result</a> <a ng-if=state.location class=btn href="" ng-click="state.activeTab = (state.activeTab == \'preview\') ? null : \'preview\'" ng-class="{\'btn-info\':(state.activeTab == \'preview\'), \'btn-default\':(state.activeTab != \'preview\')}"><i class=glyphicon ng-class="{\'glyphicon-eye-close\':state.showPreview, \'glyphicon-eye-open\':!state.showPreview}"></i> {{ state.showPreview ? \'Hide\' : \'Show\' }} Preview</a></span></div><br class="clearfix"></p><p class=info-row><div class="info-col-primary pull-left" ng-if=result><div class=info-col-ellipse>Latency: {{ result.received - result.sent }}ms <span ng-if=latency.desc ng-class=latency.style>(<em>{{ latency.desc }}</em>)</span></div></div><div class="info-col-primary pull-left" ng-if=!result><em>Checking...</em></div><div class="info-col-secondary pull-right"><span ng-if="status.code >= 0" class="pull-right label" ng-class=status.style title="Status: {{ status.desc }}, Code: {{ status.code }}">{{ status.desc }}: {{ status.code }}</span></div><br class="clearfix"></p></div><div ng-if="result != null"><p><div class="alert alert-warning" ng-if="result.valid && state.protocol == \'http\'"><i class="glyphicon glyphicon-eye-open"></i> <b>Warning:</b> The web connection <b class=text-danger>is not secure</b>, use <a href="" ng-click="setProtocol(\'https\')">HTTPS</a>.</div><div class="alert alert-success" ng-if="result.valid && state.protocol == \'https\'"><i class="glyphicon glyphicon-ok"></i> <b>Validated:</b> The web connection looks secure.</div><div class="alert alert-danger" ng-if="!result.valid && result.error && result.error != \'error\'"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Failed:</b> {{ result.error }}</div><div class="alert alert-danger" ng-if="!result.valid && !(result.error && result.error != \'error\')"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Offline:</b> Connection could not be established.</div></p></div></div><form ng-if=state.editMode><div class=form-group><h4 class=control-label for=txtTarget>Enter the website URL to connect to:</h4><input class=form-control id=txtTarget ng-model=state.location></div><div class=form-group><div class=checkbox><label><input type=checkbox ng-model=state.requireHttps> Require secure connection</label></div><div class=checkbox ng-class="\'disabled text-muted\'" ng-if=state.requireHttps><label><input type=checkbox ng-model=state.requireCert ng-disabled=true> Requires Client Certificate</label></div></div><div class=form-group ng-show=state.requireCert><label for=exampleInputFile>Select Client Certificate:</label><input type=file id=exampleInputFile><p class=help-block>This must be a valid client certificate.</p></div><button type=submit class="btn btn-primary" ng-click=submitForm()>Update</button></form></div></div><div ng-if="state.activeTab == \'preview\'" class="panel panel-default"><div class=panel-heading><b class=panel-title><i class="glyphicon glyphicon-globe"></i> <a target=_blank href="{{ state.location }}">{{ state.location }}</a></b></div><div class="panel-body info-row iframe-body" style="min-height: 480px"><iframe class=info-col-primary ng-src="{{ state.location }}" frameborder=0>IFrame not available</iframe></div></div><div ng-if="state.activeTab == \'result\'" class=source><span class=pull-right><a class="btn btn-sm btn-primary" ng-click="state.activeTab = null">Close</a></span> <samp><pre>{{ result.info }}</pre></samp></div></div><style>.results {\n' +
+    '        min-width: 480px;\n' +
+    '        display: flex;\n' +
+    '    }\n' +
+    '\n' +
+    '        .results .icon {\n' +
+    '            margin: 0 8px;\n' +
+    '            font-size: 128px;\n' +
+    '            width: 128px !important;\n' +
+    '            height: 128px !important;\n' +
+    '            position: relative;\n' +
+    '            flex-grow: 0;\n' +
+    '            flex-shrink: 0;\n' +
+    '        }\n' +
+    '\n' +
+    '            .results .icon .sub-icon {\n' +
+    '                font-size: 64px !important;\n' +
+    '                width: 64px !important;\n' +
+    '                height: 64px !important;\n' +
+    '                position: absolute;\n' +
+    '                right: 0;\n' +
+    '                top: 0;\n' +
+    '                margin-top: 100px;\n' +
+    '            }\n' +
+    '\n' +
+    '                .results .icon .sub-icon.success {\n' +
+    '                    color: #080;\n' +
+    '                }\n' +
+    '\n' +
+    '                .results .icon .sub-icon.error {\n' +
+    '                    color: #D00;\n' +
+    '                }\n' +
+    '\n' +
+    '                .results .icon .sub-icon.warning {\n' +
+    '                    color: #0094ff;\n' +
+    '                }\n' +
+    '\n' +
+    '                .results .icon .sub-icon.busy {\n' +
+    '                    color: #0094ff;\n' +
+    '                }\n' +
+    '\n' +
+    '        .results .info {\n' +
+    '            margin: 0 16px;\n' +
+    '            min-height: 128px;\n' +
+    '            min-width: 300px;\n' +
+    '            display: inline-block;\n' +
+    '            flex-grow: 1;\n' +
+    '            flex-shrink: 1;\n' +
+    '        }\n' +
+    '\n' +
+    '            .results .info h4 {\n' +
+    '                text-wrap: avoid;\n' +
+    '                overflow: hidden;\n' +
+    '                white-space: nowrap;\n' +
+    '                text-overflow: ellipsis;\n' +
+    '            }\n' +
+    '\n' +
+    '                .results .info h4 a {\n' +
+    '                    color: black;\n' +
+    '                }\n' +
+    '\n' +
+    '            .results .info .ctrl-sm {\n' +
+    '                font-size: larger;\n' +
+    '                margin-left: 8px;\n' +
+    '                color: black;\n' +
+    '            }\n' +
+    '\n' +
+    '    .info-row {\n' +
+    '        display: flex;\n' +
+    '    }\n' +
+    '\n' +
+    '    .info-row-links {\n' +
+    '        color: silver;\n' +
+    '    }\n' +
+    '\n' +
+    '        .info-row-links a {\n' +
+    '            color: #4a4a4a;\n' +
+    '            margin-left: 8px;\n' +
+    '        }\n' +
+    '\n' +
+    '            .info-row-links a:hover {\n' +
+    '                color: #000000;\n' +
+    '            }\n' +
+    '\n' +
+    '    .info-col-primary {\n' +
+    '        flex-grow: 1;\n' +
+    '        flex-shrink: 1;\n' +
+    '    }\n' +
+    '\n' +
+    '    .info-col-secondary {\n' +
+    '        flex-grow: 0;\n' +
+    '        flex-shrink: 0;\n' +
+    '    }\n' +
+    '\n' +
+    '    .iframe-body {\n' +
+    '        margin: 0;\n' +
+    '        padding: 0;\n' +
+    '    }\n' +
+    '\n' +
+    '        .iframe-body iframe {\n' +
+    '            margin: 0;\n' +
+    '            padding: 0;\n' +
+    '        }</style>');
 }]);
 
 angular.module('views/about/contact.tpl.html', []).run(['$templateCache', function($templateCache) {
@@ -22,12 +129,12 @@ angular.module('views/about/info.tpl.html', []).run(['$templateCache', function(
 
 angular.module('views/about/left.tpl.html', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('views/about/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.info><i class="fa fa-info-circle"></i>&nbsp; About this app</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.online><i class="fa fa-globe"></i>&nbsp; Visit us online</a></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.info><i class="fa fa-info-circle"></i>&nbsp; About this app</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.conection><i class="fa fa-plug"></i>&nbsp; Check Connectivity</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.online><i class="fa fa-globe"></i>&nbsp; Visit us online</a></li></ul>');
 }]);
 
 angular.module('views/about/menu.tpl.html', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('views/about/menu.tpl.html',
-    '<ul class="nav navbar-nav"><li ui:sref-active=open><a app:nav-link ui:sref=about.info><i class="fa fa-info-circle"></i>&nbsp; About this app</a></li><li ui:sref-active=open><a app:nav-link ui:sref=about.online><i class="fa fa-globe"></i>&nbsp; Visit us online</a></li></ul>');
+    '<ul class="nav navbar-nav"><li ui:sref-active=open><a app:nav-link ui:sref=about.info><i class="fa fa-info-circle"></i>&nbsp; About this app</a></li><li ui:sref-active=open><a app:nav-link ui:sref=about.conection><i class="fa fa-plug"></i>&nbsp; Check Connectivity</a></li><li ui:sref-active=open><a app:nav-link ui:sref=about.online><i class="fa fa-globe"></i>&nbsp; Visit us online</a></li></ul>');
 }]);
 
 angular.module('views/default.tpl.html', []).run(['$templateCache', function($templateCache) {
