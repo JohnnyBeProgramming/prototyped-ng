@@ -10,4 +10,9 @@
             <i class="fa fa-database"></i> Connect to Data Source
         </a>
     </li>
+    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appNode.active }">
+        <a app:nav-link ui:sref="certs.info" data:eat-click-if="!appNode.active">
+            <i class="fa fa-certificate"></i> Check Certificates
+        </a>
+    </li>
 </ul>

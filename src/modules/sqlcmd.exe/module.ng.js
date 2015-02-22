@@ -1,6 +1,7 @@
 'use strict';
 
-angular.module('prototyped.sqlcmd', ['ui.router',
+angular.module('prototyped.sqlcmd', [
+    'ui.router',
 ])
 
     .config(['$stateProvider', function ($stateProvider) {

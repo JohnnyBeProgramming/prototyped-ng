@@ -2,6 +2,7 @@
 
 angular.module('prototyped.cmd', ['ui.router',
     'prototyped.sqlcmd',
+    'prototyped.certs',
 ])
 
     .config(['$stateProvider', function ($stateProvider) {
