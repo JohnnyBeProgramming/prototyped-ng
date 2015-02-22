@@ -1,6 +1,7 @@
 'use strict';
 
 angular.module('myApp.samples', [
+    'myApp.samples.errorHandlers',
     'myApp.samples.sampleData',
     'myApp.samples.decorators',
     'myApp.samples.interceptors',
