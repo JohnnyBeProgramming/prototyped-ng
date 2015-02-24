@@ -21,7 +21,7 @@ rem ++++++++ call grunt clean || goto error
 :cmd_delete_logs
 if exist "*.log" 		echo  - Deleting: Event Logs... 		    & timeout 1 > nul & del *.log /Q
 if exist "bin" 			echo  - Deleting: Build Folder... 			& timeout 3 > nul & rmdir "bin" /S /Q > nul
-if exist "app" 			echo  - Deleting: Application Folders... 	& timeout 10 > nul & rmdir "app" /S /Q > nul
+if exist "../app" 		echo  - Deleting: Application Folders... 	& timeout 10 > nul & rmdir "../app" /S /Q > nul
 if exist "node_modules"	echo  - Deleting: Module Dependencies... 	& timeout 30 > nul & rmdir "node_modules" /S /Q > nul
 
 echo /* -- Returns [ %errorlevel% ] ----------------------------------------------- */ >> "%log%"
