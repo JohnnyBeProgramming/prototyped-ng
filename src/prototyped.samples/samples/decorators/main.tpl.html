@@ -1,0 +1,56 @@
+﻿<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <span class="pull-right">
+                <a href="" ng-disabled="decorators.busy" ng-click="decorators.apply()"
+                   class="btn" ng-class="{ 'btn-primary': !decorators.isPatched(), 'btn-success': decorators.isPatched() }">
+                    {{ decorators.isPatched() ? 'Application Patched!' : 'Apply Monkey Patches' }}
+                </a>
+            </span>
+            <h4>
+                Patching Services
+                <small>Monkey patching the normal behaviour of your application.</small>
+            </h4>
+            <hr />
+            <p>
+                By making use of angular's <a href="https://docs.angularjs.org/api/auto/service/$provide">$provide decorators</a>,
+                we patch the <a href="https://docs.angularjs.org/api/ng/service/$q">$q service</a> to intercept any promised
+                actions and take over the reply mechanism.
+            </p>
+            <p>
+                After the initial investigation, it quickly became clear there are just way too many promises to intercept and keep track
+                of, many of them in the angular framework itself. A mechanism was required to identify (and filter out) the promises
+                we were looking for.
+            </p>
+            <p>
+                With no <em>real</em> unique identifiers to work with, stack traces are used for tracking identity. In javascript,
+                stack traces are ugly, and not always helpful, but with a little bit of regular expressions, enough sensible info
+                can be extracted to get a picture of <em>where</em> the actions originate from. And this opens up a whole new world
+                of oppertunities...
+            </p>
+            <p>
+                - This sample was inspired by <a target="_blank" href="http://www.bennadel.com/blog/2775-monkey-patching-the-q-service-using-provide-decorator-in-angularjs.htm">this awesome blog post</a>. :)
+                <br />
+                - The idea to use stack traces was inspired from <a target="_blank" href="http://www.codeovertones.com/2011/08/how-to-print-stack-trace-anywhere-in.html">this awesome blog post</a>.
+            </p>
+            <hr />
+            <p>
+                <a class="btn btn-default" ng-class="{ 'btn-success': (decorators.lastStatus && decorators.lastResult), 'btn-danger': (!decorators.lastStatus && decorators.lastResult.message) }" href="" ng-click="decorators.runPromiseAction()">Run Promised Action</a>
+                <a class="btn btn-default" ng-class="{ 'btn-warning':decorators.isPatched(), 'btn-success': decorators.fcallState == 'Resolved', 'btn-danger': decorators.fcallState == 'Rejected' }" href="" ng-click="decorators.fcall()" ng-disabled="!decorators.isPatched()">Call Marshalled Function</a>
+            </p>
+            <hr />
+            <div ng:if="decorators.error" class="alert alert-danger">
+                <b>Error: </b>
+                {{ decorators.error.message || 'Something went wrong.' }}
+            </div>
+            <div ng:if="!decorators.error">
+                <div class="alert alert-success" ng-if="decorators.lastStatus === true">
+                    <b>Accepted:</b> {{ decorators.lastResult || 'No additional information specified.' }}
+                </div>
+                <div class="alert alert-danger" ng-if="decorators.lastStatus === false">
+                    <b>Rejected:</b> {{ (decorators.lastResult.message || decorators.lastResult) || 'No additional information specified.' }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

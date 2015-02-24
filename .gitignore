@@ -1,4 +1,7 @@
 app/
 bin/
 node_modules/
-/*.log
+**/*.log
+**/*.user
+**/obj/**
+**/bin/**

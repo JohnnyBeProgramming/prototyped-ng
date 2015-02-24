@@ -1,0 +1,113 @@
+<div ng:cloak>    
+    <div class="results" ng-init="detect()">
+        <div class="icon pull-left left">
+            <i class="glyphicon glyphicon-bell" ng-class="{'text-muted':!state.cfgRaven.isOnline}"></i>
+            <i class="sub-icon glyphicon" ng-class="getStatusIcon()"></i>
+        </div>
+        <div class="info pull-left">
+            <div>
+                <div class="pull-right">
+                    <a class="ctrl-sm" ng-click="state.editMode = true" href=""><i class="glyphicon glyphicon-pencil"></i></a>
+                </div>
+                <h4>
+                    <a target="_blank" href="https://www.getsentry.com/welcome/">Sentry</a> and
+                    <a target="_blank" href="http://raven-js.readthedocs.org/en/latest/">Raven-js</a>
+                    <small>Client Error and Exception Handling</small>
+                </h4>
+            </div>
+            <div class="input-group">
+                <span class="input-group-addon">
+                    Sentry Key:
+                </span>
+                <input type="text" class="form-control" aria-label="..."
+                       ng-disabled="state.cfgRaven.isOnline"
+                       ng-model="state.cfgRaven.publicKey"
+                       placeholder="https://&lt;- your-api-key-here -&gt;@app.getsentry.com/12345">
+                <label class="input-group-addon">
+                    <input type="checkbox" aria-label="..." ng-disabled="!state.cfgRaven.publicKey" ng-model="state.cfgRaven.isEnabled"> Enabled
+                </label>
+                <div class="input-group-btn">
+                    <a class="btn"
+                       ng-class="{ 'btn-primary': state.cfgRaven.publicKey, 'btn-default': !state.cfgRaven.publicKey }"
+                       ng-show="!state.cfgRaven.isOnline"
+                       ng-disabled="!state.cfgRaven.publicKey"
+                       ng-click="submitForm()">Set Public Key</a>
+                    <a class="btn btn-success" target="_blank"
+                       ng-show="state.cfgRaven.isOnline"
+                       ng-href="{{ state.cfgRaven.publicKey }}"
+                       ng-disabled="!state.cfgRaven.publicKey">Open Dashboard</a>
+                    <a class="btn btn-default" title="Disconnect"
+                       ng-disabled="!state.cfgRaven.isOnline"
+                       ng-click="disconnect()"><i class="glyphicon glyphicon-remove"></i></a>
+                </div>
+            </div>
+            <hr />
+            <div>
+                <div class="info-row">
+                    <div class="btn-group" role="group" aria-label="...">
+                        <input type="button" class="btn"
+                               value="Managed Error"
+                               ng-class="getButtonStyle('managed')"
+                               ng-click="throwManagedException()" />
+                        <input type="button" class="btn"
+                               value="AngularJS Error"
+                               ng-class="getButtonStyle('angular')"
+                               ng-click="throwAngularException()" />
+                        <div class="btn-group">
+                            <button type="button" class="btn"
+                                    ng-class="getButtonStyle('ajax')"
+                                    ng-click="throwAjaxException()">
+                                Ajax Error (HTTP)
+                            </button>
+                            <button type="button" class="btn dropdown-toggle"
+                                    data-toggle="dropdown" aria-expanded="false"
+                                    ng-class="getButtonStyle('ajax')">
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" role="menu">
+                                <li>
+                                    <a href="" ng-click="state.ajaxCfg.select(state.ajaxCfg.errHttp)">
+                                        {{ state.ajaxCfg.getDesc(state.ajaxCfg.errHttp) }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="" ng-click="state.ajaxCfg.select(state.ajaxCfg.errSuccess)">
+                                        {{ state.ajaxCfg.getDesc(state.ajaxCfg.errSuccess) }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="" ng-click="state.ajaxCfg.select(state.ajaxCfg.errFailed)">
+                                        {{ state.ajaxCfg.getDesc(state.ajaxCfg.errFailed) }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <input type="button" class="btn"
+                               value="Timeout Error"
+                               ng-class="getButtonStyle('timeout')"
+                               ng-click="throwTimeoutException()" />
+                        <input type="button" class="btn"
+                               value="Unhandled Exception"
+                               ng-class="getButtonStyle('unhandled')"
+                               onclick="sampleError.dont.exist++;" />
+                    </div>
+                    <br class="clearfix" />
+                </div>
+                <div ng-if="result != null">
+                    <p>
+                        <div class="alert alert-danger" ng-if="!result.valid && result.error && result.error != 'error'">
+                            <i class="glyphicon glyphicon-exclamation-sign"></i> <b>Failed:</b> {{ result.error }}
+                        </div>
+                    </p>
+                </div>
+            </div>
+            <pre>{{ status.logs | listReverse }}</pre>
+        </div>
+    </div>    
+    <div ng-if="state.activeTab == 'result'" class="source">
+        <span class="pull-right">
+            <a class="btn btn-sm btn-primary" ng-click="state.activeTab = null">Close</a>
+        </span>
+        <samp><pre>{{ result.info }}</pre></samp>
+    </div>    
+</div>

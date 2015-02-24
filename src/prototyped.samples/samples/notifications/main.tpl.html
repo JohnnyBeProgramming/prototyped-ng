@@ -1,0 +1,29 @@
+﻿<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <span class="pull-right">
+                <a href="" ng-disabled="notifications.busy" ng-click="notifications.apply()"
+                   class="btn" ng-class="{ 'btn-primary': !notifications.isPatched(), 'btn-success': notifications.isPatched() }">
+                    {{ notifications.isPatched() ? 'Notifications Active' : 'Enable Notifications' }}
+                </a>
+            </span>
+            <h4>
+                Web Notifications
+                <small>Desktop notifications from the web with HTML5.</small>
+            </h4>
+            <hr />
+            <p>
+                ...
+            </p>
+            <hr />
+            <p>
+                <a class="btn btn-default" ng-class="{ 'btn-primary': notifications.isPatched() }" href="" ng-click="notifications.triggerNotification()" ng-disabled="!notifications.isPatched()">Create new message</a>
+            </p>
+            <hr />
+            <div ng:if="notifications.error" class="alert alert-danger">
+                <b>Error: </b>
+                {{ notifications.error.message || 'Something went wrong.' }}
+            </div>
+        </div>
+    </div>
+</div>

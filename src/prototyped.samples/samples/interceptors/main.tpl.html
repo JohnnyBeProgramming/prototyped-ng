@@ -1,0 +1,29 @@
+﻿<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <span class="pull-right">
+                <a href="" ng-disabled="interceptors.busy" ng-click="interceptors.apply()"
+                   class="btn" ng-class="{ 'btn-primary': !interceptors.isPatched(), 'btn-success': interceptors.isPatched() }">
+                    {{ interceptors.isPatched() ? 'Interceptors Active' : 'Enable Interceptors' }}
+                </a>
+            </span>
+            <h4>
+                HTTP Interceptors
+                <small>Register and utilise Angular's interceptors.</small>
+            </h4>
+            <hr />
+            <p>
+                ...
+            </p>
+            <hr />
+            <p>
+                <a class="btn btn-default" ng-class="{ 'btn-warning': interceptors.isPatched(), 'btn-success': interceptors.fcallState == 'Resolved', 'btn-danger': interceptors.fcallState == 'Rejected' }" href="" ng-click="interceptors.triggerBadRequest()" ng-disabled="!interceptors.isPatched()">Create Bad Request</a>
+            </p>
+            <hr />
+            <div ng:if="interceptors.error" class="alert alert-danger">
+                <b>Error: </b>
+                {{ interceptors.error.message || 'Something went wrong.' }}
+            </div>
+        </div>
+    </div>
+</div>

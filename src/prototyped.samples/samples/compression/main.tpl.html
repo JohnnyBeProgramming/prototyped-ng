@@ -1,0 +1,65 @@
+﻿<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <span class="pull-right">
+                <a class="btn btn-default" href="" ng-click="compression.clearResult()" ng-if="compression.ready">Cancel</a>
+                <a class="btn btn-default" ng-class="{ 'btn-primary': !compression.ready && compression.text.length }"
+                   href="" ng-click="compression.compressText(compression.text)" ng-disabled="!compression.text.length">
+                    Compress Text
+                </a>
+                <a id="runAsScript"
+                   ng-disabled="!compression.ready" class="btn btn-default"
+                   ng-class="{ 'btn-primary': compression.ready }">
+                    Run As Script
+                </a>
+            </span>
+            <h4>
+                Dynamic Compression
+                <small>Encode strings and urls into more compact forms.</small>
+            </h4>
+            <hr />
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="btn-group pull-right">
+                        <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+                            Samples <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a href="" ng-click="compression.getSampleText('assets/lib/sp.js')">JavaScript #1</a></li>
+                            <li><a href="" ng-click="compression.getSampleText('assets/lib/test.js')">JavaScript #2</a></li>
+                            <li><a href="" ng-click="compression.getSampleText('assets/css/test.css')">CSS Styles #1</a></li>
+                            <li><a href="" ng-click="compression.getSampleText('assets/css/test.min.css')">CSS Styles #2</a></li>
+                        </ul>
+                    </div>
+
+                    <h5>
+                        Enter text to compress:
+                        <small ng-if="compression.text.length">{{ compression.text.length | toBytes }}, uncompressed</small>
+                    </h5>
+                    <textarea ng-model="compression.text" ng-disabled="compression.result"
+                              style="width: 100%; min-height: 480px;" placeholder="Enter some text here..."></textarea>
+                </div>
+                <div class="col-md-6">
+                    <span class="pull-right">
+                        <select ng-model="compression.target">
+                            <option value=""> - Use Default Encoder -</option>
+                            <option value="lzw">Use LZW Compression</option>
+                            <option value="scsu">Use SCSU Compression</option>
+                        </select>
+                    </span>
+                    <h5>
+                        Compressed Text:
+                        <small ng-if="compression.result.length">{{ compression.result.length | toBytes }}, {{ compression.getPercentage() | number:2 }}% reduction</small>
+                    </h5>
+                    <textarea ng-model="compression.result" ng-disabled="!compression.result"
+                              style="width: 100%; min-height: 480px;" readonly></textarea>
+                </div>
+            </div>
+            <hr />
+            <div ng:if="compression.error" class="alert alert-danger">
+                <b>Error: </b>
+                {{ compression.error.message || 'Something went wrong.' }}
+            </div>
+        </div>
+    </div>
+</div>
