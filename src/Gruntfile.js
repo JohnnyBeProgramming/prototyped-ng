@@ -23,11 +23,10 @@ module.exports = function (grunt) {
 
     // DEFINE PROTOTYPED BUILD 
     var cfg = {
-        web: 'web',
-        dest: 'app',
+        web: '../web',
+        dest: '../app',
         css: 'assets/css',
         lib: 'assets/lib',
-        bin: 'app/bin',
         tasks: {
             modules: [
                 'grunt-contrib-less',
@@ -281,7 +280,6 @@ module.exports = function (grunt) {
         jshint: {
             files: [
               'Gruntfile.js',
-              '<%= cfg.bin %>/**/*.js',
               '<%= cfg.dest %>/**/*.js'
             ],
             options: {
