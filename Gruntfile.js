@@ -23,7 +23,7 @@ module.exports = function (grunt) {
 
     // DEFINE PROTOTYPED BUILD 
     var cfg = {
-        src: 'src',
+        web: 'web',
         dest: 'app',
         css: 'assets/css',
         lib: 'assets/lib',
@@ -90,7 +90,7 @@ module.exports = function (grunt) {
                         var httpHost = require('./Server.js');
                         if (httpHost) {
                             httpHost.port = 8008;
-                            httpHost.path = cfg.src;
+                            httpHost.path = cfg.web;
                             //httpHost.pfxPath = './sample.pfx'; // Enable to allow HTTPS
                             httpDone = httpHost.start();
                         }
@@ -98,7 +98,7 @@ module.exports = function (grunt) {
 
                         // Start a Node Webkit window and point it to our starting url...
                         var url = httpHost.baseUrl;
-                        var www = cfg.src;
+                        var www = cfg.web;
                         var cmd = 'nodewebkit "' + www + '"';
                         var proc = require("child_process");
                         if (proc) {
@@ -168,11 +168,11 @@ module.exports = function (grunt) {
                 },
                 */
                 banner: '<%= banner %>',
-                paths: ["<%= cfg.src %>"]
+                paths: ["<%= cfg.web %>"]
             },
             src: {
                 files: {
-                    "<%= cfg.src %>/<%= cfg.css %>/app.css": "<%= cfg.src %>/assets/less/app.less",
+                    "<%= cfg.web %>/<%= cfg.css %>/app.css": "<%= cfg.web %>/assets/less/app.less",
                 }
             },
         },
@@ -181,12 +181,12 @@ module.exports = function (grunt) {
         cssmin: {
             src: {
                 expand: true,
-                cwd: '<%= cfg.src %>/<%= cfg.css %>/',
+                cwd: '<%= cfg.web %>/<%= cfg.css %>/',
                 src: [
                     '**/*.css',
                     '!**/*.min.css'
                 ],
-                dest: '<%= cfg.src %>/<%= cfg.css %>/',
+                dest: '<%= cfg.web %>/<%= cfg.css %>/',
                 extDot: 'last',
                 ext: '.min.css'
             },
@@ -201,9 +201,9 @@ module.exports = function (grunt) {
                 // Because these src-dest file mappings are manually specified, every
                 // time a new file is added or removed, the Gruntfile has to be updated.
                 files: [
-                    { src: '<%= cfg.src %>/assets/app.js', dest: '<%= cfg.dest %>/assets/app.min.js' },
-                    { src: '<%= cfg.src %>/assets/app.loader.js', dest: '<%= cfg.dest %>/assets/app.loader.min.js' },
-                    { src: '<%= cfg.src %>/assets/app.templates.js', dest: '<%= cfg.dest %>/assets/app.templates.min.js' },
+                    { src: '<%= cfg.web %>/assets/app.js', dest: '<%= cfg.dest %>/assets/app.min.js' },
+                    { src: '<%= cfg.web %>/assets/app.loader.js', dest: '<%= cfg.dest %>/assets/app.loader.min.js' },
+                    { src: '<%= cfg.web %>/assets/app.templates.js', dest: '<%= cfg.dest %>/assets/app.templates.min.js' },
                 ],
             },
             dynamics: {
@@ -218,7 +218,7 @@ module.exports = function (grunt) {
                         '!**/*.min.js',
                         '!**/*.backup.js'
                       ],
-                      cwd: '<%= cfg.src %>/modules/',   // Src matches are relative to this path.
+                      cwd: '<%= cfg.web %>/modules/',   // Src matches are relative to this path.
                       dest: '<%= cfg.dest %>/modules',  // Destination path prefix.
                       ext: '.min.js',                   // Dest filepaths will have this extension.
                       extDot: 'last'                    // Extensions in filenames begin after the first dot
@@ -374,10 +374,10 @@ module.exports = function (grunt) {
             },
             views: {
                 src: [
-                    '<%= cfg.src %>/views/**/*.jade',
-                    '<%= cfg.src %>/views/**/*.tpl.html',
+                    '<%= cfg.web %>/views/**/*.jade',
+                    '<%= cfg.web %>/views/**/*.tpl.html',
                 ],
-                dest: '<%= cfg.src %>/assets/app.templates.js'
+                dest: '<%= cfg.web %>/assets/app.templates.js'
             },
         },
 
@@ -400,7 +400,7 @@ module.exports = function (grunt) {
                           'assets/**/*.min.css',
                           'assets/lib/*.min.js',
                       ],
-                      cwd: '<%= cfg.src %>/',
+                      cwd: '<%= cfg.web %>/',
                       dest: '<%= cfg.dest %>/',
                       filter: 'isFile'
                   },
@@ -412,21 +412,21 @@ module.exports = function (grunt) {
         watch: {
             css: {
                 files: [
-                  '<%= cfg.src %>/**/*.less',
-                  '<%= cfg.src %>/**/*.css',
+                  '<%= cfg.web %>/**/*.less',
+                  '<%= cfg.web %>/**/*.css',
                 ],
                 tasks: ['less', 'cssmin']
             },
             js: {
                 files: [
-                  '<%= cfg.src %>/**/*.js',
+                  '<%= cfg.web %>/**/*.js',
                 ],
                 tasks: ['uglify', 'concat']
             },
             tpl: {
                 files: [
-                  '<%= cfg.src %>/**/*.jade',
-                  '<%= cfg.src %>/**/*.tpl.html',
+                  '<%= cfg.web %>/**/*.jade',
+                  '<%= cfg.web %>/**/*.tpl.html',
                 ],
                 tasks: ['html2js']
             }

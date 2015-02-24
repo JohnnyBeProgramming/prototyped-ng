@@ -12,12 +12,12 @@ console.log('-------------------------------------------------------------------
 var NwBuilder = require('node-webkit-builder');
 var nw = new NwBuilder({
     appName: 'Node Webkit Client',
-    files: './src/*.*', // Use the glob format
-    winIco: './src/assets/favicon.ico',
+    files: './web/*.*', // Use the glob format
+    winIco: './web/assets/favicon.ico',
     buildType: 'versioned ',
     buildDir: './bin/.nw',
     cacheDir: './bin/.cache',
-    platforms: ['win','osx'] // ['win', 'osx', 'linux32', 'linux64']
+    platforms: ['win'] // ['win', 'osx', 'linux32', 'linux64']
 });
 
 // Log stuff you want
@@ -25,7 +25,7 @@ nw.on('log',  console.log);
 
 // Build returns a promise
 nw.build().then(function () {
-   console.log(' - Done!');
+   console.log(' - Build Done!');
 }).catch(function (error) {
     console.error(error);
 });
