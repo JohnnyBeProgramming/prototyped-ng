@@ -40,6 +40,8 @@ Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "web", "http://localhost:500
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prototyped.samples", "src\prototyped.samples\prototyped.samples.csproj", "{A31A2F64-9B89-4F38-80B3-C84627A17728}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prototyped.net", "src\prototyped.exe\prototyped.net.csproj", "{449B2BBD-1EE5-4217-AD9F-D788C4123828}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,11 +56,16 @@ Global
 		{A31A2F64-9B89-4F38-80B3-C84627A17728}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A31A2F64-9B89-4F38-80B3-C84627A17728}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A31A2F64-9B89-4F38-80B3-C84627A17728}.Release|Any CPU.Build.0 = Release|Any CPU
+		{449B2BBD-1EE5-4217-AD9F-D788C4123828}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{449B2BBD-1EE5-4217-AD9F-D788C4123828}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{449B2BBD-1EE5-4217-AD9F-D788C4123828}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{449B2BBD-1EE5-4217-AD9F-D788C4123828}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A31A2F64-9B89-4F38-80B3-C84627A17728} = {E0D09E2F-E3E5-4592-A376-ECB08CAA250C}
+		{449B2BBD-1EE5-4217-AD9F-D788C4123828} = {E0D09E2F-E3E5-4592-A376-ECB08CAA250C}
 	EndGlobalSection
 EndGlobal

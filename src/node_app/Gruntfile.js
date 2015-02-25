@@ -24,7 +24,7 @@ module.exports = function (grunt) {
     // DEFINE PROTOTYPED BUILD 
     var cfg = {
         web: '../web',
-        dest: 'bin',
+        dest: '../bin',
         css: 'assets/css',
         lib: 'assets/lib',
         tasks: {
