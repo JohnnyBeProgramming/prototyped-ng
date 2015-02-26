@@ -100,7 +100,7 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <EmbeddedResource Include="..\package.json">
-      <Link>.npm\package.json</Link>
+      <Link>package.json</Link>
     </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -134,13 +134,13 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\node_app\Builder.js">
-      <Link>.npm\node_app\Builder.js</Link>
+      <Link>node_app\Builder.js</Link>
     </EmbeddedResource>
     <EmbeddedResource Include="..\node_app\Gruntfile.js">
-      <Link>.npm\node_app\Gruntfile.js</Link>
+      <Link>node_app\Gruntfile.js</Link>
     </EmbeddedResource>
     <EmbeddedResource Include="..\node_app\Server.js">
-      <Link>.npm\node_app\Server.js</Link>
+      <Link>node_app\Server.js</Link>
     </EmbeddedResource>
     <Content Include="favicon.ico" />
   </ItemGroup>

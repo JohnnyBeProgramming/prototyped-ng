@@ -16,7 +16,7 @@ namespace prototyped.exe.forms
 {
     public partial class MainForm : Form
     {
-        protected string WorkingFolder { get { return AppConfig.GetPackageFolder(); } }
+        protected string WorkingFolder { get { return Environment.CurrentDirectory; } }
         protected Process WorkingProcess { get; set; }
 
         public MainForm()
@@ -81,7 +81,7 @@ namespace prototyped.exe.forms
                         {
                             checker.Start();
 
-                            ProtoPackager.Unpack(WorkingFolder, AppConfig.PackagersDirs);
+                            ProtoPackager.Unpack(WorkingFolder, AppConfig.PackageDir);
                         }
                         finally
                         {
@@ -107,6 +107,7 @@ namespace prototyped.exe.forms
                 var isRunning = WorkingProcess != null && !WorkingProcess.HasExited;
                 if (isRunning)
                 {
+                    WorkingProcess.CloseMainWindow();
                     WorkingProcess.Kill();
                     WorkingProcess = null;
                     UpdateUI();

@@ -10,7 +10,7 @@ namespace prototyped.exe
     {
         public static string PackageFile = "package.json";
         public static string PackageStart = @"npm install & npm start";
-        public static string PackagersDirs = ".npm";
+        public static string PackageDir = "node_app";
 
         public static bool UseShadowFolder { get; private set; }
 
@@ -24,7 +24,7 @@ namespace prototyped.exe
 
         public static string GetPackageFolder(string name = null)
         {
-            var relPath = PackagersDirs;
+            var relPath = PackageDir;
             var baseDir = UseShadowFolder
                                 ? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
                                 : Environment.CurrentDirectory;

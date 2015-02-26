@@ -12,6 +12,11 @@ namespace prototyped.exe.helpers
 {
     public class ProtoPackager
     {
+        public static string[] StaticIncludes = new[] { 
+            "package.json",
+            "node_modules\\"
+        };
+
         public static ProgressTracker WorkerProgress { get; private set; }
         public class ProgressTracker
         {
@@ -49,14 +54,19 @@ namespace prototyped.exe.helpers
             try
             {
                 WorkerProgress.StatusText = "Extracting resources...";
-
-                var prefix = assembly.ManifestModule.Name + "." + resourceLocation;
+                var prefix = assembly.ManifestModule.Name;
+                if (!string.IsNullOrEmpty(resourceLocation))
+                {
+                    prefix += "." + resourceLocation;
+                }
                 foreach (string resourceName in assembly.GetManifestResourceNames())
                 {
                     var res = assembly.GetManifestResourceInfo(resourceName);
-                    if (resourceName.StartsWith(prefix))
+                    var inc = StaticIncludes.Any(name => resourceName.StartsWith(assembly.ManifestModule.Name + "." + name));
+                    if (inc || resourceName.StartsWith(prefix))
                     {
-                        var ident = resourceName.Substring(prefix.Length + 1);
+                        var ident = inc ? resourceName.Substring(assembly.ManifestModule.Name.Length + 1)
+                                        : resourceLocation + "." + resourceName.Substring(prefix.Length + 1);
                         var ext = Path.GetExtension(ident);
                         var val = ident.Substring(0, ident.Length - ext.Length);
                         var pos = val.IndexOf(".");
@@ -90,8 +100,7 @@ namespace prototyped.exe.helpers
                 // Define progress parts
                 var progSize = 1 / (float)stepTotal;
                 var progDone = stepIndex * progSize;
-                var prefix = assembly.ManifestModule.Name + "." + resourceLocation;
-                var resFile = prefix + "." + file.Replace("\\", ".");
+                var resFile = assembly.ManifestModule.Name + "." + file.Replace("\\", ".");
                 using (var stream = assembly.GetManifestResourceStream(resFile))
                 {
                     var fileSize = stream.Length;
@@ -148,23 +157,34 @@ namespace prototyped.exe.helpers
             return proc;
         }
 
-        public static bool IsInstalled(string WorkingFolder)
+        public static bool IsInstalled(string workingFolder)
         {
-            var isInstalled = Directory.Exists(WorkingFolder);
+            var targetDir = AppConfig.GetPackageFolder();
+            var isInstalled = Directory.Exists(targetDir);
             return isInstalled;
         }
 
         public static void Uninstall(string workingFolder)
         {
             // Clear and delete working folder
-            if (Directory.Exists(workingFolder)) Directory.Delete(workingFolder, true);
-
-            var baseFolder = AppConfig.GetPackageFolder();
-            if (baseFolder != workingFolder && !Directory.GetDirectories(baseFolder).Any())
+            var targetDir = AppConfig.GetPackageFolder();
+            if (Directory.Exists(targetDir)) Directory.Delete(targetDir, true);
+            foreach (var path in StaticIncludes.Where(path => path.EndsWith("\\")))
             {
-                // Clear the working folder (if nothing in it)
-                if (!Directory.GetFiles(baseFolder).Any()) Directory.Delete(baseFolder);
+                if (Directory.Exists(path)) Directory.Delete(path, true);
             }
+
+            // Clear the working folder of logs and stuff
+            var files = new string[] { 
+                    // Add files that should be manually deleted here...
+                }
+                .Concat(StaticIncludes)
+                .Concat(Directory.GetFiles(workingFolder).Where(file => file.EndsWith(".log")));
+
+            foreach (var file in files)
+            {
+                File.Delete(file);
+            };
         }
     }
 }
