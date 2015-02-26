@@ -13,7 +13,7 @@ namespace prototyped.exe.helpers
     public class ProtoPackager
     {
         public static string[] StaticIncludes = new[] { 
-            "package.json",
+            AppConfig.PackageFile,
             "node_modules\\"
         };
 
@@ -50,6 +50,7 @@ namespace prototyped.exe.helpers
                 StatusText = "Initialising..."
             };
 
+            // Build a list of resources to extract according to some criteria
             var list = new List<string> { };
             try
             {
@@ -74,7 +75,11 @@ namespace prototyped.exe.helpers
                         while (pos > 0)
                         {
                             var dir = val.Substring(0, pos);
-                            if (!Directory.Exists(dir)) Directory.CreateDirectory(Path.Combine(cwd, dir));
+                            var path = Path.Combine(cwd, dir);
+                            if (!Directory.Exists(dir))
+                            {
+                                Directory.CreateDirectory(path).Attributes |= FileAttributes.Hidden;
+                            }
                             val = val.Substring(pos + 1);
                             cwd = Path.Combine(cwd, dir);
                             pos = val.IndexOf(".");
@@ -100,25 +105,34 @@ namespace prototyped.exe.helpers
                 // Define progress parts
                 var progSize = 1 / (float)stepTotal;
                 var progDone = stepIndex * progSize;
-                var resFile = assembly.ManifestModule.Name + "." + file.Replace("\\", ".");
-                using (var stream = assembly.GetManifestResourceStream(resFile))
+
+                // Parse the file path
+                var filePath = Path.Combine(outputDir, file);
+                var cpath = Path.GetDirectoryName(filePath);
+                if (!Directory.Exists(cpath))
                 {
-                    var fileSize = stream.Length;
-                    var filePath = Path.Combine(outputDir, file);
-                    var cpath = Path.GetDirectoryName(filePath);
-                    if (!Directory.Exists(cpath))
+                    Directory.CreateDirectory(cpath).Attributes |= FileAttributes.Hidden;
+                }
+
+                // Create the file only if it does not exists
+                if (!File.Exists(filePath))
+                {
+                    var resFile = assembly.ManifestModule.Name + "." + file.Replace("\\", ".");
+                    using (var stream = assembly.GetManifestResourceStream(resFile))
                     {
-                        Directory.CreateDirectory(cpath).Attributes |= FileAttributes.Hidden;
-                    }
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        for (var i = 0; i < stream.Length; i++)
+                        var fileSize = stream.Length;
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
                         {
-                            fileStream.WriteByte((byte)stream.ReadByte());
-                            WorkerProgress.Progress = progDone + progSize * i / fileSize;
+                            for (var i = 0; i < stream.Length; i++)
+                            {
+                                fileStream.WriteByte((byte)stream.ReadByte());
+                                WorkerProgress.Progress = progDone + progSize * i / fileSize;
+                            }
+                            fileStream.Close();
                         }
-                        fileStream.Close();
                     }
+                    // Make the file a temp file (caches it in memory)
+                    //File.SetAttributes(filePath, FileAttributes.Temporary);
                 }
                 stepIndex++;
             }
@@ -139,7 +153,7 @@ namespace prototyped.exe.helpers
                 FileName = "CMD.exe",
                 Arguments = " /C " + filename + " " + args,
                 WorkingDirectory = workingDir,
-                UseShellExecute = false,
+                UseShellExecute = true,
             };
 
             // Define the process that will run it
@@ -175,13 +189,11 @@ namespace prototyped.exe.helpers
             }
 
             // Clear the working folder of logs and stuff
-            var files = new string[] { 
+            foreach (var file in new string[] { 
                     // Add files that should be manually deleted here...
                 }
-                .Concat(StaticIncludes)
-                .Concat(Directory.GetFiles(workingFolder).Where(file => file.EndsWith(".log")));
-
-            foreach (var file in files)
+                .Concat(StaticIncludes.Where(path => path != AppConfig.PackageFile))
+                .Concat(Directory.GetFiles(workingFolder).Where(file => file.EndsWith(".log"))))
             {
                 File.Delete(file);
             };

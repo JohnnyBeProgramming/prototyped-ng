@@ -134,13 +134,16 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\node_app\Builder.js">
-      <Link>node_app\Builder.js</Link>
+      <Link>node_modules\_cache\Builder.js</Link>
     </EmbeddedResource>
     <EmbeddedResource Include="..\node_app\Gruntfile.js">
-      <Link>node_app\Gruntfile.js</Link>
+      <Link>node_modules\_cache\Gruntfile.js</Link>
     </EmbeddedResource>
     <EmbeddedResource Include="..\node_app\Server.js">
-      <Link>node_app\Server.js</Link>
+      <Link>node_modules\_cache\Server.js</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\node_app\Setup.js">
+      <Link>node_modules\_cache\Setup.js</Link>
     </EmbeddedResource>
     <Content Include="favicon.ico" />
   </ItemGroup>
