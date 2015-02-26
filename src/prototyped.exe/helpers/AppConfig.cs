@@ -9,8 +9,10 @@ namespace prototyped.exe
     public static class AppConfig
     {
         public static string PackageFile = "package.json";
-        public static string PackageStart = @"npm install & npm start";
-        public static string PackageDir = "node_app";
+        public static string PackageSetup = @"npm install";
+        public static string PackageUpdate = @"npm update";
+        public static string PackageStart = @"npm start";
+        public static string PackageDir = "node_modules";
 
         public static bool UseShadowFolder { get; private set; }
 

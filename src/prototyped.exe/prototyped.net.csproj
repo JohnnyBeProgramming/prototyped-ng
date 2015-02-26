@@ -99,8 +99,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="..\package.json">
+    <EmbeddedResource Include="..\node_app\package.json">
       <Link>package.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -133,14 +134,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="..\node_app\Builder.js">
-      <Link>node_app\Builder.js</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\node_app\Gruntfile.js">
-      <Link>node_app\Gruntfile.js</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\node_app\Server.js">
-      <Link>node_app\Server.js</Link>
+    <EmbeddedResource Include="..\node_app\Setup.js">
+      <Link>Setup.js</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <Content Include="favicon.ico" />
   </ItemGroup>

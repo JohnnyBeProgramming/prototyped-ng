@@ -1,8 +1,8 @@
 /// <reference path="typings/imports.d.ts" />
 /*!
-* Prototyped Grunt file for a task based javascript builder
-* Copyright 2013-2014 Prototyped
-*/
+ * Prototyped Grunt file for a task based javascript builder
+ * Copyright 2013-2014 Prototyped
+ */
 module.exports = function (grunt) {
     'use strict';
 
@@ -13,12 +13,15 @@ module.exports = function (grunt) {
     var proto = {
         constants: {
             hr: '-------------------------------------------------------------------------------',
-            banner: '/*!\n' + ' * <%= pkg.name %> v<%= pkg.version %> (<%= pkg.homepage %>)\n' + ' * Copyright 2014-<%= grunt.template.today("yyyy") %> <%= pkg.author %>\n' + ' */\n',
-            jsCheck: 'if (typeof jQuery === \'undefined\') { throw new Error(\'Bootstrap\\\'s JavaScript requires jQuery\') }\n\n'
-        }
+            banner: '/*!\n' +
+                    ' * <%= pkg.name %> v<%= pkg.version %> (<%= pkg.homepage %>)\n' +
+                    ' * Copyright 2014-<%= grunt.template.today("yyyy") %> <%= pkg.author %>\n' +
+                    ' */\n',
+            jsCheck: 'if (typeof jQuery === \'undefined\') { throw new Error(\'Bootstrap\\\'s JavaScript requires jQuery\') }\n\n',
+        },
     };
 
-    // DEFINE PROTOTYPED BUILD
+    // DEFINE PROTOTYPED BUILD 
     var cfg = {
         web: '../web',
         dest: '../bin',
@@ -39,7 +42,7 @@ module.exports = function (grunt) {
             ],
             defines: [
                 {
-                    // Define default build process
+                    // Define default build process                      
                     key: 'default',
                     val: ['build', 'app-run', 'watch']
                 },
@@ -47,9 +50,11 @@ module.exports = function (grunt) {
                     // Define main build process
                     key: 'build',
                     val: [
+                        //'useminPrepare',
                         'build-styles',
                         'build-scripts',
                         'copy',
+                        //'usemin',
                         'test-units'
                     ]
                 },
@@ -61,31 +66,34 @@ module.exports = function (grunt) {
                     key: 'build-scripts',
                     val: ['html2js', 'uglify', 'concat']
                 },
+
                 {
                     // Add unit tests
                     key: 'test-units',
-                    val: []
+                    val: [
+                    //'jshint'
+                    ]
                 },
+
                 // Extend tasks for dist env
                 { key: 'build-dist', val: ['build-prod'] },
-                { key: 'tests-dist', val: ['test-units'] }
+                { key: 'tests-dist', val: ['test-units'] },
             ],
             customs: [
                 {
                     key: 'app-run',
                     val: function () {
+
                         // Start the web server prior to opening the window
                         var httpDone = false;
                         var httpHost = require('./Server.js');
                         if (httpHost) {
                             httpHost.port = 8008;
                             httpHost.path = cfg.web;
-
                             //httpHost.pfxPath = './sample.pfx'; // Enable to allow HTTPS
                             httpDone = httpHost.start();
                         }
-                        if (!httpDone)
-                            return false;
+                        if (!httpDone) return false;
 
                         // Start a Node Webkit window and point it to our starting url...
                         var url = httpHost.baseUrl;
@@ -107,9 +115,9 @@ module.exports = function (grunt) {
                             });
                         }
                     }
-                }
-            ]
-        }
+                },
+            ],
+        },
     };
 
     // Load the NPM tasks (modules) to be used
@@ -118,6 +126,7 @@ module.exports = function (grunt) {
         grunt.loadNpmTasks(entry);
     });
     console.log(proto.constants.hr);
+
 
     // Load the definitions of your prototyped grunt tasks
     cfg.tasks.defines.forEach(function (entry, value) {
@@ -146,14 +155,15 @@ module.exports = function (grunt) {
         pkg: pkg,
         banner: proto.constants.banner,
         jqueryCheck: proto.constants.jsCheck,
+
         // LESS FILE COMPILATION
         less: {
             options: {
                 cleancss: true,
                 /*
                 modifyVars: {
-                imgPath: '"http://mycdn.com/path/to/images"',
-                bgColor: 'red'
+                    imgPath: '"http://mycdn.com/path/to/images"',
+                    bgColor: 'red'
                 },
                 */
                 banner: '<%= banner %>',
@@ -161,10 +171,11 @@ module.exports = function (grunt) {
             },
             src: {
                 files: {
-                    "<%= cfg.web %>/<%= cfg.css %>/app.css": "<%= cfg.web %>/assets/less/app.less"
+                    "<%= cfg.web %>/<%= cfg.css %>/app.css": "<%= cfg.web %>/assets/less/app.less",
                 }
-            }
+            },
         },
+
         // MINIFY CSS
         cssmin: {
             src: {
@@ -177,8 +188,9 @@ module.exports = function (grunt) {
                 dest: '<%= cfg.web %>/<%= cfg.css %>/',
                 extDot: 'last',
                 ext: '.min.css'
-            }
+            },
         },
+
         // MINIFY JS FILE
         uglify: {
             options: {
@@ -190,41 +202,57 @@ module.exports = function (grunt) {
                 files: [
                     { src: '<%= cfg.web %>/assets/app.js', dest: '<%= cfg.dest %>/assets/app.min.js' },
                     { src: '<%= cfg.web %>/assets/app.loader.js', dest: '<%= cfg.dest %>/assets/app.loader.min.js' },
-                    { src: '<%= cfg.web %>/assets/app.templates.js', dest: '<%= cfg.dest %>/assets/app.templates.min.js' }
-                ]
+                    { src: '<%= cfg.web %>/assets/app.templates.js', dest: '<%= cfg.dest %>/assets/app.templates.min.js' },
+                ],
             },
             dynamics: {
                 // Grunt will search for "**/*.js" under "lib/" when the "uglify" task
                 // runs and build the appropriate src-dest file mappings then, so you
                 // don't need to update the Gruntfile when files are added or removed.
                 files: [
-                    {
-                        expand: true,
-                        src: [
-                            '**/*.ng.js',
-                            '!**/*.min.js',
-                            '!**/*.backup.js'
-                        ],
-                        cwd: '<%= cfg.web %>/modules/',
-                        dest: '<%= cfg.dest %>/modules',
-                        ext: '.min.js',
-                        extDot: 'last'
-                    }
-                ]
-            }
+                  {
+                      expand: true, // Enable dynamic expansion.
+                      src: [
+                        '**/*.ng.js',
+                        '!**/*.min.js',
+                        '!**/*.backup.js'
+                      ],
+                      cwd: '<%= cfg.web %>/modules/',   // Src matches are relative to this path.
+                      dest: '<%= cfg.dest %>/modules',  // Destination path prefix.
+                      ext: '.min.js',                   // Dest filepaths will have this extension.
+                      extDot: 'last'                    // Extensions in filenames begin after the first dot
+                  },
+                ],
+            },
         },
-        // COMBINE JS FILES
+
+        // COMBINE JS FILES 
         concat: {
             options: {
                 separator: ';'
             },
+            
             modules: {
                 files: [{
-                        src: ['<%= cfg.dest %>/modules/**/*.js'],
-                        dest: '<%= cfg.dest %>/assets/app.modules.min.js'
-                    }]
-            }
+                    src: ['<%= cfg.dest %>/modules/**/*.js'],
+                    dest: '<%= cfg.dest %>/assets/app.modules.min.js'
+                }]
+            },
+            /*
+            loader: {
+                files: [
+                  {
+                      dest: '<%= cfg.dest %>/assets/app.loader.dll.js',
+                      src: [
+                        'assets/app.loader.js',
+                        'assets/lib/mousetrap.js',
+                      ]
+                  }
+                ]
+            },
+            */
         },
+
         useminPrepare: {
             html: '<%= cfg.dest %>/index.html',
             options: {
@@ -247,11 +275,12 @@ module.exports = function (grunt) {
                 }
             }
         },
-        // JS TESTING
+
+        // JS TESTING    
         jshint: {
             files: [
-                'Gruntfile.js',
-                '<%= cfg.dest %>/**/*.js'
+              'Gruntfile.js',
+              '<%= cfg.dest %>/**/*.js'
             ],
             options: {
                 // options here to override JSHint defaults
@@ -263,12 +292,13 @@ module.exports = function (grunt) {
                 }
             }
         },
+
         html2js: {
             options: {
                 base: '<%= cfg.web %>',
                 module: 'myApp.views',
                 singleModule: false,
-                quoteChar: '\'',
+                quoteChar: '\'',                
                 htmlmin: {
                     collapseBooleanAttributes: true,
                     collapseWhitespace: true,
@@ -283,56 +313,58 @@ module.exports = function (grunt) {
             views: {
                 src: [
                     '<%= cfg.web %>/views/**/*.jade',
-                    '<%= cfg.web %>/views/**/*.tpl.html'
+                    '<%= cfg.web %>/views/**/*.tpl.html',
                 ],
                 dest: '<%= cfg.web %>/assets/app.templates.js'
-            }
+            },
         },
+
         copy: {
             dest: {
                 files: [
-                    // includes files within path
-                    {
-                        expand: true,
-                        src: [
-                            'index.html',
-                            '**/package.json',
-                            'assets/**/*.ico',
-                            'assets/**/*.png',
-                            'assets/**/*.jpg',
-                            'assets/**/*.bmp',
-                            'assets/**/*.svg',
-                            'assets/**/*.woff',
-                            'assets/**/*.json',
-                            'assets/**/*.min.css',
-                            'assets/lib/*.min.js'
-                        ],
-                        cwd: '<%= cfg.web %>/',
-                        dest: '<%= cfg.dest %>/',
-                        filter: 'isFile'
-                    }
-                ]
-            }
+                  // includes files within path
+                  {
+                      expand: true,
+                      src: [
+                          'index.html',
+                          '**/package.json',
+                          'assets/**/*.ico',
+                          'assets/**/*.png',
+                          'assets/**/*.jpg',
+                          'assets/**/*.bmp',
+                          'assets/**/*.svg',
+                          'assets/**/*.woff',
+                          'assets/**/*.json',
+                          'assets/**/*.min.css',
+                          'assets/lib/*.min.js',
+                      ],
+                      cwd: '<%= cfg.web %>/',
+                      dest: '<%= cfg.dest %>/',
+                      filter: 'isFile'
+                  },
+                ],
+            },
         },
+
         // WATCH FILES FOR CHANGES
         watch: {
             css: {
                 files: [
-                    '<%= cfg.web %>/**/*.less',
-                    '<%= cfg.web %>/**/*.css'
+                  '<%= cfg.web %>/**/*.less',
+                  '<%= cfg.web %>/**/*.css',
                 ],
                 tasks: ['less', 'cssmin']
             },
             js: {
                 files: [
-                    '<%= cfg.web %>/**/*.js'
+                  '<%= cfg.web %>/**/*.js',
                 ],
                 tasks: ['uglify', 'concat']
             },
             tpl: {
                 files: [
-                    '<%= cfg.web %>/**/*.jade',
-                    '<%= cfg.web %>/**/*.tpl.html'
+                  '<%= cfg.web %>/**/*.jade',
+                  '<%= cfg.web %>/**/*.tpl.html',
                 ],
                 tasks: ['html2js']
             }

@@ -81,7 +81,18 @@ namespace prototyped.exe.forms
                         {
                             checker.Start();
 
+                            // Step 1: Unpack the resources into the working folder
                             ProtoPackager.Unpack(WorkingFolder, AppConfig.PackageDir);
+
+                            // Step 2: Use the npm installer to initialise and setup the globals
+                            if (!Directory.Exists("node_modules"))
+                            {
+                                ProtoPackager.Run(AppConfig.PackageSetup, WorkingFolder).WaitForExit();
+                            }
+                            else
+                            {
+                                ProtoPackager.Run(AppConfig.PackageUpdate, WorkingFolder).WaitForExit();
+                            }
                         }
                         finally
                         {

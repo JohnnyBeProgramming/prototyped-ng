@@ -1,3 +1,3 @@
-﻿/// <reference path="../imports/jquery/jquery.d.ts" />
-/// <reference path="../imports/angularjs/angular.d.ts" />
+﻿/// <reference path="../typings/jquery/jquery.d.ts" />
+/// <reference path="../typings/angularjs/angular.d.ts" />
  

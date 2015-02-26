@@ -1,38 +1,40 @@
 {
-  "version": "0.0.2",
-  "name": "Prototyped",
-  "author": "author",
-  "private": true,
-  "description": "Prototyped software solutions for responsive web-based AngularJS apps.",
-  "homepage": "https://www.prototyped.info",
-  "repository": {
-    "type": "git",
-    "url": ""
-  },
-  "scripts": {
-    "preinstall": "npm run add:globals",
-    "add:globals": "npm run add:grunt-init & npm run add:grunt-cli & npm run add:http-server & npm run add:nodewebkit",
-    "add:grunt-init": "if not exist \"%APPDATA%/npm/node_modules/grunt-init\" call npm install -g grunt-init",
-    "add:grunt-cli": "if not exist \"%APPDATA%/npm/node_modules/grunt-cli\" call npm install -g grunt-cli",
-    "add:http-server": "if not exist \"%APPDATA%/npm/node_modules/http-server\" call npm install -g http-server",
-    "add:nodewebkit": "if not exist \"%APPDATA%/npm/node_modules/nodewebkit\" call npm install -g nodewebkit",
-    "start": "nodewebkit \"../web\""
-  },
-  "dependencies": {
-    "http-server": "0.7.4"
-  },
-  "devDependencies": {
-    "grunt": "0.4.5",
-    "grunt-contrib-concat": "0.4.0",
-    "grunt-contrib-copy": "^0.7.0",
-    "grunt-contrib-cssmin": "0.9.0",
-    "grunt-contrib-jshint": "0.10.0",
-    "grunt-contrib-less": "0.11.0",
-    "grunt-contrib-uglify": "0.6.0",
-    "grunt-contrib-watch": "0.6.1",
-    "grunt-devtools": "0.2.1",
-    "grunt-html2js": "^0.3.0",
-    "grunt-usemin": "^3.0.0",
-    "minimatch": "0.3"
-  }
+    "private": true,
+    "version": "0.0.2",
+    "name": "Prototyped",
+    "author": "Johnathan Lodder",
+    "description": "Prototyped software for responsive web-based solutions.",
+    "homepage": "https://www.prototyped.info",
+    "repository": {
+        "type": "git",
+        "url": ""
+    },
+    "scripts": {
+        "preinstall": "node node_app/Setup.js",
+        "xpostinstall": "",
+        "prestart": "grunt build",
+        "xstart": "nw \"../web\""
+    },
+    "globals": {
+        "grunt-init": "0.3.2",
+        "grunt-cli": "0.1.13",
+        "nw": "0.12.0-alpha3"
+    },
+    "dependencies": {
+        "http-server": "0.7.4"
+    },
+    "devDependencies": {
+        "grunt": "0.4.5",
+        "grunt-contrib-concat": "0.4.0",
+        "grunt-contrib-copy": "^0.7.0",
+        "grunt-contrib-cssmin": "0.9.0",
+        "grunt-contrib-jshint": "0.10.0",
+        "grunt-contrib-less": "0.11.0",
+        "grunt-contrib-uglify": "0.6.0",
+        "grunt-contrib-watch": "0.6.1",
+        "grunt-devtools": "0.2.1",
+        "grunt-html2js": "^0.3.0",
+        "grunt-usemin": "^3.0.0",
+        "minimatch": "0.3"
+    }
 }
