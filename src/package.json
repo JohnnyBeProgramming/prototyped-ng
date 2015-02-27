@@ -10,17 +10,18 @@
         "url": ""
     },
     "scripts": {
-        "preinstall": "node node_app/Setup.js",
-        "xpostinstall": "",
+        "preinstall": "node Setup.js",
+        "preupdate": "node Setup.js",
         "prestart": "grunt build",
-        "xstart": "nw \"../web\""
+        "start": "grunt app-run",
+        "poststart": "grunt watch"
     },
     "globals": {
         "grunt-init": "0.3.2",
-        "grunt-cli": "0.1.13",
-        "nw": "0.12.0-alpha3"
+        "grunt-cli": "0.1.13"
     },
     "dependencies": {
+        "nw": "0.12.0-alpha3",
         "http-server": "0.7.4"
     },
     "devDependencies": {

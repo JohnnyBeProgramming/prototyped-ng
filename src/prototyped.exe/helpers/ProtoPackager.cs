@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace prototyped.exe.helpers
 {
@@ -155,17 +156,28 @@ namespace prototyped.exe.helpers
                 Arguments = " /C " + filename + " " + args,
                 WorkingDirectory = workingDir,
                 UseShellExecute = false, // Required for environment variables
+                //RedirectStandardOutput = false,
+                //RedirectStandardError = true,
             };
 
             // Define the process that will run it
             var proc = new Process
             {
-                StartInfo = info,
+                StartInfo = info,                
             };
 
             // Start the process!
             var success = proc.Start();
-            if (success)
+            if (!proc.HasExited)
+            {
+                proc.WaitForExit();
+            }
+            if (proc.HasExited && proc.ExitCode > 0)
+            {
+                var msg = "Process exited abnormally with code [" + proc.ExitCode + "]";
+                success = MessageBox.Show(proc.StandardError.ReadToEnd(), msg, MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.OK;
+            }
+            else if (success)
             {
                 // Program was Run successfully
             }
@@ -193,7 +205,7 @@ namespace prototyped.exe.helpers
             foreach (var file in new string[] { 
                     // Add files that should be manually deleted here...
                 }
-                .Concat(StaticIncludes.Where(path => path != AppConfig.PackageFile))
+                //.Concat(StaticIncludes.Where(path => path != AppConfig.PackageFile))
                 .Concat(Directory.GetFiles(workingFolder).Where(file => file.EndsWith(".log"))))
             {
                 File.Delete(file);
