@@ -20,8 +20,8 @@ module.exports = function (grunt) {
 
     // DEFINE PROTOTYPED BUILD
     var cfg = {
-        web: '../web',
-        dest: '../bin',
+        web: 'web',
+        dest: 'app',
         css: 'assets/css',
         lib: 'assets/lib',
         tasks: {
@@ -76,7 +76,7 @@ module.exports = function (grunt) {
                     val: function () {
                         // Start the web server prior to opening the window
                         var httpDone = false;
-                        var httpHost = require('./Server.js');
+                        var httpHost = require('./node_app/Server.js');
                         if (httpHost) {
                             httpHost.port = 8008;
                             httpHost.path = cfg.web;
@@ -92,11 +92,11 @@ module.exports = function (grunt) {
                         // Start a Node Webkit window and point it to our starting url...
                         var url = httpHost.baseUrl;
                         var www = cfg.web;
-                        var cmd = 'call "node_modules/.bin/nw" "' + www + '/"';
-                        console.info(cmd);
+                        var cmd = '"node_modules/.bin/nw" "' + www + '/"';
                         var proc = require("child_process");
                         if (proc) {
                             console.info(' - Starting node webkit window...');
+                            console.warn(' - Path: ' + www);
                             console.log('-------------------------------------------------------------------------------');
 
                             proc.exec(cmd, function (error, stdout, stderr) {

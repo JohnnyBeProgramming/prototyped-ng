@@ -1,1 +1,1 @@
-"node_modules/.bin/nw" "../web/"
+"node_modules/.bin/nw" "web/"

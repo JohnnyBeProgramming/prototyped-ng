@@ -4,7 +4,7 @@
     "name": "Prototyped",
     "author": "Johnathan Lodder",
     "description": "Prototyped software for responsive web-based solutions.",
-    "homepage": "https://www.prototyped.info",
+    "homepage": "http://www.prototyped.info",
     "repository": {
         "type": "git",
         "url": ""
@@ -12,9 +12,9 @@
     "scripts": {
         "preinstall": "node Setup.js",
         "preupdate": "node Setup.js",
-        "prestart": "grunt build",
-        "start": "grunt app-run",
-        "poststart": "grunt watch"
+        "prestart": "grunt",
+        "start": "node Server.js",
+        "poststart": "pause"
     },
     "globals": {
         "grunt-init": "0.3.2",

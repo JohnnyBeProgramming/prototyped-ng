@@ -3,7 +3,7 @@
     "name": "Prototyped",
     "author": "author",
     "private": true,
-    "main": "http://www.prototyped.info/", //http://localhost:8008",
+    "main": "http://localhost:8008/",
     "single-instance": true,
     "window": {
         "fullscreen": false,
