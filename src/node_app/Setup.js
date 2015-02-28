@@ -21,7 +21,6 @@
                         hasError = true;
                         console.error(error);
                     } else {
-                        // Done loading module
                     }
                 });
             }

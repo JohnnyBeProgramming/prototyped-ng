@@ -36,7 +36,6 @@
   <ItemGroup>
     <TypeScriptCompile Include="app.ts" />
     <TypeScriptCompile Include="Builder.ts" />
-    <TypeScriptCompile Include="Gruntfile.ts" />
     <TypeScriptCompile Include="Server.ts" />
     <TypeScriptCompile Include="Setup.ts" />
     <Content Include="package.json" />
