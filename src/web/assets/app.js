@@ -666,7 +666,7 @@ angular.module('myApp', [
                     case 'debug': return 'fa fa-bug glow-orange animate-glow';
                 }
             }
-            return 'fa-cube';
+            return (appNode.active) ? 'fa-desktop' : 'fa-cube';
         }
         appStatus.getColor = function () {
             var logs = appStatus.logs;

@@ -5,14 +5,14 @@ VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{038CA08D-5CAC-42B4-B904-06031E1BBE72}"
 	ProjectSection(SolutionItems) = preProject
-		src\Builder.js = src\Builder.js
-		src\Gruntfile.js = src\Gruntfile.js
-		src\Server.js = src\Server.js
+		Builder.js = Builder.js
+		Gruntfile.js = Gruntfile.js
+		Server.js = Server.js
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "app", "app", "{3AA521C1-195C-4A52-A198-5E74BB9EB4D8}"
 	ProjectSection(SolutionItems) = preProject
-		src\package.json = src\package.json
+		package.json = package.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E0D09E2F-E3E5-4592-A376-ECB08CAA250C}"
@@ -38,9 +38,9 @@ Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "web", "http://localhost:500
 		SlnRelativePath = "web\"
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prototyped.samples", "src\prototyped.samples\prototyped.samples.csproj", "{A31A2F64-9B89-4F38-80B3-C84627A17728}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prototyped.samples", "prototyped.samples\prototyped.samples.csproj", "{A31A2F64-9B89-4F38-80B3-C84627A17728}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prototyped.net", "src\prototyped.exe\prototyped.net.csproj", "{449B2BBD-1EE5-4217-AD9F-D788C4123828}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prototyped.net", "prototyped.exe\prototyped.net.csproj", "{449B2BBD-1EE5-4217-AD9F-D788C4123828}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".net", ".net", "{ABD9A963-B99E-4E64-92C8-6FD5B5E96080}"
 EndProject
@@ -48,7 +48,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".ng", ".ng", "{C5E9870A-A07
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".node", ".node", "{95171BE4-02D1-487C-928F-469578B68BA1}"
 EndProject
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "node_app", "src\node_app\node_app.njsproj", "{5980A535-612C-4A86-80B7-886F5A26D1A3}"
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "node_app", "node_app\node_app.njsproj", "{5980A535-612C-4A86-80B7-886F5A26D1A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
