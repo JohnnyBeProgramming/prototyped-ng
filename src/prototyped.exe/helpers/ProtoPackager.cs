@@ -15,8 +15,9 @@ namespace prototyped.exe.helpers
     {
         public static string[] StaticIncludes = new[] { 
             AppConfig.PackageFile,
-            "Setup.js",
-            "node_modules\\"
+            "node_modules\\",
+            "Setup.cmd",
+            "Start.cmd",
         };
 
         public static ProgressTracker WorkerProgress { get; private set; }
@@ -168,16 +169,7 @@ namespace prototyped.exe.helpers
 
             // Start the process!
             var success = proc.Start();
-            if (!proc.HasExited)
-            {
-                proc.WaitForExit();
-            }
-            if (proc.HasExited && proc.ExitCode > 0)
-            {
-                var msg = "Process exited abnormally with code [" + proc.ExitCode + "]";
-                success = MessageBox.Show(proc.StandardError.ReadToEnd(), msg, MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.OK;
-            }
-            else if (success)
+            if (success)
             {
                 // Program was Run successfully
             }
@@ -205,7 +197,7 @@ namespace prototyped.exe.helpers
             foreach (var file in new string[] { 
                     // Add files that should be manually deleted here...
                 }
-                //.Concat(StaticIncludes.Where(path => path != AppConfig.PackageFile))
+                .Concat(StaticIncludes.Where(path => path != AppConfig.PackageFile))
                 .Concat(Directory.GetFiles(workingFolder).Where(file => file.EndsWith(".log"))))
             {
                 File.Delete(file);

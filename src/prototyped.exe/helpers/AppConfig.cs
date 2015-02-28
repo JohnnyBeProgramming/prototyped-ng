@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,19 +17,12 @@ namespace prototyped.exe
 
         public static bool UseShadowFolder { get; private set; }
 
-        static AppConfig()
-        {
-#if DEBUG
-            //PackagersDirs = string.Empty;
-            UseShadowFolder = false;
-#endif
-        }
-
         public static string GetPackageFolder(string name = null)
         {
             var relPath = PackageDir;
             var baseDir = UseShadowFolder
-                                ? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
+                                ? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) 
+                                + Path.DirectorySeparatorChar + typeof(Program).Assembly.ManifestModule.Name
                                 : Environment.CurrentDirectory;
 
             if (!string.IsNullOrEmpty(relPath)) baseDir = baseDir + @"\" + relPath;

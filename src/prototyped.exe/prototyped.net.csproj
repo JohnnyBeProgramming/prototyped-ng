@@ -103,6 +103,12 @@
       <Link>package.json</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="..\Setup.cmd">
+      <Link>Setup.cmd</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\Start.cmd">
+      <Link>Start.cmd</Link>
+    </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -134,10 +140,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="..\node_app\Setup.js">
-      <Link>Setup.js</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
     <Content Include="favicon.ico" />
   </ItemGroup>
   <ItemGroup />

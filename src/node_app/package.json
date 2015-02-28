@@ -2,11 +2,13 @@
     "version": "0.0.1",
     "name": "Prototyped",
     "scripts": {
-        "preinstall": "node Setup.js"
+        "preinstall": "echo Installing npm modules...",
+        "preupdate": "echo Updating npm modules...",
+        "prestart": "echo Starting Application...",
+        "start": "echo ToDo: Replace with your code!",
+        "poststart": "pause"
     },
     "globals": {
-        "nw": "0.12.0-alpha3",
-        "grunt-init": "0.3.2",
         "grunt-cli": "0.1.13"
     },
     "dependencies": {
