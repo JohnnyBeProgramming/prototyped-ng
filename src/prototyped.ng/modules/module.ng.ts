@@ -1,8 +1,8 @@
-/// <reference path="imports.d.ts" />
-/// <reference path="modules/default.ng.ts" />
-/// <reference path="modules/about.ng.ts" />
+/// <reference path="../imports.d.ts" />
+/// <reference path="../modules/default.ng.ts" />
+/// <reference path="../modules/about.ng.ts" />
  
-angular.module('prototyped.ng.utils', [
+angular.module('prototyped.ng', [
     'prototyped.ng.default',
     'prototyped.ng.about',
 

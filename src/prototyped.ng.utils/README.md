@@ -1,3 +1,0 @@
-﻿# prototyped.ng.utils
-
-
