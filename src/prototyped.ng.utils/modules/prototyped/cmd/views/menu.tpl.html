@@ -1,0 +1,13 @@
+﻿<ul class="nav navbar-nav">
+    <li ui:sref-active="open">
+        <a app:nav-link ui:sref="prototyped.cmd">
+            <i class="fa" ng-class="{ 'fa-refresh glow-blue': cmd.busy, 'fa-desktop glow-green': !cmd.busy && appNode.active, 'fa-warning glow-orange': !cmd.busy && !appNode.active }"></i>&nbsp;
+            Discover Local Features
+        </a>
+    </li>
+    <li ui:sref-active="open" ng-class="{ 'disabled': !appNode.active }">
+        <a app:nav-link ui:sref="sqlcmd.connect" data:eat-click-if="!appNode.active">
+            <i class="fa fa-database"></i> Connect to Data Source
+        </a>
+    </li>
+</ul>

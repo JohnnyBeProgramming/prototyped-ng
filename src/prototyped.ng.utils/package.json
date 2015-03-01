@@ -1,0 +1,10 @@
+{
+  "name": "prototyped.ng.utils",
+  "version": "0.0.0",
+  "description": "prototyped.ng.utils",
+  "main": "app.js",
+  "author": {
+    "name": "Johnathan Lodder",
+    "email": ""
+  }
+}

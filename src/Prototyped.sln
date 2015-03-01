@@ -46,6 +46,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "node", "node", "{95171BE4-0
 EndProject
 Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "prototyped.node", "prototyped.node\prototyped.node.njsproj", "{5980A535-612C-4A86-80B7-886F5A26D1A3}"
 EndProject
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "prototyped.ng.utils", "prototyped.ng.utils\prototyped.ng.utils.njsproj", "{DCF42609-9EF9-46D7-AA64-09A4987E9D5C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -64,6 +66,10 @@ Global
 		{5980A535-612C-4A86-80B7-886F5A26D1A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5980A535-612C-4A86-80B7-886F5A26D1A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5980A535-612C-4A86-80B7-886F5A26D1A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCF42609-9EF9-46D7-AA64-09A4987E9D5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCF42609-9EF9-46D7-AA64-09A4987E9D5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCF42609-9EF9-46D7-AA64-09A4987E9D5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCF42609-9EF9-46D7-AA64-09A4987E9D5C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -73,5 +79,6 @@ Global
 		{C5E9870A-A07C-4B3D-9904-3D5F6653C66D} = {E0D09E2F-E3E5-4592-A376-ECB08CAA250C}
 		{95171BE4-02D1-487C-928F-469578B68BA1} = {E0D09E2F-E3E5-4592-A376-ECB08CAA250C}
 		{5980A535-612C-4A86-80B7-886F5A26D1A3} = {95171BE4-02D1-487C-928F-469578B68BA1}
+		{DCF42609-9EF9-46D7-AA64-09A4987E9D5C} = {C5E9870A-A07C-4B3D-9904-3D5F6653C66D}
 	EndGlobalSection
 EndGlobal
