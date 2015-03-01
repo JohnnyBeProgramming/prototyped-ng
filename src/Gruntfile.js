@@ -20,6 +20,7 @@ module.exports = function (grunt) {
 
     // DEFINE PROTOTYPED BUILD
     var cfg = {
+        base: './',
         web: 'web',
         dest: 'app',
         css: 'assets/css',
@@ -68,7 +69,16 @@ module.exports = function (grunt) {
                 },
                 // Extend tasks for dist env
                 { key: 'build-dist', val: ['build-prod'] },
-                { key: 'tests-dist', val: ['test-units'] }
+                { key: 'tests-dist', val: ['test-units'] },
+                
+                // Other build tasks
+                {
+                    key: 'build-prototyped-ng',
+                    val: [
+                        'html2js:prototyped_ng',
+                        'concat:prototyped_ng',
+                    ]
+                },
             ],
             customs: [
                 {
@@ -202,7 +212,7 @@ module.exports = function (grunt) {
                         extDot: 'last'
                     }
                 ]
-            }
+            },
         },
         // COMBINE JS FILES
         concat: {
@@ -213,6 +223,15 @@ module.exports = function (grunt) {
                 files: [{
                     src: ['<%= cfg.dest %>/modules/**/*.js'],
                     dest: '<%= cfg.dest %>/assets/app.modules.min.js'
+                }]
+            },
+            prototyped_ng: {
+                files: [{
+                    src: [
+                        '<%= cfg.base %>/prototyped.ng/bin/prototyped.ng.base.js',
+                        '<%= cfg.base %>/prototyped.ng/bin/prototyped.ng.resx.js',
+                    ],
+                    dest: '<%= cfg.web %>/assets/lib/prototyped.ng.js'
                 }]
             }
         },
@@ -256,9 +275,7 @@ module.exports = function (grunt) {
         },
         html2js: {
             options: {
-                base: '<%= cfg.web %>',
-                module: 'myApp.views',
-                singleModule: false,
+                singleModule: true,
                 quoteChar: '\'',
                 htmlmin: {
                     collapseBooleanAttributes: true,
@@ -272,11 +289,27 @@ module.exports = function (grunt) {
                 }
             },
             views: {
+                options: {
+                    base: '<%= cfg.web %>',
+                    module: 'myApp.views',
+                },
                 src: [
                     '<%= cfg.web %>/views/**/*.jade',
                     '<%= cfg.web %>/views/**/*.tpl.html'
                 ],
                 dest: '<%= cfg.web %>/assets/app.templates.js'
+            },
+            prototyped_ng: {
+                options: {
+                    base: '<%= cfg.base %>/prototyped.ng',
+                    module: 'prototyped.ng.views',
+                },
+                src: [
+                    '<%= cfg.base %>/prototyped.ng/**/*.jade',
+                    '<%= cfg.base %>/prototyped.ng/**/*.sql',
+                    '<%= cfg.base %>/prototyped.ng/**/*.tpl.html'
+                ],
+                dest: '<%= cfg.base %>/prototyped.ng/bin/prototyped.ng.resx.js'
             }
         },
         copy: {

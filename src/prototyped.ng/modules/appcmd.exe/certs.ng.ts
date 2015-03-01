@@ -1,10 +1,10 @@
-﻿'use strict';
+﻿/// <reference path="../../imports.d.ts" />
 
 angular.module('prototyped.certs', [
     'ui.router',
 ])
 
-    .config(['$stateProvider', function ($stateProvider) {
+    .config(['$stateProvider', ($stateProvider) => {
         // Now set up the states
         $stateProvider
             .state('certs', {
@@ -24,7 +24,7 @@ angular.module('prototyped.certs', [
 
     }])
 
-    .controller('appCmdViewController', ['$scope', '$location', '$timeout', '$route', function ($scope, $location, $timeout, $route) {
+    .controller('appCmdViewController', ['$scope', '$location', '$timeout', '$route', ($scope, $location, $timeout, $route) => {
         $scope.result = null;
         $scope.status = null;
         $scope.state = {
@@ -61,7 +61,7 @@ angular.module('prototyped.certs', [
         $scope.extractCertificates = function (storeName) {
             // Try and call the command line
             var cmd = 'call certutil.exe -store "' + storeName + '"';
-            var result = {
+            var result = <any>{
                 items: [],
                 isDone: false,
             };
@@ -98,22 +98,22 @@ angular.module('prototyped.certs', [
         $scope.parseCertUtilBuffer = function (input) {
             console.info(' - Parsing Certificates...');
             var list = [];
-            var certs = {};
+            var certs = <any>{};
 
             // Parse the output and get the certificates
             var item;
             var index = 0;
             var lines = input.split('\r\n');
             while (index < lines.length) {
+                var match; 
                 var line = lines[index];
                 if (index == 0) {
-                    var match = /(\w+)( ")(\w+)(")/.exec(line);
-                    if (match != null) {
+                    if ((match = /(\w+)( ")(\w+)(")/.exec(line)) != null) {
                         certs.store = match[1];
                         certs.desc = match[3];
                     }
                 } else {
-                    var match; // Try matching parts of a certificate dump
+                    // Try matching parts of a certificate dump
                     if ((match = /(============+)( .* )(============+)/.exec(line)) != null) {
                         // New certificate begins...
                         item = {

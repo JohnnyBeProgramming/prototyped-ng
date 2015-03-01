@@ -1,11 +1,13 @@
-'use strict';
+/// <reference path="../../../imports.d.ts" />
+/// <reference path="../../appcmd.exe/certs.ng.ts" />
+/// <reference path="../../sqlcmd.exe/module.ng.ts" />
 
 angular.module('prototyped.cmd', ['ui.router',
     'prototyped.sqlcmd',
     'prototyped.certs',
 ])
 
-    .config(['$stateProvider', function ($stateProvider) {
+    .config(['$stateProvider', ($stateProvider) => {
 
         // Now set up the states
         $stateProvider
@@ -126,7 +128,7 @@ angular.module('prototyped.cmd', ['ui.router',
             },
     };
 
-var updates = {};
+var updates = <any>{};
 try {
     // Check for required libraries
     if (typeof require !== 'undefined') {

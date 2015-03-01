@@ -1,7 +1,10 @@
 /// <reference path="../imports.d.ts" />
 
-angular.module('prototyped.ng.about', [
-    //'views/about.tpl.html', // Requires template
+angular.module('prototyped.ng.about', [    
+    // Ensures templates loaded
+    'prototyped.ng.views', 
+
+    // Other dependencies
     'ui.router'
 ])
 

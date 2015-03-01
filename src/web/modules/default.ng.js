@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('myApp.default', [
-    'views/default.tpl.html', // Requires template
+    //'views/default.tpl.html', // Requires template
     'ui.router',
 ])
 

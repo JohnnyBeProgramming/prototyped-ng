@@ -1,4 +1,4 @@
-'use strict';
+/// <reference path="../../imports.d.ts" />
 
 angular.module('prototyped.sqlcmd', [
     'ui.router',
@@ -89,7 +89,7 @@ angular.module('prototyped.sqlcmd', [
                                                 deferred.notify(db);
                                             }
                                         }, function (reason) {
-                                            deferred.reject(err);
+                                            deferred.reject(reason);
                                         })
                                 });
                             }, function (err) {
@@ -346,7 +346,7 @@ angular.module('prototyped.sqlcmd', [
                     var totl = (db.size.files) ? (db.size.files.total || 0) : 0;
                     return totl;
                 },
-                getSizeLogs: function (db) {
+                getSizeLogs: function (db) : any {
                     if (!db.size) return 0.0;
                     var curr = db.size.sLogs || 0;
                     var totl = $scope.sqlCmd.utils.getSizeTotal(db);
@@ -359,7 +359,7 @@ angular.module('prototyped.sqlcmd', [
                         perct: perc,
                     };
                 },
-                getSizeData: function (db) {
+                getSizeData: function (db) : any {
                     if (!db.size) return 0.0;
                     var curr = db.size.sData || 0;
                     var totl = $scope.sqlCmd.utils.getSizeTotal(db);
@@ -372,7 +372,7 @@ angular.module('prototyped.sqlcmd', [
                         perct: perc,
                     };
                 },
-                getSizeIndex: function (db) {
+                getSizeIndex: function (db) : any {
                     if (!db.size) return 0.0;
                     var curr = db.size.index || 0;
                     var totl = $scope.sqlCmd.utils.getSizeTotal(db);
@@ -385,7 +385,7 @@ angular.module('prototyped.sqlcmd', [
                         perct: perc,
                     };
                 },
-                getSizeTables: function (db) {
+                getSizeTables: function (db) : any {
                     if (!db.size) return 0.0;
                     var curr = db.size.table || 0;
                     var totl = $scope.sqlCmd.utils.getSizeTotal(db);
@@ -527,7 +527,7 @@ angular.module('prototyped.sqlcmd', [
             }
         }
 
-        var updates = {};
+        var updates = <any>{};
         try {
             // Check for required libraries
             if (typeof require !== 'undefined') {

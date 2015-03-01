@@ -21,6 +21,32 @@
     <Content Include="assets\app.css" />
     <Content Include="assets\app.js" />
     <Content Include="index.html" />
+    <TypeScriptCompile Include="modules\prototyped\cmd\module.ng.ts" />
+    <TypeScriptCompile Include="modules\appcmd.exe\certs.ng.ts" />
+    <Content Include="modules\appcmd.exe\certs.tpl.html" />
+    <Content Include="modules\appcmd.exe\left.tpl.html" />
+    <Content Include="modules\prototyped\cmd\views\index.tpl.html" />
+    <Content Include="modules\prototyped\cmd\views\left.tpl.html" />
+    <Content Include="modules\prototyped\cmd\views\menu.tpl.html" />
+    <TypeScriptCompile Include="modules\prototyped\module.ng.ts" />
+    <Content Include="modules\sqlcmd.exe\dialogs\dbActions.tpl.html" />
+    <TypeScriptCompile Include="modules\sqlcmd.exe\module.ng.ts" />
+    <Content Include="modules\sqlcmd.exe\scripts\tmp\.gitignore" />
+    <Content Include="modules\sqlcmd.exe\scripts\utils\FileSizes.sql" />
+    <Content Include="modules\sqlcmd.exe\scripts\utils\ListViews.sql" />
+    <Content Include="modules\sqlcmd.exe\scripts\utils\NoCounts.sql" />
+    <Content Include="modules\sqlcmd.exe\scripts\utils\ShrinkDB.sql" />
+    <Content Include="modules\sqlcmd.exe\scripts\utils\TableSizes.sql" />
+    <Content Include="modules\sqlcmd.exe\views\connect.tpl.html" />
+    <Content Include="modules\sqlcmd.exe\views\database.tpl.html" />
+    <Content Include="modules\sqlcmd.exe\views\left.tpl.html" />
+    <Content Include="modules\sqlcmd.exe\views\menu.tpl.html" />
+    <Content Include="views\about\connections.tpl.html" />
+    <Content Include="views\about\contact.tpl.html" />
+    <Content Include="views\about\info.tpl.html" />
+    <Content Include="views\about\left.tpl.html" />
+    <Content Include="views\about\menu.tpl.html" />
+    <Content Include="views\default.tpl.html" />
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
@@ -66,11 +92,18 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <TypeScriptRemoveComments>false</TypeScriptRemoveComments>
     <TypeScriptSourceMap>true</TypeScriptSourceMap>
-    <TypeScriptOutFile>bin\prototyped.ng.js</TypeScriptOutFile>
+    <TypeScriptOutFile>bin\prototyped.ng.base.js</TypeScriptOutFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <TypeScriptRemoveComments>true</TypeScriptRemoveComments>
     <TypeScriptSourceMap>false</TypeScriptSourceMap>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>call grunt build-prototyped-ng --no-color --gruntfile "../../Gruntfile.js"</PostBuildEvent>
+  </PropertyGroup>
 </Project>
