@@ -8,7 +8,7 @@ var child_process = require('child_process');
     Setup and Pre-installation helper class
 ------------------------------------------------------------------------------- */
 var SetupManager = {
-    init: () => {
+    init: () : boolean => {
 
         // Iterate all globals dependencies and install them
         var hasError = false;
@@ -32,6 +32,8 @@ var SetupManager = {
                 }
             }
         }
+
+        return !hasError;
     },
     installGlobal: (key: string, ver?: string) => {
         var passed: boolean = true;

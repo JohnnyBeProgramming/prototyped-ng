@@ -31,6 +31,8 @@ var SetupManager = {
                 }
             }
         }
+
+        return !hasError;
     },
     installGlobal: function (key, ver) {
         var passed = true;
