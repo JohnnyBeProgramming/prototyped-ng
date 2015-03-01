@@ -5,9 +5,9 @@ VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{038CA08D-5CAC-42B4-B904-06031E1BBE72}"
 	ProjectSection(SolutionItems) = preProject
-		Builder.js = Builder.js
 		Gruntfile.js = Gruntfile.js
 		Server.js = Server.js
+		Setup.js = Setup.js
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "app", "app", "{3AA521C1-195C-4A52-A198-5E74BB9EB4D8}"
@@ -44,7 +44,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "angular", "angular", "{C5E9
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "node", "node", "{95171BE4-02D1-487C-928F-469578B68BA1}"
 EndProject
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "node_app", "node_app\node_app.njsproj", "{5980A535-612C-4A86-80B7-886F5A26D1A3}"
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "prototyped.node", "prototyped.node\prototyped.node.njsproj", "{5980A535-612C-4A86-80B7-886F5A26D1A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

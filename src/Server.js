@@ -5,18 +5,16 @@ Example of a custom HTTP Server
 ------------------------------------------------------------------------------- */
 
 // Start the web server prior to opening the window
-var httpDone = false;
-var httpHost = require('./node_app/Server.js');
+var httpHost = require('./prototyped.node/modules/Server.js');
 if (httpHost) {
     httpHost.port = 8008;
     httpHost.path = 'web';
-
     //httpHost.pfxPath = './sample.pfx'; // Enable to allow HTTPS
-    httpDone = httpHost.start();
+    if (httpHost.start()) {
+        console.info(' - Static Http server now active...');
+    } else {
+        console.warn(' - Warning: Http server was not started...');
+    }
 }
 
-if (httpDone) {
-    console.info(' - Static Http server now active...');
-} else {
-    console.warn(' - Warning: Http server was not started...');
-}
+module.exports = httpHost;

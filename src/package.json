@@ -11,7 +11,6 @@
     },
     "scripts": {
         "preinstall": "node Setup.js",
-        "preupdate": "node Setup.js",
         "prestart": "grunt",
         "start": "node Server.js",
         "poststart": "pause"

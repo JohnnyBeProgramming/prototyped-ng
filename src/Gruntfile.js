@@ -75,22 +75,10 @@ module.exports = function (grunt) {
                     key: 'app-run',
                     val: function () {
                         // Start the web server prior to opening the window
-                        var httpDone = false;
-                        var httpHost = require('./node_app/Server.js');
-                        if (httpHost) {
-                            httpHost.port = 8008;
-                            httpHost.path = cfg.web;
-
-                            //httpHost.pfxPath = './sample.pfx'; // Enable to allow HTTPS
-                            httpDone = httpHost.start();
-                        }
-                        if (!httpDone) {
-                            console.warn(' - Warning: Http server was not started...');
-                            return false;
-                        }
+                        var httpHost = require('./Server.js');
+                        var url = httpHost.baseUrl;
 
                         // Start a Node Webkit window and point it to our starting url...
-                        var url = httpHost.baseUrl;
                         var www = cfg.web;
                         var cmd = '"node_modules/.bin/nw" "' + www + '/"';
                         var proc = require("child_process");
@@ -223,9 +211,9 @@ module.exports = function (grunt) {
             },
             modules: {
                 files: [{
-                        src: ['<%= cfg.dest %>/modules/**/*.js'],
-                        dest: '<%= cfg.dest %>/assets/app.modules.min.js'
-                    }]
+                    src: ['<%= cfg.dest %>/modules/**/*.js'],
+                    dest: '<%= cfg.dest %>/assets/app.modules.min.js'
+                }]
             }
         },
         useminPrepare: {

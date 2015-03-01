@@ -5,7 +5,7 @@
         "preinstall": "echo Installing npm modules...",
         "preupdate": "echo Updating npm modules...",
         "prestart": "echo Starting Application...",
-        "start": "echo ToDo: Replace with your code!",
+        "start": "node app.js",
         "poststart": "pause"
     },
     "globals": {
