@@ -36,9 +36,9 @@ angular.module('prototyped.sqlcmd', [
 
     }])
 
-    .controller('sqlCmdViewController', ['$rootScope', '$scope', '$state', '$stateParams', '$q', '$modal', '$filter', function ($rootScope, $scope, $state, $stateParams, $q, $modal, $filter) {
+    .controller('sqlCmdViewController', ['$rootScope', '$scope', '$state', '$stateParams', '$q', '$modal', '$filter', '$templateCache', function ($rootScope, $scope, $state, $stateParams, $q, $modal, $filter, $templateCache) {
 
-        var baseUrl = './modules/sqlcmd.exe/scripts';
+        var baseUrl = '.';
 
         function extendModalScope(_scope, $modalInstance) {
             _scope.db = {
@@ -66,35 +66,35 @@ angular.module('prototyped.sqlcmd', [
                                 database: ident,
                                 //nocount: false,
                             }, function (result) {
-                                // Update the UI
-                                deferred.notify(db);
+                                    // Update the UI
+                                    deferred.notify(db);
 
-                                // Resolve the deferred promise
-                                var links = [];
-                                for (var name in db.links) {
-                                    if (db.links.hasOwnProperty(name) && db.links[name]) {
-                                        links.push(name);
+                                    // Resolve the deferred promise
+                                    var links = [];
+                                    for (var name in db.links) {
+                                        if (db.links.hasOwnProperty(name) && db.links[name]) {
+                                            links.push(name);
+                                        }
                                     }
-                                }
-                                var pending = links.length;
-                                links.forEach(function (linkName) {
-                                    db.linkUser(db.user, linkName)
-                                        .then(function () {
-                                            pending--;
-                                            if (pending <= 0) {
-                                                // Done adding roles
-                                                deferred.resolve(result);
-                                            } else {
-                                                // Update the UI
-                                                deferred.notify(db);
-                                            }
-                                        }, function (reason) {
-                                            deferred.reject(reason);
-                                        })
+                                    var pending = links.length;
+                                    links.forEach(function (linkName) {
+                                        db.linkUser(db.user, linkName)
+                                            .then(function () {
+                                                pending--;
+                                                if (pending <= 0) {
+                                                    // Done adding roles
+                                                    deferred.resolve(result);
+                                                } else {
+                                                    // Update the UI
+                                                    deferred.notify(db);
+                                                }
+                                            }, function (reason) {
+                                                deferred.reject(reason);
+                                            })
                                 });
-                            }, function (err) {
-                                deferred.reject(err);
-                            });
+                                }, function (err) {
+                                    deferred.reject(err);
+                                });
                         } else {
                             throw new Error('No form input defined...');
                         }
@@ -115,15 +115,15 @@ angular.module('prototyped.sqlcmd', [
                             database: ident,
                             //nocount: false,
                         }, function (result) {
-                            // Resolve the deferred promise
-                            if (result) {
-                                deferred.resolve(result);
-                            } else {
-                                deferred.reject(new Error('Could not link user "' + user + '" in database: ' + ident));
-                            }
-                        }, function (err) {
-                            deferred.reject(err);
-                        });
+                                // Resolve the deferred promise
+                                if (result) {
+                                    deferred.resolve(result);
+                                } else {
+                                    deferred.reject(new Error('Could not link user "' + user + '" in database: ' + ident));
+                                }
+                            }, function (err) {
+                                deferred.reject(err);
+                            });
                     } catch (ex) {
                         deferred.reject(ex);
                     }
@@ -202,8 +202,8 @@ angular.module('prototyped.sqlcmd', [
                                         file: 'SQLCMD.exe',
                                         path: input,
                                     }, {
-                                        reload: true
-                                    });
+                                            reload: true
+                                        });
                                 } else {
                                     // Not found
                                     $rootScope.$applyAsync(function () {
@@ -225,8 +225,8 @@ angular.module('prototyped.sqlcmd', [
                         path: $stateParams.path,
                         dbname: db.DATABASE_NAME,
                     }, {
-                        reload: false
-                    });
+                            reload: false
+                        });
                 },
                 exec: function (sql, opts, callback, errorHandler) {
                     var fs = require('fs');
@@ -267,10 +267,96 @@ angular.module('prototyped.sqlcmd', [
                         }
                     });
                 },
+                resolveFilename: (filePath: string) => {
+                    var fs = require('fs');
+                    var path = require('path');
+
+                    // Check if the file already exists
+                    try {
+                        var file = path.join(baseUrl, filePath);
+                        var stats = fs.statSync(filePath);
+                        if (stats.isFile()) {
+                            return file;
+                        }
+                    } catch (ex) { }
+
+                    // Check if a tmp file exists
+                    try {
+                        var tmp = path.join(baseUrl, 'tmp', filePath);
+                        var tst = fs.statSync(tmp);
+                        if (tst.isFile()) {
+                            return tmp;
+                        }
+                    } catch (ex) { }
+
+                    // Try and find it in the cache
+                    try {
+                        function sync(p, opts, made) {
+                            if (!opts || typeof opts !== 'object') {
+                                opts = { mode: opts };
+                            }
+
+                            var mode = opts.mode;
+                            var xfs = opts.fs || fs;
+
+                            if (mode === undefined) {
+                                mode = 777 & (~process.umask());
+                            }
+                            if (!made) made = null;
+
+                            p = path.resolve(p);
+
+                            try {
+                                xfs.mkdirSync(p, mode);
+                                made = made || p;
+                            }
+                            catch (err0) {
+                                switch (err0.code) {
+                                    case 'ENOENT':
+                                        made = sync(path.dirname(p), opts, made);
+                                        sync(p, opts, made);
+                                        break;
+
+                                    // In the case of any other error, just see if there's a dir
+                                    // there already.  If so, then hooray!  If not, then something
+                                    // is borked.
+                                    default:
+                                        var stat;
+                                        try {
+                                            stat = xfs.statSync(p);
+                                        }
+                                        catch (err1) {
+                                            throw err0;
+                                        }
+                                        if (!stat.isDirectory()) throw err0;
+                                        break;
+                                }
+                            }
+
+                            return made;
+                        };
+
+                        // Try and retrieve the file from the cache
+                        var cache = $templateCache.get(filePath);
+                        if (cache) {
+                            var tmpDir = path.dirname(tmp);
+                            sync(tmpDir, null, null);
+                            if (fs) {
+                                fs.writeFileSync(tmp, cache);
+                            }
+                            return tmp;
+                        }
+                    } catch (ex) { console.warn(ex.message); }
+
+                    // Could not resolve file name, return original
+                    return filePath;
+                },
                 runFile: function (filePath, opts, callback, errorHandler) {
-                    var inp = '"' + path.join(process.cwd(), filePath) + '"';
+                    var src = filePath;
+                    var inp = '"' + path.join(process.cwd(), src) + '"';
                     if (opts.nocount !== false) {
-                        inp = '"' + path.join(process.cwd(), baseUrl + '/utils/NoCounts.sql') + '",' + inp;
+                        var noc = $scope.sqlCmd.utils.resolveFilename('modules/sqlcmd.exe/scripts/utils/NoCounts.sql');
+                        inp = '"' + path.join(process.cwd(), noc) + '",' + inp;
                     }
                     var arg = ' -S lpc:localhost -E';
                     var ext = ' -s"," -W -w 999 -i ' + inp;
@@ -346,7 +432,7 @@ angular.module('prototyped.sqlcmd', [
                     var totl = (db.size.files) ? (db.size.files.total || 0) : 0;
                     return totl;
                 },
-                getSizeLogs: function (db) : any {
+                getSizeLogs: function (db): any {
                     if (!db.size) return 0.0;
                     var curr = db.size.sLogs || 0;
                     var totl = $scope.sqlCmd.utils.getSizeTotal(db);
@@ -359,7 +445,7 @@ angular.module('prototyped.sqlcmd', [
                         perct: perc,
                     };
                 },
-                getSizeData: function (db) : any {
+                getSizeData: function (db): any {
                     if (!db.size) return 0.0;
                     var curr = db.size.sData || 0;
                     var totl = $scope.sqlCmd.utils.getSizeTotal(db);
@@ -372,7 +458,7 @@ angular.module('prototyped.sqlcmd', [
                         perct: perc,
                     };
                 },
-                getSizeIndex: function (db) : any {
+                getSizeIndex: function (db): any {
                     if (!db.size) return 0.0;
                     var curr = db.size.index || 0;
                     var totl = $scope.sqlCmd.utils.getSizeTotal(db);
@@ -385,7 +471,7 @@ angular.module('prototyped.sqlcmd', [
                         perct: perc,
                     };
                 },
-                getSizeTables: function (db) : any {
+                getSizeTables: function (db): any {
                     if (!db.size) return 0.0;
                     var curr = db.size.table || 0;
                     var totl = $scope.sqlCmd.utils.getSizeTotal(db);
@@ -414,8 +500,8 @@ angular.module('prototyped.sqlcmd', [
                     modalInstance.result.then(function (result) {
                         $scope.result = result;
                     }, function (reason) {
-                        // Modal dismissed                         
-                    });
+                            // Modal dismissed                         
+                        });
                 },
             },
         };
@@ -430,8 +516,10 @@ angular.module('prototyped.sqlcmd', [
                 $scope.sqlCmd.target = db;
             }
 
-            var sqlFileSizes = baseUrl + '/utils/FileSizes.sql';
-            $scope.sqlCmd.utils.runFile(sqlFileSizes, { database: db.DATABASE_NAME }, function (result) {
+            // Get the file size and basic info for the database
+            var tplFileSizes = $scope.sqlCmd.utils.resolveFilename('modules/sqlcmd.exe/scripts/utils/FileSizes.sql');
+            $scope.sqlCmd.utils.runFile(tplFileSizes, { database: db.DATABASE_NAME }, function (result) {
+
                 $rootScope.$applyAsync(function () {
                     var files = [];
                     var grand = 0;
@@ -463,8 +551,8 @@ angular.module('prototyped.sqlcmd', [
                     });
                 });
 
-                var sqlTableSize = baseUrl + '/utils/TableSizes.sql';
-                $scope.sqlCmd.utils.runFile(sqlTableSize, { database: db.DATABASE_NAME }, function (result) {
+                var tplTableSize = $scope.sqlCmd.utils.resolveFilename('modules/sqlcmd.exe/scripts/utils/TableSizes.sql');
+                $scope.sqlCmd.utils.runFile(tplTableSize, { database: db.DATABASE_NAME }, function (result) {
                     $rootScope.$applyAsync(function () {
                         var tables = [];
                         var sizeUsed = 0;
@@ -498,8 +586,8 @@ angular.module('prototyped.sqlcmd', [
                     });
                 });
 
-                var sqlViewSize = baseUrl + '/utils/ListViews.sql';
-                $scope.sqlCmd.utils.runFile(sqlViewSize, { database: db.DATABASE_NAME }, function (result) {
+                var tplViewSize = $scope.sqlCmd.utils.resolveFilename('modules/sqlcmd.exe/scripts/utils/ListViews.sql');
+                $scope.sqlCmd.utils.runFile(tplViewSize, { database: db.DATABASE_NAME }, function (result) {
                     $rootScope.$applyAsync(function () {
                         var views = [];
                         if (result && result.length) {

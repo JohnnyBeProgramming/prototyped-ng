@@ -31,7 +31,6 @@
     <TypeScriptCompile Include="modules\prototyped\module.ng.ts" />
     <Content Include="modules\sqlcmd.exe\dialogs\dbActions.tpl.html" />
     <TypeScriptCompile Include="modules\sqlcmd.exe\module.ng.ts" />
-    <Content Include="modules\sqlcmd.exe\scripts\tmp\.gitignore" />
     <Content Include="modules\sqlcmd.exe\scripts\utils\FileSizes.sql" />
     <Content Include="modules\sqlcmd.exe\scripts\utils\ListViews.sql" />
     <Content Include="modules\sqlcmd.exe\scripts\utils\NoCounts.sql" />

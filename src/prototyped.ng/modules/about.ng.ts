@@ -1,10 +1,10 @@
 /// <reference path="../imports.d.ts" />
 
-angular.module('prototyped.ng.about', [    
-    // Ensures templates loaded
-    'prototyped.ng.views', 
+angular.module('prototyped.ng.about', [
+// Ensures templates loaded
+    'prototyped.ng.views',
 
-    // Other dependencies
+// Other dependencies
     'ui.router'
 ])
 
@@ -138,7 +138,10 @@ angular.module('prototyped.ng.about', [
                     }
                     ua = ua.substring(0, pointer);
 
-                    if (!$.isNumeric(ua)) {
+                    console.warn(ua);
+                    console.warn($.isNumeric(ua) + ' <=> ' + window.isNaN(ua));
+
+                    if (!window.isNaN(ua)) {
                         if (parseInt(ua) > 0) {
                             info.versions.html = ua;
                         }
@@ -231,7 +234,7 @@ angular.module('prototyped.ng.about', [
                 }
 
                 // Check if the browser supports web db's
-                var webDB = info.about.webdb = {
+                var webDB = info.about.webdb = <any>{
                     db: null,
                     version: '1',
                     active: null,

@@ -290,13 +290,10 @@
                         <i class="glyphicon glyphicon-ok glow-green"></i> You have a modern javascript engine.
                     </p>
                     <p ng:if="info.versions.js < '5.0'" class="text-warning">
-                        <i class="glyphicon glyphicon-warning-sign glow-orange"></i> Javascript is out of date.
+                        <i class="glyphicon glyphicon-warning-sign glow-orange"></i> Javascript is out of date or unavailable.
                     </p>
                     <p ng:if="info.versions.v8" class="text-success">
                         <i class="glyphicon glyphicon-ok glow-green"></i> Javascript V8 engine, build v{{info.versions.v8}}.
-                    </p>
-                    <p ng:if="info.detects.bootstrap" class="text-success">
-                        <i class="glyphicon glyphicon-ok glow-green"></i> Bootstrap and/or UI Componets found.
                     </p>
                 </div>
             </div>
@@ -330,6 +327,9 @@
                     <p ng:if="info.detects.less" class="text-success">
                         <i class="glyphicon glyphicon-ok glow-green"></i>
                         <span>Support for LESS has been detected.</span>
+                    </p>
+                    <p ng:if="info.detects.bootstrap" class="text-success">
+                        <i class="glyphicon glyphicon-ok glow-green"></i> Bootstrap and/or UI Componets found.
                     </p>
                 </div>
             </div>

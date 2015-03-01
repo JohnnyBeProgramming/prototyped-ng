@@ -13,9 +13,11 @@ angular.module('myApp', [
   'angular-loading-bar',
   'angularMoment',
 
+  // Prototyped modules
+  'prototyped',
+  'prototyped.ng',
 
   // My modules...
-  //'prototyped.ng',
   'myApp.views',
   'myApp.modules',
   'myApp.samples',

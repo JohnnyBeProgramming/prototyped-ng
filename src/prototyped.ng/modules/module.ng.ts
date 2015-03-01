@@ -7,7 +7,7 @@ angular.module('prototyped.ng', [
     'prototyped.ng.about',
 
     // Define sub modules
-    //'prototyped',
+    'prototyped',
 ])
 
     .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {

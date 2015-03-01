@@ -8,7 +8,7 @@ angular.module('prototyped.ng.default', [
     .config(['$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider
-          .state('home', {
+          .state('default', {
               url: '/',
               views: {
                   'main@': {
