@@ -65,7 +65,7 @@
         <div ng:if="cmd.result">
             <h5>Additional System Paths</h5>
             <ul ng:if="cmd.result.paths" style="padding: 12px; margin: 0;">
-                <li ng-repeat="path in cmd.result.paths" style="list-style: none; padding: 0; margin: 0;">
+                <li ng-repeat="path in cmd.utils.getAllPaths()" style="list-style: none; padding: 0; margin: 0;">
                     <i class="glyphicon" ng-class="cmd.utils.icon(path, null)"></i>&nbsp;
                     <a href="" ng-click="cmd.utils.list(path)" ng-class="{ 'glow-blue': path == cmd.target.path }">
                         {{ path }}

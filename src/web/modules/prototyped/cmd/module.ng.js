@@ -109,81 +109,94 @@ angular.module('prototyped.cmd', ['ui.router',
                         console.error(ex.message);
                         $scope.cmd.error = ex;
                     }
-                }
+                },
+                getAllPaths: function () {
+                    if (!context.result || !context.result.paths) return list;
+                    var list = context.result.paths;
+                    var u = {}, a = [];
+                    for (var i = 0, l = list.length; i < l; ++i) {
+                        if (u.hasOwnProperty(list[i])) {
+                            continue;
+                        }
+                        a.push(list[i]);
+                        u[list[i]] = 1;
+                    }
+                    return a;
+                },
             },
+    };
+
+var updates = {};
+try {
+    // Check for required libraries
+    if (typeof require !== 'undefined') {
+        // Set the result
+        updates = {
+            busy: false,
+            active: false,
+            result: {
+                path: 'C:\\Working\\',
+            },                    
         };
 
-        var updates = {};
-        try {
-            // Check for required libraries
-            if (typeof require !== 'undefined') {
-                // Set the result
-                updates = {
-                    busy: false,
-                    active: false,
-                    result: {
-                        path: 'C:\\Working\\',
-                    }
-                };
+        // Parse the system paths
+        var cmd = 'echo %PATH%';
+        var proc = require("child_process");
+        if (proc) {
+            proc.exec(cmd, function (error, stdout, stderr) {
+                $rootScope.$applyAsync(function () {
 
-                // Parse the system paths
-                var cmd = 'echo %PATH%';
-                var proc = require("child_process");
-                if (proc) {
-                    proc.exec(cmd, function (error, stdout, stderr) {
-                        $rootScope.$applyAsync(function () {
-
-                            updates.active = true;
-                            updates.busy = false;
-                            if (error) {
-                                console.error(error);
-                                updates.error = error;
-                            } else {
-                                // Parse the path strings and search for folder
-                                var paths = [];
-                                if (stdout) {
-                                    stdout.split(';').forEach(function (path) {
-                                        if (path) {
-                                            paths.push(path.trim());
-                                        }
-                                    });
+                    updates.active = true;
+                    updates.busy = false;
+                    if (error) {
+                        console.error(error);
+                        updates.error = error;
+                    } else {
+                        // Parse the path strings and search for folder
+                        var paths = [];
+                        if (stdout) {
+                            stdout.split(';').forEach(function (path) {
+                                if (path) {
+                                    paths.push(path.trim());
                                 }
-                                updates.result.paths = paths;
-                                updates.result.stdout = stdout;
-                                updates.result.stderr = stderr;
+                            });
+                        }
+                        updates.result.paths = paths;
+                        updates.result.stdout = stdout;
+                        updates.result.stderr = stderr;
 
 
-                            }
-                            angular.extend($scope.cmd, updates);
+                    }
+                    angular.extend($scope.cmd, updates);
 
-                        });
-                    });
-                }
-
-                // Get the current working folder
-                var cwd = (typeof process !== 'undefined') ? process.cwd() : null;
-                if (cwd) {
-                    // List current folder contents
-                    $scope.cmd.utils.list(cwd, function (list) {
-                        $rootScope.$applyAsync(function () {
-                            // Update the current working dir
-                            $scope.cmd.cwd = {
-                                path: cwd,
-                                list: list,
-                            };
-                        });
-                    });
-                }
-            } else {
-                // Not available
-                updates.active = false;
-                updates.busy = false;
-            }
-        } catch (ex) {
-            updates.busy = false;
-            updates.error = ex;
+                });
+            });
         }
-        angular.extend($scope.cmd, updates);
 
-    }])
+        // Get the current working folder
+        var cwd = (typeof process !== 'undefined') ? process.cwd() : null;
+        if (cwd) {
+            // List current folder contents
+            $scope.cmd.utils.list(cwd, function (list) {
+                $rootScope.$applyAsync(function () {
+                    // Update the current working dir
+                    $scope.cmd.cwd = {
+                        path: cwd,
+                        list: list,
+                    };
+                });
+            });
+        }
+    } else {
+        // Not available
+        updates.active = false;
+        updates.busy = false;
+    }
+} catch (ex) {
+    updates.busy = false;
+    updates.error = ex;
+}
+angular.extend($scope.cmd, updates);
+
+}])
 
