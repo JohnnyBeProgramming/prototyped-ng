@@ -251,10 +251,9 @@ module.exports = function (grunt) {
                 files: [{
                     src: [
                         '<%= cfg.base %>/prototyped.ng.samples/bin/prototyped.ng.samples.base.js',
-                        //'<%= cfg.base %>/prototyped.ng.samples/bin/prototyped.ng.samples.resx.js',
-                        '<%= cfg.base %>/prototyped.ng.samples/bin/prototyped.ng.samples.sqlx.js',
+                        '<%= cfg.base %>/prototyped.ng.samples/bin/prototyped.ng.samples.resx.js',
                     ],
-                    dest: '<%= cfg.web %>/assets/lib/prototyped.samples.ng.js'
+                    dest: '<%= cfg.web %>/assets/lib/prototyped.ng.samples.js'
                 }]
             },
         },

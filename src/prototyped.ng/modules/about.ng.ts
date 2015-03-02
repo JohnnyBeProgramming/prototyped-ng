@@ -138,9 +138,6 @@ angular.module('prototyped.ng.about', [
                     }
                     ua = ua.substring(0, pointer);
 
-                    console.warn(ua);
-                    console.warn($.isNumeric(ua) + ' <=> ' + window.isNaN(ua));
-
                     if (!window.isNaN(ua)) {
                         if (parseInt(ua) > 0) {
                             info.versions.html = ua;

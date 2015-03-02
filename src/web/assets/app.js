@@ -13,14 +13,16 @@ angular.module('myApp', [
   'angular-loading-bar',
   'angularMoment',
 
+  // My modules
+  'myApp.views',
+  'myApp.modules',
+
   // Prototyped modules
   'prototyped',
   'prototyped.ng',
+  'prototyped.ng.samples',
+  'prototyped.ng.samples.views',
 
-  // My modules...
-  'myApp.views',
-  'myApp.modules',
-  'myApp.samples',
 ])
 
     .constant('appInfo', {

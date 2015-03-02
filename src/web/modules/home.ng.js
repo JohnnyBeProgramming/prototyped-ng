@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('myApp.default', [
+angular.module('myApp.home', [
     'ui.router',
 ])
 
