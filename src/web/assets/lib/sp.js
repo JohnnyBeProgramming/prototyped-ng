@@ -165,7 +165,7 @@
 
     // Return the defined type
     return StringPrototyped;
-})(window, document);
+})(window || {}, document || {});
 
 // Extend the string class with override
 String.prototype[''] = function (callback) {

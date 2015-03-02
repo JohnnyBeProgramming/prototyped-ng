@@ -1,6 +1,7 @@
 /// <reference path="../../imports.d.ts" />
 
 angular.module('prototyped.sqlcmd', [
+    'prototyped.ng.sql',
     'ui.router',
 ])
 

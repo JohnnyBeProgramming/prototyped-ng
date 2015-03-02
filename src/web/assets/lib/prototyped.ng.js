@@ -909,6 +909,7 @@ angular.module('prototyped.ng', [
     }]);
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.sqlcmd', [
+    'prototyped.ng.sql',
     'ui.router'
 ]).config([
     '$stateProvider', function ($stateProvider) {
@@ -1778,16 +1779,6 @@ angular.module('prototyped', [
     }]);
 //# sourceMappingURL=prototyped.ng.base.js.map
 ;angular.module('prototyped.ng.views', []).run(['$templateCache', function($templateCache) {
-  $templateCache.put('modules/sqlcmd.exe/scripts/utils/FileSizes.sql',
-    'SELECT DB_NAME(database_id) AS DatabaseName, Name AS Logical_Name, Physical_Name, (size*8) SizeKB FROM sys.master_files WHERE DB_NAME(database_id) LIKE DB_NAME()');
-  $templateCache.put('modules/sqlcmd.exe/scripts/utils/ListViews.sql',
-    'SELECT v.object_id AS ObjectId, v.name AS ViewName FROM sys.views v WHERE v.is_ms_shipped = 0');
-  $templateCache.put('modules/sqlcmd.exe/scripts/utils/NoCounts.sql',
-    'SET NOCOUNT ON;');
-  $templateCache.put('modules/sqlcmd.exe/scripts/utils/ShrinkDB.sql',
-    '��D E C L A R E   @ T a r g e t D B   v a r c h a r ( m a x )   S E T   @ T a r g e t D B   =   D B _ N A M E ( )     D E C L A R E   @ I n i t i a l S i z e   i n t         - -   D e c l a r e   t h e   t e m p   t a b l e   ( u s e d   t o   h o l d   i n f o   a b o u t   D B   s i z e s   b e f o r e   a n d   a f t e r   s h r i n k )     I F   O B J E C T _ I D ( N \' t e m p d b . . [ # T a b l e S i z e s ] \' )   I S   N O T   N U L L   D R O P   T A B L E   # T a b l e S i z e s       C R E A T E   T A B L E   # T a b l e S i z e s   ( [ D e s c r i p t i o n ]   v a r c h a r ( m a x ) ,   [ T o t a l S i z e ]   i n t ,   [ R e d u c t i o n ]   d e c i m a l ( 1 8 , 2 ) )     I N S E R T   I N T O   # T a b l e S i z e s   S E L E C T   @ T a r g e t D B   +   \'   (   b e f o r e   ) \' ,   S U M ( s i z e ) ,   0 . 0 0   F R O M   s y s . d a t a b a s e _ f i l e s     S E L E C T   @ I n i t i a l S i z e   =   [ T o t a l S i z e ]   F R O M   # T a b l e S i z e s         / *     - -   S e t   r e c o v e r y   m o d e   t o   \' S i m p l e \'     A L T E R   D A T A B A S E   Z e t e s _ I M S _ C l e a n   S E T   R E C O V E R Y   S I M P L E     * /         - -   S h r i n k   t h e   D B   f i l e s     D E C L A R E   @ n a m e   v a r c h a r ( m a x )     D E C L A R E   d b _ c u r s o r   C U R S O R   F O R       S E L E C T   n a m e   F R O M   s y s . d a t a b a s e _ f i l e s   W H E R E   s t a t e _ d e s c   =   \' O N L I N E \'         O P E N   d b _ c u r s o r         F E T C H   N E X T   F R O M   d b _ c u r s o r   I N T O   @ n a m e         W H I L E   @ @ F E T C H _ S T A T U S   =   0         B E G I N                 D B C C   S H R I N K F I L E   ( @ n a m e ,   1 )   W I T H   N O _ I N F O M S G S                                     F E T C H   N E X T   F R O M   d b _ c u r s o r   I N T O   @ n a m e         E N D         C L O S E   d b _ c u r s o r         D E A L L O C A T E   d b _ c u r s o r         / *     - -   S e t   r e c o v e r y   m o d e   t o   \' F u l l \'     A L T E R   D A T A B A S E   Z e t e s _ I M S _ C l e a n   S E T   R E C O V E R Y   F U L L     * /         - -   G e t   t h e   n e w   D B   s i z e ,   a n d   d i s p l a y   t h e   c o m p a r e d   r e s u l t s     I N S E R T   I N T O   # T a b l e S i z e s   S E L E C T   @ T a r g e t D B   +   \'   (   a f t e r   ) \' ,   S U M ( s i z e ) ,   ( 1 0 0   *   ( @ I n i t i a l S i z e   -   S U M ( s i z e ) )   /   @ I n i t i a l S i z e )   F R O M   s y s . d a t a b a s e _ f i l e s     S E L E C T           [ D e s c r i p t i o n ]       , R E P L A C E ( C O N V E R T ( v a r c h a r , C O N V E R T ( M o n e y ,   [ T o t a l S i z e ] ) , 1 ) , \' . 0 0 \' , \' \' )   A S   [ S i z e   (   k b   ) ]       , [ R e d u c t i o n ]   A S   [ R e d u c e d   (   %   ) ]     F R O M   # T a b l e S i z e s     D R O P   T A B L E   # T a b l e S i z e s ');
-  $templateCache.put('modules/sqlcmd.exe/scripts/utils/TableSizes.sql',
-    'if object_id(N\'tempdb..[#TableSizes]\') is not null drop table #TableSizes ; go create table #TableSizes ( [Table Name] nvarchar(128) , [Number of Rows] char(11) , [Reserved Space] varchar(18) , [Data Space] varchar(18) , [Index Size] varchar(18) , [Unused Space] varchar(18) ); go declare @schemaname varchar(256) ; set @schemaname = \'dbo\' ; declare curSchemaTable cursor for select sys.schemas.name + \'.\' + sys.objects.name from sys.objects , sys.schemas where object_id > 100 and sys.schemas.name = @schemaname and type_desc = \'USER_TABLE\' and sys.objects.schema_id = sys.schemas.schema_id ; open curSchemaTable ; declare @name varchar(256) ; fetch curSchemaTable into @name; while ( @@FETCH_STATUS = 0 ) begin insert into #TableSizes exec sp_spaceused @objname = @name; fetch curSchemaTable into @name; end close curSchemaTable; deallocate curSchemaTable; select [Table Name] , [Number of Rows] , [Reserved Space] , [Data Space] , [Index Size] , [Unused Space] from [#TableSizes] order by [Table Name]; drop table #TableSizes;');
   $templateCache.put('modules/appcmd.exe/certs.tpl.html',
     '<div ng-if=!state.current class=results ng-init=detect()><div class="icon pull-left left"><i class="glyphicon glyphicon-certificate"></i> <i class="sub-icon glyphicon" ng-class=getStatusColor()></i></div><div class="info pull-left"><div ng-if=!state.editMode><div class=pull-right><a class=ctrl-sm ng-click="state.editMode = true" href="" ng-hide="result.isDone && !result.valid"><i class="glyphicon glyphicon-plus"></i> New</a></div><h4>Security Certificates <small ng-if=result.certs.store>&nbsp;{{ result.certs.store }}<span ng-if=result.certs.store>, {{ result.certs.desc }}</span></small></h4></div><div ng-if=!state.editMode><p ng-if=!result.isDone><em>Please wait, loading...</em></p><ul ng-if="result.isDone && !result.valid"><li><b>NodeJS Required</b>: Try running this application inside something like <a target=_blank href=https://github.com/rogerwang/node-webkit>Node Webkit</a>.</li><li><b>Not Available:</b> You cannot access the local computer\'s certificate store from a browser window.</li></ul><div ng-if="result != null && result.isDone"><div class="alert alert-danger" ng-if="!result.valid && !$.isEmptyObject(result.error)"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Error:</b> {{ result.error }}</div><div class="alert alert-warning" ng-if="!result.valid && $.isEmptyObject(result.error)"><i class="glyphicon glyphicon-warning-sign"></i> <b>Warning:</b> Limited access to the <em>certificate store</em>.</div></div><div ng-if=result.valid><table class="table table-hover table-condensed"><thead><tr><th>Description</th><th>Thumbprint</th><th><div class=pull-right>Actions</div></th></tr></thead><tbody><tr class=inactive ng-if=!result.items.length><td><span class=text-muted>No results</span></td><td>&nbsp;</td><td>&nbsp;</td></tr><tr class=compact ng-repeat="itm in result.items"><td>{{ itm.name }}</td><td>{{ itm.hash }}</td><td><a href="" ng-click=exportCert(itm)>Export</a></td></tr></tbody></table></div><div ng-if=result.isDone class=text-muted>Last Checked: {{ result.lastUpdated | date:\'mediumTime\' }}</div></div><form ng-if=state.editMode><div class=form-group><h4 class=control-label for=txtTarget>New Certificate Name:</h4><input class=form-control id=txtName ng-model=state.certName></div><button type=submit class="btn btn-primary" ng-click="state.editMode = false;">Create</button></form></div></div><div ng-if=state.current><span class=pull-right><a class="btn btn-sm btn-primary" ng-click="state.current = null">Go Back</a></span> <samp><pre>{{ state.current }}</pre></samp></div><style>.results {\n' +
     '        min-width: 480px;\n' +
@@ -2009,4 +2000,238 @@ angular.module('prototyped', [
     '<ul class="nav navbar-nav"><li ui:sref-active=open><a app:nav-link ui:sref=about.info><i class="fa fa-info-circle"></i>&nbsp; About this app</a></li><li ui:sref-active=open><a app:nav-link ui:sref=about.conection><i class="fa fa-plug"></i>&nbsp; Check Connectivity</a></li><li ui:sref-active=open><a app:nav-link ui:sref=about.online><i class="fa fa-globe"></i>&nbsp; Visit us online</a></li></ul>');
   $templateCache.put('views/default.tpl.html',
     '<div class=container><h4>Default Page <small>Default page for your web app</small></h4><div ng:cloak><div class="alert alert-info animate-show"><i class="glyphicon glyphicon-comment"></i> <b>ToDo:</b> <em>Replace this text with your implementation code</em></div></div></div>');
+}]);
+;angular.module('prototyped.ng.sql', []).run(['$templateCache', function($templateCache) { 
+  'use strict';
+
+  $templateCache.put('modules/sqlcmd.exe/scripts/utils/FileSizes.sql',
+    "SELECT \r" +
+    "\n" +
+    "\tDB_NAME(database_id) AS DatabaseName,\r" +
+    "\n" +
+    "\tName AS Logical_Name,\r" +
+    "\n" +
+    "\tPhysical_Name, (size*8) SizeKB\r" +
+    "\n" +
+    "FROM \r" +
+    "\n" +
+    "\tsys.master_files\r" +
+    "\n" +
+    "WHERE \r" +
+    "\n" +
+    "\tDB_NAME(database_id) LIKE DB_NAME()"
+  );
+
+
+  $templateCache.put('modules/sqlcmd.exe/scripts/utils/ListViews.sql',
+    "SELECT \r" +
+    "\n" +
+    "\tv.object_id  AS ObjectId,\r" +
+    "\n" +
+    "\tv.name  AS ViewName\r" +
+    "\n" +
+    "FROM sys.views  v \r" +
+    "\n" +
+    "WHERE v.is_ms_shipped = 0"
+  );
+
+
+  $templateCache.put('modules/sqlcmd.exe/scripts/utils/NoCounts.sql',
+    "SET NOCOUNT ON;"
+  );
+
+
+  $templateCache.put('modules/sqlcmd.exe/scripts/utils/ShrinkDB.sql',
+    "DECLARE @TargetDB varchar(max) SET @TargetDB = DB_NAME()\r" +
+    "\n" +
+    "DECLARE @InitialSize int\r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "-- Declare the temp table (used to hold info about DB sizes before and after shrink)\r" +
+    "\n" +
+    "IF OBJECT_ID(N'tempdb..[#TableSizes]') IS NOT NULL DROP TABLE #TableSizes \r" +
+    "\n" +
+    "CREATE TABLE #TableSizes ([Description] varchar(max), [TotalSize] int, [Reduction] decimal(18,2))\r" +
+    "\n" +
+    "INSERT INTO #TableSizes SELECT @TargetDB + ' ( before )', SUM(size), 0.00 FROM sys.database_files\r" +
+    "\n" +
+    "SELECT @InitialSize = [TotalSize] FROM #TableSizes\r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "/*\r" +
+    "\n" +
+    "-- Set recovery mode to 'Simple'\r" +
+    "\n" +
+    "ALTER DATABASE Zetes_IMS_Clean SET RECOVERY SIMPLE\r" +
+    "\n" +
+    "*/\r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "-- Shrink the DB files\r" +
+    "\n" +
+    "DECLARE @name varchar(max)\r" +
+    "\n" +
+    "DECLARE db_cursor CURSOR FOR \r" +
+    "\n" +
+    "SELECT name FROM sys.database_files WHERE state_desc = 'ONLINE'\r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "OPEN db_cursor  \r" +
+    "\n" +
+    "FETCH NEXT FROM db_cursor INTO @name  \r" +
+    "\n" +
+    "WHILE @@FETCH_STATUS = 0  \r" +
+    "\n" +
+    "BEGIN  \r" +
+    "\n" +
+    "\t   DBCC SHRINKFILE (@name, 1) WITH NO_INFOMSGS\r" +
+    "\n" +
+    "       \r" +
+    "\n" +
+    "       FETCH NEXT FROM db_cursor INTO @name  \r" +
+    "\n" +
+    "END  \r" +
+    "\n" +
+    "CLOSE db_cursor  \r" +
+    "\n" +
+    "DEALLOCATE db_cursor\r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "/*\r" +
+    "\n" +
+    "-- Set recovery mode to 'Full'\r" +
+    "\n" +
+    "ALTER DATABASE Zetes_IMS_Clean SET RECOVERY FULL\r" +
+    "\n" +
+    "*/\r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "-- Get the new DB size, and display the compared results\r" +
+    "\n" +
+    "INSERT INTO #TableSizes SELECT @TargetDB + ' ( after )', SUM(size), (100 * (@InitialSize - SUM(size)) / @InitialSize) FROM sys.database_files\r" +
+    "\n" +
+    "SELECT \r" +
+    "\n" +
+    "\t [Description]\r" +
+    "\n" +
+    "\t,REPLACE(CONVERT(varchar,CONVERT(Money, [TotalSize]),1),'.00','') AS [Size ( kb )]\r" +
+    "\n" +
+    "\t,[Reduction] AS [Reduced ( % )]\r" +
+    "\n" +
+    "FROM #TableSizes\r" +
+    "\n" +
+    "DROP TABLE #TableSizes"
+  );
+
+
+  $templateCache.put('modules/sqlcmd.exe/scripts/utils/TableSizes.sql',
+    "if object_id(N'tempdb..[#TableSizes]') is not null\r" +
+    "\n" +
+    "  drop table #TableSizes;\r" +
+    "\n" +
+    "go\r" +
+    "\n" +
+    "create table #TableSizes\r" +
+    "\n" +
+    "(\r" +
+    "\n" +
+    "    [Table Name] nvarchar(128)   \r" +
+    "\n" +
+    "  , [Number of Rows] char(11)    \r" +
+    "\n" +
+    "  , [Reserved Space] varchar(18) \r" +
+    "\n" +
+    "  , [Data Space] varchar(18)    \r" +
+    "\n" +
+    "  , [Index Size] varchar(18)    \r" +
+    "\n" +
+    "  , [Unused Space] varchar(18)  \r" +
+    "\n" +
+    ");\r" +
+    "\n" +
+    "go\r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "declare @schemaname varchar(256) ;\r" +
+    "\n" +
+    "set @schemaname = 'dbo' ;\r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "declare curSchemaTable cursor\r" +
+    "\n" +
+    "  for select sys.schemas.name + '.' + sys.objects.name\r" +
+    "\n" +
+    "      from    sys.objects\r" +
+    "\n" +
+    "    \t\t, sys.schemas\r" +
+    "\n" +
+    "      where   object_id > 100\r" +
+    "\n" +
+    "    \t\t  and sys.schemas.name = @schemaname\r" +
+    "\n" +
+    "    \t\t  and type_desc = 'USER_TABLE'\r" +
+    "\n" +
+    "    \t\t  and sys.objects.schema_id = sys.schemas.schema_id ;\r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "open curSchemaTable ;\r" +
+    "\n" +
+    "declare @name varchar(256) ;  \r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "fetch curSchemaTable into @name;\r" +
+    "\n" +
+    "while ( @@FETCH_STATUS = 0 )\r" +
+    "\n" +
+    "  begin    \r" +
+    "\n" +
+    "    insert into #TableSizes\r" +
+    "\n" +
+    "    \t\texec sp_spaceused @objname = @name;       \r" +
+    "\n" +
+    "    fetch curSchemaTable into @name;   \r" +
+    "\n" +
+    "  end\r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "close curSchemaTable;     \r" +
+    "\n" +
+    "deallocate curSchemaTable;\r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "select [Table Name]\r" +
+    "\n" +
+    "      , [Number of Rows]\r" +
+    "\n" +
+    "      , [Reserved Space]\r" +
+    "\n" +
+    "      , [Data Space]\r" +
+    "\n" +
+    "      , [Index Size]\r" +
+    "\n" +
+    "      , [Unused Space]\r" +
+    "\n" +
+    "from    [#TableSizes]\r" +
+    "\n" +
+    "order by [Table Name];\r" +
+    "\n" +
+    "\r" +
+    "\n" +
+    "drop table #TableSizes;"
+  );
+
 }]);
