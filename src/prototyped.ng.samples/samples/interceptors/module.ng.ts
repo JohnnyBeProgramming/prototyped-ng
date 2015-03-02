@@ -1,4 +1,4 @@
-'use strict';
+/// <reference path="../../imports.d.ts" />
 
 angular.module('myApp.samples.interceptors', [])
     .config(['$stateProvider', function ($stateProvider) {
@@ -155,7 +155,7 @@ angular.module('myApp.samples.interceptors', [])
     };
 
     // Apply updates (including async)
-    var updates = {};
+    var updates = <any>{};
     try {
         // Check for required libraries
         if (typeof require !== 'undefined') {

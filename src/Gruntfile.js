@@ -51,6 +51,8 @@ module.exports = function (grunt) {
                     val: [
                         'build-styles',
                         'build-scripts',
+                        'build-prototyped-ng',
+                        'build-prototyped-ng-samples',
                         'copy',
                         'test-units'
                     ]
@@ -79,6 +81,14 @@ module.exports = function (grunt) {
                         'html2js:prototyped_ng',
                         'ngtemplates:prototyped_ng',
                         'concat:prototyped_ng',
+                    ]
+                },
+                {
+                    key: 'build-prototyped-ng-samples',
+                    val: [
+                        'html2js:prototyped_ng_samples',
+                        //'ngtemplates:prototyped_ng_samples',
+                        'concat:prototyped_ng_samples',
                     ]
                 },
             ],
@@ -236,7 +246,17 @@ module.exports = function (grunt) {
                     ],
                     dest: '<%= cfg.web %>/assets/lib/prototyped.ng.js'
                 }]
-            }
+            },
+            prototyped_ng_samples: {
+                files: [{
+                    src: [
+                        '<%= cfg.base %>/prototyped.ng.samples/bin/prototyped.ng.samples.base.js',
+                        //'<%= cfg.base %>/prototyped.ng.samples/bin/prototyped.ng.samples.resx.js',
+                        '<%= cfg.base %>/prototyped.ng.samples/bin/prototyped.ng.samples.sqlx.js',
+                    ],
+                    dest: '<%= cfg.web %>/assets/lib/prototyped.samples.ng.js'
+                }]
+            },
         },
         useminPrepare: {
             html: '<%= cfg.dest %>/index.html',
@@ -423,6 +443,17 @@ module.exports = function (grunt) {
                     '<%= cfg.base %>/prototyped.ng/**/*.tpl.html'
                 ],
                 dest: '<%= cfg.base %>/prototyped.ng/bin/prototyped.ng.resx.js'
+            },
+            prototyped_ng_samples: {
+                options: {
+                    base: '<%= cfg.base %>/prototyped.ng.samples',
+                    module: 'prototyped.ng.samples.views',
+                },
+                src: [
+                    '<%= cfg.base %>/prototyped.ng.samples/**/*.jade',
+                    '<%= cfg.base %>/prototyped.ng.samples/**/*.tpl.html'
+                ],
+                dest: '<%= cfg.base %>/prototyped.ng.samples/bin/prototyped.ng.samples.resx.js'
             }
         },
         copy: {

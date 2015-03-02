@@ -1,4 +1,6 @@
-'use strict';
+/// <reference path="../../imports.d.ts" />
+
+declare var SCSU: new() => any;
 
 angular.module('myApp.samples.compression', [])
     .config(['$stateProvider', function ($stateProvider) {
@@ -87,7 +89,7 @@ angular.module('myApp.samples.compression', [])
         };
 
         // Define the model
-        var context = $scope.compression = {
+        var context = $scope.compression = <any>{
             busy: true,
             target: 'lzw',
             compressText: function (text) {
@@ -178,7 +180,7 @@ angular.module('myApp.samples.compression', [])
         });
 
         // Apply updates (including async)
-        var updates = {};
+        var updates = <any>{};
         try {
             // Get some sample text
             context.getSampleText('assets/lib/test.js');

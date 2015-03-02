@@ -1,6 +1,13 @@
-/// <reference path="imports.d.ts" />
+/// <reference path="../imports.d.ts" />
+/// <reference path="compression/module.ng.ts" />
+/// <reference path="decorators/module.ng.ts" />
+/// <reference path="errorHandlers/module.ng.ts" />
+/// <reference path="interceptors/module.ng.ts" />
+/// <reference path="notifications/module.ng.ts" />
+/// <reference path="sampleData/module.ng.ts" />
+/// <reference path="styles3d/module.ng.ts" />
 
-angular.module('myApp.samples', [
+angular.module('prototyped.ng.samples', [
     'myApp.samples.errorHandlers',
     'myApp.samples.sampleData',
     'myApp.samples.decorators',
@@ -10,7 +17,7 @@ angular.module('myApp.samples', [
     'myApp.samples.styles3d',
 ])
 
-    .config(['$stateProvider', ($stateProvider) => {
+    .config(['$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider
             .state('samples', {
@@ -30,7 +37,7 @@ angular.module('myApp.samples', [
 
     }])
 
-    .controller('sampleViewController', ['$rootScope', '$scope', '$state', ($rootScope, $scope, $state) => {
+    .controller('sampleViewController', ['$rootScope', '$scope', '$state', function ($rootScope, $scope, $state) {
         // Define the model
         var context = $scope.sample = {
             busy: true,
@@ -46,20 +53,24 @@ angular.module('myApp.samples', [
                     return list;
                 }
             },
-            error: null,
         };
 
-        // Apply async updates
-        var updates = {
-            busy: true,
-            hasNode: false,
-            error: null,
-        };
+        // Apply updates (including async)
+        var updates = <any>{};
         try {
             // Check for required libraries
-            //updates.hasNode = typeof require !== 'undefined';
-            updates.busy = false;
+            if (typeof require !== 'undefined') {
+                // We are now in NodeJS!
+                updates = {
+                    busy: false,
+                    hasNode: true,
+                };
 
+            } else {
+                // Not available
+                updates.hasNode = false;
+                updates.busy = false;
+            }
         } catch (ex) {
             updates.busy = false;
             updates.error = ex;

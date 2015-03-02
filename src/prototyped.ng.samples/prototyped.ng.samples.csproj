@@ -3,7 +3,7 @@
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <ProjectGuid>{A31A2F64-9B89-4F38-80B3-C84627A17728}</ProjectGuid>
+    <ProjectGuid>{EEFED0D7-A24E-4EAC-8421-8F6C809B8997}</ProjectGuid>
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <OutputPath>bin</OutputPath>
@@ -18,33 +18,37 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="assets\app.css" />
+    <Content Include="assets\app.js" />
+    <Content Include="index.html" />
     <Content Include="samples\compression\main.tpl.html" />
-    <Content Include="samples\compression\module.ng.js" />
+    <TypeScriptCompile Include="samples\compression\module.ng.ts" />
     <Content Include="samples\decorators\dialogs\interceptor.tpl.html" />
     <Content Include="samples\decorators\main.tpl.html" />
-    <Content Include="samples\decorators\module.ng.js" />
+    <TypeScriptCompile Include="samples\decorators\module.ng.ts" />
     <Content Include="samples\errorHandlers\main.tpl.html" />
-    <Content Include="samples\errorHandlers\module.ng.js" />
-    <Content Include="index.html" />
+    <TypeScriptCompile Include="samples\errorHandlers\module.ng.ts" />
     <Content Include="samples\interceptors\main.tpl.html" />
-    <Content Include="samples\interceptors\module.ng.js" />
+    <TypeScriptCompile Include="samples\interceptors\module.ng.ts" />
     <Content Include="samples\left.tpl.html" />
     <Content Include="samples\main.tpl.html" />
-    <TypeScriptCompile Include="imports.d.ts" />
-    <TypeScriptCompile Include="module.ng.ts" />
+    <TypeScriptCompile Include="samples\module.ng.ts" />
     <Content Include="samples\notifications\main.tpl.html" />
-    <Content Include="samples\notifications\module.ng.js" />
+    <TypeScriptCompile Include="samples\notifications\module.ng.ts" />
     <Content Include="samples\sampleData\main.tpl.html" />
-    <Content Include="samples\sampleData\module.ng.js" />
+    <TypeScriptCompile Include="samples\sampleData\module.ng.ts" />
     <Content Include="samples\styles3d\main.tpl.html" />
-    <Content Include="samples\styles3d\module.ng.js" />
+    <TypeScriptCompile Include="samples\styles3d\module.ng.ts" />
     <Content Include="web.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <TypeScriptCompile Include="imports.d.ts" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <RootNamespace>prototyped.samples</RootNamespace>
+    <RootNamespace>prototyped.ng.samples</RootNamespace>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\WebApplications\Microsoft.WebApplication.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\WebApplications\Microsoft.WebApplication.targets')" />
@@ -54,9 +58,9 @@
         <WebProjectProperties>
           <UseIIS>True</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
-          <DevelopmentServerPort>50196</DevelopmentServerPort>
+          <DevelopmentServerPort>49943</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
-          <IISUrl>http://localhost:50196/</IISUrl>
+          <IISUrl>http://localhost:49943/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
           <UseCustomServer>False</UseCustomServer>
           <CustomServerUrl>
@@ -69,10 +73,8 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <TypeScriptRemoveComments>false</TypeScriptRemoveComments>
     <TypeScriptSourceMap>true</TypeScriptSourceMap>
+    <TypeScriptOutFile>bin\prototyped.ng.samples.base.js</TypeScriptOutFile>
     <TypeScriptModuleKind>commonjs</TypeScriptModuleKind>
-    <TypeScriptOutFile>bin\prototyped.samples.dll.js</TypeScriptOutFile>
-    <TypeScriptOutDir>bin\js</TypeScriptOutDir>
-    <TypeScriptGeneratesDeclarations>False</TypeScriptGeneratesDeclarations>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <TypeScriptRemoveComments>true</TypeScriptRemoveComments>

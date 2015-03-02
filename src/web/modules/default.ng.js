@@ -11,7 +11,7 @@ angular.module('myApp.default', [
               url: '/',
               views: {
                   'main@': {
-                      templateUrl: 'views/default.tpl.html',
+                      templateUrl: 'views/home.tpl.html',
                       controller: 'HomeViewCtrl'
                   },
               }

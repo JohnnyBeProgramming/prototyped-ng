@@ -1,4 +1,4 @@
-'use strict';
+/// <reference path="../../imports.d.ts" />
 
 angular.module('myApp.samples.decorators', [])
     .config(['$stateProvider', function ($stateProvider) {
@@ -127,7 +127,7 @@ angular.module('myApp.samples.decorators', [])
             var proxy;
             proxy = $q.defer; $q.defer = function () {
                 var result, value;
-                var info = {
+                var info = <any>{
                     startAt: Date.now(),
                 };
                 try {
@@ -145,7 +145,7 @@ angular.module('myApp.samples.decorators', [])
                     if (cfg.debug) console.info('[ ' + callTime + ' ms ] Execution time.');
 
                     // Build a stack trace
-                    var stack = new Error('dummy').stack
+                    var stack = (<any>new Error('dummy')).stack
                                     .replace(/^[^\(]+?[\n$]/gm, '')
                                     .replace(/^\s+at\s+/gm, '')
                                     .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
@@ -161,7 +161,7 @@ angular.module('myApp.samples.decorators', [])
                         // Extrack the function name and url location from the string
                         var match = /(.+)(\s+)(\()(.+)(\))(\s*)/i.exec(line);
                         if (match) {
-                            var item = {
+                            var item = <any>{
                                 source: match[1].trim(),
                                 rawUrl: match[4].trim(),
                             };
@@ -421,7 +421,7 @@ angular.module('myApp.samples.decorators', [])
 
     .controller('decoratorsController', ['$rootScope', '$scope', '$state', '$stateParams', '$modal', '$q', '$timeout', '$window', 'decoratorConfig', function ($rootScope, $scope, $state, $stateParams, $modal, $q, $timeout, $window, cfg) {
         // Define the model
-        var context = $scope.decorators = {
+        var context = $scope.decorators = <any>{
             busy: true,
             apply: function () {
                 // Set the persisted value                
@@ -519,7 +519,7 @@ angular.module('myApp.samples.decorators', [])
         };
 
         // Apply updates (including async)
-        var updates = {};
+        var updates = <any>{};
         try {
             // Check for required libraries
             if (typeof require !== 'undefined') {

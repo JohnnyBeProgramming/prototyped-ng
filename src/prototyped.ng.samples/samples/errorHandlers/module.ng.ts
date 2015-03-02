@@ -1,4 +1,5 @@
-'use strict';
+/// <reference path="../../imports.d.ts" />
+declare var Raven: any;
 
 angular.module('myApp.samples.errorHandlers', [])
 
@@ -91,8 +92,8 @@ angular.module('myApp.samples.errorHandlers', [])
                 };
             }
 
-            function attach(msgType, msgDesc, msgExt) {
-                var itm = {
+            function attach(msgType, msgDesc, msgExt?) {
+                var itm = <any>{
                     type: msgType,
                     desc: msgDesc,
                     time: Date.now()
@@ -165,7 +166,7 @@ angular.module('myApp.samples.errorHandlers', [])
                         success: function (result) {
                             // Response recieved...
                             console.info(' - AJAX got response...');
-                            ajaxOnSuccessSample.dont.exist++;
+                            window['ajaxOnSuccessSample'].dont.exist++;
                         },
                         error: function (xhr) { }
                     });
@@ -177,7 +178,7 @@ angular.module('myApp.samples.errorHandlers', [])
                         success: function (result) { },
                         error: function (xhr) {
                             console.warn(" - Ajax Error [" + xhr.status + "] " + xhr.statusText);
-                            ajaxOnErrorSample.dont.exist++;
+                            window['ajaxOnErrorSample'].dont.exist++;
                         }
                     });
                 },
@@ -257,7 +258,7 @@ angular.module('myApp.samples.errorHandlers', [])
             try {
                 $log.info(' - About to break something...');
                 Raven.context(ctx, function () {
-                    managedSampleError.dont.exist++;
+                    window['managedSampleError'].dont.exist++;
                 });
             } catch (ex) {
                 // throw ex; // this will also be caught by the global Angular exception handler
@@ -276,7 +277,7 @@ angular.module('myApp.samples.errorHandlers', [])
             console.info(' - Setting timeout...');
             setTimeout(function () {
                 console.info(' - Entering timeout...');
-                timeoutSampleError.dont.exist++;
+                window['timeoutSampleError'].dont.exist++;
                 console.info(' - Exit timeout...');
             }, 3 * 1000);
         }

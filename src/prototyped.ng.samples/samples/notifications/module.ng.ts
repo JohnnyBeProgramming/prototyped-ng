@@ -1,4 +1,6 @@
-'use strict';
+/// <reference path="../../imports.d.ts" />
+
+declare var Notification: new (title, opts) => any;
 
 angular.module('myApp.samples.notifications', [])
     .config(['$stateProvider', function ($stateProvider) {
@@ -70,23 +72,19 @@ angular.module('myApp.samples.notifications', [])
             }
         },
         hookNotifications: function (callback, notFound) {
-            try {
-                if ('Notification' in window) {
-                    // API supported, request permission and notify
-                    Notification.requestPermission(function (status) {
-                        if (callback) {
-                            callback(status);
-                        }                        
-                    });
-                } else {
-                    // API not supported
-                    console.warn(' - Web notifications not supported by your browser...');
-                    if (notFound) {
-                        notFound();
+            if ('Notification' in window) {
+                // API supported, request permission and notify
+                window['Notification'].requestPermission(function (status) {
+                    if (callback) {
+                        callback(status);
                     }
+                });
+            } else {
+                // API not supported
+                console.warn(' - Web notifications not supported by your browser...');
+                if (notFound) {
+                    notFound();
                 }
-            } catch (ex) {
-                context.error = ex;
             }
         },
     })
@@ -158,7 +156,7 @@ angular.module('myApp.samples.notifications', [])
         };
 
         // Apply updates (including async)
-        var updates = {};
+        var updates = <any>{};
         try {
             // Check for required libraries
             if (typeof require !== 'undefined') {

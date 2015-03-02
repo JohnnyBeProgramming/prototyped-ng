@@ -1,4 +1,6 @@
-'use strict';
+/// <reference path="../../imports.d.ts" />
+declare var ge1doot: any;
+declare var $script: any;
 
 angular.module('myApp.samples.styles3d', [])
     .config(['$stateProvider', function ($stateProvider) {
@@ -19,7 +21,7 @@ angular.module('myApp.samples.styles3d', [])
     }])
 
     .service('style3dUniverse', [function () {
-        var universe = {
+        var universe = <any>{
             screen: null,
             pointer: null,
             camera: null,
@@ -131,7 +133,7 @@ angular.module('myApp.samples.styles3d', [])
             $script(['assets/lib/screen.js'], function () {
                 runStyle3D();
             });
-        } else throw new Error('Failed to initialise. $script missing....');        
+        } else throw new Error('Failed to initialise. $script missing....');
     }])
 
     .run(['$state', function ($state) {

@@ -1,4 +1,4 @@
-'use strict';
+/// <reference path="../../imports.d.ts" />
 
 angular.module('myApp.samples.sampleData', [])
 
@@ -90,7 +90,7 @@ angular.module('myApp.samples.sampleData', [])
         };
 
         // Apply updates (including async)
-        var updates = {};
+        var updates = <any>{};
         try {
             // Check for required libraries
             if (typeof require !== 'undefined') {
