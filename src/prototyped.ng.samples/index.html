@@ -1,120 +1,63 @@
 ﻿<!DOCTYPE html>
-<html>
+
+<html lang="en">
 <head>
+    <base href="/">
     <meta charset="utf-8" />
-    <title>TypeScript HTML App</title>
+    <title>Module Sandbox</title>
+
+    <!-- Load AngularJS and all the required libraries (exclude IE < 10 from the party) -->
+    <!--[if gt IE 9]><!-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/less.js/2.3.1/less.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-route.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-animate.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-utils/0.1.1/angular-ui-utils.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.13/angular-ui-router.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.0/ui-bootstrap-tpls.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.js"></script>
+    <script src="https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.js"></script>
+    <!--<![endif]-->
+
+    <!-- Load this module's libraries -->
+    <script src="assets/lib/prototyped.ng.samples.base.js"></script>
+    <!--
+    <script src="assets/lib/prototyped.ng.samples.resx.js"></script>
+    -->
+
+    <!-- Load some styles and logic just for testing this app... -->
     <link href="assets/app.css" rel="stylesheet" type="text/css" />
     <script src="assets/app.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            overflow: hidden;
-        }
-
-        p, h1 {
-            display: inline-block;
-            margin-left: 100px;
-            color: #333;
-            font-family: sans-serif;
-        }
-
-        #content {
-            margin-left: 100px;
-        }
-
-        #clouds {
-            padding: 100px 0;
-            background: #c9dbe9;
-            background: -webkit-linear-gradient(top, #c9dbe9 0%, #fff 100%);
-        }
-
-        .cloud {
-            width: 200px;
-            height: 60px;
-            background: #fff;
-            -webkit-border-radius: 200px;
-            position: relative;
-        }
-
-            .cloud:before, .cloud:after {
-                content: '';
-                position: absolute;
-                background: #fff;
-                width: 100px;
-                height: 80px;
-                position: absolute;
-                top: -15px;
-                left: 10px;
-                -webkit-border-radius: 100px;
-                -webkit-transform: rotate(30deg);
-            }
-
-            .cloud:after {
-                width: 120px;
-                height: 120px;
-                top: -55px;
-                left: auto;
-                right: 15px;
-            }
-
-        .x1 {
-            -webkit-animation: moveclouds 30s linear infinite;
-            opacity: 0.8;
-        }
-
-        @-webkit-keyframes moveclouds {
-            0% {
-                margin-left: 800px;
-            }
-
-            100% {
-                margin-left: -800px;
-            }
-        }
-    </style>
 </head>
-<body>
-
-    <div id="clouds">
-        <h1>TypeScript HTML App</h1>
-        <br /><br />
-        <p>
-            <div id="content"></div>
-        </p>
-        <div class="cloud x1"></div>
+<body id="testApp">
+    <div id="menu" >
+        <a ui:sref="default" class="pull-right btn btn-default">Home</a>
+        <div ui:view="menu">
+            <ul class="nav navbar-nav">
+                <li ui:sref-active="open">
+                    <a ui:sref="default">Default</a>
+                </li>
+                <li ui:sref-active="open">
+                    <a ui:sref="samples.info">Samples</a>
+                </li>
+            </ul>
+        </div>
     </div>
-
-    <script>
-        var found = typeof StringPrototyped != 'undefined';
-        !function (window, document) {
-            var encoders = {}, lzwCompressor = { encode: function (e) { for (var t, n = {}, o = (e + "").split(""), r = [], c = o[0], i = 256, d = 1; d < o.length; d++) t = o[d], null != n[c + t] ? c += t : (r.push(c.length > 1 ? n[c] : c.charCodeAt(0)), n[c + t] = i, i++, c = t); r.push(c.length > 1 ? n[c] : c.charCodeAt(0)); for (var d = 0; d < r.length; d++) r[d] = String.fromCharCode(r[d]); return r.join("") }, decode: function (e) { for (var t, n = {}, o = (e + "").split(""), r = o[0], c = r, i = [r], d = 256, s = 1; s < o.length; s++) { var u = o[s].charCodeAt(0); t = 256 > u ? o[s] : n[u] ? n[u] : c + r, i.push(t), r = t.charAt(0), n[d] = c + r, d++, c = t } return i.join("") } }; if (encoders.lzw = lzwCompressor, "undefined" != typeof SCSU) { var scsuWorker = new SCSU, scsuCompressor = { encode: function (e) { return scsuWorker.compress(e) }, decode: function (e) { return scsuWorker.decompress(e) } }; encoders.scsu = scsuCompressor } var StringPrototyped = function (input) { var ctx = this; return ctx.val = input, ctx.encoders = encoders, ctx.then = function (e) { return "function" == typeof e && e(ctx.val), ctx }, ctx.eval = function (callback) { return ctx.val = eval(input), "function" == typeof callback && callback(ctx.val), ctx }, ctx.compress = function (e, t) { if (t || (t = "lzw"), ctx.encoders.hasOwnProperty(t)) { var n = ctx.encoders[t], o = ctx.val = n.encode(input); return "function" == typeof e && e(o), new StringPrototyped(o) } throw new Error("Compression Failed. Encoder: " + t) }, ctx.decompress = function (e, t) { if (t || (t = "lzw"), ctx.encoders.hasOwnProperty(t)) { var n = ctx.encoders[t], o = ctx.val = n.decode(input); return "function" == typeof e && e(o), new StringPrototyped(o) } throw new Error("Decompression Failed. Encoder: " + t) }, ctx.insert = function (e, t) { var n = document.createElement(e); n.onload = function () { t && t(ctx.val) }, n.innerText = ctx.val, document.body.appendChild(n) }, ctx.inject = function (e, t) { var n = ctx.val; if (/\.js/.test(n)) { var o = document.createElement("script"); document.body.appendChild(o), o.onload = function (t) { e && e(n, t) }, "undefined" != typeof t && (o.async = t), o.src = n } else if (/\.css/.test(n)) { var r = document.createElement("link"); r.onload = function (t) { e && e(n, t) }, r.type = "text/css", r.rel = "stylesheet", r.href = n, document.head.appendChild(r) } return ctx }, ctx.isReady = !0, ctx }; return window.StringPrototyped = StringPrototyped, "function" == typeof define && define.amd && define(StringPrototyped), StringPrototyped
-        }(window, document), String.prototype[""] = function (e) { var t = this, n = new StringPrototyped(t); return "function" == typeof e && e(t), n };
-        console.log(found ? "Already Defined" : "Attached Prototype");
-    </script>
-    <script type="text/javascript">
-        try {
-            "body:before {\n  z-index: 9ę9;č conteġė'Protĩyped!'ĜĎpositiĠėabsoluĢĲ overflowėhidĔnŃheightĻŁoŃwŏthŚĪŃrŖŘė-52pxŃĪpė28ŬŃopacķă 0.85ŃğŊrė#0ƇƈŃŷŐĒgėųx 64ŴĝćĤ Āld 15Ŭ Sans-SŇifŮĕt-alŖnėcģĢrƫxƭshadŋƅ6dc2ffƝƠ1Ơ6ƕĎ-webkķ-trƣsćrmėĨtaĢ(45Ĕg)Ń-moĐǕǗǙǛ ǝǟeǡǣeǥǧmƥǬƤǮǜĩǲǴǤǦĝ-oǔǖǼĈǯǱǠǢȂǧǏǑǓĀx-ƻƽƿżƠ0Ơ3Ơrgba(0,żȦȥż.3ȃǍǩĐȔȖƼƾŌȚƑȜƑȞƑȠȢȤȨȿȪȬŃȱȗȴėȸȶ ȺǰȡȣȩɏȨȫȭƙŸkgĨuēƅǅɜƪĝȢcɖɘɚ ǨǪ-ưnear-ɗƽiƵ(ůȦ#ɝǅż%ɵf3ɼɼ 50ɺ #ĮʆƜ51ʃɶɷƝƇ%ɓɠɢoədŨȑǒƭɯdɱġ(ɩɫrȦlĆt ɴ ʤfʦĀtĪmȦƂĈȖůȤʋɷf)ʱĿʳsʵʁʷɽ˂ʺĞʼɭʾŶ(ʉʋʇĮ˄ʲˇʵ1ʏɻɷ)ʑɕɗʔɤǎǐʙɨĒʡɮǖʜɲʨʌɝɹɻ˂ɿˀɵˍʈʊ˕˩˓ʂ˘ɡ˚ʕŨȆʠɬˣɰ˦Ŷ˳ɜ˪ʄɾ˂ʀʂ˯Ĕ̌ʀ˲̆ʍ˵ʐɃ˙ɣʖɥǹˠɪ˾ʛʝtɳ̂̐˩̊̆ˬ3̉ˌ̌Į̎ʷ̑ʏ˷ʓ˺ʩˡ̜ˤ̞̠ƙĩʯ̃ɸ̤ɶ̨̦̋ʇ̬̼ǆ̒ɓfilƶėpĨgŏ:DXImageTȈǘȊ.MicĨľʫ.̝ɲʾɬtCˆʾr='˨ɜ'Ȧģdͫƃͭͯͱǅͳ G̶ƵTĬe=0ȃ}\nĀĂĄĆĈeΌǙe,ΉāăąΑ:aʫŇċĝğġƵė\"\"ɃĈĔɭůėɋľưƜ#80ΰΰΥrΧɨʥΪƠάŏʧ͛ŷĉġδζťŗřɊκĿμǻsοƵƊĵķĹƲ ļάŁeΥʮoǯ-ȺĜΈΊΖ΍ĉΐΎΝĎʪφ0ϟΔ΋ΗΎΙΛrϧǰŦϪϬ/*# ľurƴMappƍURL=Ģʾ.css.͖p */"['']().decompress().insert('style');
-            console.log("Styles Loaded");
-        } catch (ex) {
-            alert(ex.message)
-        }
-    </script>
-    <script type="text/javascript">
-        try {
-            "(function (window, ĎcumentđbaseUrl) {\n Ħ var libs = [ĥħĶěĝğl + 'Ĝĝts/ĭb/pČg.js',ĵĦ];ŐĨĪ csİĲĴĶķĜĞĠļľŀeł/ŘŃtest.ŨŎŔŒŔtryģ\nŔĶāăąć Čit(ĢĤŝƆ // Load alĻthe releĩĘ Ŭyƚƞƕťİ(Ĝyă)ŹƇŨ.forEachĀĂĄĆĈ(ƟƚSƣtƄƫƇħƼeƾeť['']ƃ.ČjeĄƶżƹĉsrcǁǃǜħcćsoƚ.debug(' - StƠƖsƿƐdǥd:ľŢǘǚœǝƆ})ǾǿȁœǂŝƉƋƍƏscripłƐsƨcƐcǟrdŉ toƞoĖ featuƘĒťǒŽns.ȰȇĶifĉǰpeoȵ$ȍȏȑı=Ĳ'ĂǥfČedǫ&&ĬĮȯƚngƔ > 0ǛǿĶȉGȟačȣťƴȝƕƞȎȐtĬȋeīŌȲƇ(ĸŠĻĽĿřƤ/app.lɪrŋō)ǊǌǎǐȬǔƸžƻǙđƛǀŷəǃǟȮǢeǤǦǨǪǬȊƎɈǹǫĽǼȂɮǝɽƎƃȃʑ ȁʤʫ ƙĝſȵ(ŅɏėɒhɔɖɘʪȉSɦȿʦǥīƑƘƎŶɅɇdʭĶ˂ʨʭ}ʯlʱƅʪƈƊNoƔȜȞɩƎđǡ bo˚Ŭrɹˌħˣ˥Ŵɹˏə}ȇ˱ȇŻʉĈˎʼǜȉMakǲȨƖjQuɫŶiİˉnɈʭȴȶyȸȺ ̂̄ŵɀɂɄeɆ̊ɉ˹əȉƌƎ̒̃̅˩Ħʵ.puǳǪhttps:ƉcdnŌŮɽudflĪʖǟmɸjaxńɎ/jq̔y/2.1.3͈͊̅.mČʀ'ʣ˰Ÿ̞Ɗ̠ƏƑĻ̑ƔƖǥȸčėciūȓȕhrćo̪ly.ʭĩī̇Aĩi̽bơĲȷȹȻȽɧ !Ɂľ̘̚Ɉ'ʩǜ̍(ͻͽͿƚ̝ǿʓǡǣǥǧǩǫǭ͠Ȝdƨa͗ȖΆȑȯȰŎɍį͛˖ȼˀƂʵđ˵ȭĉΘʽƊBˤł˭pɣǲyŬem wƕĈ͢ɥȾȒ̾˞Ƿ̥ŝ˫ο˧p˯˖ȅː˒˔ϓȉTɤĔrƘƝbͱwĝͺİn˚ƞuɺưŪˋ˖ɣϨ ̊w EϤưǪβώȣa;Ɉȝȟ˂!͚ΐǃ˱Ќ͝Ƈηǖϕ˦ˮκŝΚʕʗΞʚǭνˬϗňɑȰ.Њ˲ЏƆȉInƁiƑ̇ƖɞƏГπȇƀƂΰĦЍǞȦɢ(exЖʾȡťhȜwėɨwͱТȱʒǠЙɫͱrǪFЃƚƏ˝˂ĒΥΧύɧΫФʍрΐ˱ȁĊČĎĐĒoĔĖĘđ'̭̯̲/wѶ̨ͱȞ΃dǏnƯ/Њ"['']().decompress().eval();
-            console.log("Modules Loaded");
-        } catch (ex) {
-            alert(ex.message)
-        }
-    </script>
-
-    <![CDATA[ "!CDATA!"[''](alert) ]]>
-    <script>
-        //"SELECT \\r\\n\\tDB_NAME(database_id) AS DēĕėeName,ć\\tħĩĞĠLogicalČĨĪĬPhysĵķĹĩ, (ŀze*8ĝSiŉKBćFROMĆĈsĿ.mėter_filesćWHEREŘĉċčďđģĖĘĚĜ LIKŭĊČĎĐ)"['']().decompress(alert)
-    </script>
+    <div id="contents">
+        <div id="left" ui:view="left"
+             ng:show="state.current.views['left'] || state.current.views['left@']">
+            <em>Left View</em>
+        </div>
+        <div id="main" ui:view="main">
+            <em>Main View</em>
+        </div>
+    </div>
+    <div id="footer" ui:view="footer">
+        <em>Footer View</em>
+    </div>
 </body>
 </html>

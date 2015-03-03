@@ -35,16 +35,18 @@
     <script src="assets/app.js"></script>
 </head>
 <body id="testApp">
-    <a ui:sref="default">X</a>
-    <div id="menu" ui:view="menu" >
-        <ul class="nav navbar-nav">
-            <li ui:sref-active="open">
-                <a ui:sref="default">Default</a>
-            </li>
-            <li ui:sref-active="open">
-                <a ui:sref="about.info">About</a>
-            </li>
-        </ul>
+    <div id="menu" >
+        <a ui:sref="default" class="pull-right btn btn-default">Home</a>
+        <div ui:view="menu">
+            <ul class="nav navbar-nav">
+                <li ui:sref-active="open">
+                    <a ui:sref="default">Default</a>
+                </li>
+                <li ui:sref-active="open">
+                    <a ui:sref="about.info">About</a>
+                </li>
+            </ul>
+        </div>
     </div>
     <div id="contents">
         <div id="left" ui:view="left"

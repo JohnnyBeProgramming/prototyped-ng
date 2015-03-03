@@ -20,6 +20,8 @@
   <ItemGroup>
     <Content Include="assets\app.css" />
     <Content Include="assets\app.js" />
+    <Content Include="assets\lib\prototyped.ng.samples.base.js" />
+    <Content Include="assets\lib\prototyped.ng.samples.resx.js" />
     <Content Include="index.html" />
     <Content Include="samples\compression\main.tpl.html" />
     <TypeScriptCompile Include="samples\compression\module.ng.ts" />
@@ -43,6 +45,10 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="imports.d.ts" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Content Include="assets\lib\prototyped.ng.samples.base.js.map" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
@@ -81,4 +87,10 @@
     <TypeScriptSourceMap>false</TypeScriptSourceMap>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
+  <PropertyGroup>
+    <PreBuildEvent>call grunt build-prototyped-ng-samples --no-color --gruntfile "../../Gruntfile.js"</PreBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>copy *.js ..\assets\lib &amp; copy *.map ..\assets\lib</PostBuildEvent>
+  </PropertyGroup>
 </Project>
