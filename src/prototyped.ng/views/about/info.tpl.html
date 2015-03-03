@@ -121,10 +121,6 @@
                             <pre>WebDB: {{ info.about.webdb }}</pre>
                             <pre>HDD: {{ info.about.hdd }}</pre>
                         </div>
-                        <div ng-switch-when="2">
-                            <p class="glow-orange" to-html="[ info.about.hdd, info.about.webdb ]"></p>
-                            <p class="glow-blue">toXml:'pre' - {{ [ info.about.hdd, info.about.webdb ] | toXml:'pre'  }}</p>
-                        </div>
                     </div>
                 </div>
                 <div class="col-md-3 panel-right">

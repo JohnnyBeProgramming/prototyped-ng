@@ -20,7 +20,17 @@
   <ItemGroup>
     <Content Include="assets\app.css" />
     <Content Include="assets\app.js" />
+    <Content Include="assets\lib\prototyped.ng.base.js" />
+    <Content Include="assets\lib\prototyped.ng.resx.js" />
+    <Content Include="assets\lib\prototyped.ng.sqlx.js" />
+    <Content Include="css\app.css" />
+    <Content Include="css\app.min.css">
+      <DependentUpon>app.css</DependentUpon>
+    </Content>
     <Content Include="index.html" />
+    <Content Include="css\app.css.map">
+      <DependentUpon>app.css</DependentUpon>
+    </Content>
     <TypeScriptCompile Include="modules\prototyped\cmd\module.ng.ts" />
     <TypeScriptCompile Include="modules\appcmd.exe\certs.ng.ts" />
     <Content Include="modules\appcmd.exe\certs.tpl.html" />
@@ -54,6 +64,7 @@
     <TypeScriptCompile Include="modules\about.ng.ts" />
     <TypeScriptCompile Include="modules\default.ng.ts" />
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>
@@ -91,10 +102,9 @@
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
   <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
+    <PreBuildEvent>call grunt build-prototyped-ng --no-color --gruntfile "../../Gruntfile.js"</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>call grunt build-prototyped-ng --no-color --gruntfile "../../Gruntfile.js"</PostBuildEvent>
+    <PostBuildEvent>copy *.js ..\assets\lib &amp; copy *.map ..\assets\lib</PostBuildEvent>
   </PropertyGroup>
 </Project>
