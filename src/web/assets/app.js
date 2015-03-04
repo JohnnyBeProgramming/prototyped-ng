@@ -19,7 +19,10 @@ angular.module('myApp', [
 
   // Prototyped modules
   'prototyped',
+  //'prototyped.cmd',
   'prototyped.ng',
+  'prototyped.ng.views',
+  'prototyped.ng.sql',
   'prototyped.ng.samples',
   'prototyped.ng.samples.views',
 
@@ -462,6 +465,7 @@ angular.module('myApp', [
             }
         };
     }])
+
     .filter('isArray', function () {
         return function (input) {
             return angular.isArray(input);
@@ -527,6 +531,37 @@ angular.module('myApp', [
             return bytesDesc;
         }
     })
+    .directive('eatClickIf', ['$parse', '$rootScope', function ($parse, $rootScope) {
+        return {
+            priority: 100, // this ensure eatClickIf be compiled before ngClick
+            restrict: 'A',
+            compile: function ($element, attr) {
+                var fn = $parse(attr.eatClickIf);
+                return {
+                    pre: function link(scope, element) {
+                        var eventName = 'click';
+                        element.on(eventName, function (event) {
+                            var callback = function () {
+                                if (fn(scope, { $event: event })) {
+                                    // prevents ng-click to be executed
+                                    event.stopImmediatePropagation();
+                                    // prevents href 
+                                    event.preventDefault();
+                                    return false;
+                                }
+                            };
+                            if ($rootScope.$$phase) {
+                                scope.$evalAsync(callback);
+                            } else {
+                                scope.$apply(callback);
+                            }
+                        });
+                    },
+                    post: function () { }
+                }
+            }
+        }
+    }])
 
     .directive('toHtml', ['$sce', '$filter', function ($sce, $filter) {
         function getHtml(obj) {
@@ -601,38 +636,6 @@ angular.module('myApp', [
         }
         return function (input, rootName) {
             return toXmlString(rootName || 'xml', input, true);
-        }
-    }])
-
-    .directive('eatClickIf', ['$parse', '$rootScope', function ($parse, $rootScope) {
-        return {
-            priority: 100, // this ensure eatClickIf be compiled before ngClick
-            restrict: 'A',
-            compile: function ($element, attr) {
-                var fn = $parse(attr.eatClickIf);
-                return {
-                    pre: function link(scope, element) {
-                        var eventName = 'click';
-                        element.on(eventName, function (event) {
-                            var callback = function () {
-                                if (fn(scope, { $event: event })) {
-                                    // prevents ng-click to be executed
-                                    event.stopImmediatePropagation();
-                                    // prevents href 
-                                    event.preventDefault();
-                                    return false;
-                                }
-                            };
-                            if ($rootScope.$$phase) {
-                                scope.$evalAsync(callback);
-                            } else {
-                                scope.$apply(callback);
-                            }
-                        });
-                    },
-                    post: function () { }
-                }
-            }
         }
     }])
 

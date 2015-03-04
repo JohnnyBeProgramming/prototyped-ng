@@ -20,8 +20,11 @@
   <ItemGroup>
     <Content Include="assets\app.css" />
     <Content Include="assets\app.js" />
+    <Content Include="assets\lib\prototyped.ng.base.js" />
+    <Content Include="assets\lib\prototyped.ng.resx.js" />
     <Content Include="assets\lib\prototyped.ng.samples.base.js" />
     <Content Include="assets\lib\prototyped.ng.samples.resx.js" />
+    <Content Include="assets\lib\screen.js" />
     <Content Include="index.html" />
     <Content Include="samples\compression\main.tpl.html" />
     <TypeScriptCompile Include="samples\compression\module.ng.ts" />
@@ -46,9 +49,11 @@
   <ItemGroup>
     <TypeScriptCompile Include="imports.d.ts" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
-    <Content Include="assets\lib\prototyped.ng.samples.base.js.map" />
+    <ProjectReference Include="..\prototyped.ng\prototyped.ng.csproj">
+      <Project>{42656789-35a8-4bcf-b2b0-8454a32a1db5}</Project>
+      <Name>prototyped.ng</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
@@ -79,7 +84,7 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <TypeScriptRemoveComments>false</TypeScriptRemoveComments>
     <TypeScriptSourceMap>true</TypeScriptSourceMap>
-    <TypeScriptOutFile>bin\prototyped.ng.samples.base.js</TypeScriptOutFile>
+    <TypeScriptOutFile>assets\lib\prototyped.ng.samples.base.js</TypeScriptOutFile>
     <TypeScriptModuleKind>commonjs</TypeScriptModuleKind>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -88,9 +93,11 @@
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
   <PropertyGroup>
-    <PreBuildEvent>call grunt build-prototyped-ng-samples --no-color --gruntfile "../../Gruntfile.js"</PreBuildEvent>
+    <PreBuildEvent>copy ..\..\prototyped.ng\assets\lib\*.js &amp; copy ..\..\prototyped.ng\assets\lib\*.map
+</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>copy *.js ..\assets\lib &amp; copy *.map ..\assets\lib</PostBuildEvent>
+    <PostBuildEvent>call grunt build-prototyped-ng-samples --no-color --gruntfile "../../Gruntfile.js"
+</PostBuildEvent>
   </PropertyGroup>
 </Project>

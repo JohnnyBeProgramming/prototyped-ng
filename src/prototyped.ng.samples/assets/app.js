@@ -13,6 +13,7 @@ angular.module('testApp', [
   'angularMoment',
 
   // Prototyped modules
+  'prototyped.ng',
   'prototyped.ng.samples',
 
 ])
@@ -90,7 +91,7 @@ angular.module('testApp', [
     .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
         // Set up default routes
         $urlRouterProvider
-            .when('', '/samples')
+            .when('', '/')
             .when('/', '/samples')
 
     }])

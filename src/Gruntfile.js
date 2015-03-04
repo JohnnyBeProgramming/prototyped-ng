@@ -240,20 +240,20 @@ module.exports = function (grunt) {
             prototyped_ng: {
                 files: [{
                     src: [
-                        '<%= cfg.base %>/prototyped.ng/bin/prototyped.ng.base.js',
-                        '<%= cfg.base %>/prototyped.ng/bin/prototyped.ng.resx.js',
-                        '<%= cfg.base %>/prototyped.ng/bin/prototyped.ng.sqlx.js',
+                        '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.base.js',
+                        '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.resx.js',
+                        '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.sqlx.js',
                     ],
-                    dest: '<%= cfg.web %>/assets/lib/prototyped.ng.js'
+                    dest: '<%= cfg.web %>/<%= cfg.lib %>/prototyped.ng.js'
                 }]
             },
             prototyped_ng_samples: {
                 files: [{
                     src: [
-                        '<%= cfg.base %>/prototyped.ng.samples/bin/prototyped.ng.samples.base.js',
-                        '<%= cfg.base %>/prototyped.ng.samples/bin/prototyped.ng.samples.resx.js',
+                        '<%= cfg.base %>/prototyped.ng.samples/<%= cfg.lib %>/prototyped.ng.samples.base.js',
+                        '<%= cfg.base %>/prototyped.ng.samples/<%= cfg.lib %>/prototyped.ng.samples.resx.js',
                     ],
-                    dest: '<%= cfg.web %>/assets/lib/prototyped.ng.samples.js'
+                    dest: '<%= cfg.web %>/<%= cfg.lib %>/prototyped.ng.samples.js'
                 }]
             },
         },
@@ -402,7 +402,7 @@ module.exports = function (grunt) {
                     }
                 },
                 src: '<%= cfg.base %>/prototyped.ng/**/*.sql',
-                dest: '<%= cfg.base %>/prototyped.ng/bin/prototyped.ng.sqlx.js',
+                dest: '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.sqlx.js',
                 module: 'prototyped.ng.sql',
             }
         },
@@ -441,7 +441,7 @@ module.exports = function (grunt) {
                     '<%= cfg.base %>/prototyped.ng/**/*.jade',
                     '<%= cfg.base %>/prototyped.ng/**/*.tpl.html'
                 ],
-                dest: '<%= cfg.base %>/prototyped.ng/bin/prototyped.ng.resx.js'
+                dest: '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.resx.js'
             },
             prototyped_ng_samples: {
                 options: {
@@ -452,7 +452,7 @@ module.exports = function (grunt) {
                     '<%= cfg.base %>/prototyped.ng.samples/**/*.jade',
                     '<%= cfg.base %>/prototyped.ng.samples/**/*.tpl.html'
                 ],
-                dest: '<%= cfg.base %>/prototyped.ng.samples/bin/prototyped.ng.samples.resx.js'
+                dest: '<%= cfg.base %>/prototyped.ng.samples/<%= cfg.lib %>/prototyped.ng.samples.resx.js'
             }
         },
         copy: {

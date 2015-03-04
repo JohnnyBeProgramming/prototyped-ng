@@ -1,4 +1,4 @@
-<div ng:cloak>    
+<div ng:cloak style="width: 100%;">
     <div class="results" ng-init="detect()">
         <div class="icon pull-left left">
             <i class="glyphicon glyphicon-bell" ng-class="{'text-muted':!state.cfgRaven.isOnline}"></i>
@@ -103,11 +103,11 @@
             </div>
             <pre>{{ status.logs | listReverse }}</pre>
         </div>
-    </div>    
+    </div>
     <div ng-if="state.activeTab == 'result'" class="source">
         <span class="pull-right">
             <a class="btn btn-sm btn-primary" ng-click="state.activeTab = null">Close</a>
         </span>
         <samp><pre>{{ result.info }}</pre></samp>
-    </div>    
+    </div>
 </div>

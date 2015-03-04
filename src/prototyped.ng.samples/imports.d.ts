@@ -4,6 +4,7 @@
 interface Window {
     WhichBrowser: () => void;
     isNaN: (input: any) => boolean;
+    isFinite: (input: any) => boolean;
 }
 declare var process: any;
 declare var require: (name: string) => any;
