@@ -24,10 +24,12 @@
     <Content Include="assets\lib\prototyped.ng.resx.js" />
     <Content Include="assets\lib\prototyped.ng.sqlx.js" />
     <Content Include="index.html" />
+    <TypeScriptCompile Include="modules\edge\module.ng.ts" />
     <TypeScriptCompile Include="modules\features\module.ng.ts" />
     <TypeScriptCompile Include="modules\appcmd.exe\certs.ng.ts" />
     <Content Include="modules\appcmd.exe\certs.tpl.html" />
     <Content Include="modules\appcmd.exe\left.tpl.html" />
+    <Content Include="modules\edge\index.tpl.html" />
     <Content Include="modules\features\views\index.tpl.html" />
     <Content Include="modules\features\views\left.tpl.html" />
     <Content Include="modules\features\views\menu.tpl.html" />

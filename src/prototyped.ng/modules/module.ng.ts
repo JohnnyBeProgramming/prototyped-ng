@@ -11,6 +11,7 @@ angular.module('prototyped.ng', [
 
     // Define sub modules
     'prototyped.features',
+    'prototyped.edge',
 ])
 
 

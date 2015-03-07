@@ -15,4 +15,9 @@
             <i class="fa fa-certificate"></i> Check Certificates
         </a>
     </li>
+    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appNode.active }">
+        <a app:nav-link ui:sref="prototyped.edge" data:eat-click-if="!appNode.active">
+            <i class="fa fa-magic"></i> Interop with C#.net
+        </a>
+    </li>
 </ul>
