@@ -26,6 +26,11 @@
     <!-- Load this module's libraries -->
     <script src="assets/lib/prototyped.ng.base.js"></script>
     <script src="assets/lib/prototyped.ng.sqlx.js"></script>
+    <script>
+        // Mock the template cache (clears pre-loaded templates and load rather from source)
+        angular.module('prototyped.ng.views', []).run(['$templateCache', function ($templateCache) { }]);
+        //angular.module('prototyped.ng.sql', []).run(['$templateCache', function ($templateCache) { }]);
+    </script>
     <!--
     <script src="assets/lib/prototyped.ng.resx.js"></script>
     -->
@@ -35,7 +40,7 @@
     <script src="assets/app.js"></script>
 </head>
 <body id="testApp">
-    <div id="menu" >
+    <div id="menu">
         <a ui:sref="default" class="pull-right btn btn-default">Home</a>
         <div ui:view="menu">
             <ul class="nav navbar-nav">

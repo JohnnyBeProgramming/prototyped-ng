@@ -1,8 +1,8 @@
-/// <reference path="../../../imports.d.ts" />
-/// <reference path="../../appcmd.exe/certs.ng.ts" />
-/// <reference path="../../sqlcmd.exe/module.ng.ts" />
+/// <reference path="../../imports.d.ts" />
+/// <reference path="../appcmd.exe/certs.ng.ts" />
+/// <reference path="../sqlcmd.exe/module.ng.ts" />
 
-angular.module('prototyped.cmd', ['ui.router',
+angular.module('prototyped.features', ['ui.router',
     'prototyped.sqlcmd',
     'prototyped.certs',
 ])
@@ -14,10 +14,10 @@ angular.module('prototyped.cmd', ['ui.router',
             .state('prototyped.cmd', {
                 url: '/cmd',
                 views: {
-                    'menu@': { templateUrl: 'modules/prototyped/cmd/views/menu.tpl.html' },
-                    'left@': { templateUrl: 'modules/prototyped/cmd/views/left.tpl.html' },
+                    'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },
+                    'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                     'main@': {
-                        templateUrl: 'modules/prototyped/cmd/views/index.tpl.html',
+                        templateUrl: 'modules/features/views/index.tpl.html',
                         controller: 'systemCmdViewController'
                     },
                 }
@@ -25,10 +25,10 @@ angular.module('prototyped.cmd', ['ui.router',
             .state('prototyped.clear', {
                 url: '/clear',
                 views: {
-                    'menu@': { templateUrl: 'modules/prototyped/cmd/views/menu.tpl.html' },
-                    'left@': { templateUrl: 'modules/prototyped/cmd/views/left.tpl.html' },
+                    'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },
+                    'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                     'main@': {
-                        templateUrl: 'modules/prototyped/cmd/views/index.tpl.html',
+                        templateUrl: 'modules/features/views/index.tpl.html',
                         controller: 'systemCmdViewController'
                     },
                 }
@@ -137,7 +137,6 @@ try {
             busy: false,
             active: false,
             result: {
-                path: 'C:\\Working\\',
             },                    
         };
 

@@ -1634,6 +1634,7 @@ angular.module('myApp.samples.styles3d', []).config([
 /// <reference path="sampleData/module.ng.ts" />
 /// <reference path="styles3d/module.ng.ts" />
 angular.module('prototyped.ng.samples', [
+    'prototyped.ng.samples.views',
     'myApp.samples.errorHandlers',
     'myApp.samples.sampleData',
     'myApp.samples.decorators',

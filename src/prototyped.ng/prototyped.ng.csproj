@@ -23,22 +23,14 @@
     <Content Include="assets\lib\prototyped.ng.base.js" />
     <Content Include="assets\lib\prototyped.ng.resx.js" />
     <Content Include="assets\lib\prototyped.ng.sqlx.js" />
-    <Content Include="css\app.css" />
-    <Content Include="css\app.min.css">
-      <DependentUpon>app.css</DependentUpon>
-    </Content>
     <Content Include="index.html" />
-    <Content Include="css\app.css.map">
-      <DependentUpon>app.css</DependentUpon>
-    </Content>
-    <TypeScriptCompile Include="modules\prototyped\cmd\module.ng.ts" />
+    <TypeScriptCompile Include="modules\features\module.ng.ts" />
     <TypeScriptCompile Include="modules\appcmd.exe\certs.ng.ts" />
     <Content Include="modules\appcmd.exe\certs.tpl.html" />
     <Content Include="modules\appcmd.exe\left.tpl.html" />
-    <Content Include="modules\prototyped\cmd\views\index.tpl.html" />
-    <Content Include="modules\prototyped\cmd\views\left.tpl.html" />
-    <Content Include="modules\prototyped\cmd\views\menu.tpl.html" />
-    <TypeScriptCompile Include="modules\prototyped\module.ng.ts" />
+    <Content Include="modules\features\views\index.tpl.html" />
+    <Content Include="modules\features\views\left.tpl.html" />
+    <Content Include="modules\features\views\menu.tpl.html" />
     <Content Include="modules\sqlcmd.exe\dialogs\dbActions.tpl.html" />
     <TypeScriptCompile Include="modules\sqlcmd.exe\module.ng.ts" />
     <Content Include="modules\sqlcmd.exe\scripts\utils\FileSizes.sql" />

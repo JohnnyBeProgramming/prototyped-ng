@@ -18,13 +18,8 @@ angular.module('myApp', [
   'myApp.modules',
 
   // Prototyped modules
-  'prototyped',
-  //'prototyped.cmd',
   'prototyped.ng',
-  'prototyped.ng.views',
-  'prototyped.ng.sql',
   'prototyped.ng.samples',
-  'prototyped.ng.samples.views',
 
 ])
 

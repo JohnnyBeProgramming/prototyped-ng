@@ -13,9 +13,7 @@ angular.module('testApp', [
   'angularMoment',
 
   // Prototyped modules
-  'prototyped',
   'prototyped.ng',
-
 ])
 
     .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {

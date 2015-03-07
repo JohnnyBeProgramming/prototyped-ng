@@ -3,12 +3,30 @@
 /// <reference path="../modules/about.ng.ts" />
  
 angular.module('prototyped.ng', [
+    'prototyped.ng.views',
+    'prototyped.ng.sql',
+    
     'prototyped.ng.default',
     'prototyped.ng.about',
 
     // Define sub modules
-    'prototyped',
+    'prototyped.features',
 ])
+
+
+    .config(['$stateProvider', '$urlRouterProvider', ($stateProvider, $urlRouterProvider) => {
+
+        // Define redirects
+        $urlRouterProvider.when('/prototyped', '/prototyped/cmd');
+
+        // Now set up the states
+        $stateProvider
+            .state('prototyped', {
+                url: '/prototyped',
+                abstract: true,
+            })
+
+    }])
 
     .filter('isArray', () => {
         return (input) => {
@@ -106,8 +124,4 @@ angular.module('prototyped.ng', [
                 }
             }
         }
-    }])
-
-    .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
-
     }])
