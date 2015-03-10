@@ -1,4 +1,8 @@
 ﻿<div id="about-info" style="width: 100%">
+    <!-- Ensure styles are loaded -->
+    <style resx:import="assets/css/prototyped.min.css"></style>
+    <style resx:import="assets/css/images.min.css"></style>
+    <!-- Define the contents -->
     <div class="row">
         <div class="col-lg-8 col-md-12 info-overview">
             <h4>
@@ -19,7 +23,6 @@
                     </h5>
                     <div ng:if="true">
                         <a class="panel-icon-lg img-terminal">
-
                             <div ng:if="info.about.browser.name == 'Chrome'" class="panel-icon-inner img-chrome"></div>
                             <div ng:if="info.about.browser.name == 'Chromium'" class="panel-icon-inner img-chromium"></div>
                             <div ng:if="info.about.browser.name == 'Firefox'" class="panel-icon-inner img-firefox"></div>
@@ -28,14 +31,12 @@
                             <div ng:if="info.about.browser.name == 'Safari'" class="panel-icon-inner img-safari"></div>
                             <div ng:if="info.about.browser.name == 'SeaMonkey'" class="panel-icon-inner img-seamonkey"></div>
                             <div ng:if="info.about.browser.name == 'Spartan'" class="panel-icon-inner img-spartan"></div>
-
                             <div ng:if="info.about.os.name == 'Windows'" class="panel-icon-overlay img-windows"></div>
                             <div ng:if="info.about.os.name == 'MacOS'" class="panel-icon-overlay img-mac-os"></div>
                             <div ng:if="info.about.os.name == 'Apple'" class="panel-icon-overlay img-apple"></div>
                             <div ng:if="info.about.os.name == 'UNIX'" class="panel-icon-overlay img-unix"></div>
                             <div ng:if="info.about.os.name == 'Linux'" class="panel-icon-overlay img-linux"></div>
                             <div ng:if="info.about.os.name == 'Ubuntu'" class="panel-icon-overlay img-ubuntu"></div>
-
                         </a>
                         <p class="panel-label" title="{{ info.about.os.name }} @ {{ info.about.os.version.alias }}">
                             Host System:
@@ -61,7 +62,6 @@
                         <a ng-switch-when="warn" class="panel-icon-lg img-drive-warn"></a>
                         <a ng-switch-when="hist" class="panel-icon-lg img-drive-hist"></a>
                         <a ng-switch-when="wifi" class="panel-icon-lg img-drive-wifi"></a>
-
                         <div ng:if="info.about.webdb.active" class="panel-icon-inset-bl img-webdb"></div>
                     </div>
                     <p ng:if="info.about.webdb.active" class="panel-label ellipsis">
@@ -138,11 +138,9 @@
                     </div>
                     <div ng:if="!info.about.server.local" ng-class="{ 'inactive-gray': true || info.versions.jqry }">
                         <a class="panel-icon-lg img-server">
-
                             <div ng:if="info.about.server.type == 'iis'" class="panel-icon-inset img-iis"></div>
                             <div ng:if="info.about.server.type == 'node'" class="panel-icon-inset img-node"></div>
                             <div ng:if="info.about.server.type == 'apache'" class="panel-icon-inset img-apache"></div>
-
                             <div ng:if="info.about.server.name == 'Windows'" class="panel-icon-overlay img-windows"></div>
                             <div ng:if="info.about.server.name == 'MacOS'" class="panel-icon-overlay img-mac-os"></div>
                             <div ng:if="info.about.server.name == 'Apple'" class="panel-icon-overlay img-apple"></div>

@@ -26,6 +26,7 @@
     <!-- Load this module's libraries -->
     <script src="assets/lib/prototyped.ng.base.js"></script>
     <script src="assets/lib/prototyped.ng.sqlx.js"></script>
+    <script src="assets/lib/prototyped.ng.styles.js"></script>
     <script>
         // Mock the template cache (clears pre-loaded templates and load rather from source)
         angular.module('prototyped.ng.views', []).run(['$templateCache', function ($templateCache) { }]);
@@ -36,8 +37,8 @@
     -->
 
     <!-- Load some styles and logic just for testing this app... -->
-    <link href="assets/app.css" rel="stylesheet" type="text/css" />
-    <script src="assets/app.js"></script>
+    <link href="assets/css/app.css" type="text/css" rel="stylesheet" />
+    <script src="index.js" type="text/javascript"></script>
 </head>
 <body id="testApp">
     <div id="menu">

@@ -70,6 +70,7 @@ module.exports = function (grunt) {
                     key: 'test-units',
                     val: []
                 },
+
                 // Extend tasks for dist env
                 { key: 'build-dist', val: ['build-prod'] },
                 { key: 'tests-dist', val: ['test-units'] },
@@ -80,6 +81,7 @@ module.exports = function (grunt) {
                     val: [
                         'html2js:prototyped_ng',
                         'ngtemplates:prototyped_ng',
+                        'ngtemplates:prototyped_ng_styles',
                         'concat:prototyped_ng',
                     ]
                 },
@@ -241,7 +243,8 @@ module.exports = function (grunt) {
                 files: [{
                     src: [
                         '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.base.js',
-                        '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.resx.js',
+                        '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.views.js',
+                        '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.styles.js',
                         '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.sqlx.js',
                     ],
                     dest: '<%= cfg.web %>/<%= cfg.lib %>/prototyped.ng.js'
@@ -404,7 +407,32 @@ module.exports = function (grunt) {
                 src: '<%= cfg.base %>/prototyped.ng/**/*.sql',
                 dest: '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.sqlx.js',
                 module: 'prototyped.ng.sql',
-            }
+            },
+            prototyped_ng_styles: {
+                options: {
+                    module: 'prototyped.ng.styles',
+                    base: '<%= cfg.base %>/prototyped.ng',
+                    htmlmin: {
+                        collapseWhitespace: false,
+                        collapseBooleanAttributes: false,
+                    },
+                    url: function (url) {
+                        // Remove the prefix (if exists)
+                        var path = require('path');
+                        var prefix = './prototyped.ng/';
+                        if (url && (url.indexOf(prefix) == 0)) {
+                            url = url.substring(prefix.length);
+                        }
+                        return url;
+                    }
+                },
+                src: [
+                    '<%= cfg.base %>/prototyped.ng/assets/css/!app*.css',
+                    '<%= cfg.base %>/prototyped.ng/assets/css/**.min.css'
+                ],
+                dest: '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.styles.js',
+                module: 'prototyped.ng.styles',
+            },
         },
         html2js: {
             options: {
@@ -441,7 +469,7 @@ module.exports = function (grunt) {
                     '<%= cfg.base %>/prototyped.ng/**/*.jade',
                     '<%= cfg.base %>/prototyped.ng/**/*.tpl.html'
                 ],
-                dest: '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.resx.js'
+                dest: '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.views.js'
             },
             prototyped_ng_samples: {
                 options: {

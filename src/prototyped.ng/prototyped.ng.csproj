@@ -18,8 +18,19 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="assets\app.css" />
-    <Content Include="assets\app.js" />
+    <Content Include="index.js" />
+    <Content Include="assets\css\app.css" />
+    <Content Include="assets\css\app.min.css">
+      <DependentUpon>app.css</DependentUpon>
+    </Content>
+    <Content Include="assets\css\images.css" />
+    <Content Include="assets\css\images.min.css">
+      <DependentUpon>images.css</DependentUpon>
+    </Content>
+    <Content Include="assets\css\prototyped.css" />
+    <Content Include="assets\css\prototyped.min.css">
+      <DependentUpon>prototyped.css</DependentUpon>
+    </Content>
     <Content Include="assets\lib\prototyped.ng.base.js" />
     <Content Include="assets\lib\prototyped.ng.resx.js" />
     <Content Include="assets\lib\prototyped.ng.sqlx.js" />
@@ -58,7 +69,30 @@
     <TypeScriptCompile Include="modules\about.ng.ts" />
     <TypeScriptCompile Include="modules\default.ng.ts" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="assets\less\app.less" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\css\app.css.map">
+      <DependentUpon>app.css</DependentUpon>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\less\prototyped.less" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\css\prototyped.css.map">
+      <DependentUpon>prototyped.css</DependentUpon>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\less\images.less" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\css\images.css.map">
+      <DependentUpon>images.css</DependentUpon>
+    </Content>
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>

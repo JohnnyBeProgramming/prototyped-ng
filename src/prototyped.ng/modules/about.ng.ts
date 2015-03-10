@@ -2,7 +2,8 @@
 
 angular.module('prototyped.ng.about', [
     // Ensures that templates loaded
-    //'prototyped.ng.views',
+    'prototyped.ng.views',
+    'prototyped.ng.styles',
 
     // Other dependencies
     'ui.router'

@@ -8,13 +8,11 @@
 @import 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css';
 
 body {
-    font-family: 'Segoe UI', sans-serif;
+    color: #333;
+    font-size: 11px;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
     display: flex;
     flex-direction: column;
-}
-
-span {
-    font-style: italic;
 }
 
 #menu {
@@ -22,24 +20,23 @@ span {
     padding: 3px;
     display: block;
     border: dotted 1px #808080;
-}
 
-    #menu ul {
+    ul {
         margin: 0;
         padding: 0;
-    }
 
-        #menu ul li {
+        li {
             margin: 0;
             padding: 0;
             display: inline;
             list-style: none;
-        }
 
-            #menu ul li a {
+            a {
                 text-decoration: none;
             }
-
+        }
+    }
+}
 
 #contents {
     display: flex;
@@ -62,6 +59,35 @@ span {
     flex-grow: 1;
     flex-shrink: 1;
     border: dotted 1px #808080;
+
+    h2 {
+        margin: 0;
+        padding: 3px 0;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    h5 {
+        margin: 0 0 6px 0;
+        padding: 3px;
+        border-bottom: solid 1px #f2f2f2;
+        font-weight: bolder;
+
+        small {
+            text-wrap: avoid;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+    }
+
+    hr {
+        margin: 8px 0;
+    }
+
+    .centered {
+        text-align: center;
+    }
 }
 
 #footer {
