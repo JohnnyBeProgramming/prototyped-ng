@@ -55,7 +55,9 @@ var SetupManager = {
     installLocal: (key: string, ver?: string) => {
         // Do a local install of the package manager (if not exist)
         var passed: boolean = true;
-        var cmd = 'call npm update ' + key;
+        var isWin = /^win/.test(process.platform);
+        var pre = isWin ? 'call' : 'sudo';        
+        var cmd = pre + ' npm update ' + key;
         if (ver) cmd += '@' + ver;
         if (cmd) cmd += ' -express --loglevel error';
         console.log('   + ' + key + '@' + ver + '');

@@ -6,8 +6,8 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{038CA08D-5CAC-42B4-B904-06031E1BBE72}"
 	ProjectSection(SolutionItems) = preProject
 		Gruntfile.js = Gruntfile.js
-		Server.js = Server.js
-		Setup.js = Setup.js
+		prototyped.node\modules\Server.ts = prototyped.node\modules\Server.ts
+		prototyped.node\Setup.ts = prototyped.node\Setup.ts
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "app", "app", "{3AA521C1-195C-4A52-A198-5E74BB9EB4D8}"
