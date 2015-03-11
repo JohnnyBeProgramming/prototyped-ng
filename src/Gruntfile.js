@@ -254,7 +254,7 @@ module.exports = function (grunt) {
                 files: [{
                     src: [
                         '<%= cfg.base %>/prototyped.ng.samples/<%= cfg.lib %>/prototyped.ng.samples.base.js',
-                        '<%= cfg.base %>/prototyped.ng.samples/<%= cfg.lib %>/prototyped.ng.samples.resx.js',
+                        '<%= cfg.base %>/prototyped.ng.samples/<%= cfg.lib %>/prototyped.ng.samples.views.js',
                     ],
                     dest: '<%= cfg.web %>/<%= cfg.lib %>/prototyped.ng.samples.js'
                 }]
@@ -480,7 +480,7 @@ module.exports = function (grunt) {
                     '<%= cfg.base %>/prototyped.ng.samples/**/*.jade',
                     '<%= cfg.base %>/prototyped.ng.samples/**/*.tpl.html'
                 ],
-                dest: '<%= cfg.base %>/prototyped.ng.samples/<%= cfg.lib %>/prototyped.ng.samples.resx.js'
+                dest: '<%= cfg.base %>/prototyped.ng.samples/<%= cfg.lib %>/prototyped.ng.samples.views.js'
             }
         },
         copy: {

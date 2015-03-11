@@ -1,32 +1,32 @@
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/default.ng.ts" />
-/// <reference path="../modules/about.ng.ts" />
+/// <reference path="../modules/about/module.ng.ts" />
 
 angular.module('prototyped.ng', [
     'prototyped.ng.views',
     'prototyped.ng.styles',
     'prototyped.ng.sql',
-
     'prototyped.ng.default',
     'prototyped.ng.about',
 
-// Define sub modules
+    // Define sub modules
     'prototyped.features',
     'prototyped.edge',
+    'prototyped.editor',
+    'prototyped.console',
 ])
 
     .config(['$stateProvider', '$urlRouterProvider', ($stateProvider, $urlRouterProvider) => {
-
-        // Define redirects
-        $urlRouterProvider.when('/prototyped', '/prototyped/cmd');
-
-        // Now set up the states
+        
+        // Set up the routing...
         $stateProvider
-            .state('prototyped', {
-                url: '/prototyped',
+            .state('proto', {
+                url: '/proto',
                 abstract: true,
             })
 
+        // Define redirects
+        $urlRouterProvider.when('/proto', '/proto/cmd');
     }])
 
     .constant('appInfo', {

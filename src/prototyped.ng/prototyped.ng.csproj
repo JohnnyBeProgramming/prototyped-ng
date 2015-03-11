@@ -18,6 +18,10 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="assets\lib\prototyped.ng.base.js" />
+    <Content Include="assets\lib\prototyped.ng.sqlx.js" />
+    <Content Include="assets\lib\prototyped.ng.styles.js" />
+    <Content Include="assets\lib\prototyped.ng.views.js" />
     <Content Include="index.js" />
     <Content Include="assets\css\app.css" />
     <Content Include="assets\css\app.min.css">
@@ -31,16 +35,17 @@
     <Content Include="assets\css\prototyped.min.css">
       <DependentUpon>prototyped.css</DependentUpon>
     </Content>
-    <Content Include="assets\lib\prototyped.ng.base.js" />
-    <Content Include="assets\lib\prototyped.ng.resx.js" />
-    <Content Include="assets\lib\prototyped.ng.sqlx.js" />
     <Content Include="index.html" />
+    <TypeScriptCompile Include="modules\commands\controllers\ConsoleController.ts" />
+    <TypeScriptCompile Include="modules\commands\module.ng.ts" />
     <TypeScriptCompile Include="modules\edge\module.ng.ts" />
+    <TypeScriptCompile Include="modules\editor\controllers\EditorController.ts" />
+    <TypeScriptCompile Include="modules\editor\module.ng.ts" />
     <TypeScriptCompile Include="modules\features\module.ng.ts" />
     <TypeScriptCompile Include="modules\appcmd.exe\certs.ng.ts" />
     <Content Include="modules\appcmd.exe\certs.tpl.html" />
-    <Content Include="modules\appcmd.exe\left.tpl.html" />
     <Content Include="modules\edge\index.tpl.html" />
+    <Content Include="modules\editor\views\main.tpl.html" />
     <Content Include="modules\features\views\index.tpl.html" />
     <Content Include="modules\features\views\left.tpl.html" />
     <Content Include="modules\features\views\menu.tpl.html" />
@@ -59,14 +64,14 @@
     <Content Include="views\about\contact.tpl.html" />
     <Content Include="views\about\info.tpl.html" />
     <Content Include="views\about\left.tpl.html" />
-    <Content Include="views\about\menu.tpl.html" />
+    <Content Include="modules\commands\views\main.tpl.html" />
     <Content Include="views\default.tpl.html" />
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="imports.d.ts" />
     <TypeScriptCompile Include="modules\module.ng.ts" />
-    <TypeScriptCompile Include="modules\about.ng.ts" />
+    <TypeScriptCompile Include="modules\about\module.ng.ts" />
     <TypeScriptCompile Include="modules\default.ng.ts" />
   </ItemGroup>
   <ItemGroup>
@@ -93,6 +98,7 @@
       <DependentUpon>images.css</DependentUpon>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>

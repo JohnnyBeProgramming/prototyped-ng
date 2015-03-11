@@ -1,5 +1,6 @@
 ﻿/// <reference path="../typings/jquery/jquery.d.ts" />
 /// <reference path="../typings/angularjs/angular.d.ts" />
+/// <reference path="../typings/googlemaps/google.maps.d.ts" />
 
 interface Window {
     WhichBrowser: () => void;

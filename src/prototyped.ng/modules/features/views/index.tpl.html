@@ -40,7 +40,23 @@
             </div>
             <div ng:if="false" class="alert alert-info">
                 <i class="fa fa-share-square"></i> <b>Info:</b>
-            </div>
+            </div>            
+        </div>
+        <div ng:if="!appNode.active">
+            <h5>
+                How to run this application
+            </h5>
+            <ul style="padding-left: 20px;">
+                <li>
+                    This software requires access to the <a target="_blank" href="https://nodejs.org/">NodeJS</a> framework for some advanced features.
+                </li>
+                <li>
+                    Nodewebkit is a modified chromium build that adds NodeJS to the DOM script engine (V8).
+                </li>
+                <li>
+                    See the node-webkit GitHub page for more info: <a target="_blank" href="https://github.com/nwjs/nw.js/">https://github.com/nwjs/nw.js</a>
+                </li>
+            </ul>
         </div>
         <div ng:if="cmd.cwd">
             <h5>Current Working Directory <small>{{ cmd.cwd.path }}</small></h5>

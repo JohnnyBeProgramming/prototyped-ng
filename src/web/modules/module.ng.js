@@ -5,5 +5,5 @@ angular.module('myApp.modules', [
 ])
 
     .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
-
+        
     }])

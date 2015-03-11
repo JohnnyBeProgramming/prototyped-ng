@@ -1208,6 +1208,765 @@ angular.module('myApp.samples.interceptors', []).config([
     }]).run([
     '$state', '$templateCache', 'interceptorConfig', function ($state, $templateCache, cfg) {
     }]);
+///<reference path="../../../imports.d.ts"/>
+var proto;
+(function (proto) {
+    var String = (function () {
+        function String() {
+        }
+        String.Format = function (format, values, useLocale) {
+            if (typeof useLocale === "undefined") { useLocale = false; }
+            var result = '';
+            for (var i = 0; ;) {
+                // Find the next opening or closing brace
+                var open = format.indexOf('{', i);
+                var close = format.indexOf('}', i);
+                if ((open < 0) && (close < 0)) {
+                    // Not found: copy the end of the string and break
+                    result += format.slice(i);
+                    break;
+                }
+                if ((close > 0) && ((close < open) || (open < 0))) {
+                    if (format.charAt(close + 1) !== '}')
+                        throw new Error('Format Error: StringFormatBraceMismatch');
+                    result += format.slice(i, close + 1);
+                    i = close + 2;
+                    continue;
+                }
+
+                // Copy the string before the brace
+                result += format.slice(i, open);
+                i = open + 1;
+
+                // Check for double braces (which display as one and are not arguments)
+                if (format.charAt(i) === '{') {
+                    result += '{';
+                    i++;
+                    continue;
+                }
+
+                // Find the closing brace
+                if (close < 0)
+                    throw new Error('format stringFormatBraceMismatch');
+
+                // Get the string between the braces, and split it around the ':' (if any)
+                var brace = format.substring(i, close);
+                var colonIndex = brace.indexOf(':');
+                var argNumber = parseInt((colonIndex < 0) ? brace : brace.substring(0, colonIndex), 10);
+                if (isNaN(argNumber))
+                    throw new Error('format stringFormatInvalid');
+                var argFormat = (colonIndex < 0) ? '' : brace.substring(colonIndex + 1);
+                var arg = values[argNumber];
+                if (typeof (arg) === "undefined" || arg === null) {
+                    arg = '';
+                }
+
+                // If it has a toFormattedString method, call it.  Otherwise, call toString()
+                if (arg.toFormattedString) {
+                    result += arg.toFormattedString(argFormat);
+                } else if (useLocale && arg.localeFormat) {
+                    result += arg.localeFormat(argFormat);
+                } else if (arg.format) {
+                    result += arg.format(argFormat);
+                } else
+                    result += arg.toString();
+
+                i = close + 1;
+            }
+
+            return result;
+        };
+        String.FormatFilter = function (input, template) {
+            if (!input)
+                return template;
+            if (!input.length)
+                input = [input]; // Convert to array
+            return String.Format(template, input);
+        };
+        String.FormatNumber = function (input, template) {
+            // Inspired by: https://code.google.com/p/javascript-number-formatter/source/browse/format.js
+            if (!template || isNaN(+input)) {
+                return template;
+            }
+
+            //convert any string to number according to formation sign.
+            var v = (template.charAt(0) == '-') ? -v : +v;
+            var isNegative = v < 0 ? v = -v : 0;
+
+            //search for separator for grp & decimal, anything not digit, not +/- sign, not #.
+            var result = template.match(/[^\d\-\+#]/g);
+            var Decimal = (result && result[result.length - 1]) || '.';
+            var Group = (result && result[1] && result[0]) || ',';
+
+            //split the decimal for the format string if any.
+            var m = template.split(Decimal);
+
+            //Fix the decimal first, toFixed will auto fill trailing zero.
+            var val = v.toFixed(m[1] && m[1].length);
+            val = +(val) + ''; //convert number to string to trim off *all* trailing decimal zero(es)
+
+            //fill back any trailing zero according to format
+            var pos_trail_zero = m[1] && m[1].lastIndexOf('0');
+            var part = val.split('.');
+
+            //integer will get !part[1]
+            if (!part[1] || part[1] && part[1].length <= pos_trail_zero) {
+                val = (+val).toFixed(pos_trail_zero + 1);
+            }
+            var szSep = m[0].split(Group);
+            m[0] = szSep.join(''); //join back without separator for counting the pos of any leading 0.
+
+            var pos_lead_zero = m[0] && m[0].indexOf('0');
+            if (pos_lead_zero > -1) {
+                while (part[0].length < (m[0].length - pos_lead_zero)) {
+                    part[0] = '0' + part[0];
+                }
+            } else if (+part[0] == 0) {
+                part[0] = '';
+            }
+
+            var dx = val.split('.');
+            dx[0] = part[0];
+
+            //process the first group separator from decimal (.) only, the rest ignore.
+            //get the length of the last slice of split result.
+            var pos_separator = (szSep[1] && szSep[szSep.length - 1].length);
+            if (pos_separator) {
+                var integer = dx[0];
+                var str = '';
+                var offset = integer.length % pos_separator;
+                for (var i = 0, l = integer.length; i < l; i++) {
+                    str += integer.charAt(i); //ie6 only support charAt for sz.
+
+                    //-pos_separator so that won't trail separator on full length
+                    if (!((i - offset + 1) % pos_separator) && i < l - pos_separator) {
+                        str += Group;
+                    }
+                }
+                dx[0] = str;
+            }
+
+            dx[1] = (m[1] && dx[1]) ? Decimal + dx[1] : "";
+            return (isNegative ? '-' : '') + dx[0] + dx[1];
+        };
+        return String;
+    })();
+    proto.String = String;
+})(proto || (proto = {}));
+
+String.prototype.Formatted = function () {
+    var args = [];
+    for (var _i = 0; _i < (arguments.length - 0); _i++) {
+        args[_i] = arguments[_i + 0];
+    }
+    return proto.String.Format(this, args);
+};
+///<reference path="../../../imports.d.ts"/>
+var proto;
+(function (proto) {
+    (function (utils) {
+        var Networking = (function () {
+            function Networking() {
+            }
+            Networking.GetClientInfo = function (window) {
+                var xmlhttp = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+                if (xmlhttp) {
+                    xmlhttp.open("GET", "http://api.hostip.info/get_html.php", false); // True for async...
+
+                    /* Async
+                    xmlhttp.onload = function (e) {
+                    if (xmlhttp.readyState === 4) {
+                    if (xmlhttp.status === 200) {
+                    // defer.resolve(xmlhttp.responseText);
+                    console.info(xmlhttp.responseText);
+                    } else {
+                    //defer.reject(error);
+                    console.warn(xmlhttp.statusText);
+                    }
+                    }
+                    };
+                    xmlhttp.onerror = function (error) {
+                    //defer.reject(error);
+                    console.error(xmlhttp.statusText);
+                    };
+                    */
+                    xmlhttp.send();
+
+                    var info = {};
+                    var resp = xmlhttp.responseText;
+                    var data = resp.split("\n");
+                    for (var i = 0; data.length >= i; i++) {
+                        if (data[i]) {
+                            var parts = data[i].split(":");
+                            var objDef = (parts.length > 1) && (typeof parts[1] !== 'undefined');
+                            if (objDef) {
+                                var objKey = parts[0].trim();
+                                var objVal = parts[1].trim();
+                                if (objKey == 'Country' && objVal.indexOf('Unknown Country') >= 0) {
+                                    objVal = null;
+                                }
+                                if (objKey == 'City' && objVal.indexOf('Unknown City') >= 0) {
+                                    objVal = null;
+                                }
+                                eval('info.' + objKey + ' = objVal');
+                            }
+                        }
+                    }
+                    return info;
+                }
+
+                return null;
+            };
+
+            Networking.GetCurrentIP = function (window) {
+                var info = this.GetClientInfo(window);
+                if (info) {
+                    return info.IP;
+                }
+                return null;
+            };
+            return Networking;
+        })();
+        utils.Networking = Networking;
+
+        var GeoPoint = (function () {
+            function GeoPoint(label, lat, lng, zoom) {
+                if (typeof zoom === "undefined") { zoom = 8; }
+                this.Label = label;
+                this.Lat = lat;
+                this.Lng = lng;
+                this.Zoom = zoom;
+            }
+            GeoPoint.prototype.getPosition = function () {
+                return new google.maps.LatLng(this.Lat, this.Lng);
+            };
+            return GeoPoint;
+        })();
+        utils.GeoPoint = GeoPoint;
+
+        var GeoFactory = (function () {
+            function GeoFactory($rootScope, $q) {
+                this.$rootScope = $rootScope;
+                this.$q = $q;
+                console.log(' - [ Geo ] Factory Created...');
+            }
+            GeoFactory.prototype.GetPosition = function () {
+                var _this = this;
+                var defer = this.$q.defer();
+
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    _this.$rootScope.$applyAsync(function () {
+                        defer.resolve(position);
+                    });
+                }, function (error) {
+                    _this.$rootScope.$applyAsync(function () {
+                        defer.reject(error);
+                    });
+                });
+
+                return defer.promise;
+            };
+
+            GeoFactory.FormatLatitude = function (input, template) {
+                return (!input) ? null : GeoFactory.ConvertDDToDMS(true, input, template);
+            };
+            GeoFactory.FormatLongitude = function (input, template) {
+                return (!input) ? null : GeoFactory.ConvertDDToDMS(false, input, template);
+            };
+
+            GeoFactory.ParseDMS = function (input) {
+                var parts = [];
+                var regEx = input.split(/[^\d\w]+/);
+                for (var i = 0; i < regEx.length; i++) {
+                    parts.push(parseFloat(regEx[1]));
+                }
+                return {
+                    lat: GeoFactory.ConvertDMSToDD(parts[0], parts[1], parts[2], parts[3]),
+                    lng: GeoFactory.ConvertDMSToDD(parts[4], parts[5], parts[6], parts[7])
+                };
+            };
+
+            GeoFactory.ConvertDMSToDD = function (degrees, minutes, seconds, direction) {
+                var dd = degrees + minutes / 60 + seconds / (60 * 60);
+                if (direction == "S" || direction == "W") {
+                    dd = dd * -1; // Invert number
+                }
+                return dd;
+            };
+            GeoFactory.ConvertDDToDMS = function (northToSouth, input, template) {
+                // Example Output: 54°21′44″N
+                if (!template)
+                    template = '{0}°{1}′{2}″{3}';
+                var dir = northToSouth ? (input > 0 ? 'N' : 'S') : (input > 0 ? 'E' : 'W');
+                var inp = Math.abs(input);
+                var deg = Math.floor(inp);
+                var min = Math.floor((inp - deg) * 60);
+                var sec = Math.floor(((inp - deg) * 60 - min) * 60);
+                var dm = (min >= 10 ? '' + min : '0' + min);
+                var ds = (sec >= 10 ? '' + sec : '0' + sec);
+                return deg + '°' + dm + '′' + ds + '″' + dir;
+            };
+            return GeoFactory;
+        })();
+        utils.GeoFactory = GeoFactory;
+
+        var GoogleMapper = (function () {
+            function GoogleMapper(args) {
+                this.MapArgs = args;
+            }
+            GoogleMapper.prototype.initMaps = function (callback) {
+                var _this = this;
+                // Async load the google maps API and set up the callback
+                var apiUrl = 'https://maps.googleapis.com/maps/api/js';
+                var apiHnd = 'protoGoogleMapper';
+                var apiArg = $.extend(this.MapArgs, {
+                    callback: apiHnd
+                });
+
+                // Check if already loaded (patch onLoad if needed)
+                if (apiHnd in window) {
+                    if (callback) {
+                        var func = window[apiHnd];
+                        if (window[apiHnd].loaded) {
+                            callback();
+                        } else {
+                            window[apiHnd] = function () {
+                                func();
+                                callback();
+                            };
+                        }
+                    }
+                    return;
+                }
+
+                // Declare the global callback
+                window[apiHnd] = function () {
+                    // Bind the map to the element
+                    _this.bindMaps();
+
+                    // Check for handler
+                    if (callback) {
+                        callback();
+                    }
+
+                    // Delete callback
+                    window[apiHnd].loaded = true;
+                };
+
+                // Can't use the jXHR promise because 'script' doesn't support 'callback=?'
+                $.ajax({ dataType: 'script', data: apiArg, url: apiUrl });
+            };
+
+            GoogleMapper.prototype.getMap = function () {
+                return this.MapTarg;
+            };
+
+            GoogleMapper.prototype.isMapsDefined = function () {
+                return typeof google !== 'undefined' && typeof google.maps !== 'undefined';
+            };
+
+            GoogleMapper.prototype.bindMaps = function () {
+                // Ensure google maps available
+                if (this.isMapsDefined()) {
+                    console.log(' - [ Geo ] Init Google maps...');
+
+                    // Set default position
+                    if (!this.Position) {
+                        this.Position = new google.maps.LatLng(0, 0);
+                    }
+
+                    // Define position and the map options
+                    var pos = this.Position;
+                    var opt = this.Options = {
+                        zoom: 5,
+                        center: pos,
+                        mapTypeControlOptions: {
+                            mapTypeIds: [
+                                google.maps.MapTypeId.HYBRID,
+                                google.maps.MapTypeId.ROADMAP,
+                                google.maps.MapTypeId.SATELLITE,
+                                google.maps.MapTypeId.TERRAIN
+                            ]
+                        },
+                        mapTypeId: google.maps.MapTypeId.TERRAIN
+                    };
+
+                    // Load the maps
+                    var div = this.MapElem = document.getElementById('map-canvas');
+                    var map = this.MapTarg = new google.maps.Map(div, opt);
+                    if (map) {
+                        // Load more map options
+                        map.setCenter(this.Position);
+                    }
+
+                    console.log(' - [ Geo ] Google maps loaded.');
+                } else {
+                    console.warn(' - [ Geo ] Warning: Google maps is not available...');
+                }
+            };
+
+            GoogleMapper.prototype.createMarker = function (lat, lng, obj) {
+                if (typeof obj === "undefined") { obj = {}; }
+                // Return a new instance of a marker
+                return new google.maps.Marker($.extend(obj, {
+                    position: new google.maps.LatLng(lat, lng),
+                    map: this.MapTarg
+                }));
+            };
+
+            GoogleMapper.prototype.setPosition = function (lat, lng, zoom) {
+                var pos = new google.maps.LatLng(lat, lng);
+                if (pos && this.MapTarg) {
+                    console.log(' - [ Geo ] Changing map position to [ ' + lat + ' , ' + lng + ' ]');
+
+                    // Update the map view port
+                    this.MapTarg.setCenter(pos);
+                    this.Position = pos;
+
+                    // Position set on map successfuly
+                    return true;
+                } else {
+                    // Save the current position
+                    this.Position = pos;
+
+                    // Deferred action, position saved
+                    return false;
+                }
+            };
+            return GoogleMapper;
+        })();
+        utils.GoogleMapper = GoogleMapper;
+    })(proto.utils || (proto.utils = {}));
+    var utils = proto.utils;
+})(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
+///<reference path="proto.ts"/>
+///<reference path="proto.utils.ts"/>
+var proto;
+(function (proto) {
+    (function (samples) {
+        (function (location) {
+            var GeoController = (function () {
+                function GeoController($rootScope, $scope, geo) {
+                    this.$rootScope = $rootScope;
+                    this.$scope = $scope;
+                    this.geo = geo;
+                    // Link to current scope
+                    this.$scope.geoCtrl = this;
+
+                    // Load resources
+                    this.init();
+                }
+                GeoController.prototype.init = function () {
+                    var _this = this;
+                    this.initMaps(function (map) {
+                        // Load sample data
+                        _this.getSamples();
+
+                        // Request network and geo location info
+                        _this.getClientInfoPassive(function (response) {
+                            _this.$rootScope.$applyAsync(function () {
+                                _this.setClientInfoResponse(response);
+                            });
+                        });
+                    });
+                };
+
+                GeoController.prototype.setClientInfoResponse = function (response) {
+                    if (response) {
+                        // Set the client info
+                        this.$scope.client = this.Client = response;
+
+                        // Get results
+                        var ip = response.ip;
+                        var org = response.org;
+                        var city = response.city;
+                        var region = response.region;
+                        var country = response.country;
+                        var hostname = response.hostname;
+
+                        // Parse Lat Long
+                        var lat, lng;
+                        var loc = response.loc;
+                        if (loc) {
+                            var ll = loc.split(',');
+                            if (ll.length > 1) {
+                                lat = ll[0];
+                                lng = ll[1];
+                            }
+                        }
+                        if (lat && lng) {
+                            var lbl = country + ' ( ' + ip + ' )';
+                            var pin = new proto.utils.GeoPoint(lbl, lat, lng, 3);
+                            var url = 'https://chart.googleapis.com/chart?chst=d_simple_text_icon_left&chld=' + country + '|14|FFF|flag_' + country.toLowerCase() + '|20|FFF|333';
+
+                            // Set the country of origin
+                            this.setGeoPoint(pin, {
+                                icon: 'http://maps.gstatic.com/mapfiles/markers2/dd-via.png'
+                            }, {
+                                content: '<div>' + lbl + '</div>'
+                            });
+                        }
+                    }
+                };
+                GeoController.prototype.getClientInfoPassive = function (callback) {
+                    // Request client info from online service
+                    $.get("http://ipinfo.io", function (response) {
+                        if (callback) {
+                            callback(response);
+                        }
+                    }, "jsonp");
+                };
+
+                GeoController.prototype.initMaps = function (callback) {
+                    var _this = this;
+                    // Define the google mapper class
+                    this.Mapper = new proto.utils.GoogleMapper({
+                        'v': '3.exp',
+                        //'key': apiKey,
+                        'sensor': false,
+                        'libraries': 'places,weather'
+                    });
+
+                    // Start the mapper class
+                    this.Mapper.initMaps(function () {
+                        var map = _this.Mapper.getMap();
+                        if (map) {
+                            // Load resources
+                            _this.loadMaps(map);
+                        }
+
+                        // Maps loaded, update UI...
+                        _this.$rootScope.$applyAsync(function () {
+                            if (callback)
+                                callback(map);
+                        });
+                    });
+                };
+                GeoController.prototype.loadMaps = function (map) {
+                    // Load additional map resources
+                    var transitLayer = new google.maps.TransitLayer();
+                    transitLayer.setMap(map);
+
+                    var cloudLayer = new google.maps.weather.CloudLayer();
+                    cloudLayer.setMap(map);
+
+                    var objClass = eval('google.maps.weather.WeatherLayer');
+                    var weatherLayer = new objClass({
+                        temperatureUnits: google.maps.weather.TemperatureUnit.CELSIUS
+                    });
+                    weatherLayer.setMap(map);
+                };
+
+                GeoController.prototype.getStatus = function () {
+                    var lbl = 'Unavailable';
+                    if (this.$scope.client) {
+                        lbl = this.$scope.client.hostname || this.$scope.client.city || this.$scope.client.country ? 'Somewhere in ' + this.$scope.client.country : 'Locating...';
+                    }
+                    if (this.$scope.position) {
+                        lbl = this.$scope.position.coords ? 'Position Found' : (this.$scope.position.isBusy ? 'Requesting...' : 'Request Declined');
+                    }
+                    return lbl;
+                };
+
+                GeoController.prototype.getPosition = function () {
+                    var _this = this;
+                    console.info(' - [ Geo ] Requesting position...');
+                    this.$scope.position = {
+                        timestamp: Date.now(),
+                        isBusy: true
+                    };
+
+                    // Request the current GPS position from browser
+                    this.geo.GetPosition().then(function (position) {
+                        console.log(' - [ Geo ] Position found!');
+
+                        // Update current position
+                        var lat = position.coords.latitude;
+                        var lng = position.coords.longitude;
+                        _this.$scope.position = position;
+                        _this.Mapper.setPosition(lat, lng);
+
+                        // Set a marker at current location
+                        if (!_this.Marker) {
+                            // Create a mew marker
+                            var marker = _this.Marker = _this.Mapper.createMarker(lat, lng, {
+                                title: 'Your Location',
+                                animation: google.maps.Animation.DROP,
+                                icon: 'http://maps.gstatic.com/mapfiles/markers2/boost-marker-mapview.png'
+                            });
+
+                            // Add the info window
+                            var infowindow = new google.maps.InfoWindow({ content: '<em>Your current location</em>' });
+                            var map = _this.Mapper ? _this.Mapper.getMap() : null;
+                            if (map) {
+                                // Add click event to pin
+                                google.maps.event.addListener(marker, 'click', function () {
+                                    infowindow.open(map, marker);
+                                });
+                                infowindow.open(map, marker);
+                                map.setZoom(16);
+
+                                if (position.coords.accuracy) {
+                                    var accuracyZone = {
+                                        strokeColor: '#0000FF',
+                                        strokeOpacity: 0.8,
+                                        strokeWeight: 2,
+                                        fillColor: '#61d8f3',
+                                        fillOpacity: 0.15,
+                                        map: map,
+                                        center: marker.getPosition(),
+                                        radius: position.coords.accuracy
+                                    };
+
+                                    // Add the circle for this city to the map.
+                                    var zoneCircle = new google.maps.Circle(accuracyZone);
+                                }
+                            }
+                        } else {
+                            // Update existing
+                            _this.Marker.setPosition(new google.maps.LatLng(lat, lng));
+                        }
+                    }, function (ex) {
+                        console.error(' - [ Geo ] ' + (ex.message || 'Request denied.'));
+
+                        // Update UI state
+                        _this.$scope.position = {
+                            timestamp: Date.now(),
+                            failed: true
+                        };
+                    });
+                };
+
+                GeoController.prototype.setGeoPoint = function (point, opts, infoWindowOpts) {
+                    var lat = point.Lat;
+                    var lng = point.Lng;
+                    var key = '' + lat + '_' + lng;
+                    var pin = null;
+                    if (!pin) {
+                        var opts = $.extend(opts || {}, {
+                            title: point.Label
+                        });
+                        if (!opts.icon) {
+                            opts.icon = 'http://maps.gstatic.com/mapfiles/markers2/icon_greenC.png';
+                        }
+                        pin = this.Mapper.createMarker(lat, lng, opts);
+
+                        //this.PinsPOI[key] = pin;
+                        // Add the info window
+                        if (infoWindowOpts) {
+                            var map = this.Mapper ? this.Mapper.getMap() : null;
+                            if (map) {
+                                var opts = $.extend(infoWindowOpts, {});
+                                if (!opts.content) {
+                                    opts.content = '<div>' + point.Label + '</div>';
+                                }
+
+                                var infowindow = new google.maps.InfoWindow(opts);
+                                infowindow.open(map, pin);
+
+                                // Add click event to pin
+                                google.maps.event.addListener(pin, 'click', function () {
+                                    infowindow.open(map, pin);
+                                });
+                            }
+                        }
+                    }
+                    if (this.Mapper) {
+                        this.Mapper.setPosition(lat, lng);
+                    }
+                };
+
+                GeoController.prototype.setPosition = function (lat, lng) {
+                    if (this.Mapper) {
+                        this.Mapper.setPosition(lat, lng);
+                    }
+                };
+
+                GeoController.prototype.hasSamples = function () {
+                    return this.Samples && this.Samples.length > 0;
+                };
+
+                GeoController.prototype.getSamples = function () {
+                    // Ensure maps loaded
+                    if (!this.Mapper || !this.Mapper.isMapsDefined())
+                        return [];
+
+                    // Define if not exist
+                    if (!this.Samples) {
+                        this.Samples = [
+                            new proto.utils.GeoPoint('New York', 40.7056258, -73.97968, 10),
+                            new proto.utils.GeoPoint('London', 51.5286416, -0.1015987, 10),
+                            new proto.utils.GeoPoint('Paris', 48.8588589, 2.3470599, 12),
+                            new proto.utils.GeoPoint('Amsterdam', 52.3747158, 4.8986166, 12),
+                            new proto.utils.GeoPoint('Cape Town', -33.919892, 18.425713, 9),
+                            new proto.utils.GeoPoint('Hong Kong', 22.3700556, 114.1535941, 11),
+                            new proto.utils.GeoPoint('Sydney', -33.7969235, 150.9224326, 10)
+                        ];
+                    }
+                    return this.Samples;
+                };
+                return GeoController;
+            })();
+            location.GeoController = GeoController;
+        })(samples.location || (samples.location = {}));
+        var location = samples.location;
+    })(proto.samples || (proto.samples = {}));
+    var samples = proto.samples;
+})(proto || (proto = {}));
+// ----------------------------------------------------------------------
+// Geo Locator sample definition
+// ----------------------------------------------------------------------
+///<reference path="../../imports.d.ts"/>
+///<reference path="controllers/GeoController.ts"/>
+angular.module('myApp.samples.location', [
+    'ui.router'
+]).config([
+    '$stateProvider', function ($stateProvider) {
+        $stateProvider.state('samples.location', {
+            url: '/location',
+            views: {
+                'left@': { templateUrl: 'samples/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'samples/location/views/main.tpl.html',
+                    controller: 'proto.samples.GeoController',
+                    constrollerAs: 'geoCtrl'
+                }
+            }
+        });
+    }]).config([
+    '$provide', function ($provide) {
+        // Define a decorator to check duration of request
+        $provide.decorator("geo", function ($delegate) {
+            return {
+                locate: function () {
+                    var start = Date.now();
+                    var result = $delegate.locate();
+                    result.always(function () {
+                        console.info("Geo location took: " + (Date.now() - start) + "ms");
+                    });
+                    return result;
+                }
+            };
+        });
+    }]).factory('geo', ['$q', '$rootScope', function ($q, $rootScope) {
+        return new proto.utils.GeoFactory($rootScope, $q);
+    }]).service('geoService', ['$q', '$rootScope', function ($q, $rootScope) {
+        return new proto.utils.GeoFactory($rootScope, $q);
+    }]).filter('latitude', [function () {
+        return proto.utils.GeoFactory.FormatLatitude;
+    }]).filter('longitude', [function () {
+        return proto.utils.GeoFactory.FormatLongitude;
+    }]).filter('formatted', [function () {
+        return proto.String.FormatFilter;
+    }]).controller('proto.samples.GeoController', [
+    '$rootScope',
+    '$scope',
+    'geoService',
+    proto.samples.location.GeoController
+]).run([
+    '$rootScope', function ($rootScope) {
+    }]);
 /// <reference path="../../imports.d.ts" />
 
 angular.module('myApp.samples.notifications', []).config([
@@ -1637,6 +2396,7 @@ angular.module('prototyped.ng.samples', [
     'prototyped.ng.samples.views',
     'myApp.samples.errorHandlers',
     'myApp.samples.sampleData',
+    'myApp.samples.location',
     'myApp.samples.decorators',
     'myApp.samples.interceptors',
     'myApp.samples.notifications',
@@ -1713,7 +2473,13 @@ angular.module('prototyped.ng.samples', [
   $templateCache.put('samples/interceptors/main.tpl.html',
     '<div id=InterceptorView style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=interceptors.busy ng-click=interceptors.apply() class=btn ng-class="{ \'btn-primary\': !interceptors.isPatched(), \'btn-success\': interceptors.isPatched() }">{{ interceptors.isPatched() ? \'Interceptors Active\' : \'Enable Interceptors\' }}</a></span><h4>HTTP Interceptors <small>Register and utilise Angular\'s interceptors.</small></h4><hr><p>...</p><hr><p><a class="btn btn-default" ng-class="{ \'btn-warning\': interceptors.isPatched(), \'btn-success\': interceptors.fcallState == \'Resolved\', \'btn-danger\': interceptors.fcallState == \'Rejected\' }" href="" ng-click=interceptors.triggerBadRequest() ng-disabled=!interceptors.isPatched()>Create Bad Request</a></p><hr><div ng:if=interceptors.error class="alert alert-danger"><b>Error:</b> {{ interceptors.error.message || \'Something went wrong.\' }}</div></div></div></div>');
   $templateCache.put('samples/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=samples.info><i class=fa ng-class="{ \'fa-refresh glow-blue animate-glow\': samples.busy, \'fa-cubes glow-green\': !samples.busy, \'fa-warning glow-red animate-glow\': samples.error }"></i>&nbsp; Samples Home Page</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.errors><i class="fa fa-life-ring"></i> Exception Handlers</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.sampleData><i class="fa fa-gears"></i> Online Sample Data</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.notifications><i class="fa fa-comment"></i> Web Notifications</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.interceptors><i class="fa fa-crosshairs"></i> HTTP Interceptors</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.decorators><i class="fa fa-plug"></i> Service Decorators</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.compression><i class="fa fa-file-archive-o"></i> Dynamic Compression</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.styles3d><i class="fa fa-codepen"></i> Exploring Styles 3D</a></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=samples.info><i class=fa ng-class="{ \'fa-refresh glow-blue animate-glow\': samples.busy, \'fa-cubes glow-green\': !samples.busy, \'fa-warning glow-red animate-glow\': samples.error }"></i>&nbsp; Samples Home Page</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.sampleData><i class="fa fa-gears"></i> Online Sample Data</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.notifications><i class="fa fa-comment"></i> Web Notifications</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.interceptors><i class="fa fa-crosshairs"></i> HTTP Interceptors</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.decorators><i class="fa fa-plug"></i> Service Decorators</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.compression><i class="fa fa-file-archive-o"></i> Dynamic Compression</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.location><i class="fa fa-crosshairs"></i> Geo Location Tracking</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.styles3d><i class="fa fa-codepen"></i> Exploring Styles 3D</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.errors><i class="fa fa-life-ring"></i> Exception Handlers</a></li></ul>');
+  $templateCache.put('samples/location/views/aside.tpl.html',
+    '<ul class="nav nav-list ng-cloak"><li><h5>Current Location</h5><div class=thumbnail><div class="row nav-label"><span class=col-sm-3>Status</span> <b class=col-sm-9 ng-class="{\'text-success\' : position.coords, \'text-inactive\' : client || position.isBusy, \'text-error\':position.failed, \'text-danger\' : !client && !position.coords && !position.failed && !position.isBusy }"><i class=glyphicon ng-class="{\'glyphicon-ok\' : position.coords, \'glyphicon-refresh\' : position.isBusy, \'glyphicon-exclamation-sign\' : !position.coords && !position.isBusy }"></i> {{ geoCtrl.getStatus() }}</b></div><div class="row nav-label" ng-show=position.coords><span class=col-sm-3>Long</span> <b class=col-sm-9>{{ position.coords.longitude | longitude }}</b></div><div class="row nav-label" ng-show=position.coords><span class=col-sm-3>Latt</span> <b class=col-sm-9>{{ position.coords.latitude | latitude }}</b></div><div class="row nav-label" ng-show=position.coords.accuracy><span class=col-sm-3>Accuracy</span> <b class=col-sm-9>{{ position.coords.accuracy | formatted:\'{0} meters\' || \'n.a.\' }}</b></div></div></li><li ng-if=geoCtrl.hasSamples()><h5>Popular Locations</h5><div class=thumbnail><div ng-repeat="loc in geoCtrl.getSamples()"><a href="" ng-click=geoCtrl.setGeoPoint(loc)><i class="glyphicon glyphicon-screenshot"></i> <span class=nav-label>{{ loc.Label }}</span></a></div></div></li><li ng-show="(client || position)"><h5>Additional Info</h5><div class=thumbnail><div class="row nav-label" ng-show=client.country><div class=col-sm-3>Country</div><b class="col-sm-9 ellipse">{{ client.country }}</b></div><div class="row nav-label" ng-show=client.city><div class=col-sm-3>City</div><b class="col-sm-9 ellipse">{{ client.city }}</b></div><div class="row nav-label" ng-show=client.ip><div class=col-sm-3>TCP/IP</div><b class="col-sm-9 ellipse">{{ client.ip }}</b></div><div class="row nav-label" ng-show=position.timestamp><span class=col-sm-3>Updated</span> <b class="col-sm-9 ellipse">{{ position.timestamp | date:\'HH:mm a Z\' || \'n.a.\' }}</b></div><div class="row nav-label" ng-show=position.coords.speed><span class=col-sm-3>Speed</span> <b class="col-sm-9 ellipse">{{ position.coords.speed | formatted:\'{0} m/s\' }}</b></div><div class="row nav-label" ng-show=position.coords.altitude><span class=col-sm-3>Altitude</span> <b class="col-sm-9 ellipse">{{ position.coords.altitude | formatted:\'{0} meters\' }}</b></div><div class="row nav-label" ng-show=position.coords.heading><span class=col-sm-3>Heading</span> <b class="col-sm-9 ellipse">{{ position.coords.heading | formatted:\'{0}°\' }}</b></div></div></li></ul>');
+  $templateCache.put('samples/location/views/main.tpl.html',
+    '<div style="width: 100%"><div class=row><div class="col-lg-9 col-md-12 info-overview"><h5 class=page-header style="margin: 0">Geo Location <small>Find your current position on the globe.</small></h5><div ng-include="\'samples/location/views/status.tpl.html\'"></div><div id=map-canvas class="panel-contents dock-vert" style="min-height: 520px" xng-hide=isActive><div class=docked style="min-width: 640px; min-height: 480px">...</div></div></div><div class="col-lg-3 hidden-md"><div ng-include="\'samples/location/views/aside.tpl.html\'"></div></div></div></div>');
+  $templateCache.put('samples/location/views/status.tpl.html',
+    '<div class=alert role=alert style="cursor:pointer; margin: 0; padding: 3px; border-radius:0" ng-class="{ \'alert-danger\':position.failed, \'alert-info\': position.isBusy, \'alert-success\': position.coords, \'alert-warning\': !position }" ng-click=geoCtrl.getPosition() ng-show=!geoCtrl.hideStatus><button type=button class=close data-dismiss=alert><span aria-hidden=true>&times;</span><span class=sr-only>Close</span></button> <i class=glyphicon ng-class="{ \'glyphicon-eye-close\':position.failed, \'glyphicon-refresh\': position.isBusy, \'glyphicon-ok\': position.coords, \'glyphicon-eye-open\': !position }"></i> <span ng-if="!position && !client">Locating your current position...</span> <span ng-if="!position.failed && !position.coords && !position.isBusy && client"><b>Please Note:</b> Tracking you (passively) via your IP address. <em>Click here for a more accurate position.</em></span> <span ng-if="!position.failed && !position.coords && position.isBusy"><b>Requesting:</b> Please accept or discard the request for your current location...</span> <span ng-if=position.failed><b>Warning:</b> You declined to share your location info, passively tracking your IP address...</span> <span ng-if=position.coords><b>Success:</b> Current position found via browser. Processing info...</span></div>');
   $templateCache.put('samples/main.tpl.html',
     '<div class=container><div class=row><div class=col-md-12><h4>Prototyped Samples <small>Beware, code monkeys at play... ;)</small></h4><hr><p ui:view=body>.....</p><hr></div></div></div>');
   $templateCache.put('samples/notifications/main.tpl.html',

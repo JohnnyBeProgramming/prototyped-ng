@@ -1,5 +1,13 @@
 ﻿body {
 
+    .docked {
+        flex-grow: 1;
+        flex-shrink: 1;
+        display: flex;
+        height: 100%;
+        overflow: none;
+    }
+
     .inactive-gray {
         opacity: 0.50;
         filter: alpha(opacity=50);
@@ -195,6 +203,7 @@
             border-top-left-radius: 0;
             border-top-right-radius: 0;
         }
+
         .tab-content {
         }
     }
@@ -267,4 +276,41 @@
         }
     }
 
+    .console {
+
+        .cmd-console {
+        }
+
+        .cmd-input {
+        }
+
+        .cmd-output {
+            padding: 8px;
+            font-size: 10.5px;
+            font-family: Courier New, Courier, monospace;
+            color: darkslategray;
+        }
+
+        .cmd-line {
+            padding: 0;
+            margin: 0;
+        }
+
+        .cmd-time {
+            color: silver;
+        }
+
+        .cmd-text {
+            white-space: pre;
+        }
+
+
+        @media screen and (max-width: 640px) and (max-height: 480px) {
+
+            .cmd-output {
+                padding: 4px;
+                font-size: 10.4px;
+            }
+        }
+    }
 }

@@ -1,11 +1,11 @@
-/// <reference path="../imports.d.ts" />
+/// <reference path="../../imports.d.ts" />
 
 angular.module('prototyped.ng.about', [
-    // Ensures that templates loaded
+// Ensures that templates loaded
     'prototyped.ng.views',
     'prototyped.ng.styles',
 
-    // Other dependencies
+// Other dependencies
     'ui.router'
 ])
 
@@ -20,7 +20,6 @@ angular.module('prototyped.ng.about', [
             .state('about.info', {
                 url: '/info',
                 views: {
-                    'menu@': { templateUrl: 'views/about/menu.tpl.html' },
                     'left@': { templateUrl: 'views/about/left.tpl.html' },
                     'main@': {
                         templateUrl: 'views/about/info.tpl.html',
@@ -28,23 +27,21 @@ angular.module('prototyped.ng.about', [
                     },
                 }
             })
+            .state('about.online', {
+                url: '^/contact',
+                views: {
+                    'left@': { templateUrl: 'views/about/left.tpl.html' },
+                    'main@': { templateUrl: 'views/about/contact.tpl.html' },
+                }
+            })
             .state('about.conection', {
                 url: '/conection',
                 views: {
-                    'menu@': { templateUrl: 'views/about/menu.tpl.html' },
                     'left@': { templateUrl: 'views/about/left.tpl.html' },
                     'main@': {
                         templateUrl: 'views/about/connections.tpl.html',
                         controller: 'AboutConnectionController',
                     },
-                }
-            })
-            .state('about.online', {
-                url: '^/contact',
-                views: {
-                    'menu@': { templateUrl: 'views/about/menu.tpl.html' },
-                    'left@': { templateUrl: 'views/about/left.tpl.html' },
-                    'main@': { templateUrl: 'views/about/contact.tpl.html' },
                 }
             })
 
@@ -464,5 +461,3 @@ angular.module('prototyped.ng.about', [
             return info;
         }
     }])
-
-;

@@ -1,474 +1,577 @@
-﻿/// <reference path="../imports.d.ts" />
-angular.module('prototyped.ng.about', [
-    'prototyped.ng.views',
-    'prototyped.ng.styles',
+﻿///<reference path="../../../imports.d.ts"/>
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (commands) {
+            var ConsoleController = (function () {
+                function ConsoleController($scope) {
+                    this.$scope = $scope;
+                    this._proxyList = [];
+                    try  {
+                        // Set the scope vars
+                        $scope.myConsole = this;
+                        $scope.lines = [];
+
+                        // Create the list proxies
+                        this._currentProxy = new BrowserConsole();
+                        this._proxyList.push(this._currentProxy);
+
+                        // Get the required libraries
+                        if (typeof require !== 'undefined') {
+                            var proc = require('child_process');
+                            if (!$.isEmptyObject(proc)) {
+                                this._currentProxy = new ProcessConsole(proc);
+                                this._proxyList.push(this._currentProxy);
+                            }
+                        }
+                    } catch (ex) {
+                        // Could not load required libraries
+                        console.error(' - Warning: Console app failed to load required libraries.');
+                    } finally {
+                        // Initialise the controller
+                        this.init();
+                    }
+                }
+                ConsoleController.prototype.init = function () {
+                    try  {
+                        // Check the command line status and give user some feedback
+                        if (this._currentProxy) {
+                            this.success('Command line ready and active.');
+                        } else {
+                            this.warning('Cannot access the command line from the browser.');
+                        }
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                };
+
+                ConsoleController.prototype.clear = function () {
+                    // Clear cache
+                    this.$scope.lines = [];
+
+                    // Clear via proxy
+                    if (this._currentProxy) {
+                        this._currentProxy.clear();
+                    }
+                };
+
+                ConsoleController.prototype.getProxyName = function () {
+                    return (this._currentProxy) ? this._currentProxy.ProxyName : '';
+                };
+                ConsoleController.prototype.getProxies = function () {
+                    return this._proxyList;
+                };
+                ConsoleController.prototype.setProxy = function (name) {
+                    console.info(' - Switching Proxy: ' + name);
+                    for (var i = 0; i < this._proxyList.length; i++) {
+                        var itm = this._proxyList[i];
+                        if (itm.ProxyName == name) {
+                            this._currentProxy = itm;
+                            break;
+                        }
+                    }
+
+                    // Refresh UI if needed
+                    if (!this.$scope.$$phase)
+                        this.$scope.$apply();
+
+                    return this._currentProxy;
+                };
+
+                ConsoleController.prototype.command = function (text) {
+                    var _this = this;
+                    // Try and run the command
+                    this.info('' + text);
+                    this.$scope.txtInput = '';
+
+                    // Check if proxy exists
+                    if (this._currentProxy) {
+                        // Check for 'clear screen' command
+                        if (text == 'cls')
+                            return this.clear();
+
+                        // Run the command via proxy
+                        this._currentProxy.command(text, function (msg, tp) {
+                            switch (tp) {
+                                case 'debug':
+                                    _this.debug(msg);
+                                    break;
+                                case 'info':
+                                    _this.info(msg);
+                                    break;
+                                case 'warn':
+                                    _this.warning(msg);
+                                    break;
+                                case 'succcess':
+                                    _this.success(msg);
+                                    break;
+                                case 'error':
+                                    _this.error(msg);
+                                    break;
+                                default:
+                                    _this.debug(msg);
+                                    break;
+                            }
+
+                            // Refresh UI if needed
+                            if (!_this.$scope.$$phase)
+                                _this.$scope.$apply();
+                        });
+                    } else {
+                        this.error('Command line is not available...');
+                    }
+                };
+
+                ConsoleController.prototype.debug = function (msg) {
+                    this.$scope.lines.push({
+                        time: Date.now(),
+                        text: msg,
+                        type: 'debug'
+                    });
+                };
+
+                ConsoleController.prototype.info = function (msg) {
+                    this.$scope.lines.push({
+                        time: Date.now(),
+                        text: msg,
+                        type: 'info'
+                    });
+                };
+
+                ConsoleController.prototype.warning = function (msg) {
+                    this.$scope.lines.push({
+                        time: Date.now(),
+                        text: msg,
+                        type: 'warning'
+                    });
+                };
+
+                ConsoleController.prototype.success = function (msg) {
+                    this.$scope.lines.push({
+                        time: Date.now(),
+                        text: msg,
+                        type: 'success'
+                    });
+                };
+
+                ConsoleController.prototype.error = function (msg) {
+                    this.$scope.lines.push({
+                        time: Date.now(),
+                        text: msg,
+                        type: 'error'
+                    });
+                };
+                return ConsoleController;
+            })();
+            commands.ConsoleController = ConsoleController;
+
+            var BrowserConsole = (function () {
+                function BrowserConsole() {
+                    this.ProxyName = 'Browser';
+                }
+                BrowserConsole.prototype.command = function (text, callback) {
+                    try  {
+                        var result = eval(text);
+                        if (callback && result) {
+                            callback(result, 'info');
+                        }
+                        console.info(result);
+                    } catch (ex) {
+                        callback(ex, 'error');
+                        console.error(ex);
+                    }
+                };
+
+                BrowserConsole.prototype.clear = function () {
+                    console.clear();
+                };
+                BrowserConsole.prototype.debug = function (msg) {
+                    console.debug(msg);
+                };
+                BrowserConsole.prototype.info = function (msg) {
+                    console.info(msg);
+                };
+                BrowserConsole.prototype.warning = function (msg) {
+                    console.warn(msg);
+                };
+                BrowserConsole.prototype.success = function (msg) {
+                    console.info(msg);
+                };
+                BrowserConsole.prototype.error = function (msg) {
+                    console.error(msg);
+                };
+                return BrowserConsole;
+            })();
+            commands.BrowserConsole = BrowserConsole;
+
+            var ProcessConsole = (function () {
+                function ProcessConsole(_proc) {
+                    this._proc = _proc;
+                    this.ProxyName = 'System';
+                }
+                ProcessConsole.prototype.clear = function () {
+                };
+
+                ProcessConsole.prototype.command = function (text, callback) {
+                    // Call the command line from a child process
+                    var proc = eval('process');
+                    var ls = this._proc.exec(text, function (error, stdout, stderr) {
+                        if (error) {
+                            console.groupCollapsed('Command Error: ' + text);
+                            console.error(error.stack);
+                            console.info(' - Signal received: ' + error.signal);
+                            console.info(' - Error code: ' + error.code);
+                            console.groupEnd();
+                        }
+                        if (stdout) {
+                            callback('' + stdout, 'info');
+                        }
+                        if (stderr) {
+                            callback('' + stderr, 'error');
+                        }
+                    }).on('exit', function (code) {
+                        //callback(' - Process returned: ' + code, 'debug');
+                    });
+                };
+                return ProcessConsole;
+            })();
+            commands.ProcessConsole = ProcessConsole;
+        })(ng.commands || (ng.commands = {}));
+        var commands = ng.commands;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="../../imports.d.ts" />
+/// <reference path="controllers/ConsoleController.ts"/>
+angular.module('prototyped.console', [
     'ui.router'
 ]).config([
     '$stateProvider', function ($stateProvider) {
         // Define the UI states
-        $stateProvider.state('about', {
-            url: '/about',
-            abstract: true
-        }).state('about.info', {
-            url: '/info',
+        $stateProvider.state('proto.console', {
+            url: '/console',
             views: {
-                'menu@': { templateUrl: 'views/about/menu.tpl.html' },
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'views/about/info.tpl.html',
-                    controller: 'AboutInfoController'
+                    templateUrl: 'modules/commands/views/main.tpl.html',
+                    controller: 'proto.ng.commands.ConsoleController'
                 }
-            }
-        }).state('about.conection', {
-            url: '/conection',
-            views: {
-                'menu@': { templateUrl: 'views/about/menu.tpl.html' },
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/about/connections.tpl.html',
-                    controller: 'AboutConnectionController'
-                }
-            }
-        }).state('about.online', {
-            url: '^/contact',
-            views: {
-                'menu@': { templateUrl: 'views/about/menu.tpl.html' },
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': { templateUrl: 'views/about/contact.tpl.html' }
             }
         });
-    }]).controller('AboutInfoController', [
-    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
-        function css(a) {
-            var sheets = document.styleSheets, o = [];
-            for (var i in sheets) {
-                var rules = sheets[i].rules || sheets[i].cssRules;
-                for (var r in rules) {
-                    if (a.is(rules[r].selectorText)) {
-                        o.push(rules[r].selectorText);
-                    }
+    }]).controller('proto.ng.commands.ConsoleController', [
+    '$scope',
+    proto.ng.commands.ConsoleController
+]);
+/// <reference path="../../imports.d.ts" />
+angular.module('prototyped.edge', [
+    'ui.router'
+]).config([
+    '$stateProvider', function ($stateProvider) {
+        // Now set up the states
+        $stateProvider.state('proto.edge', {
+            url: '^/edge',
+            views: {
+                'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },
+                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'modules/edge/index.tpl.html',
+                    controller: 'edgeViewController'
                 }
             }
-            return o;
-        }
+        });
+    }]).controller('edgeViewController', [
+    '$rootScope', '$scope', '$state', '$window', '$location', '$timeout', function ($rootScope, $scope, $state, $window, $location, $timeout) {
+        var appEdge = {
+            stubs: null,
+            active: false,
+            start: function () {
+                if (typeof require === 'undefined')
+                    return;
+                var edge = require("edge");
+                try  {
+                    console.log('-------------------------------------------------------------------------------');
+                    console.log(' - Connnecting NodeJS with an EdgeJS to the outside world....');
+                    console.log('-------------------------------------------------------------------------------');
 
-        function selectorExists(selector) {
-            return false;
-            //var ret = css($(selector));
-            //return ret;
-        }
-
-        function getVersionInfo(ident) {
-            try  {
-                if (typeof process !== 'undefined' && process.versions) {
-                    return process.versions[ident];
+                    var stubs = appEdge.stubs = {
+                        ping: edge.func(function () {
+                        })
+                    };
+                } catch (ex) {
+                    appEdge.error = ex;
+                    return false;
                 }
-            } catch (ex) {
-            }
-            return null;
-        }
-
-        // Define a function to detect the capabilities
-        $scope.detectBrowserInfo = function () {
-            var info = {
-                about: null,
-                versions: {
-                    ie: null,
-                    html: null,
-                    jqry: null,
-                    css: null,
-                    js: null,
-                    ng: null,
-                    nw: null,
-                    njs: null,
-                    v8: null,
-                    openssl: null,
-                    chromium: null
-                },
-                detects: {
-                    jqry: false,
-                    less: false,
-                    bootstrap: false,
-                    ngAnimate: false,
-                    ngUiRouter: false,
-                    ngUiUtils: false,
-                    ngUiBootstrap: false
-                },
-                css: {
-                    boostrap2: null,
-                    boostrap3: null
-                },
-                codeName: navigator.appCodeName,
-                userAgent: navigator.userAgent
-            };
-
-            try  {
-                // Get IE version (if defined)
-                if (!!window['ActiveXObject']) {
-                    info.versions.ie = 10;
-                }
-
-                // Sanitize codeName and userAgentt
-                var cn = info.codeName;
-                var ua = info.userAgent;
-                if (ua) {
-                    // Remove start of string in UAgent upto CName or end of string if not found.
-                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
-
-                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
-                    ua = ua.substring(cn.length);
-
-                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
-                        ua = ua.substring(1);
-                    }
-
-                    // Remove the end of the string from first characrer that is not a number or point etc.
-                    var pointer = 0;
-                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
-                        pointer = pointer + 1;
-                    }
-                    ua = ua.substring(0, pointer);
-
-                    if (!window.isNaN(ua)) {
-                        if (parseInt(ua) > 0) {
-                            info.versions.html = ua;
-                        }
-                        if (parseFloat(ua) >= 5) {
-                            info.versions.css = '3.x';
-                            info.versions.js = '5.x';
-                        }
-                    }
-                }
-                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
-                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
-                info.versions.nw = getVersionInfo('node-webkit');
-                info.versions.njs = getVersionInfo('node');
-                info.versions.v8 = getVersionInfo('v8');
-                info.versions.openssl = getVersionInfo('openssl');
-                info.versions.chromium = getVersionInfo('chromium');
-
-                // Check for CSS extensions
-                info.css.boostrap2 = selectorExists('hero-unit');
-                info.css.boostrap3 = selectorExists('jumbotron');
-
-                // Detect selected features and availability
-                info.about = {
-                    protocol: $location.$$protocol,
-                    browser: {},
-                    server: {
-                        active: undefined,
-                        url: $location.$$absUrl
-                    },
-                    os: {},
-                    hdd: { type: null }
-                };
-
-                // Detect the operating system
-                var osName = 'Unknown OS';
-                var appVer = navigator.appVersion;
-                if (appVer) {
-                    if (appVer.indexOf("Win") != -1)
-                        osName = 'Windows';
-                    if (appVer.indexOf("Mac") != -1)
-                        osName = 'MacOS';
-                    if (appVer.indexOf("X11") != -1)
-                        osName = 'UNIX';
-                    if (appVer.indexOf("Linux") != -1)
-                        osName = 'Linux';
-                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
-                }
-                info.about.os.name = osName;
-
-                // Check for jQuery
-                info.detects.jqry = typeof jQuery !== 'undefined';
-
-                // Check for general header and body scripts
-                $("script").each(function () {
-                    var src = $(this).attr("src");
-                    if (src) {
-                        // Fast check on known script names
-                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
-                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
-                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
-                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
-                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
-                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
-                    }
+                return true;
+            },
+            run: function () {
+                // Send a pin out to C# world
+                var me = 'JavaScript';
+                console.log(' - [ JS ] Sending out a probe named \'' + me + '\'... ');
+                appEdge.stubs.ping(me, function (error, result) {
+                    if (error)
+                        throw error;
+                    console.log(result);
+                    console.log(' - [ JS ] Seems like the probe made it back!');
                 });
-
-                // Get the client browser details (build a url string)
-                var detectUrl = (function () {
-                    var p = [], w = window, d = document, e = 0, f = 0;
-                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
-                    e |= w.ActiveXObject ? 1 : 0;
-                    e |= w.opera ? 2 : 0;
-                    e |= w.chrome ? 4 : 0;
-                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
-                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
-                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
-                    p.push('e=' + e);
-                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
-                    f |= 'WebSocket' in w ? 2 : 0;
-                    f |= w.Worker ? 4 : 0;
-                    f |= w.applicationCache ? 8 : 0;
-                    f |= w.history && history.pushState ? 16 : 0;
-                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
-                    f |= 'FileReader' in w ? 64 : 0;
-                    p.push('f=' + f);
-                    p.push('r=' + Math.random().toString(36).substring(7));
-                    p.push('w=' + screen.width);
-                    p.push('h=' + screen.height);
-                    var s = d.createElement('script');
-                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
-                })();
-
-                // Send a loaded package to a server to detect more features
-                $.getScript(detectUrl).done(function (script, textStatus) {
-                    $rootScope.$applyAsync(function () {
-                        // Browser info and details loaded
-                        var browserInfo = new window.WhichBrowser();
-                        angular.extend(info.about, browserInfo);
-                    });
-                }).fail(function (jqxhr, settings, exception) {
-                    console.error(exception);
-                });
-
-                // Set browser name to IE (if defined)
-                if (navigator.appName == 'Microsoft Internet Explorer') {
-                    info.about.browser.name = 'Internet Explorer';
-                }
-
-                // Check if the browser supports web db's
-                var webDB = info.about.webdb = {
-                    db: null,
-                    version: '1',
-                    active: null,
-                    size: 5 * 1024 * 1024,
-                    test: function (name, desc, dbVer, dbSize) {
-                        try  {
-                            // Try and open a web db
-                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
-                            webDB.onSuccess(null, null);
-                        } catch (ex) {
-                            // Nope, something went wrong
-                            webDB.onError(null, null);
-                        }
-                    },
-                    onSuccess: function (tx, r) {
-                        if (tx) {
-                            if (r) {
-                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
-                            }
-                            if (tx) {
-                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
-                            }
-                        }
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = true;
-                            webDB.used = JSON.stringify(webDB.db).length;
-                        });
-                    },
-                    onError: function (tx, e) {
-                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = false;
-                        });
-                    }
-                };
-                info.about.webdb.test();
-            } catch (ex) {
-                console.error(ex);
             }
-
-            // Return the preliminary info
-            return info;
         };
 
-        // Define the state
-        $scope.info = $scope.detectBrowserInfo();
-    }]).controller('AboutConnectionController', [
-    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
-        $scope.result = null;
-        $scope.status = null;
-        $scope.state = {
-            editMode: false,
-            location: $location.$$absUrl,
-            protocol: $location.$$protocol,
-            requireHttps: ($location.$$protocol == 'https')
+        // Define the Edge controller logic
+        $scope.edge = {
+            active: false,
+            detect: function () {
+                // Make sure we are in node space
+                if (typeof require !== 'undefined') {
+                    try  {
+                        // Load the AppEdge library
+                        var edge = appEdge;
+                        if (edge) {
+                            // Start loading all the stubs
+                            $scope.edge.active = edge.start();
+
+                            // Extend the scope with full functionality
+                            angular.extend($scope.edge, edge);
+                        }
+                    } catch (ex) {
+                        // Something went wrong
+                        $scope.edge.error = ex;
+                        return false;
+                    }
+                    return true;
+                } else {
+                    // Method 'require' is undefined, probably inside a browser window
+                    $scope.edge.error = new Error('Required libraries not found or unavailable.');
+                    return false;
+                }
+            }
         };
-        $scope.detect = function () {
-            var target = $scope.state.location;
-            var started = Date.now();
-            $scope.result = null;
-            $scope.latency = null;
-            $scope.status = { code: 0, desc: '', style: 'label-default' };
-            $.ajax({
-                url: target,
-                crossDomain: true,
-                /*
-                username: 'user',
-                password: 'pass',
-                xhrFields: {
-                withCredentials: true
-                }
-                */
-                beforeSend: function (xhr) {
-                    $timeout(function () {
-                        //$scope.status.code = xhr.status;
-                        $scope.status.desc = 'sending';
-                        $scope.status.style = 'label-info';
-                    });
-                },
-                success: function (data, textStatus, xhr) {
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-success';
-                        $scope.result = {
-                            valid: true,
-                            info: data,
-                            sent: started,
-                            received: Date.now()
-                        };
-                    });
-                },
-                error: function (xhr, textStatus, error) {
-                    xhr.ex = error;
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-danger';
-                        $scope.result = {
-                            valid: false,
-                            info: xhr,
-                            sent: started,
-                            error: xhr.statusText,
-                            received: Date.now()
-                        };
-                    });
-                },
-                complete: function (xhr, textStatus) {
-                    console.debug(' - Status Code: ' + xhr.status);
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                    });
-                }
-            }).always(function (xhr) {
-                $timeout(function () {
-                    $scope.latency = $scope.getLatencyInfo();
-                });
+
+        // Auto-detect if node is available
+        if (typeof require !== 'undefined') {
+            $timeout(function () {
+                $scope.edge.detect();
             });
-        };
-        $scope.setProtocol = function (protocol) {
-            var val = $scope.state.location;
-            var pos = val.indexOf('://');
-            if (pos > 0) {
-                val = protocol + val.substring(pos);
-            }
-            $scope.state.protocol = protocol;
-            $scope.state.location = val;
-            $scope.detect();
-        };
-        $scope.getProtocolStyle = function (protocol, activeStyle) {
-            var cssRes = '';
-            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
-            if (isValid) {
-                if (!$scope.result) {
-                    cssRes += 'btn-primary';
-                } else if ($scope.result.valid && activeStyle) {
-                    cssRes += activeStyle;
-                } else if ($scope.result) {
-                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
+        }
+    }]);
+///<reference path="../../../imports.d.ts"/>
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (editor) {
+            var EditorController = (function () {
+                function EditorController($scope, $timeout) {
+                    this.$scope = $scope;
+                    this.$timeout = $timeout;
+                    this.isActive = false;
+                    this.FileLocation = '';
+                    this.LastChanged = null;
+                    this.LastOnSaved = null;
+                    this.$scope.myWriter = this;
+                    try  {
+                        // Load file system
+                        this._path = require('path');
+                        this._fs = require('fs');
+
+                        // Try  and load the node webkit
+                        var nwGui = 'nw.gui';
+                        this._gui = require(nwGui);
+                    } catch (ex) {
+                        console.warn(' - [ Editor ] Warning: Could not load all required modules');
+                    }
+                }
+                Object.defineProperty(EditorController.prototype, "FileContents", {
+                    get: function () {
+                        return this._buffer;
+                    },
+                    set: function (buffer) {
+                        this._buffer = buffer;
+                        this.LastChanged = Date.now();
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+
+                Object.defineProperty(EditorController.prototype, "HasChanges", {
+                    get: function () {
+                        return this.LastChanged != null && this.LastChanged > this.LastOnSaved;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(EditorController.prototype, "HasFileSys", {
+                    get: function () {
+                        return !$.isEmptyObject(this._gui);
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+
+                EditorController.prototype.init = function () {
+                    this.isActive = true;
+                };
+
+                EditorController.prototype.openFile = function () {
+                    var _this = this;
+                    if (this.checkUnsaved())
+                        return;
+
+                    if (!$.isEmptyObject(this._gui) && !$.isEmptyObject(this._fs)) {
+                        var chooser = $('#fileDialog');
+                        chooser.change(function (evt) {
+                            var filePath = chooser.val();
+                            if (filePath) {
+                                // Try and read the file
+                                _this._fs.readFile(filePath, 'UTF-8', function (err, data) {
+                                    if (err) {
+                                        throw new Error(err);
+                                    } else {
+                                        _this.FileContents = data;
+                                        _this.FileLocation = filePath;
+                                        _this.LastChanged = null;
+                                        _this.LastOnSaved = null;
+                                    }
+                                    _this.$scope.$apply();
+                                });
+                            }
+                        });
+                        chooser.trigger('click');
+                    } else {
+                        console.warn(' - [ Editor ] Warning: Shell not available.');
+                    }
+                };
+
+                EditorController.prototype.openFileLocation = function () {
+                    if (this._gui) {
+                        this._gui.Shell.openItem(this.FileLocation);
+                    } else {
+                        console.warn(' - [ Editor ] Warning: Shell not available.');
+                    }
+                };
+
+                EditorController.prototype.newFile = function () {
+                    if (this.checkUnsaved())
+                        return;
+
+                    // Clear prev. states
+                    this.FileLocation = null;
+                    this.LastChanged = null;
+                    this.LastOnSaved = null;
+
+                    // Set some intial text
+                    this.FileContents = 'Enter some text';
+                    this.LastChanged = Date.now();
+
+                    // Do post-new operations
+                    this.$timeout(function () {
+                        // Select file contents
+                        $('#FileContents').select();
+                    });
+                };
+
+                EditorController.prototype.saveFile = function (filePath) {
+                    var _this = this;
+                    if (!filePath)
+                        filePath = this.FileLocation;
+                    if (!filePath)
+                        return this.saveFileAs();
+                    if (!$.isEmptyObject(this._fs) && !$.isEmptyObject(this._path)) {
+                        var output = this._buffer;
+                        this._fs.writeFile(filePath, output, 'UTF-8', function (err) {
+                            if (err) {
+                                throw new Error(err);
+                            } else {
+                                // File has been saved
+                                _this.FileLocation = filePath;
+                                _this.LastOnSaved = Date.now();
+                            }
+                            _this.$scope.$apply();
+                        });
+                    } else {
+                        console.warn(' - [ Editor ] Warning: File system not available.');
+                    }
+                };
+
+                EditorController.prototype.saveFileAs = function () {
+                    var _this = this;
+                    if (!$.isEmptyObject(this._gui)) {
+                        // Get the file name
+                        var filePath = this.FileLocation || 'Untitled.txt';
+                        var chooser = $('#saveDialog');
+                        chooser.change(function (evt) {
+                            var filePath = chooser.val();
+                            if (filePath) {
+                                // Save file in specified location
+                                _this.saveFile(filePath);
+                            }
+                        });
+                        chooser.trigger('click');
+                    } else {
+                        console.warn(' - [ Editor ] Warning: Shell not available.');
+                    }
+                };
+
+                EditorController.prototype.test = function () {
+                    throw new Error('Lala');
+                    try  {
+                        var dir = './';
+                        var log = "Test.log";
+                        if (!$.isEmptyObject(this._fs) && !$.isEmptyObject(this._path)) {
+                            var target = this._path.resolve(dir, log);
+                            this._fs.writeFile(log, "Hey there!", function (err) {
+                                if (err) {
+                                    throw new Error(err);
+                                } else {
+                                    var nwGui = 'nw.gui';
+                                    var myGui = require(nwGui);
+                                    if (!$.isEmptyObject(myGui)) {
+                                        myGui.Shell.openItem(target);
+                                    } else {
+                                        throw new Error('Cannot open the item: ' + target);
+                                    }
+                                }
+                            });
+                        } else {
+                            console.warn(' - Warning: File system not available...');
+                        }
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                };
+
+                EditorController.prototype.checkUnsaved = function (msg) {
+                    var msgCheck = msg || 'There are unsaved changes.\r\nAre you sure you want to continue?';
+                    var hasCheck = this.FileContents != null && this.HasChanges;
+                    return (hasCheck && confirm(msgCheck) == false);
+                };
+                return EditorController;
+            })();
+            editor.EditorController = EditorController;
+        })(ng.editor || (ng.editor = {}));
+        var editor = ng.editor;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="../../imports.d.ts" />
+/// <reference path="controllers/EditorController.ts"/>
+angular.module('prototyped.editor', [
+    'ui.router'
+]).config([
+    '$stateProvider', function ($stateProvider) {
+        // Define the UI states
+        $stateProvider.state('proto.editor', {
+            url: '/editor',
+            views: {
+                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'modules/editor/views/main.tpl.html',
+                    controller: 'proto.ng.editor.EditorController'
                 }
             }
-            return cssRes;
-        };
-        $scope.getStatusIcon = function (activeStyle) {
-            var cssRes = '';
-            if (!$scope.result) {
-                cssRes += 'glyphicon-refresh';
-            } else if (activeStyle && $scope.result.valid) {
-                cssRes += activeStyle;
-            } else {
-                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
-            }
-            return cssRes;
-        };
-        $scope.submitForm = function () {
-            $scope.state.editMode = false;
-            if ($scope.state.requireHttps) {
-                $scope.setProtocol('https');
-            } else {
-                $scope.detect();
-            }
-        };
-        $scope.getStatusColor = function () {
-            var cssRes = $scope.getStatusIcon() + ' ';
-            if (!$scope.result) {
-                cssRes += 'busy';
-            } else if ($scope.result.valid) {
-                cssRes += 'success';
-            } else {
-                cssRes += 'error';
-            }
-            return cssRes;
-        };
-        $scope.getLatencyInfo = function () {
-            var cssNone = 'text-muted';
-            var cssHigh = 'text-success';
-            var cssMedium = 'text-warning';
-            var cssLow = 'text-danger';
-            var info = {
-                desc: '',
-                style: cssNone
-            };
-
-            if (!$scope.result) {
-                return info;
-            }
-
-            if (!$scope.result.valid) {
-                info.style = 'text-muted';
-                info.desc = 'Connection Failed';
-                return info;
-            }
-
-            var totalMs = $scope.result.received - $scope.result.sent;
-            if (totalMs > 2 * 60 * 1000) {
-                info.style = cssNone;
-                info.desc = 'Timed out';
-            } else if (totalMs > 1 * 60 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Impossibly slow';
-            } else if (totalMs > 30 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Very slow';
-            } else if (totalMs > 1 * 1000) {
-                info.style = cssMedium;
-                info.desc = 'Relatively slow';
-            } else if (totalMs > 500) {
-                info.style = cssMedium;
-                info.desc = 'Moderately slow';
-            } else if (totalMs > 250) {
-                info.style = cssMedium;
-                info.desc = 'Barely Responsive';
-            } else if (totalMs > 150) {
-                info.style = cssHigh;
-                info.desc = 'Average Response Time';
-            } else if (totalMs > 50) {
-                info.style = cssHigh;
-                info.desc = 'Responsive Enough';
-            } else if (totalMs > 15) {
-                info.style = cssHigh;
-                info.desc = 'Very Responsive';
-            } else {
-                info.style = cssHigh;
-                info.desc = 'Optimal';
-            }
-            return info;
-        };
-    }]);
+        });
+    }]).controller('proto.ng.editor.EditorController', [
+    '$scope',
+    proto.ng.editor.EditorController
+]);
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.certs', [
     'ui.router'
@@ -481,7 +584,7 @@ angular.module('prototyped.certs', [
         }).state('certs.info', {
             url: '',
             views: {
-                'left@': { templateUrl: 'modules/appcmd.exe/left.tpl.html' },
+                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/appcmd.exe/certs.tpl.html',
                     controller: 'appCmdViewController'
@@ -696,295 +799,6 @@ angular.module('prototyped.certs', [
             }
             return cssRes;
         };
-    }]);
-/// <reference path="../imports.d.ts" />
-angular.module('prototyped.ng.default', [
-    'ui.router'
-]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Now set up the states
-        $stateProvider.state('default', {
-            url: '/',
-            views: {
-                'main@': {
-                    templateUrl: 'views/default.tpl.html',
-                    controller: 'HomeViewCtrl'
-                }
-            }
-        });
-    }]).controller('HomeViewCtrl', [
-    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
-        $scope.result = null;
-        $scope.status = null;
-        $scope.state = {
-            editMode: false,
-            location: $location.$$absUrl,
-            protocol: $location.$$protocol,
-            requireHttps: ($location.$$protocol == 'https')
-        };
-        $scope.detect = function () {
-            var target = $scope.state.location;
-            var started = Date.now();
-            $scope.result = null;
-            $scope.latency = null;
-            $scope.status = { code: 0, desc: '', style: 'label-default' };
-            $.ajax({
-                url: target,
-                crossDomain: true,
-                /*
-                username: 'user',
-                password: 'pass',
-                xhrFields: {
-                withCredentials: true
-                }
-                */
-                beforeSend: function (xhr) {
-                    $timeout(function () {
-                        //$scope.status.code = xhr.status;
-                        $scope.status.desc = 'sending';
-                        $scope.status.style = 'label-info';
-                    });
-                },
-                success: function (data, textStatus, xhr) {
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-success';
-                        $scope.result = {
-                            valid: true,
-                            info: data,
-                            sent: started,
-                            received: Date.now()
-                        };
-                    });
-                },
-                error: function (xhr, textStatus, error) {
-                    xhr.ex = error;
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-danger';
-                        $scope.result = {
-                            valid: false,
-                            info: xhr,
-                            sent: started,
-                            error: xhr.statusText,
-                            received: Date.now()
-                        };
-                    });
-                },
-                complete: function (xhr, textStatus) {
-                    console.debug(' - Status Code: ' + xhr.status);
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                    });
-                }
-            }).always(function (xhr) {
-                $timeout(function () {
-                    $scope.latency = $scope.getLatencyInfo();
-                });
-            });
-        };
-        $scope.setProtocol = function (protocol) {
-            var val = $scope.state.location;
-            var pos = val.indexOf('://');
-            if (pos > 0) {
-                val = protocol + val.substring(pos);
-            }
-            $scope.state.protocol = protocol;
-            $scope.state.location = val;
-            $scope.detect();
-        };
-        $scope.getProtocolStyle = function (protocol, activeStyle) {
-            var cssRes = '';
-            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
-            if (isValid) {
-                if (!$scope.result) {
-                    cssRes += 'btn-primary';
-                } else if ($scope.result.valid && activeStyle) {
-                    cssRes += activeStyle;
-                } else if ($scope.result) {
-                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
-                }
-            }
-            return cssRes;
-        };
-        $scope.getStatusIcon = function (activeStyle) {
-            var cssRes = '';
-            if (!$scope.result) {
-                cssRes += 'glyphicon-refresh';
-            } else if (activeStyle && $scope.result.valid) {
-                cssRes += activeStyle;
-            } else {
-                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
-            }
-            return cssRes;
-        };
-        $scope.submitForm = function () {
-            $scope.state.editMode = false;
-            if ($scope.state.requireHttps) {
-                $scope.setProtocol('https');
-            } else {
-                $scope.detect();
-            }
-        };
-        $scope.getStatusColor = function () {
-            var cssRes = $scope.getStatusIcon() + ' ';
-            if (!$scope.result) {
-                cssRes += 'busy';
-            } else if ($scope.result.valid) {
-                cssRes += 'success';
-            } else {
-                cssRes += 'error';
-            }
-            return cssRes;
-        };
-        $scope.getLatencyInfo = function () {
-            var cssNone = 'text-muted';
-            var cssHigh = 'text-success';
-            var cssMedium = 'text-warning';
-            var cssLow = 'text-danger';
-            var info = {
-                desc: '',
-                style: cssNone
-            };
-
-            if (!$scope.result) {
-                return info;
-            }
-
-            if (!$scope.result.valid) {
-                info.style = 'text-muted';
-                info.desc = 'Connection Failed';
-                return info;
-            }
-
-            var totalMs = $scope.result.received - $scope.result.sent;
-            if (totalMs > 2 * 60 * 1000) {
-                info.style = cssNone;
-                info.desc = 'Timed out';
-            } else if (totalMs > 1 * 60 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Impossibly slow';
-            } else if (totalMs > 30 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Very slow';
-            } else if (totalMs > 1 * 1000) {
-                info.style = cssMedium;
-                info.desc = 'Relatively slow';
-            } else if (totalMs > 500) {
-                info.style = cssMedium;
-                info.desc = 'Moderately slow';
-            } else if (totalMs > 250) {
-                info.style = cssMedium;
-                info.desc = 'Barely Responsive';
-            } else if (totalMs > 150) {
-                info.style = cssHigh;
-                info.desc = 'Average Response Time';
-            } else if (totalMs > 50) {
-                info.style = cssHigh;
-                info.desc = 'Responsive Enough';
-            } else if (totalMs > 15) {
-                info.style = cssHigh;
-                info.desc = 'Very Responsive';
-            } else {
-                info.style = cssHigh;
-                info.desc = 'Optimal';
-            }
-            return info;
-        };
-    }]);
-/// <reference path="../../imports.d.ts" />
-angular.module('prototyped.edge', [
-    'ui.router'
-]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Now set up the states
-        $stateProvider.state('prototyped.edge', {
-            url: '^/edge',
-            views: {
-                'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },
-                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'modules/edge/index.tpl.html',
-                    controller: 'edgeViewController'
-                }
-            }
-        });
-    }]).controller('edgeViewController', [
-    '$rootScope', '$scope', '$state', '$window', '$location', '$timeout', function ($rootScope, $scope, $state, $window, $location, $timeout) {
-        var appEdge = {
-            stubs: null,
-            active: false,
-            start: function () {
-                if (typeof require === 'undefined')
-                    return;
-                var edge = require("edge");
-                try  {
-                    console.log('-------------------------------------------------------------------------------');
-                    console.log(' - Connnecting NodeJS with an EdgeJS to the outside world....');
-                    console.log('-------------------------------------------------------------------------------');
-
-                    var stubs = appEdge.stubs = {
-                        ping: edge.func(function () {
-                        })
-                    };
-                } catch (ex) {
-                    appEdge.error = ex;
-                    return false;
-                }
-                return true;
-            },
-            run: function () {
-                // Send a pin out to C# world
-                var me = 'JavaScript';
-                console.log(' - [ JS ] Sending out a probe named \'' + me + '\'... ');
-                appEdge.stubs.ping(me, function (error, result) {
-                    if (error)
-                        throw error;
-                    console.log(result);
-                    console.log(' - [ JS ] Seems like the probe made it back!');
-                });
-            }
-        };
-
-        // Define the Edge controller logic
-        $scope.edge = {
-            active: false,
-            detect: function () {
-                // Make sure we are in node space
-                if (typeof require !== 'undefined') {
-                    try  {
-                        // Load the AppEdge library
-                        var edge = appEdge;
-                        if (edge) {
-                            // Start loading all the stubs
-                            $scope.edge.active = edge.start();
-
-                            // Extend the scope with full functionality
-                            angular.extend($scope.edge, edge);
-                        }
-                    } catch (ex) {
-                        // Something went wrong
-                        $scope.edge.error = ex;
-                        return false;
-                    }
-                    return true;
-                } else {
-                    // Method 'require' is undefined, probably inside a browser window
-                    $scope.edge.error = new Error('Required libraries not found or unavailable.');
-                    return false;
-                }
-            }
-        };
-
-        // Auto-detect if node is available
-        if (typeof require !== 'undefined') {
-            $timeout(function () {
-                $scope.edge.detect();
-            });
-        }
     }]);
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.sqlcmd', [
@@ -1654,7 +1468,7 @@ angular.module('prototyped.features', [
 ]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
-        $stateProvider.state('prototyped.cmd', {
+        $stateProvider.state('proto.cmd', {
             url: '/cmd',
             views: {
                 'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },
@@ -1664,7 +1478,7 @@ angular.module('prototyped.features', [
                     controller: 'systemCmdViewController'
                 }
             }
-        }).state('prototyped.clear', {
+        }).state('proto.clear', {
             url: '/clear',
             views: {
                 'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },
@@ -1838,8 +1652,674 @@ angular.module('prototyped.features', [
         angular.extend($scope.cmd, updates);
     }]);
 /// <reference path="../imports.d.ts" />
+angular.module('prototyped.ng.default', [
+    'ui.router'
+]).config([
+    '$stateProvider', function ($stateProvider) {
+        // Now set up the states
+        $stateProvider.state('default', {
+            url: '/',
+            views: {
+                'main@': {
+                    templateUrl: 'views/default.tpl.html',
+                    controller: 'HomeViewCtrl'
+                }
+            }
+        });
+    }]).controller('HomeViewCtrl', [
+    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
+        $scope.result = null;
+        $scope.status = null;
+        $scope.state = {
+            editMode: false,
+            location: $location.$$absUrl,
+            protocol: $location.$$protocol,
+            requireHttps: ($location.$$protocol == 'https')
+        };
+        $scope.detect = function () {
+            var target = $scope.state.location;
+            var started = Date.now();
+            $scope.result = null;
+            $scope.latency = null;
+            $scope.status = { code: 0, desc: '', style: 'label-default' };
+            $.ajax({
+                url: target,
+                crossDomain: true,
+                /*
+                username: 'user',
+                password: 'pass',
+                xhrFields: {
+                withCredentials: true
+                }
+                */
+                beforeSend: function (xhr) {
+                    $timeout(function () {
+                        //$scope.status.code = xhr.status;
+                        $scope.status.desc = 'sending';
+                        $scope.status.style = 'label-info';
+                    });
+                },
+                success: function (data, textStatus, xhr) {
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-success';
+                        $scope.result = {
+                            valid: true,
+                            info: data,
+                            sent: started,
+                            received: Date.now()
+                        };
+                    });
+                },
+                error: function (xhr, textStatus, error) {
+                    xhr.ex = error;
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-danger';
+                        $scope.result = {
+                            valid: false,
+                            info: xhr,
+                            sent: started,
+                            error: xhr.statusText,
+                            received: Date.now()
+                        };
+                    });
+                },
+                complete: function (xhr, textStatus) {
+                    console.debug(' - Status Code: ' + xhr.status);
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                    });
+                }
+            }).always(function (xhr) {
+                $timeout(function () {
+                    $scope.latency = $scope.getLatencyInfo();
+                });
+            });
+        };
+        $scope.setProtocol = function (protocol) {
+            var val = $scope.state.location;
+            var pos = val.indexOf('://');
+            if (pos > 0) {
+                val = protocol + val.substring(pos);
+            }
+            $scope.state.protocol = protocol;
+            $scope.state.location = val;
+            $scope.detect();
+        };
+        $scope.getProtocolStyle = function (protocol, activeStyle) {
+            var cssRes = '';
+            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
+            if (isValid) {
+                if (!$scope.result) {
+                    cssRes += 'btn-primary';
+                } else if ($scope.result.valid && activeStyle) {
+                    cssRes += activeStyle;
+                } else if ($scope.result) {
+                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
+                }
+            }
+            return cssRes;
+        };
+        $scope.getStatusIcon = function (activeStyle) {
+            var cssRes = '';
+            if (!$scope.result) {
+                cssRes += 'glyphicon-refresh';
+            } else if (activeStyle && $scope.result.valid) {
+                cssRes += activeStyle;
+            } else {
+                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
+            }
+            return cssRes;
+        };
+        $scope.submitForm = function () {
+            $scope.state.editMode = false;
+            if ($scope.state.requireHttps) {
+                $scope.setProtocol('https');
+            } else {
+                $scope.detect();
+            }
+        };
+        $scope.getStatusColor = function () {
+            var cssRes = $scope.getStatusIcon() + ' ';
+            if (!$scope.result) {
+                cssRes += 'busy';
+            } else if ($scope.result.valid) {
+                cssRes += 'success';
+            } else {
+                cssRes += 'error';
+            }
+            return cssRes;
+        };
+        $scope.getLatencyInfo = function () {
+            var cssNone = 'text-muted';
+            var cssHigh = 'text-success';
+            var cssMedium = 'text-warning';
+            var cssLow = 'text-danger';
+            var info = {
+                desc: '',
+                style: cssNone
+            };
+
+            if (!$scope.result) {
+                return info;
+            }
+
+            if (!$scope.result.valid) {
+                info.style = 'text-muted';
+                info.desc = 'Connection Failed';
+                return info;
+            }
+
+            var totalMs = $scope.result.received - $scope.result.sent;
+            if (totalMs > 2 * 60 * 1000) {
+                info.style = cssNone;
+                info.desc = 'Timed out';
+            } else if (totalMs > 1 * 60 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Impossibly slow';
+            } else if (totalMs > 30 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Very slow';
+            } else if (totalMs > 1 * 1000) {
+                info.style = cssMedium;
+                info.desc = 'Relatively slow';
+            } else if (totalMs > 500) {
+                info.style = cssMedium;
+                info.desc = 'Moderately slow';
+            } else if (totalMs > 250) {
+                info.style = cssMedium;
+                info.desc = 'Barely Responsive';
+            } else if (totalMs > 150) {
+                info.style = cssHigh;
+                info.desc = 'Average Response Time';
+            } else if (totalMs > 50) {
+                info.style = cssHigh;
+                info.desc = 'Responsive Enough';
+            } else if (totalMs > 15) {
+                info.style = cssHigh;
+                info.desc = 'Very Responsive';
+            } else {
+                info.style = cssHigh;
+                info.desc = 'Optimal';
+            }
+            return info;
+        };
+    }]);
+/// <reference path="../../imports.d.ts" />
+angular.module('prototyped.ng.about', [
+    'prototyped.ng.views',
+    'prototyped.ng.styles',
+    'ui.router'
+]).config([
+    '$stateProvider', function ($stateProvider) {
+        // Define the UI states
+        $stateProvider.state('about', {
+            url: '/about',
+            abstract: true
+        }).state('about.info', {
+            url: '/info',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/info.tpl.html',
+                    controller: 'AboutInfoController'
+                }
+            }
+        }).state('about.online', {
+            url: '^/contact',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': { templateUrl: 'views/about/contact.tpl.html' }
+            }
+        }).state('about.conection', {
+            url: '/conection',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/connections.tpl.html',
+                    controller: 'AboutConnectionController'
+                }
+            }
+        });
+    }]).controller('AboutInfoController', [
+    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
+        function css(a) {
+            var sheets = document.styleSheets, o = [];
+            for (var i in sheets) {
+                var rules = sheets[i].rules || sheets[i].cssRules;
+                for (var r in rules) {
+                    if (a.is(rules[r].selectorText)) {
+                        o.push(rules[r].selectorText);
+                    }
+                }
+            }
+            return o;
+        }
+
+        function selectorExists(selector) {
+            return false;
+            //var ret = css($(selector));
+            //return ret;
+        }
+
+        function getVersionInfo(ident) {
+            try  {
+                if (typeof process !== 'undefined' && process.versions) {
+                    return process.versions[ident];
+                }
+            } catch (ex) {
+            }
+            return null;
+        }
+
+        // Define a function to detect the capabilities
+        $scope.detectBrowserInfo = function () {
+            var info = {
+                about: null,
+                versions: {
+                    ie: null,
+                    html: null,
+                    jqry: null,
+                    css: null,
+                    js: null,
+                    ng: null,
+                    nw: null,
+                    njs: null,
+                    v8: null,
+                    openssl: null,
+                    chromium: null
+                },
+                detects: {
+                    jqry: false,
+                    less: false,
+                    bootstrap: false,
+                    ngAnimate: false,
+                    ngUiRouter: false,
+                    ngUiUtils: false,
+                    ngUiBootstrap: false
+                },
+                css: {
+                    boostrap2: null,
+                    boostrap3: null
+                },
+                codeName: navigator.appCodeName,
+                userAgent: navigator.userAgent
+            };
+
+            try  {
+                // Get IE version (if defined)
+                if (!!window['ActiveXObject']) {
+                    info.versions.ie = 10;
+                }
+
+                // Sanitize codeName and userAgentt
+                var cn = info.codeName;
+                var ua = info.userAgent;
+                if (ua) {
+                    // Remove start of string in UAgent upto CName or end of string if not found.
+                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
+
+                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
+                    ua = ua.substring(cn.length);
+
+                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
+                        ua = ua.substring(1);
+                    }
+
+                    // Remove the end of the string from first characrer that is not a number or point etc.
+                    var pointer = 0;
+                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
+                        pointer = pointer + 1;
+                    }
+                    ua = ua.substring(0, pointer);
+
+                    if (!window.isNaN(ua)) {
+                        if (parseInt(ua) > 0) {
+                            info.versions.html = ua;
+                        }
+                        if (parseFloat(ua) >= 5) {
+                            info.versions.css = '3.x';
+                            info.versions.js = '5.x';
+                        }
+                    }
+                }
+                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
+                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
+                info.versions.nw = getVersionInfo('node-webkit');
+                info.versions.njs = getVersionInfo('node');
+                info.versions.v8 = getVersionInfo('v8');
+                info.versions.openssl = getVersionInfo('openssl');
+                info.versions.chromium = getVersionInfo('chromium');
+
+                // Check for CSS extensions
+                info.css.boostrap2 = selectorExists('hero-unit');
+                info.css.boostrap3 = selectorExists('jumbotron');
+
+                // Detect selected features and availability
+                info.about = {
+                    protocol: $location.$$protocol,
+                    browser: {},
+                    server: {
+                        active: undefined,
+                        url: $location.$$absUrl
+                    },
+                    os: {},
+                    hdd: { type: null }
+                };
+
+                // Detect the operating system
+                var osName = 'Unknown OS';
+                var appVer = navigator.appVersion;
+                if (appVer) {
+                    if (appVer.indexOf("Win") != -1)
+                        osName = 'Windows';
+                    if (appVer.indexOf("Mac") != -1)
+                        osName = 'MacOS';
+                    if (appVer.indexOf("X11") != -1)
+                        osName = 'UNIX';
+                    if (appVer.indexOf("Linux") != -1)
+                        osName = 'Linux';
+                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
+                }
+                info.about.os.name = osName;
+
+                // Check for jQuery
+                info.detects.jqry = typeof jQuery !== 'undefined';
+
+                // Check for general header and body scripts
+                $("script").each(function () {
+                    var src = $(this).attr("src");
+                    if (src) {
+                        // Fast check on known script names
+                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
+                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
+                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
+                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
+                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
+                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
+                    }
+                });
+
+                // Get the client browser details (build a url string)
+                var detectUrl = (function () {
+                    var p = [], w = window, d = document, e = 0, f = 0;
+                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
+                    e |= w.ActiveXObject ? 1 : 0;
+                    e |= w.opera ? 2 : 0;
+                    e |= w.chrome ? 4 : 0;
+                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
+                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
+                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
+                    p.push('e=' + e);
+                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
+                    f |= 'WebSocket' in w ? 2 : 0;
+                    f |= w.Worker ? 4 : 0;
+                    f |= w.applicationCache ? 8 : 0;
+                    f |= w.history && history.pushState ? 16 : 0;
+                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
+                    f |= 'FileReader' in w ? 64 : 0;
+                    p.push('f=' + f);
+                    p.push('r=' + Math.random().toString(36).substring(7));
+                    p.push('w=' + screen.width);
+                    p.push('h=' + screen.height);
+                    var s = d.createElement('script');
+                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
+                })();
+
+                // Send a loaded package to a server to detect more features
+                $.getScript(detectUrl).done(function (script, textStatus) {
+                    $rootScope.$applyAsync(function () {
+                        // Browser info and details loaded
+                        var browserInfo = new window.WhichBrowser();
+                        angular.extend(info.about, browserInfo);
+                    });
+                }).fail(function (jqxhr, settings, exception) {
+                    console.error(exception);
+                });
+
+                // Set browser name to IE (if defined)
+                if (navigator.appName == 'Microsoft Internet Explorer') {
+                    info.about.browser.name = 'Internet Explorer';
+                }
+
+                // Check if the browser supports web db's
+                var webDB = info.about.webdb = {
+                    db: null,
+                    version: '1',
+                    active: null,
+                    size: 5 * 1024 * 1024,
+                    test: function (name, desc, dbVer, dbSize) {
+                        try  {
+                            // Try and open a web db
+                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
+                            webDB.onSuccess(null, null);
+                        } catch (ex) {
+                            // Nope, something went wrong
+                            webDB.onError(null, null);
+                        }
+                    },
+                    onSuccess: function (tx, r) {
+                        if (tx) {
+                            if (r) {
+                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
+                            }
+                            if (tx) {
+                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
+                            }
+                        }
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = true;
+                            webDB.used = JSON.stringify(webDB.db).length;
+                        });
+                    },
+                    onError: function (tx, e) {
+                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = false;
+                        });
+                    }
+                };
+                info.about.webdb.test();
+            } catch (ex) {
+                console.error(ex);
+            }
+
+            // Return the preliminary info
+            return info;
+        };
+
+        // Define the state
+        $scope.info = $scope.detectBrowserInfo();
+    }]).controller('AboutConnectionController', [
+    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
+        $scope.result = null;
+        $scope.status = null;
+        $scope.state = {
+            editMode: false,
+            location: $location.$$absUrl,
+            protocol: $location.$$protocol,
+            requireHttps: ($location.$$protocol == 'https')
+        };
+        $scope.detect = function () {
+            var target = $scope.state.location;
+            var started = Date.now();
+            $scope.result = null;
+            $scope.latency = null;
+            $scope.status = { code: 0, desc: '', style: 'label-default' };
+            $.ajax({
+                url: target,
+                crossDomain: true,
+                /*
+                username: 'user',
+                password: 'pass',
+                xhrFields: {
+                withCredentials: true
+                }
+                */
+                beforeSend: function (xhr) {
+                    $timeout(function () {
+                        //$scope.status.code = xhr.status;
+                        $scope.status.desc = 'sending';
+                        $scope.status.style = 'label-info';
+                    });
+                },
+                success: function (data, textStatus, xhr) {
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-success';
+                        $scope.result = {
+                            valid: true,
+                            info: data,
+                            sent: started,
+                            received: Date.now()
+                        };
+                    });
+                },
+                error: function (xhr, textStatus, error) {
+                    xhr.ex = error;
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-danger';
+                        $scope.result = {
+                            valid: false,
+                            info: xhr,
+                            sent: started,
+                            error: xhr.statusText,
+                            received: Date.now()
+                        };
+                    });
+                },
+                complete: function (xhr, textStatus) {
+                    console.debug(' - Status Code: ' + xhr.status);
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                    });
+                }
+            }).always(function (xhr) {
+                $timeout(function () {
+                    $scope.latency = $scope.getLatencyInfo();
+                });
+            });
+        };
+        $scope.setProtocol = function (protocol) {
+            var val = $scope.state.location;
+            var pos = val.indexOf('://');
+            if (pos > 0) {
+                val = protocol + val.substring(pos);
+            }
+            $scope.state.protocol = protocol;
+            $scope.state.location = val;
+            $scope.detect();
+        };
+        $scope.getProtocolStyle = function (protocol, activeStyle) {
+            var cssRes = '';
+            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
+            if (isValid) {
+                if (!$scope.result) {
+                    cssRes += 'btn-primary';
+                } else if ($scope.result.valid && activeStyle) {
+                    cssRes += activeStyle;
+                } else if ($scope.result) {
+                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
+                }
+            }
+            return cssRes;
+        };
+        $scope.getStatusIcon = function (activeStyle) {
+            var cssRes = '';
+            if (!$scope.result) {
+                cssRes += 'glyphicon-refresh';
+            } else if (activeStyle && $scope.result.valid) {
+                cssRes += activeStyle;
+            } else {
+                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
+            }
+            return cssRes;
+        };
+        $scope.submitForm = function () {
+            $scope.state.editMode = false;
+            if ($scope.state.requireHttps) {
+                $scope.setProtocol('https');
+            } else {
+                $scope.detect();
+            }
+        };
+        $scope.getStatusColor = function () {
+            var cssRes = $scope.getStatusIcon() + ' ';
+            if (!$scope.result) {
+                cssRes += 'busy';
+            } else if ($scope.result.valid) {
+                cssRes += 'success';
+            } else {
+                cssRes += 'error';
+            }
+            return cssRes;
+        };
+        $scope.getLatencyInfo = function () {
+            var cssNone = 'text-muted';
+            var cssHigh = 'text-success';
+            var cssMedium = 'text-warning';
+            var cssLow = 'text-danger';
+            var info = {
+                desc: '',
+                style: cssNone
+            };
+
+            if (!$scope.result) {
+                return info;
+            }
+
+            if (!$scope.result.valid) {
+                info.style = 'text-muted';
+                info.desc = 'Connection Failed';
+                return info;
+            }
+
+            var totalMs = $scope.result.received - $scope.result.sent;
+            if (totalMs > 2 * 60 * 1000) {
+                info.style = cssNone;
+                info.desc = 'Timed out';
+            } else if (totalMs > 1 * 60 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Impossibly slow';
+            } else if (totalMs > 30 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Very slow';
+            } else if (totalMs > 1 * 1000) {
+                info.style = cssMedium;
+                info.desc = 'Relatively slow';
+            } else if (totalMs > 500) {
+                info.style = cssMedium;
+                info.desc = 'Moderately slow';
+            } else if (totalMs > 250) {
+                info.style = cssMedium;
+                info.desc = 'Barely Responsive';
+            } else if (totalMs > 150) {
+                info.style = cssHigh;
+                info.desc = 'Average Response Time';
+            } else if (totalMs > 50) {
+                info.style = cssHigh;
+                info.desc = 'Responsive Enough';
+            } else if (totalMs > 15) {
+                info.style = cssHigh;
+                info.desc = 'Very Responsive';
+            } else {
+                info.style = cssHigh;
+                info.desc = 'Optimal';
+            }
+            return info;
+        };
+    }]);
+/// <reference path="../imports.d.ts" />
 /// <reference path="../modules/default.ng.ts" />
-/// <reference path="../modules/about.ng.ts" />
+/// <reference path="../modules/about/module.ng.ts" />
 angular.module('prototyped.ng', [
     'prototyped.ng.views',
     'prototyped.ng.styles',
@@ -1847,17 +2327,19 @@ angular.module('prototyped.ng', [
     'prototyped.ng.default',
     'prototyped.ng.about',
     'prototyped.features',
-    'prototyped.edge'
+    'prototyped.edge',
+    'prototyped.editor',
+    'prototyped.console'
 ]).config([
     '$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
-        // Define redirects
-        $urlRouterProvider.when('/prototyped', '/prototyped/cmd');
-
-        // Now set up the states
-        $stateProvider.state('prototyped', {
-            url: '/prototyped',
+        // Set up the routing...
+        $stateProvider.state('proto', {
+            url: '/proto',
             abstract: true
         });
+
+        // Define redirects
+        $urlRouterProvider.when('/proto', '/proto/cmd');
     }]).constant('appInfo', {
     version: '1.0.0.0'
 }).constant('appNode', {

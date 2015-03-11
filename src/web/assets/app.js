@@ -37,7 +37,7 @@ angular.module('myApp', [
                 shown: true,
                 label: 'Discover Features',
                 icon: 'fa fa-share-alt',
-                value: 'prototyped.cmd',
+                value: 'proto.cmd',
                 /*
                 value: [
                     { label: 'Discovery', icon: 'fa fa-refresh', value: 'modules.discover', },
@@ -54,6 +54,34 @@ angular.module('myApp', [
             },
         ],
     })
+
+    .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
+        // Set up default routes
+        $urlRouterProvider
+            .when('', '/')
+            .otherwise('error/404')
+
+        // Now set up the states
+        $stateProvider
+            .state('error', {
+                url: '/error',
+                resolve: {
+                    errorObj: [function () {
+                        return this.self.error;
+                    }]
+                },
+                views: {
+                    'main@': { templateUrl: 'views/status/default.jade' },
+                },
+            })
+            .state('error.404', {
+                url: '/404',
+                views: {
+                    'main@': { templateUrl: 'views/status/404.jade' },
+                }
+            })
+
+    }])
 
     .config(['$locationProvider', 'appNode', function ($locationProvider, appNode) {
         // Try and figure out router mode from the initial url
@@ -160,34 +188,6 @@ angular.module('myApp', [
         //$httpProvider.interceptors.push('jadeResponseInterceptor');
     }])
 
-    .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
-        // Set up default routes
-        $urlRouterProvider
-            .when('', '/')
-            .otherwise('error/404')
-
-        // Now set up the states
-        $stateProvider
-            .state('error', {
-                url: '/error',
-                resolve: {
-                    errorObj: [function () {
-                        return this.self.error;
-                    }]
-                },
-                views: {
-                    'main@': { templateUrl: 'views/status/default.jade' },
-                },
-            })
-            .state('error.404', {
-                url: '/404',
-                views: {
-                    'main@': { templateUrl: 'views/status/404.jade' },
-                }
-            })
-
-    }])
-
     .directive('appMenu', ['$timeout', function ($location, $timeout) {
         return {
             restrict: 'A',
@@ -249,9 +249,6 @@ angular.module('myApp', [
 
         // Hook some keyboard shortcuts (if available)
         if (typeof Mousetrap !== 'undefined') {
-            Mousetrap.bind('CTRL + SHIFT + C', function () {
-                console.log(' - Debug!');
-            }, 'keyup');
             Mousetrap.bind('p r o t o t e s t', function () {
                 console.log(' - Entering test mode!');
                 $window.location.href = ($window.location.href.indexOf('?') > 0 ? '&' : '?') + 'test!';

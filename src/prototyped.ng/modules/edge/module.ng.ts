@@ -7,7 +7,7 @@ angular.module('prototyped.edge', ['ui.router',
 
         // Now set up the states
         $stateProvider
-            .state('prototyped.edge', {
+            .state('proto.edge', {
                 url: '^/edge',
                 views: {
                     'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },

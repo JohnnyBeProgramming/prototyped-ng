@@ -14,7 +14,7 @@ angular.module('prototyped.certs', [
             .state('certs.info', {
                 url: '',
                 views: {
-                    'left@': { templateUrl: 'modules/appcmd.exe/left.tpl.html' },
+                    'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/appcmd.exe/certs.tpl.html',
                         controller: 'appCmdViewController'

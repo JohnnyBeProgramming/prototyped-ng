@@ -12,6 +12,7 @@ angular.module('prototyped.ng.samples', [
 
     'myApp.samples.errorHandlers',
     'myApp.samples.sampleData',
+    'myApp.samples.location',
     'myApp.samples.decorators',
     'myApp.samples.interceptors',
     'myApp.samples.notifications',

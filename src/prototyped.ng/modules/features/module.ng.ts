@@ -11,7 +11,7 @@ angular.module('prototyped.features', ['ui.router',
 
         // Now set up the states
         $stateProvider
-            .state('prototyped.cmd', {
+            .state('proto.cmd', {
                 url: '/cmd',
                 views: {
                     'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },
@@ -22,7 +22,7 @@ angular.module('prototyped.features', ['ui.router',
                     },
                 }
             })
-            .state('prototyped.clear', {
+            .state('proto.clear', {
                 url: '/clear',
                 views: {
                     'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },
