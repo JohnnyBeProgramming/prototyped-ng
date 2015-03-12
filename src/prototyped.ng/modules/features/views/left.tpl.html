@@ -16,6 +16,11 @@
         </a>
     </li>
     <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appNode.active }">
+        <a app:nav-link ui:sref="proto.explore" data:eat-click-if="!appNode.active">
+            <i class="fa fa-folder"></i> Local Filesystem Viewer
+        </a>
+    </li>
+    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appNode.active }">
         <a app:nav-link ui:sref="sqlcmd.connect" data:eat-click-if="!appNode.active">
             <i class="fa fa-database"></i> Connect to Data Source
         </a>

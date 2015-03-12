@@ -6,18 +6,19 @@ angular.module('prototyped.ng', [
     'prototyped.ng.views',
     'prototyped.ng.styles',
     'prototyped.ng.sql',
-    'prototyped.ng.default',
-    'prototyped.ng.about',
 
-    // Define sub modules
-    'prototyped.features',
+// Define sub modules
+    'prototyped.default',
+    'prototyped.about',
     'prototyped.edge',
     'prototyped.editor',
+    'prototyped.explorer',
     'prototyped.console',
+    'prototyped.features',
 ])
 
     .config(['$stateProvider', '$urlRouterProvider', ($stateProvider, $urlRouterProvider) => {
-        
+
         // Set up the routing...
         $stateProvider
             .state('proto', {

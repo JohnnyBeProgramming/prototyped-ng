@@ -1,13 +1,24 @@
 ﻿body {
+    
 
     .docked {
+        height: 100%;
         flex-grow: 1;
         flex-shrink: 1;
         display: flex;
-        height: 100%;
         overflow: none;
     }
 
+    .dragable {
+        -webkit-app-region: drag;
+        -webkit-user-select: none;
+    }
+
+    .non-dragable {
+        -webkit-app-region: no-drag;
+        -webkit-user-select: auto;
+    }
+    
     .inactive-gray {
         opacity: 0.50;
         filter: alpha(opacity=50);

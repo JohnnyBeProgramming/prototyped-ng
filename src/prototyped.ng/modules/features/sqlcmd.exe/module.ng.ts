@@ -1,4 +1,4 @@
-/// <reference path="../../imports.d.ts" />
+/// <reference path="../../../imports.d.ts" />
 
 angular.module('prototyped.sqlcmd', [
     'prototyped.ng.sql',
@@ -15,10 +15,10 @@ angular.module('prototyped.sqlcmd', [
             .state('sqlcmd.connect', {
                 url: '/connect/:path/:file',
                 views: {
-                    'menu@': { templateUrl: 'modules/sqlcmd.exe/views/menu.tpl.html' },
-                    'left@': { templateUrl: 'modules/sqlcmd.exe/views/left.tpl.html' },
+                    'menu@': { templateUrl: 'modules/features/sqlcmd.exe/views/menu.tpl.html' },
+                    'left@': { templateUrl: 'modules/features/sqlcmd.exe/views/left.tpl.html' },
                     'main@': {
-                        templateUrl: 'modules/sqlcmd.exe/views/connect.tpl.html',
+                        templateUrl: 'modules/features/sqlcmd.exe/views/connect.tpl.html',
                         controller: 'sqlCmdViewController'
                     },
                 }
@@ -26,10 +26,10 @@ angular.module('prototyped.sqlcmd', [
             .state('sqlcmd.connect.db', {
                 url: '/:dbname',
                 views: {
-                    'menu@': { templateUrl: 'modules/sqlcmd.exe/views/menu.tpl.html' },
-                    'left@': { templateUrl: 'modules/sqlcmd.exe/views/left.tpl.html' },
+                    'menu@': { templateUrl: 'modules/features/sqlcmd.exe/views/menu.tpl.html' },
+                    'left@': { templateUrl: 'modules/features/sqlcmd.exe/views/left.tpl.html' },
                     'main@': {
-                        templateUrl: 'modules/sqlcmd.exe/views/database.tpl.html',
+                        templateUrl: 'modules/features/sqlcmd.exe/views/database.tpl.html',
                         controller: 'sqlCmdViewController'
                     },
                 }
@@ -356,7 +356,7 @@ angular.module('prototyped.sqlcmd', [
                     var src = filePath;
                     var inp = '"' + path.join(process.cwd(), src) + '"';
                     if (opts.nocount !== false) {
-                        var noc = $scope.sqlCmd.utils.resolveFilename('modules/sqlcmd.exe/scripts/utils/NoCounts.sql');
+                        var noc = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/NoCounts.sql');
                         inp = '"' + path.join(process.cwd(), noc) + '",' + inp;
                     }
                     var arg = ' -S lpc:localhost -E';
@@ -518,7 +518,7 @@ angular.module('prototyped.sqlcmd', [
             }
 
             // Get the file size and basic info for the database
-            var tplFileSizes = $scope.sqlCmd.utils.resolveFilename('modules/sqlcmd.exe/scripts/utils/FileSizes.sql');
+            var tplFileSizes = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/FileSizes.sql');
             $scope.sqlCmd.utils.runFile(tplFileSizes, { database: db.DATABASE_NAME }, function (result) {
 
                 $rootScope.$applyAsync(function () {
@@ -552,7 +552,7 @@ angular.module('prototyped.sqlcmd', [
                     });
                 });
 
-                var tplTableSize = $scope.sqlCmd.utils.resolveFilename('modules/sqlcmd.exe/scripts/utils/TableSizes.sql');
+                var tplTableSize = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/TableSizes.sql');
                 $scope.sqlCmd.utils.runFile(tplTableSize, { database: db.DATABASE_NAME }, function (result) {
                     $rootScope.$applyAsync(function () {
                         var tables = [];
@@ -587,7 +587,7 @@ angular.module('prototyped.sqlcmd', [
                     });
                 });
 
-                var tplViewSize = $scope.sqlCmd.utils.resolveFilename('modules/sqlcmd.exe/scripts/utils/ListViews.sql');
+                var tplViewSize = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/ListViews.sql');
                 $scope.sqlCmd.utils.runFile(tplViewSize, { database: db.DATABASE_NAME }, function (result) {
                     $rootScope.$applyAsync(function () {
                         var views = [];

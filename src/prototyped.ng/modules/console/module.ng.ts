@@ -2,7 +2,6 @@
 /// <reference path="controllers/ConsoleController.ts"/>
 
 angular.module('prototyped.console', [
-    // Other dependencies
     'ui.router'
 ])
 
@@ -15,7 +14,7 @@ angular.module('prototyped.console', [
                 views: {
                     'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                     'main@': {
-                        templateUrl: 'modules/commands/views/main.tpl.html',
+                        templateUrl: 'modules/console/views/main.tpl.html',
                         controller: 'proto.ng.commands.ConsoleController',
                     },
                 }

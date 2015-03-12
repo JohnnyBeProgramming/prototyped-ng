@@ -1,7 +1,7 @@
 angular.module('prototyped.ng.sql', []).run(['$templateCache', function($templateCache) { 
   'use strict';
 
-  $templateCache.put('modules/sqlcmd.exe/scripts/utils/FileSizes.sql',
+  $templateCache.put('modules/features/sqlcmd.exe/scripts/utils/FileSizes.sql',
     "SELECT \r" +
     "\n" +
     "\tDB_NAME(database_id) AS DatabaseName,\r" +
@@ -20,7 +20,7 @@ angular.module('prototyped.ng.sql', []).run(['$templateCache', function($templat
   );
 
 
-  $templateCache.put('modules/sqlcmd.exe/scripts/utils/ListViews.sql',
+  $templateCache.put('modules/features/sqlcmd.exe/scripts/utils/ListViews.sql',
     "SELECT \r" +
     "\n" +
     "\tv.object_id  AS ObjectId,\r" +
@@ -33,12 +33,12 @@ angular.module('prototyped.ng.sql', []).run(['$templateCache', function($templat
   );
 
 
-  $templateCache.put('modules/sqlcmd.exe/scripts/utils/NoCounts.sql',
+  $templateCache.put('modules/features/sqlcmd.exe/scripts/utils/NoCounts.sql',
     "SET NOCOUNT ON;"
   );
 
 
-  $templateCache.put('modules/sqlcmd.exe/scripts/utils/ShrinkDB.sql',
+  $templateCache.put('modules/features/sqlcmd.exe/scripts/utils/ShrinkDB.sql',
     "DECLARE @TargetDB varchar(max) SET @TargetDB = DB_NAME()\r" +
     "\n" +
     "DECLARE @InitialSize int\r" +
@@ -127,7 +127,7 @@ angular.module('prototyped.ng.sql', []).run(['$templateCache', function($templat
   );
 
 
-  $templateCache.put('modules/sqlcmd.exe/scripts/utils/TableSizes.sql',
+  $templateCache.put('modules/features/sqlcmd.exe/scripts/utils/TableSizes.sql',
     "if object_id(N'tempdb..[#TableSizes]') is not null\r" +
     "\n" +
     "  drop table #TableSizes;\r" +

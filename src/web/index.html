@@ -105,9 +105,9 @@
     <!--[if lt IE 9]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a target="_self" href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p><![endif]-->
     <div id="myApp" class="docked">
         <style resx:import="assets/css/prototyped.min.css"></style>
-        <div class="navbar navbar-default navbar-fixed-top">
+        <div class="dragable navbar navbar-default navbar-fixed-top">
             <div class="navbar-inner">
-                <ul class="nav navbar-nav navheading ng-cloak">
+                <ul class="non-dragable nav navbar-nav navheading ng-cloak">
                     <li class="dock-fill">
                         <a app:clean href="" class="navbar-brand" role="button">
                             <i class="fa" ng:class="status.getIcon() + ' ' + status.getColor()"></i> <span>Prototyped</span>
@@ -119,12 +119,12 @@
                         </a>
                     </li>
                 </ul>
-                <span ui:view="menu" class="ng-cloak hidden-xs">
+                <div class="non-dragable ng-cloak hidden-xs" style="display: inline-block" ui:view="menu">
                     <!-- Begin: Default menu toolbar -->
                     <ul class="nav navbar-nav" app:menu="appMenu.items"></ul>
                     <!-- End: Default menu toolbar -->
-                </span>
-                <ul class="nav navbar-nav pull-right toolbar-ctrls hidden-xs">
+                </div>
+                <ul class="non-dragable nav navbar-nav pull-right toolbar-ctrls hidden-xs">
                     <li class="ng-cloak"><a app:clean href=""><i class="glyphicon glyphicon-refresh"></i></a></li>
                     <li class="ng-cloak"><a app:debug href=""><i class="glyphicon glyphicon-wrench"></i></a></li>
                     <li class="ng-cloak"><a app:kiosk href=""><i class="glyphicon glyphicon-fullscreen"></i></a></li>
@@ -228,7 +228,7 @@
         // Define the modules to load
         var modules = [
             'modules/module.ng.js',
-            'modules/home.ng.js',
+            'modules/home/home.ng.js',
 
             // Load prototyped module libraries
             'assets/lib/prototyped.ng.js',

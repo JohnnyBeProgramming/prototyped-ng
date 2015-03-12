@@ -1,4 +1,4 @@
-﻿/// <reference path="../../imports.d.ts" />
+﻿/// <reference path="../../../imports.d.ts" />
 
 angular.module('prototyped.certs', [
     'ui.router',
@@ -16,7 +16,7 @@ angular.module('prototyped.certs', [
                 views: {
                     'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                     'main@': {
-                        templateUrl: 'modules/appcmd.exe/certs.tpl.html',
+                        templateUrl: 'modules/features/appcmd.exe/certs.tpl.html',
                         controller: 'appCmdViewController'
                     },
                 }

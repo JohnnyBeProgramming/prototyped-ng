@@ -22,7 +22,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.js"></script>
     <script src="https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.js"></script>
     <!--<![endif]-->
-
     <!-- Load this module's libraries -->
     <script src="assets/lib/prototyped.ng.base.js"></script>
     <script src="assets/lib/prototyped.ng.sqlx.js"></script>
@@ -41,7 +40,9 @@
 <body id="testApp">
     <style resx:import="assets/css/prototyped.min.css"></style>
     <div id="menu">
-        <a ui:sref="default" class="pull-right btn btn-default">Home</a>
+        <div class="dragable">
+            <a ui:sref="default" class="pull-right btn btn-default">Home</a>
+        </div>
         <div ui:view="menu">
             <ul class="nav navbar-nav">
                 <li ui:sref-active="open">

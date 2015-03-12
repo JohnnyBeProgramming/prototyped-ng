@@ -1,0 +1,53 @@
+﻿<div class="container">
+    <h4>
+        File Browser
+        <small>Explore files and folders on your local system</small>
+    </h4>
+    <div ng:cloak>
+        <div id="fileExplorer" class="dock-vert">
+            <div class="view-toolbar btn-group btn-group-sm">
+                <a ui:sref="proto.explore" class="btn btn-default pull-left"><i class="glyphicon glyphicon-chevron-left"></i></a>
+                <a href="" class="btn btn-default pull-right" ng-click="myReader.openFolder()" ng-disabled="!myNode.isActive"><i class="glyphicon glyphicon-folder-open"></i></a>
+                <div class="input-group input-group-sm">
+                    <label class="input-group-addon">Path:</label>
+                    <div class="form-control nav-address-bar">
+                        <ul id="addressbar" class="breadcrumb" ng-show="myNode.isActive">
+                            <li ng-repeat="itm in paths.sequence" data-path="w:">
+                                <a href="" ng-click="myReader.navigate('{{itm.path}}')">{{itm.name}}</a>
+                            </li>
+                        </ul>
+                        <div class="text-error" style="padding-left: 8px;" ng-show="!myNode.isActive">
+                            <i class="glyphicon glyphicon-bullhorn"></i> No access to local file system.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="loader" ng-show="myReader.isBusy">
+                <em>Loading...</em>
+            </div>
+            <div ng-show="myNode.isActive && !myReader.isBusy">
+                <div class="panel-contents dock-vert ">
+                    <ul style="margin: 5px;" id="files" class="files"></ul>
+                </div>
+            </div>
+            <div ng-show="!myNode.isActive">
+                <div>
+                    <div class="page-header">
+                        <h2><i class="glyphicon glyphicon-warning-sign"></i> Warning <small>All features not available</small></h2>
+                    </div>
+                    <div>
+                        <p>
+                            <b>Please Note:</b> You are running this from a browser window.
+                        </p>
+                        <p>
+                            For security reasons, web browsers do not have permission to use the local file system, or other advanced operating system features.
+                        </p>
+                        <p>
+                            To use this application with full functionality, you need an elevated runtime (<a href="/about/info">see this how to</a>).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

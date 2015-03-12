@@ -1,20 +1,20 @@
 /// <reference path="../../imports.d.ts" />
-/// <reference path="../appcmd.exe/certs.ng.ts" />
-/// <reference path="../sqlcmd.exe/module.ng.ts" />
+/// <reference path="appcmd.exe/certs.ng.ts" />
+/// <reference path="sqlcmd.exe/module.ng.ts" />
 
-angular.module('prototyped.features', ['ui.router',
+angular.module('prototyped.features', [
+    'ui.router',
+
     'prototyped.sqlcmd',
     'prototyped.certs',
 ])
 
     .config(['$stateProvider', ($stateProvider) => {
 
-        // Now set up the states
         $stateProvider
             .state('proto.cmd', {
                 url: '/cmd',
                 views: {
-                    'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },
                     'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/features/views/index.tpl.html',
@@ -25,7 +25,6 @@ angular.module('prototyped.features', ['ui.router',
             .state('proto.clear', {
                 url: '/clear',
                 views: {
-                    'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },
                     'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/features/views/index.tpl.html',
@@ -33,7 +32,6 @@ angular.module('prototyped.features', ['ui.router',
                     },
                 }
             })
-
 
     }])
 
@@ -126,78 +124,78 @@ angular.module('prototyped.features', ['ui.router',
                     return a;
                 },
             },
-    };
-
-var updates = <any>{};
-try {
-    // Check for required libraries
-    if (typeof require !== 'undefined') {
-        // Set the result
-        updates = {
-            busy: false,
-            active: false,
-            result: {
-            },                    
         };
 
-        // Parse the system paths
-        var cmd = 'echo %PATH%';
-        var proc = require("child_process");
-        if (proc) {
-            proc.exec(cmd, function (error, stdout, stderr) {
-                $rootScope.$applyAsync(function () {
+        var updates = <any>{};
+        try {
+            // Check for required libraries
+            if (typeof require !== 'undefined') {
+                // Set the result
+                updates = {
+                    busy: false,
+                    active: false,
+                    result: {
+                    },
+                };
 
-                    updates.active = true;
-                    updates.busy = false;
-                    if (error) {
-                        console.error(error);
-                        updates.error = error;
-                    } else {
-                        // Parse the path strings and search for folder
-                        var paths = [];
-                        if (stdout) {
-                            stdout.split(';').forEach(function (path) {
-                                if (path) {
-                                    paths.push(path.trim());
+                // Parse the system paths
+                var cmd = 'echo %PATH%';
+                var proc = require("child_process");
+                if (proc) {
+                    proc.exec(cmd, function (error, stdout, stderr) {
+                        $rootScope.$applyAsync(function () {
+
+                            updates.active = true;
+                            updates.busy = false;
+                            if (error) {
+                                console.error(error);
+                                updates.error = error;
+                            } else {
+                                // Parse the path strings and search for folder
+                                var paths = [];
+                                if (stdout) {
+                                    stdout.split(';').forEach(function (path) {
+                                        if (path) {
+                                            paths.push(path.trim());
+                                        }
+                                    });
                                 }
-                            });
-                        }
-                        updates.result.paths = paths;
-                        updates.result.stdout = stdout;
-                        updates.result.stderr = stderr;
+                                updates.result.paths = paths;
+                                updates.result.stdout = stdout;
+                                updates.result.stderr = stderr;
 
 
-                    }
-                    angular.extend($scope.cmd, updates);
+                            }
+                            angular.extend($scope.cmd, updates);
 
-                });
-            });
+                        });
+                    });
+                }
+
+                // Get the current working folder
+                var cwd = (typeof process !== 'undefined') ? process.cwd() : null;
+                if (cwd) {
+                    // List current folder contents
+                    $scope.cmd.utils.list(cwd, function (list) {
+                        $rootScope.$applyAsync(function () {
+                            // Update the current working dir
+                            $scope.cmd.cwd = {
+                                path: cwd,
+                                list: list,
+                            };
+                        });
+                    });
+                }
+            } else {
+                // Not available
+                updates.active = false;
+                updates.busy = false;
+            }
+        } catch (ex) {
+            updates.busy = false;
+            updates.error = ex;
         }
+        angular.extend($scope.cmd, updates);
 
-        // Get the current working folder
-        var cwd = (typeof process !== 'undefined') ? process.cwd() : null;
-        if (cwd) {
-            // List current folder contents
-            $scope.cmd.utils.list(cwd, function (list) {
-                $rootScope.$applyAsync(function () {
-                    // Update the current working dir
-                    $scope.cmd.cwd = {
-                        path: cwd,
-                        list: list,
-                    };
-                });
-            });
-        }
-    } else {
-        // Not available
-        updates.active = false;
-        updates.busy = false;
-    }
-} catch (ex) {
-    updates.busy = false;
-    updates.error = ex;
-}
-angular.extend($scope.cmd, updates);
-
-}])
+    }])
 

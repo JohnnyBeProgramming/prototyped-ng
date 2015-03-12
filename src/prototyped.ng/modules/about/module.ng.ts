@@ -1,6 +1,6 @@
 /// <reference path="../../imports.d.ts" />
 
-angular.module('prototyped.ng.about', [
+angular.module('prototyped.about', [
 // Ensures that templates loaded
     'prototyped.ng.views',
     'prototyped.ng.styles',
