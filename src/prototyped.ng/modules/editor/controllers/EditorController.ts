@@ -91,7 +91,10 @@ module proto.ng.editor {
             // Do post-new operations
             this.$timeout(() => {
                 // Select file contents
-                $('#FileContents').select();
+                var elem = $('#FileContents');
+                if (elem) {
+                    elem.select();
+                }
             });
         }
 

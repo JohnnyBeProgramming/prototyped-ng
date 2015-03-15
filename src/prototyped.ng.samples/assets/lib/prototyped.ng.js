@@ -2329,14 +2329,16 @@ angular.module('prototyped.ng', [
     'prototyped.features'
 ]).config([
     '$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
+
+        // Define redirects
+        $urlRouterProvider.when('/proto', '/proto/explore');
+
         // Set up the routing...
         $stateProvider.state('proto', {
             url: '/proto',
             abstract: true
         });
 
-        // Define redirects
-        $urlRouterProvider.when('/proto', '/proto/cmd');
     }]).constant('appInfo', {
     version: '1.0.0.0'
 }).constant('appNode', {

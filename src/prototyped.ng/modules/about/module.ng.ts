@@ -9,7 +9,11 @@ angular.module('prototyped.about', [
     'ui.router'
 ])
 
-    .config(['$stateProvider', function ($stateProvider) {
+    .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
+
+        // Define redirects
+        $urlRouterProvider
+            .when('/about', '/about/info');
 
         // Define the UI states
         $stateProvider

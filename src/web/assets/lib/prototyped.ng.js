@@ -1,471 +1,3 @@
-/// <reference path="../../imports.d.ts" />
-angular.module('prototyped.about', [
-    'prototyped.ng.views',
-    'prototyped.ng.styles',
-    'ui.router'
-]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Define the UI states
-        $stateProvider.state('about', {
-            url: '/about',
-            abstract: true
-        }).state('about.info', {
-            url: '/info',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/about/info.tpl.html',
-                    controller: 'AboutInfoController'
-                }
-            }
-        }).state('about.online', {
-            url: '^/contact',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': { templateUrl: 'views/about/contact.tpl.html' }
-            }
-        }).state('about.conection', {
-            url: '/conection',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/about/connections.tpl.html',
-                    controller: 'AboutConnectionController'
-                }
-            }
-        });
-    }]).controller('AboutInfoController', [
-    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
-        function css(a) {
-            var sheets = document.styleSheets, o = [];
-            for (var i in sheets) {
-                var rules = sheets[i].rules || sheets[i].cssRules;
-                for (var r in rules) {
-                    if (a.is(rules[r].selectorText)) {
-                        o.push(rules[r].selectorText);
-                    }
-                }
-            }
-            return o;
-        }
-
-        function selectorExists(selector) {
-            return false;
-            //var ret = css($(selector));
-            //return ret;
-        }
-
-        function getVersionInfo(ident) {
-            try  {
-                if (typeof process !== 'undefined' && process.versions) {
-                    return process.versions[ident];
-                }
-            } catch (ex) {
-            }
-            return null;
-        }
-
-        // Define a function to detect the capabilities
-        $scope.detectBrowserInfo = function () {
-            var info = {
-                about: null,
-                versions: {
-                    ie: null,
-                    html: null,
-                    jqry: null,
-                    css: null,
-                    js: null,
-                    ng: null,
-                    nw: null,
-                    njs: null,
-                    v8: null,
-                    openssl: null,
-                    chromium: null
-                },
-                detects: {
-                    jqry: false,
-                    less: false,
-                    bootstrap: false,
-                    ngAnimate: false,
-                    ngUiRouter: false,
-                    ngUiUtils: false,
-                    ngUiBootstrap: false
-                },
-                css: {
-                    boostrap2: null,
-                    boostrap3: null
-                },
-                codeName: navigator.appCodeName,
-                userAgent: navigator.userAgent
-            };
-
-            try  {
-                // Get IE version (if defined)
-                if (!!window['ActiveXObject']) {
-                    info.versions.ie = 10;
-                }
-
-                // Sanitize codeName and userAgentt
-                var cn = info.codeName;
-                var ua = info.userAgent;
-                if (ua) {
-                    // Remove start of string in UAgent upto CName or end of string if not found.
-                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
-
-                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
-                    ua = ua.substring(cn.length);
-
-                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
-                        ua = ua.substring(1);
-                    }
-
-                    // Remove the end of the string from first characrer that is not a number or point etc.
-                    var pointer = 0;
-                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
-                        pointer = pointer + 1;
-                    }
-                    ua = ua.substring(0, pointer);
-
-                    if (!window.isNaN(ua)) {
-                        if (parseInt(ua) > 0) {
-                            info.versions.html = ua;
-                        }
-                        if (parseFloat(ua) >= 5) {
-                            info.versions.css = '3.x';
-                            info.versions.js = '5.x';
-                        }
-                    }
-                }
-                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
-                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
-                info.versions.nw = getVersionInfo('node-webkit');
-                info.versions.njs = getVersionInfo('node');
-                info.versions.v8 = getVersionInfo('v8');
-                info.versions.openssl = getVersionInfo('openssl');
-                info.versions.chromium = getVersionInfo('chromium');
-
-                // Check for CSS extensions
-                info.css.boostrap2 = selectorExists('hero-unit');
-                info.css.boostrap3 = selectorExists('jumbotron');
-
-                // Detect selected features and availability
-                info.about = {
-                    protocol: $location.$$protocol,
-                    browser: {},
-                    server: {
-                        active: undefined,
-                        url: $location.$$absUrl
-                    },
-                    os: {},
-                    hdd: { type: null }
-                };
-
-                // Detect the operating system
-                var osName = 'Unknown OS';
-                var appVer = navigator.appVersion;
-                if (appVer) {
-                    if (appVer.indexOf("Win") != -1)
-                        osName = 'Windows';
-                    if (appVer.indexOf("Mac") != -1)
-                        osName = 'MacOS';
-                    if (appVer.indexOf("X11") != -1)
-                        osName = 'UNIX';
-                    if (appVer.indexOf("Linux") != -1)
-                        osName = 'Linux';
-                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
-                }
-                info.about.os.name = osName;
-
-                // Check for jQuery
-                info.detects.jqry = typeof jQuery !== 'undefined';
-
-                // Check for general header and body scripts
-                $("script").each(function () {
-                    var src = $(this).attr("src");
-                    if (src) {
-                        // Fast check on known script names
-                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
-                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
-                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
-                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
-                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
-                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
-                    }
-                });
-
-                // Get the client browser details (build a url string)
-                var detectUrl = (function () {
-                    var p = [], w = window, d = document, e = 0, f = 0;
-                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
-                    e |= w.ActiveXObject ? 1 : 0;
-                    e |= w.opera ? 2 : 0;
-                    e |= w.chrome ? 4 : 0;
-                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
-                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
-                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
-                    p.push('e=' + e);
-                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
-                    f |= 'WebSocket' in w ? 2 : 0;
-                    f |= w.Worker ? 4 : 0;
-                    f |= w.applicationCache ? 8 : 0;
-                    f |= w.history && history.pushState ? 16 : 0;
-                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
-                    f |= 'FileReader' in w ? 64 : 0;
-                    p.push('f=' + f);
-                    p.push('r=' + Math.random().toString(36).substring(7));
-                    p.push('w=' + screen.width);
-                    p.push('h=' + screen.height);
-                    var s = d.createElement('script');
-                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
-                })();
-
-                // Send a loaded package to a server to detect more features
-                $.getScript(detectUrl).done(function (script, textStatus) {
-                    $rootScope.$applyAsync(function () {
-                        // Browser info and details loaded
-                        var browserInfo = new window.WhichBrowser();
-                        angular.extend(info.about, browserInfo);
-                    });
-                }).fail(function (jqxhr, settings, exception) {
-                    console.error(exception);
-                });
-
-                // Set browser name to IE (if defined)
-                if (navigator.appName == 'Microsoft Internet Explorer') {
-                    info.about.browser.name = 'Internet Explorer';
-                }
-
-                // Check if the browser supports web db's
-                var webDB = info.about.webdb = {
-                    db: null,
-                    version: '1',
-                    active: null,
-                    size: 5 * 1024 * 1024,
-                    test: function (name, desc, dbVer, dbSize) {
-                        try  {
-                            // Try and open a web db
-                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
-                            webDB.onSuccess(null, null);
-                        } catch (ex) {
-                            // Nope, something went wrong
-                            webDB.onError(null, null);
-                        }
-                    },
-                    onSuccess: function (tx, r) {
-                        if (tx) {
-                            if (r) {
-                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
-                            }
-                            if (tx) {
-                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
-                            }
-                        }
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = true;
-                            webDB.used = JSON.stringify(webDB.db).length;
-                        });
-                    },
-                    onError: function (tx, e) {
-                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = false;
-                        });
-                    }
-                };
-                info.about.webdb.test();
-            } catch (ex) {
-                console.error(ex);
-            }
-
-            // Return the preliminary info
-            return info;
-        };
-
-        // Define the state
-        $scope.info = $scope.detectBrowserInfo();
-    }]).controller('AboutConnectionController', [
-    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
-        $scope.result = null;
-        $scope.status = null;
-        $scope.state = {
-            editMode: false,
-            location: $location.$$absUrl,
-            protocol: $location.$$protocol,
-            requireHttps: ($location.$$protocol == 'https')
-        };
-        $scope.detect = function () {
-            var target = $scope.state.location;
-            var started = Date.now();
-            $scope.result = null;
-            $scope.latency = null;
-            $scope.status = { code: 0, desc: '', style: 'label-default' };
-            $.ajax({
-                url: target,
-                crossDomain: true,
-                /*
-                username: 'user',
-                password: 'pass',
-                xhrFields: {
-                withCredentials: true
-                }
-                */
-                beforeSend: function (xhr) {
-                    $timeout(function () {
-                        //$scope.status.code = xhr.status;
-                        $scope.status.desc = 'sending';
-                        $scope.status.style = 'label-info';
-                    });
-                },
-                success: function (data, textStatus, xhr) {
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-success';
-                        $scope.result = {
-                            valid: true,
-                            info: data,
-                            sent: started,
-                            received: Date.now()
-                        };
-                    });
-                },
-                error: function (xhr, textStatus, error) {
-                    xhr.ex = error;
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-danger';
-                        $scope.result = {
-                            valid: false,
-                            info: xhr,
-                            sent: started,
-                            error: xhr.statusText,
-                            received: Date.now()
-                        };
-                    });
-                },
-                complete: function (xhr, textStatus) {
-                    console.debug(' - Status Code: ' + xhr.status);
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                    });
-                }
-            }).always(function (xhr) {
-                $timeout(function () {
-                    $scope.latency = $scope.getLatencyInfo();
-                });
-            });
-        };
-        $scope.setProtocol = function (protocol) {
-            var val = $scope.state.location;
-            var pos = val.indexOf('://');
-            if (pos > 0) {
-                val = protocol + val.substring(pos);
-            }
-            $scope.state.protocol = protocol;
-            $scope.state.location = val;
-            $scope.detect();
-        };
-        $scope.getProtocolStyle = function (protocol, activeStyle) {
-            var cssRes = '';
-            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
-            if (isValid) {
-                if (!$scope.result) {
-                    cssRes += 'btn-primary';
-                } else if ($scope.result.valid && activeStyle) {
-                    cssRes += activeStyle;
-                } else if ($scope.result) {
-                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
-                }
-            }
-            return cssRes;
-        };
-        $scope.getStatusIcon = function (activeStyle) {
-            var cssRes = '';
-            if (!$scope.result) {
-                cssRes += 'glyphicon-refresh';
-            } else if (activeStyle && $scope.result.valid) {
-                cssRes += activeStyle;
-            } else {
-                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
-            }
-            return cssRes;
-        };
-        $scope.submitForm = function () {
-            $scope.state.editMode = false;
-            if ($scope.state.requireHttps) {
-                $scope.setProtocol('https');
-            } else {
-                $scope.detect();
-            }
-        };
-        $scope.getStatusColor = function () {
-            var cssRes = $scope.getStatusIcon() + ' ';
-            if (!$scope.result) {
-                cssRes += 'busy';
-            } else if ($scope.result.valid) {
-                cssRes += 'success';
-            } else {
-                cssRes += 'error';
-            }
-            return cssRes;
-        };
-        $scope.getLatencyInfo = function () {
-            var cssNone = 'text-muted';
-            var cssHigh = 'text-success';
-            var cssMedium = 'text-warning';
-            var cssLow = 'text-danger';
-            var info = {
-                desc: '',
-                style: cssNone
-            };
-
-            if (!$scope.result) {
-                return info;
-            }
-
-            if (!$scope.result.valid) {
-                info.style = 'text-muted';
-                info.desc = 'Connection Failed';
-                return info;
-            }
-
-            var totalMs = $scope.result.received - $scope.result.sent;
-            if (totalMs > 2 * 60 * 1000) {
-                info.style = cssNone;
-                info.desc = 'Timed out';
-            } else if (totalMs > 1 * 60 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Impossibly slow';
-            } else if (totalMs > 30 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Very slow';
-            } else if (totalMs > 1 * 1000) {
-                info.style = cssMedium;
-                info.desc = 'Relatively slow';
-            } else if (totalMs > 500) {
-                info.style = cssMedium;
-                info.desc = 'Moderately slow';
-            } else if (totalMs > 250) {
-                info.style = cssMedium;
-                info.desc = 'Barely Responsive';
-            } else if (totalMs > 150) {
-                info.style = cssHigh;
-                info.desc = 'Average Response Time';
-            } else if (totalMs > 50) {
-                info.style = cssHigh;
-                info.desc = 'Responsive Enough';
-            } else if (totalMs > 15) {
-                info.style = cssHigh;
-                info.desc = 'Very Responsive';
-            } else {
-                info.style = cssHigh;
-                info.desc = 'Optimal';
-            }
-            return info;
-        };
-    }]);
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
@@ -730,81 +262,6 @@ angular.module('prototyped.console', [
     '$scope',
     proto.ng.commands.ConsoleController
 ]);
-/// <reference path="../imports.d.ts" />
-angular.module('prototyped.default', [
-    'ui.router'
-]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Now set up the states
-        $stateProvider.state('default', {
-            url: '/',
-            views: {
-                'main@': {
-                    templateUrl: 'views/default.tpl.html',
-                    controller: 'CardViewCtrl',
-                    controllerAs: 'sliderCtrl'
-                }
-            }
-        });
-    }]).value('appPages', {
-    pages: [
-        {
-            url: '/proto',
-            style: 'img-explore',
-            title: 'Explore Features & Options',
-            desc: 'You can navigate your way around the site by clicking on this card...'
-        },
-        {
-            url: '/samples',
-            style: 'img-sandbox',
-            title: 'Prototyping Sandbox',
-            desc: 'A blank sandox working place fully pre-loaded to play and learn with.'
-        },
-        {
-            url: '/proto',
-            style: 'img-editor',
-            title: 'Import & Export Data',
-            desc: 'Load from external sources, modify and/or export to an external resource.'
-        },
-        {
-            url: '/about/info',
-            style: 'img-about',
-            title: 'About this software',
-            desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
-        }
-    ]
-}).controller('CardViewCtrl', [
-    '$scope', 'appPages', function ($scope, appPages) {
-        // Make sure 'mySiteMap' exists
-        $scope.pages = appPages.pages || [];
-
-        // initial image index
-        $scope._Index = 0;
-
-        $scope.count = function () {
-            return $scope.pages.length;
-        };
-
-        // if a current image is the same as requested image
-        $scope.isActive = function (index) {
-            return $scope._Index === index;
-        };
-
-        // show prev image
-        $scope.showPrev = function () {
-            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
-        };
-
-        // show next image
-        $scope.showNext = function () {
-            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
-        };
-
-        // show a certain image
-        $scope.showPhoto = function (index) {
-            $scope._Index = index;
-        };
-    }]);
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.edge', [
     'ui.router'
@@ -814,10 +271,9 @@ angular.module('prototyped.edge', [
         $stateProvider.state('proto.edge', {
             url: '^/edge',
             views: {
-                'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },
                 'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'modules/edge/index.tpl.html',
+                    templateUrl: 'modules/edge/views/index.tpl.html',
                     controller: 'edgeViewController'
                 }
             }
@@ -1007,7 +463,10 @@ var proto;
                     // Do post-new operations
                     this.$timeout(function () {
                         // Select file contents
-                        $('#FileContents').select();
+                        var elem = $('#FileContents');
+                        if (elem) {
+                            elem.select();
+                        }
                     });
                 };
 
@@ -1113,6 +572,7 @@ angular.module('prototyped.editor', [
         });
     }]).controller('proto.ng.editor.EditorController', [
     '$scope',
+    '$timeout',
     proto.ng.editor.EditorController
 ]);
 ///<reference path="../../../imports.d.ts"/>
@@ -1120,7 +580,9 @@ var proto;
 (function (proto) {
     (function (explorer) {
         var AddressBarController = (function () {
-            function AddressBarController($scope, $q) {
+            function AddressBarController($rootScope, $scope, $q) {
+                var _this = this;
+                this.$rootScope = $rootScope;
                 this.$scope = $scope;
                 this.$q = $q;
                 this.history = [];
@@ -1130,6 +592,14 @@ var proto;
                     var elem = $('#addressbar');
                     if (elem) {
                         this.init(elem);
+
+                        this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                            if (folder != _this.$scope.dir_path) {
+                                console.warn(' - Addressbar Navigate: ', folder);
+                                _this.$scope.dir_path = folder;
+                                _this.navigate(folder);
+                            }
+                        });
                     } else {
                         throw new Error('Element with id "addressbar" not found...');
                     }
@@ -1162,7 +632,6 @@ var proto;
             };
 
             AddressBarController.prototype.navigate = function (path) {
-                console.info(' - navigate: ', path);
                 this.generateOutput(path);
             };
 
@@ -1195,8 +664,10 @@ var proto;
                 // Set the current dir path
                 this.$scope.dir_path = dir_path;
                 this.$scope.dir_parts = this.generatePaths(dir_path);
-
                 this.history.push(dir_path);
+
+                // Breadcast event that path has changed
+                this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
             };
 
             AddressBarController.prototype.generatePaths = function (dir_path) {
@@ -1248,201 +719,162 @@ var proto;
 (function (proto) {
     (function (explorer) {
         var ExplorerController = (function () {
-            function ExplorerController($scope, $route, $timeout, $q) {
+            function ExplorerController($rootScope, $scope, $q) {
+                var _this = this;
+                this.$rootScope = $rootScope;
                 this.$scope = $scope;
-                this.$route = $route;
-                this.$timeout = $timeout;
                 this.$q = $q;
                 var dir = './';
-                var pkg = 'package.json';
                 try  {
                     // Hook up to the current scope
-                    this.$scope.myReader = this;
-                    this.$scope.isBusy = false;
-                    /*
-                    // Hook in the required libraries
-                    this._path = require('path');
-                    this._fs = require('fs');
-                    
+                    this.$scope.isBusy = true;
+
                     // Initialize the cotroller
                     this.init(dir);
-                    */
-                    // Test File Read...
-                    /*
-                    console.debug(' - Fetching file: ' + pkg);
-                    this.openFile(pkg, (data) => {
-                    console.info(data);
-                    }, console.warn);
-                    */
+
+                    // Hook event for when folder path changes
+                    this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                        if (folder != _this.$scope.dir_path) {
+                            console.warn(' - Explorer Navigate: ', folder);
+                            _this.$scope.dir_path = folder;
+                            _this.navigate(folder);
+                        }
+                    });
                 } catch (ex) {
                     console.error(ex);
                 }
             }
-            Object.defineProperty(ExplorerController.prototype, "FolderView", {
-                get: function () {
-                    return this._folderViewCtrl;
-                },
-                enumerable: true,
-                configurable: true
-            });
-
             ExplorerController.prototype.init = function (dir) {
-                // Check if file system is loaded
-                if (!$.isEmptyObject(this._fs)) {
-                    // Get and set current folder details
-                    this.TargetFolder = this._fs.realpathSync(dir);
-
-                    // Watch for changes on this folder (non-recursive)
-                    this._fs.watch('./', function () {
-                        // Changes Detected... Reload on changes?
-                        console.log(' - Changes Detected...');
-                    });
-
-                    // Make sure path is defined
-                    if (!$.isEmptyObject(this._path)) {
-                        // Link Address bar
-                        var addrBarElem = $('addressbar');
-                        if (addrBarElem)
-                            this.linkAddressBar(addrBarElem);
-
-                        // Link Folder Explorer
-                        var pathViewElem = $('#files');
-                        if (pathViewElem)
-                            this.createFolderView(pathViewElem);
-                    }
-                } else {
-                    // No access to the file system
-                    this.TargetFolder = null;
-                }
+                // Resolve the initial folder path
+                this.navigate(dir);
             };
 
-            ExplorerController.prototype.isExpanded = function () {
-                var result = this.$scope.navExpanded;
-                if (typeof result !== 'boolean') {
-                    var wdt = $(window).innerWidth();
-                    result = wdt > 500;
-                }
-                return result;
-            };
-
-            ExplorerController.prototype.linkAddressBar = function (elem) {
-                var _this = this;
-                // Try and load the address bar
-                if (this._addrBar) {
-                    var addressbar = new this._addrBar.AddressBar(elem);
-                    if (addressbar) {
-                        addressbar.on('navigate', function (dir) {
-                            _this.navigate(dir);
-                        });
-                    }
-                    this._addrBarCtrl = addressbar;
-                    this.refreshAddressBar(this.TargetFolder);
-                }
-            };
-
-            ExplorerController.prototype.refreshAddressBar = function (path) {
-                var result = this._addrBarCtrl.generatePaths(path);
-                this.$scope.paths = result;
-                if (!this.$scope.$$phase) {
-                    this.$scope.$apply();
-                }
-                ;
-            };
-
-            ExplorerController.prototype.navigate = function (path) {
+            ExplorerController.prototype.navigate = function (dir_path) {
                 var _this = this;
                 var deferred = this.$q.defer();
-                console.info(' - Navigate: ' + path);
+                try  {
+                    // Set busy flag
+                    this.$scope.isBusy = true;
+                    this.$scope.error = null;
 
-                // Set busy flag
-                this.$scope.isBusy = true;
-                this.$scope.error = '';
-                this.$timeout(function () {
-                    try  {
-                        // Opoen the specified folder
-                        _this._folderViewCtrl.open(path);
+                    // Resolve the full path
+                    var path = require('path');
+                    dir_path = path.resolve(dir_path);
 
-                        // Refresh  the address bar as well
-                        if (_this._addrBarCtrl) {
-                            _this.refreshAddressBar(path);
-                            //this._addrBarCtrl.enter(mime);
+                    // Read the folder contents (async)
+                    var fs = require('fs');
+                    fs.readdir(dir_path, function (error, files) {
+                        if (error) {
+                            deferred.reject(error);
+                            return;
                         }
 
+                        // Split and sort results
+                        var folders = [];
+                        var lsFiles = [];
+                        for (var i = 0; i < files.sort().length; ++i) {
+                            var targ = path.join(dir_path, files[i]);
+                            var stat = _this.mimeType(targ);
+                            if (stat.type == 'folder') {
+                                folders.push(stat);
+                            } else {
+                                lsFiles.push(stat);
+                            }
+                        }
+
+                        // Generate the contents
+                        var result = {
+                            path: dir_path,
+                            folders: folders,
+                            files: lsFiles
+                        };
+
                         // Mark promise as resolved
-                        deferred.resolve(path);
-                    } catch (ex) {
-                        // Mark promise and rejected
-                        deferred.reject(ex);
-                    }
-                });
+                        deferred.resolve(result);
+                    });
+                } catch (ex) {
+                    // Mark promise and rejected
+                    deferred.reject(ex);
+                }
+
+                // Handle the result and error conditions
                 deferred.promise.then(function (result) {
                     // Clear busy flag
                     _this.$scope.isBusy = false;
-                    _this.$scope.cwd = result;
+                    _this.$scope.dir_path = result.path;
+                    _this.$scope.files = result.files;
+                    _this.$scope.folders = result.folders;
+
+                    // Breadcast event that path has changed
+                    _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
                 }, function (error) {
                     // Clear busy flag
                     _this.$scope.isBusy = false;
                     _this.$scope.error = error;
                 });
+
+                return deferred.promise;
             };
 
-            ExplorerController.prototype.createFolderView = function (elem) {
-                var _this = this;
-                // Try and load the folder view
-                var folder = new this._folderView.Folder(elem);
-                if (folder) {
-                    folder.on('navigate', function (dir, mime) {
-                        if (mime.type == 'folder') {
-                            _this.navigate(mime.path);
-                        } else {
-                            var req = 'nw.gui';
-                            var gui = require(req);
-                            if (gui)
-                                gui.Shell.openItem(mime.path);
-                        }
-                    });
-                }
-                this._folderViewCtrl = folder;
-                this.navigate(this.TargetFolder);
+            ExplorerController.prototype.select = function (filePath) {
+                this.$scope.selected = filePath;
             };
 
-            ExplorerController.prototype.readFile = function (filePath, callback, errorHandler) {
-                // Make sure the required libraries exists
-                if (this._fs && this._path) {
-                    var targetPath = this._path.resolve(this.TargetFolder, filePath);
-                    try  {
-                        // Try and read the file
-                        this._fs.readFile(filePath, 'UTF-8', function (err, data) {
-                            if (err) {
-                                if (errorHandler)
-                                    errorHandler(err);
-                                return;
+            ExplorerController.prototype.open = function (filePath) {
+                var req = 'nw.gui';
+                var gui = require(req);
+                if (gui)
+                    gui.Shell.openItem(filePath);
+            };
+
+            ExplorerController.prototype.mimeType = function (filepath) {
+                var map = {
+                    'compressed': ['zip', 'rar', 'gz', '7z'],
+                    'text': ['txt', 'md', ''],
+                    'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
+                    'pdf': ['pdf'],
+                    'css': ['css'],
+                    'excel': ['csv', 'xls', 'xlsx'],
+                    'html': ['html'],
+                    'word': ['doc', 'docx'],
+                    'powerpoint': ['ppt', 'pptx'],
+                    'movie': ['mkv', 'avi', 'rmvb']
+                };
+                var cached = {};
+
+                var fs = require('fs');
+                var path = require('path');
+                var result = {
+                    name: path.basename(filepath),
+                    path: filepath,
+                    type: null
+                };
+
+                try  {
+                    var stat = fs.statSync(filepath);
+                    if (stat.isDirectory()) {
+                        result.type = 'folder';
+                    } else {
+                        var ext = path.extname(filepath).substr(1);
+                        result.type = cached[ext];
+                        if (!result.type) {
+                            for (var key in map) {
+                                var arr = map[key];
+                                if (arr.length > 0 && arr.indexOf(ext) >= 0) {
+                                    cached[ext] = result.type = key;
+                                    break;
+                                }
                             }
-                            if (callback)
-                                callback(data);
-                        });
-                    } catch (ex) {
-                        // File read error
-                        console.error(ex);
-                        if (errorHandler)
-                            errorHandler(ex);
+
+                            if (!result.type)
+                                result.type = 'blank';
+                        }
                     }
+                } catch (e) {
+                    console.error(e);
                 }
-            };
 
-            ExplorerController.prototype.openFolder = function (dir) {
-                if (!this._gui) {
-                    var nwGui = 'nw.gui';
-                    this._gui = require(nwGui);
-                }
-                if (!dir)
-                    dir = this.TargetFolder;
-                if (!$.isEmptyObject(this._gui)) {
-                    console.debug(' - Opening Folder: ' + dir);
-
-                    //this._gui.Shell.openItem(target);
-                    this._gui.Shell.openItem(dir + '/');
-                }
+                return result;
             };
             return ExplorerController;
         })();
@@ -1461,7 +893,8 @@ angular.module('prototyped.explorer', [
                 'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/explore/views/index.tpl.html',
-                    controller: 'proto.explorer.ExplorerController'
+                    controller: 'proto.explorer.ExplorerController',
+                    controllerAs: 'ctrlExplorer'
                 }
             }
         });
@@ -1478,13 +911,13 @@ angular.module('prototyped.explorer', [
             controllerAs: 'addrBar'
         };
     }]).controller('proto.explorer.AddressBarController', [
+    '$rootScope',
     '$scope',
     '$q',
     proto.explorer.AddressBarController
 ]).controller('proto.explorer.ExplorerController', [
+    '$rootScope',
     '$scope',
-    '$route',
-    '$timeout',
     '$q',
     proto.explorer.ExplorerController
 ]);
@@ -2382,7 +1815,7 @@ angular.module('prototyped.features', [
 ]).config([
     '$stateProvider', function ($stateProvider) {
         $stateProvider.state('proto.cmd', {
-            url: '/cmd',
+            url: '/explore',
             views: {
                 'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                 'main@': {
@@ -2563,6 +1996,552 @@ angular.module('prototyped.features', [
         angular.extend($scope.cmd, updates);
     }]);
 /// <reference path="../imports.d.ts" />
+angular.module('prototyped.default', [
+    'ui.router'
+]).value('appPages', {
+    pages: [
+        {
+            url: '/proto',
+            style: 'img-explore',
+            title: 'Explore Features & Options',
+            desc: 'You can explore locally installed features and find your way around the site by clicking on this card...'
+        },
+        {
+            url: '/samples',
+            style: 'img-sandbox',
+            title: 'Prototyped Sample Code',
+            desc: 'A selection of samples to test, play and learn about web technologies.'
+        },
+        {
+            url: '/sync',
+            style: 'img-editor',
+            title: 'Import & Export Data',
+            desc: 'Load from external sources, modify and/or export to an external resource.'
+        },
+        {
+            url: '/about',
+            style: 'img-about',
+            title: 'About this software',
+            desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
+        }
+    ]
+}).config([
+    '$stateProvider', function ($stateProvider) {
+        // Now set up the states
+        $stateProvider.state('default', {
+            url: '/',
+            views: {
+                'main@': {
+                    templateUrl: 'views/default.tpl.html',
+                    controller: 'CardViewCtrl',
+                    controllerAs: 'sliderCtrl'
+                }
+            }
+        });
+    }]).controller('CardViewCtrl', [
+    '$scope', 'appPages', function ($scope, appPages) {
+        // Make sure 'mySiteMap' exists
+        $scope.pages = appPages.pages || [];
+
+        // initial image index
+        $scope._Index = 0;
+
+        $scope.count = function () {
+            return $scope.pages.length;
+        };
+
+        // if a current image is the same as requested image
+        $scope.isActive = function (index) {
+            return $scope._Index === index;
+        };
+
+        // show prev image
+        $scope.showPrev = function () {
+            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
+        };
+
+        // show next image
+        $scope.showNext = function () {
+            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
+        };
+
+        // show a certain image
+        $scope.showPhoto = function (index) {
+            $scope._Index = index;
+        };
+    }]);
+/// <reference path="../../imports.d.ts" />
+angular.module('prototyped.about', [
+    'prototyped.ng.views',
+    'prototyped.ng.styles',
+    'ui.router'
+]).config([
+    '$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
+        // Define redirects
+        $urlRouterProvider.when('/about', '/about/info');
+
+        // Define the UI states
+        $stateProvider.state('about', {
+            url: '/about',
+            abstract: true
+        }).state('about.info', {
+            url: '/info',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/info.tpl.html',
+                    controller: 'AboutInfoController'
+                }
+            }
+        }).state('about.online', {
+            url: '^/contact',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': { templateUrl: 'views/about/contact.tpl.html' }
+            }
+        }).state('about.conection', {
+            url: '/conection',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/connections.tpl.html',
+                    controller: 'AboutConnectionController'
+                }
+            }
+        });
+    }]).controller('AboutInfoController', [
+    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
+        function css(a) {
+            var sheets = document.styleSheets, o = [];
+            for (var i in sheets) {
+                var rules = sheets[i].rules || sheets[i].cssRules;
+                for (var r in rules) {
+                    if (a.is(rules[r].selectorText)) {
+                        o.push(rules[r].selectorText);
+                    }
+                }
+            }
+            return o;
+        }
+
+        function selectorExists(selector) {
+            return false;
+            //var ret = css($(selector));
+            //return ret;
+        }
+
+        function getVersionInfo(ident) {
+            try  {
+                if (typeof process !== 'undefined' && process.versions) {
+                    return process.versions[ident];
+                }
+            } catch (ex) {
+            }
+            return null;
+        }
+
+        // Define a function to detect the capabilities
+        $scope.detectBrowserInfo = function () {
+            var info = {
+                about: null,
+                versions: {
+                    ie: null,
+                    html: null,
+                    jqry: null,
+                    css: null,
+                    js: null,
+                    ng: null,
+                    nw: null,
+                    njs: null,
+                    v8: null,
+                    openssl: null,
+                    chromium: null
+                },
+                detects: {
+                    jqry: false,
+                    less: false,
+                    bootstrap: false,
+                    ngAnimate: false,
+                    ngUiRouter: false,
+                    ngUiUtils: false,
+                    ngUiBootstrap: false
+                },
+                css: {
+                    boostrap2: null,
+                    boostrap3: null
+                },
+                codeName: navigator.appCodeName,
+                userAgent: navigator.userAgent
+            };
+
+            try  {
+                // Get IE version (if defined)
+                if (!!window['ActiveXObject']) {
+                    info.versions.ie = 10;
+                }
+
+                // Sanitize codeName and userAgentt
+                var cn = info.codeName;
+                var ua = info.userAgent;
+                if (ua) {
+                    // Remove start of string in UAgent upto CName or end of string if not found.
+                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
+
+                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
+                    ua = ua.substring(cn.length);
+
+                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
+                        ua = ua.substring(1);
+                    }
+
+                    // Remove the end of the string from first characrer that is not a number or point etc.
+                    var pointer = 0;
+                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
+                        pointer = pointer + 1;
+                    }
+                    ua = ua.substring(0, pointer);
+
+                    if (!window.isNaN(ua)) {
+                        if (parseInt(ua) > 0) {
+                            info.versions.html = ua;
+                        }
+                        if (parseFloat(ua) >= 5) {
+                            info.versions.css = '3.x';
+                            info.versions.js = '5.x';
+                        }
+                    }
+                }
+                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
+                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
+                info.versions.nw = getVersionInfo('node-webkit');
+                info.versions.njs = getVersionInfo('node');
+                info.versions.v8 = getVersionInfo('v8');
+                info.versions.openssl = getVersionInfo('openssl');
+                info.versions.chromium = getVersionInfo('chromium');
+
+                // Check for CSS extensions
+                info.css.boostrap2 = selectorExists('hero-unit');
+                info.css.boostrap3 = selectorExists('jumbotron');
+
+                // Detect selected features and availability
+                info.about = {
+                    protocol: $location.$$protocol,
+                    browser: {},
+                    server: {
+                        active: undefined,
+                        url: $location.$$absUrl
+                    },
+                    os: {},
+                    hdd: { type: null }
+                };
+
+                // Detect the operating system
+                var osName = 'Unknown OS';
+                var appVer = navigator.appVersion;
+                if (appVer) {
+                    if (appVer.indexOf("Win") != -1)
+                        osName = 'Windows';
+                    if (appVer.indexOf("Mac") != -1)
+                        osName = 'MacOS';
+                    if (appVer.indexOf("X11") != -1)
+                        osName = 'UNIX';
+                    if (appVer.indexOf("Linux") != -1)
+                        osName = 'Linux';
+                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
+                }
+                info.about.os.name = osName;
+
+                // Check for jQuery
+                info.detects.jqry = typeof jQuery !== 'undefined';
+
+                // Check for general header and body scripts
+                $("script").each(function () {
+                    var src = $(this).attr("src");
+                    if (src) {
+                        // Fast check on known script names
+                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
+                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
+                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
+                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
+                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
+                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
+                    }
+                });
+
+                // Get the client browser details (build a url string)
+                var detectUrl = (function () {
+                    var p = [], w = window, d = document, e = 0, f = 0;
+                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
+                    e |= w.ActiveXObject ? 1 : 0;
+                    e |= w.opera ? 2 : 0;
+                    e |= w.chrome ? 4 : 0;
+                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
+                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
+                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
+                    p.push('e=' + e);
+                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
+                    f |= 'WebSocket' in w ? 2 : 0;
+                    f |= w.Worker ? 4 : 0;
+                    f |= w.applicationCache ? 8 : 0;
+                    f |= w.history && history.pushState ? 16 : 0;
+                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
+                    f |= 'FileReader' in w ? 64 : 0;
+                    p.push('f=' + f);
+                    p.push('r=' + Math.random().toString(36).substring(7));
+                    p.push('w=' + screen.width);
+                    p.push('h=' + screen.height);
+                    var s = d.createElement('script');
+                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
+                })();
+
+                // Send a loaded package to a server to detect more features
+                $.getScript(detectUrl).done(function (script, textStatus) {
+                    $rootScope.$applyAsync(function () {
+                        // Browser info and details loaded
+                        var browserInfo = new window.WhichBrowser();
+                        angular.extend(info.about, browserInfo);
+                    });
+                }).fail(function (jqxhr, settings, exception) {
+                    console.error(exception);
+                });
+
+                // Set browser name to IE (if defined)
+                if (navigator.appName == 'Microsoft Internet Explorer') {
+                    info.about.browser.name = 'Internet Explorer';
+                }
+
+                // Check if the browser supports web db's
+                var webDB = info.about.webdb = {
+                    db: null,
+                    version: '1',
+                    active: null,
+                    size: 5 * 1024 * 1024,
+                    test: function (name, desc, dbVer, dbSize) {
+                        try  {
+                            // Try and open a web db
+                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
+                            webDB.onSuccess(null, null);
+                        } catch (ex) {
+                            // Nope, something went wrong
+                            webDB.onError(null, null);
+                        }
+                    },
+                    onSuccess: function (tx, r) {
+                        if (tx) {
+                            if (r) {
+                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
+                            }
+                            if (tx) {
+                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
+                            }
+                        }
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = true;
+                            webDB.used = JSON.stringify(webDB.db).length;
+                        });
+                    },
+                    onError: function (tx, e) {
+                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = false;
+                        });
+                    }
+                };
+                info.about.webdb.test();
+            } catch (ex) {
+                console.error(ex);
+            }
+
+            // Return the preliminary info
+            return info;
+        };
+
+        // Define the state
+        $scope.info = $scope.detectBrowserInfo();
+    }]).controller('AboutConnectionController', [
+    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
+        $scope.result = null;
+        $scope.status = null;
+        $scope.state = {
+            editMode: false,
+            location: $location.$$absUrl,
+            protocol: $location.$$protocol,
+            requireHttps: ($location.$$protocol == 'https')
+        };
+        $scope.detect = function () {
+            var target = $scope.state.location;
+            var started = Date.now();
+            $scope.result = null;
+            $scope.latency = null;
+            $scope.status = { code: 0, desc: '', style: 'label-default' };
+            $.ajax({
+                url: target,
+                crossDomain: true,
+                /*
+                username: 'user',
+                password: 'pass',
+                xhrFields: {
+                withCredentials: true
+                }
+                */
+                beforeSend: function (xhr) {
+                    $timeout(function () {
+                        //$scope.status.code = xhr.status;
+                        $scope.status.desc = 'sending';
+                        $scope.status.style = 'label-info';
+                    });
+                },
+                success: function (data, textStatus, xhr) {
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-success';
+                        $scope.result = {
+                            valid: true,
+                            info: data,
+                            sent: started,
+                            received: Date.now()
+                        };
+                    });
+                },
+                error: function (xhr, textStatus, error) {
+                    xhr.ex = error;
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-danger';
+                        $scope.result = {
+                            valid: false,
+                            info: xhr,
+                            sent: started,
+                            error: xhr.statusText,
+                            received: Date.now()
+                        };
+                    });
+                },
+                complete: function (xhr, textStatus) {
+                    console.debug(' - Status Code: ' + xhr.status);
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                    });
+                }
+            }).always(function (xhr) {
+                $timeout(function () {
+                    $scope.latency = $scope.getLatencyInfo();
+                });
+            });
+        };
+        $scope.setProtocol = function (protocol) {
+            var val = $scope.state.location;
+            var pos = val.indexOf('://');
+            if (pos > 0) {
+                val = protocol + val.substring(pos);
+            }
+            $scope.state.protocol = protocol;
+            $scope.state.location = val;
+            $scope.detect();
+        };
+        $scope.getProtocolStyle = function (protocol, activeStyle) {
+            var cssRes = '';
+            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
+            if (isValid) {
+                if (!$scope.result) {
+                    cssRes += 'btn-primary';
+                } else if ($scope.result.valid && activeStyle) {
+                    cssRes += activeStyle;
+                } else if ($scope.result) {
+                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
+                }
+            }
+            return cssRes;
+        };
+        $scope.getStatusIcon = function (activeStyle) {
+            var cssRes = '';
+            if (!$scope.result) {
+                cssRes += 'glyphicon-refresh';
+            } else if (activeStyle && $scope.result.valid) {
+                cssRes += activeStyle;
+            } else {
+                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
+            }
+            return cssRes;
+        };
+        $scope.submitForm = function () {
+            $scope.state.editMode = false;
+            if ($scope.state.requireHttps) {
+                $scope.setProtocol('https');
+            } else {
+                $scope.detect();
+            }
+        };
+        $scope.getStatusColor = function () {
+            var cssRes = $scope.getStatusIcon() + ' ';
+            if (!$scope.result) {
+                cssRes += 'busy';
+            } else if ($scope.result.valid) {
+                cssRes += 'success';
+            } else {
+                cssRes += 'error';
+            }
+            return cssRes;
+        };
+        $scope.getLatencyInfo = function () {
+            var cssNone = 'text-muted';
+            var cssHigh = 'text-success';
+            var cssMedium = 'text-warning';
+            var cssLow = 'text-danger';
+            var info = {
+                desc: '',
+                style: cssNone
+            };
+
+            if (!$scope.result) {
+                return info;
+            }
+
+            if (!$scope.result.valid) {
+                info.style = 'text-muted';
+                info.desc = 'Connection Failed';
+                return info;
+            }
+
+            var totalMs = $scope.result.received - $scope.result.sent;
+            if (totalMs > 2 * 60 * 1000) {
+                info.style = cssNone;
+                info.desc = 'Timed out';
+            } else if (totalMs > 1 * 60 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Impossibly slow';
+            } else if (totalMs > 30 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Very slow';
+            } else if (totalMs > 1 * 1000) {
+                info.style = cssMedium;
+                info.desc = 'Relatively slow';
+            } else if (totalMs > 500) {
+                info.style = cssMedium;
+                info.desc = 'Moderately slow';
+            } else if (totalMs > 250) {
+                info.style = cssMedium;
+                info.desc = 'Barely Responsive';
+            } else if (totalMs > 150) {
+                info.style = cssHigh;
+                info.desc = 'Average Response Time';
+            } else if (totalMs > 50) {
+                info.style = cssHigh;
+                info.desc = 'Responsive Enough';
+            } else if (totalMs > 15) {
+                info.style = cssHigh;
+                info.desc = 'Very Responsive';
+            } else {
+                info.style = cssHigh;
+                info.desc = 'Optimal';
+            }
+            return info;
+        };
+    }]);
+/// <reference path="../imports.d.ts" />
 /// <reference path="../modules/default.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
 angular.module('prototyped.ng', [
@@ -2578,14 +2557,14 @@ angular.module('prototyped.ng', [
     'prototyped.features'
 ]).config([
     '$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
+        // Define redirects
+        $urlRouterProvider.when('/proto', '/proto/explore').when('/sandbox', '/samples').when('/sync', '/edge');
+
         // Set up the routing...
         $stateProvider.state('proto', {
             url: '/proto',
             abstract: true
         });
-
-        // Define redirects
-        $urlRouterProvider.when('/proto', '/proto/cmd');
     }]).constant('appInfo', {
     version: '1.0.0.0'
 }).constant('appNode', {
@@ -3034,15 +3013,37 @@ angular.module('prototyped.ng', [
 //# sourceMappingURL=prototyped.ng.base.js.map
 ;angular.module('prototyped.ng.views', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('modules/console/views/main.tpl.html',
-    '<div class=console><div class="cmd-console btn-group btn-group-sm"><a href=./index.html class="btn btn-default pull-left"><i class="glyphicon glyphicon-chevron-left"></i></a><div class="btn-group btn-group-sm pull-right"><a href="" class="btn btn-default dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-chevron-right"></i> <span class=caret></span></a><ul class=dropdown-menu role=menu><li ng-repeat="itm in myConsole.getProxies()"><a href="" ng-click=myConsole.setProxy(itm.ProxyName)>Switch to {{ itm.ProxyName }}</a></li></ul></div><a href="" class="btn btn-default pull-right" ng-click=myConsole.clear()><i class="glyphicon glyphicon-trash"></i></a><div class="input-group input-group-sm"><label for=txtInput class=input-group-addon>{{ myConsole.getProxyName() }}:</label><input id=txtInput class="cmd-input form-control" tabindex=1 ng-model=txtInput ng-keypress="($event.which === 13)?myConsole.command(txtInput):0" placeholder="Enter Command Here"></div></div><div class="cmd-output dock-vert"><div class=cmd-line ng-repeat="ln in lines"><span class=text-{{ln.type}}><i class=glyphicon title="{{ln.time | date:\'hh:mm:ss\'}}" ng-class="{ \'glyphicon-chevron-right\':ln.type==\'info\', \'glyphicon-ok-sign\':ln.type==\'success\', \'glyphicon-warning-sign\':ln.type==\'warning\', \'glyphicon-exclamation-sign\':ln.type==\'error\' }"></i> <span class=cmd-text>{{ln.text}}</span></span></div></div></div>');
-  $templateCache.put('modules/edge/index.tpl.html',
-    '<div class=container><h4>Prototyping EdgeJS <small>Interoperability between JavaScript and C#.net, SQL and more</small></h4><div ng:cloak><div class=alert ng-class="{ \'alert-success\': edge.active, \'alert-warning\': !edge.active, \'alert-danger\': edge.error}"><div ng-if=!edge.error><i class=glyphicon ng-class="{ \'glyphicon-ok\':edge.active, \'glyphicon-warning-sign\': !edge.active }"></i> <b>EdgeJS:</b> The current status is <em>{{ edge.active ? \'Connected\' : \'Offline\' }}</em>.</div><div ng-if=edge.error><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Error:</b> {{ edge.error.message ? edge.error.message : edge.error }}.</div></div><div class="btn-group btn-group-sm"><a class="btn btn-primary" ng-if=!edge.active href="" ng-click="edge.active = edge.detect()">Connnect</a> <a class="btn btn-warning" ng-if=edge.active href="" ng-click="edge.active = false">Disconnect</a></div><hr><pre>{{ edge }}</pre></div></div>');
-  $templateCache.put('modules/editor/views/main.tpl.html',
-    '<div class=text-editor ng-init=myWriter.init()><style>.text-area {\n' +
+    '<div class=console><style>.contents.docked {\n' +
+    '            padding: 0 !important;\n' +
+    '            margin: 0 !important;\n' +
+    '        }\n' +
+    '\n' +
+    '        .console {\n' +
+    '            display: flex;\n' +
+    '            flex-direction: column;\n' +
+    '            width: 100%;\n' +
+    '        }\n' +
+    '\n' +
+    '        .cmd-output {\n' +
     '            width: 100%;\n' +
     '            padding: 6px;\n' +
-    '            min-height: 520px;\n' +
-    '        }</style><div class="btn-group btn-group-sm"><a ng-href="/" ng-click="myWriter.checkUnsaved() && $event.preventDefault()" class="btn btn-default pull-left"><i class="glyphicon glyphicon-chevron-left"></i></a> <a href="" class="btn btn-default pull-left" ng-click=myWriter.newFile()><i class="glyphicon glyphicon-file"></i></a> <a href="" class="btn btn-default pull-left" ng-click=myWriter.openFile() ng-disabled=!myWriter.HasFileSys><i class="glyphicon glyphicon-folder-open"></i></a><div class="btn-group btn-group-sm pull-right"><a href="" ng-disabled=!myWriter.FileLocation class="btn btn-default dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-save"></i> <span class=caret></span></a><ul class=dropdown-menu role=menu><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileContents}"><a href="" ng-click=myWriter.saveFileAs()><i class="glyphicon glyphicon-floppy-disk"></i> Save file as...</a></li><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileLocation}"><a href="" ng-click=myWriter.openFileLocation() ng-disabled="!myWriter.HasFileSys || !myWriter.FileLocation"><i class="glyphicon glyphicon-save"></i>Open file...</a></li></ul></div><a href="" class="btn btn-default pull-right" ng-click=myWriter.saveFile() ng-disabled="!(myWriter.HasFileSys && myWriter.HasChanges)"><i class="glyphicon glyphicon-floppy-disk"></i></a><div class="input-group input-group-sm"><label for=txtFileName class=input-group-addon>File:</label><input id=txtFileName class="cmd-input form-control" tabindex=1 value={{myWriter.FileLocation}} placeholder="{{ myWriter.FileLocation || \'Create new or open existing...\' }}" ng-readonly="true"></div></div><textarea id=FileContents class=text-area ng-disabled="myWriter.FileContents == null" ng-model=myWriter.FileContents></textarea><input style=display:none id=fileDialog type=file accept=".txt,.json"> <input style=display:none id=saveDialog type=file accept=.txt nwsaveas></div>');
+    '        }</style><div class="dock-tight btn-group btn-group-sm"><a href=./index.html class="btn btn-default pull-left"><i class="glyphicon glyphicon-chevron-left"></i></a><div class="btn-group btn-group-sm pull-right"><a href="" class="btn btn-default dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-chevron-right"></i> <span class=caret></span></a><ul class=dropdown-menu role=menu><li ng-repeat="itm in myConsole.getProxies()"><a href="" ng-click=myConsole.setProxy(itm.ProxyName)>Switch to {{ itm.ProxyName }}</a></li></ul></div><a href="" class="btn btn-default pull-right" ng-click=myConsole.clear()><i class="glyphicon glyphicon-trash"></i></a><div class="input-group input-group-sm"><label for=txtInput class=input-group-addon>{{ myConsole.getProxyName() }}:</label><input id=txtInput class="cmd-input form-control" tabindex=1 ng-model=txtInput ng-keypress="($event.which === 13)?myConsole.command(txtInput):0" placeholder="Enter Command Here"></div></div><div class="cmd-output dock-fill"><div class=cmd-line ng-repeat="ln in lines"><span class=text-{{ln.type}}><i class=glyphicon title="{{ln.time | date:\'hh:mm:ss\'}}" ng-class="{ \'glyphicon-chevron-right\':ln.type==\'info\', \'glyphicon-ok-sign\':ln.type==\'success\', \'glyphicon-warning-sign\':ln.type==\'warning\', \'glyphicon-exclamation-sign\':ln.type==\'error\' }"></i> <span class=cmd-text>{{ln.text}}</span></span></div></div></div>');
+  $templateCache.put('modules/edge/views/index.tpl.html',
+    '<div class=container><h4>Prototyping EdgeJS <small>Interoperability between JavaScript and C#.net, SQL and more</small></h4><div ng:cloak><div class=alert ng-class="{ \'alert-success\': edge.active, \'alert-warning\': !edge.active, \'alert-danger\': edge.error}"><div ng-if=!edge.error><i class=glyphicon ng-class="{ \'glyphicon-ok\':edge.active, \'glyphicon-warning-sign\': !edge.active }"></i> <b>EdgeJS:</b> The current status is <em>{{ edge.active ? \'Connected\' : \'Offline\' }}</em>.</div><div ng-if=edge.error><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Error:</b> {{ edge.error.message ? edge.error.message : edge.error }}.</div></div><div class="btn-group btn-group-sm"><a class="btn btn-primary" ng-if=!edge.active href="" ng-click="edge.active = edge.detect()">Connnect</a> <a class="btn btn-warning" ng-if=edge.active href="" ng-click="edge.active = false">Disconnect</a></div></div></div>');
+  $templateCache.put('modules/editor/views/main.tpl.html',
+    '<div class=text-editor ng-init=myWriter.init()><style>.contents.docked {\n' +
+    '            padding: 0!important;\n' +
+    '            margin: 0!important;\n' +
+    '        }\n' +
+    '        .text-editor {\n' +
+    '            display: flex;\n' +
+    '            flex-direction: column;\n' +
+    '            width: 100%;\n' +
+    '        }\n' +
+    '        .text-area {\n' +
+    '            width: 100%;\n' +
+    '            padding: 6px;\n' +
+    '        }</style><div class="btn-group btn-group-sm dock-tight"><a ng-href="/" ng-click="myWriter.checkUnsaved() && $event.preventDefault()" class="btn btn-default pull-left"><i class="glyphicon glyphicon-chevron-left"></i></a> <a href="" class="btn btn-default pull-left" ng-click=myWriter.newFile()><i class="glyphicon glyphicon-file"></i></a> <a href="" class="btn btn-default pull-left" ng-click=myWriter.openFile() ng-disabled=!myWriter.HasFileSys><i class="glyphicon glyphicon-folder-open"></i></a><div class="btn-group btn-group-sm pull-right"><a href="" ng-disabled=!myWriter.FileLocation class="btn btn-default dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-save"></i> <span class=caret></span></a><ul class=dropdown-menu role=menu><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileContents}"><a href="" ng-click=myWriter.saveFileAs()><i class="glyphicon glyphicon-floppy-disk"></i> Save file as...</a></li><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileLocation}"><a href="" ng-click=myWriter.openFileLocation() ng-disabled="!myWriter.HasFileSys || !myWriter.FileLocation"><i class="glyphicon glyphicon-save"></i>Open file...</a></li></ul></div><a href="" class="btn btn-default pull-right" ng-click=myWriter.saveFile() ng-disabled="!(myWriter.HasFileSys && myWriter.HasChanges)"><i class="glyphicon glyphicon-floppy-disk"></i></a><div class="input-group input-group-sm"><label for=txtFileName class=input-group-addon>File:</label><input id=txtFileName class="cmd-input form-control" tabindex=1 value={{myWriter.FileLocation}} placeholder="{{ myWriter.FileLocation || \'Create new or open existing...\' }}" ng-readonly="true"></div></div><textarea id=FileContents class="text-area dock-fill" ng-disabled="myWriter.FileContents == null" ng-model=myWriter.FileContents></textarea><input style=display:none id=fileDialog type=file accept=".txt,.json"> <input style=display:none id=saveDialog type=file accept=.txt nwsaveas></div>');
   $templateCache.put('modules/explore/views/addressbar.tpl.html',
     '<div class="view-toolbar btn-group btn-group-sm"><style>#addressbar {\n' +
     '            background: none;\n' +
@@ -3055,7 +3056,14 @@ angular.module('prototyped.ng', [
     '                margin: 0;\n' +
     '            }</style><a href="" class="btn btn-default pull-right" ng-click=addrBar.openFolder(dir_path) ng-disabled=!dir_parts><i class="glyphicon glyphicon-folder-open"></i></a> <a href="" ng-click=addrBar.back() class="btn btn-default pull-right" ng-disabled=!addrBar.hasHistory()><i class="glyphicon glyphicon-chevron-left"></i></a><div class="input-group input-group-sm"><label class=input-group-addon>Path:</label><div class="form-control nav-address-bar"><ul id=addressbar class=breadcrumb ng-show=dir_parts><li ng-repeat="itm in dir_parts.sequence" data-path={{itm.path}}><a href="" ng-click=addrBar.navigate(itm.path)>{{itm.name}}</a></li></ul><div class=text-error style="padding-left: 8px" ng-show=!dir_parts><i class="glyphicon glyphicon-bullhorn"></i> No access to local file system.</div></div></div></div>');
   $templateCache.put('modules/explore/views/index.tpl.html',
-    '<div style="width: 100%"><h4>File Browser <small>Explore files and folders on your local system</small></h4><div ng:cloak><div id=fileExplorer class=dock-vert><div proto:address-bar></div><div class=loader ng-show=myReader.isBusy><em>Loading...</em></div><div ng-show="myNode.isActive && !myReader.isBusy"><div class="panel-contents dock-vert"><ul style="margin: 5px" id=files class=files></ul></div></div><div ng-show=!myNode.isActive><br><h5><i class="glyphicon glyphicon-warning-sign"></i> Warning <small>All features not available</small></h5><div><p><b>Please Note:</b> You are running this from a browser window.</p><p>For security reasons, web browsers do not have permission to use the local file system, or other advanced operating system features.</p><p>To use this application with full functionality, you need an elevated runtime (<a href=/about/info>see this how to</a>).</p></div></div></div></div></div>');
+    '<div style="width: 100%" ng:cloak><style>.view-selector {\n' +
+    '            padding: 3px;\n' +
+    '            margin-right: 8px;\n' +
+    '        }\n' +
+    '        .view-selector a {\n' +
+    '            color: #808080;\n' +
+    '            text-decoration: none;\n' +
+    '        }</style><div class="view-selector pull-right" ng-init="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }"><div class="input-group pull-left"><a href="" class=dropdown-toggle data-toggle=dropdown aria-expanded=false><i ng-class=viewMode.css></i> {{ viewMode.desc || \'Default View\' }} <span class=caret></span></a><ul class="pull-right dropdown-menu" role=menu><li><a href="" ng-click="viewMode = { desc:\'Large Icons\', css:\'fa fa-th-large\', view: \'view-large\' }"><i class="fa fa-th-large"></i> Large Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Medium Icons\', css:\'fa fa-th\', view: \'view-med\' }"><i class="fa fa-th"></i> Medium Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Details View\', css:\'fa fa-list\', view: \'view-details\' }"><i class="fa fa-list"></i> Details View</a></li><li class=divider></li><li><a href="" ng-click="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }">Use Default</a></li></ul></div></div><h4>File Browser <small>Explore files and folders on your local system</small></h4><div id=fileExplorer ng-class=viewMode.view><div proto:address-bar></div><div class=loader ng-show=isBusy><br><em style="padding: 24px">Loading...</em></div><div ng-show="!isBusy && dir_path"><div class=folder-contents ng-if="!folders.length && !files.length"><em>No files or folders were found...</em></div><div class=folder-contents ng-if=folders.length><h5>File Folders</h5><div id=files class=files><a href="" class="file centered" ng-click=ctrlExplorer.navigate(itm.path) ng-repeat="itm in folders"><div class=icon><i class="glyphicon glyphicon-folder-open" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div></div><div class=folder-contents ng-if=files.length><h5>Application Files</h5><div id=files class=files><a href="" class="file centered" ng-repeat="itm in files" ng-class="{ \'focus\' : (selected == itm.path)}" ng-click=ctrlExplorer.select(itm.path) ng-dblclick=ctrlExplorer.open(itm.path)><div class=icon ng-switch=itm.type><i ng-switch-default class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=blank class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=text class="fa fa-file-text-o" style="font-size: 32px"></i> <i ng-switch-when=image class="fa fa-file-image-o" style="font-size: 32px"></i> <i ng-switch-when=pdf class="fa fa-file-pdf-o" style="font-size: 32px"></i> <i ng-switch-when=css class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=html class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=word class="fa fa-file-word-o" style="font-size: 32px"></i> <i ng-switch-when=powerpoint class="fa fa-file-powerpoint-o" style="font-size: 32px"></i> <i ng-switch-when=movie class="fa fa-file-movie-o" style="font-size: 32px"></i> <i ng-switch-when=excel class="fa fa-file-excel-o" style="font-size: 32px"></i> <i ng-switch-when=compressed class="fa fa-file-archive-o" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div></div></div><div ng-show="!isBusy && !dir_path"><br><h5><i class="glyphicon glyphicon-warning-sign"></i> Warning <small>All features not available</small></h5><div class="alert alert-warning"><p><b>Please Note:</b> You are running this from a browser window.</p><p>For security reasons, web browsers do not have permission to use the local file system, or other advanced operating system features.</p><p>To use this application with full functionality, you need an elevated runtime (<a href=/about/info>see this how to</a>).</p></div></div></div></div>');
   $templateCache.put('modules/features/appcmd.exe/certs.tpl.html',
     '<div ng-if=!state.current class=results ng-init=detect()><div class="icon pull-left left"><i class="glyphicon glyphicon-certificate"></i> <i class="sub-icon glyphicon" ng-class=getStatusColor()></i></div><div class="info pull-left"><div ng-if=!state.editMode><div class=pull-right><a class=ctrl-sm ng-click="state.editMode = true" href="" ng-hide="result.isDone && !result.valid"><i class="glyphicon glyphicon-plus"></i> New</a></div><h4>Security Certificates <small ng-if=result.certs.store>&nbsp;{{ result.certs.store }}<span ng-if=result.certs.store>, {{ result.certs.desc }}</span></small></h4></div><div ng-if=!state.editMode><p ng-if=!result.isDone><em>Please wait, loading...</em></p><ul ng-if="result.isDone && !result.valid"><li><b>NodeJS Required</b>: Try running this application inside something like <a target=_blank href=https://github.com/rogerwang/node-webkit>Node Webkit</a>.</li><li><b>Not Available:</b> You cannot access the local computer\'s certificate store from a browser window.</li></ul><div ng-if="result != null && result.isDone"><div class="alert alert-danger" ng-if="!result.valid && !$.isEmptyObject(result.error)"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Error:</b> {{ result.error }}</div><div class="alert alert-warning" ng-if="!result.valid && $.isEmptyObject(result.error)"><i class="glyphicon glyphicon-warning-sign"></i> <b>Warning:</b> Limited access to the <em>certificate store</em>.</div></div><div ng-if=result.valid><table class="table table-hover table-condensed"><thead><tr><th>Description</th><th>Thumbprint</th><th><div class=pull-right>Actions</div></th></tr></thead><tbody><tr class=inactive ng-if=!result.items.length><td><span class=text-muted>No results</span></td><td>&nbsp;</td><td>&nbsp;</td></tr><tr class=compact ng-repeat="itm in result.items"><td>{{ itm.name }}</td><td>{{ itm.hash }}</td><td><a href="" ng-click=exportCert(itm)>Export</a></td></tr></tbody></table></div><div ng-if=result.isDone class=text-muted>Last Checked: {{ result.lastUpdated | date:\'mediumTime\' }}</div></div><form ng-if=state.editMode><div class=form-group><h4 class=control-label for=txtTarget>New Certificate Name:</h4><input class=form-control id=txtName ng-model=state.certName></div><button type=submit class="btn btn-primary" ng-click="state.editMode = false;">Create</button></form></div></div><div ng-if=state.current><span class=pull-right><a class="btn btn-sm btn-primary" ng-click="state.current = null">Go Back</a></span> <samp><pre>{{ state.current }}</pre></samp></div><style>.results {\n' +
     '        min-width: 480px;\n' +
@@ -3154,7 +3162,7 @@ angular.module('prototyped.ng', [
   $templateCache.put('modules/features/views/index.tpl.html',
     '<div class=container><h4>Prototyping Local Resources <small>Discover features and command line utilities</small></h4><div ng:cloak><div ng:if=cmd.busy><div class=app-loading><div class=loadtext><label id=preLoaderText>Loading, please wait...</label><div class=spinner><div class=rect1></div><div class=rect2></div><div class=rect3></div><div class=rect4></div><div class=rect5></div><div class=rect7></div><div class=rect7></div><div class=rect8></div><div class=rect9></div><div class=rect10></div><div class=rect11></div><div class=rect12></div></div></div></div></div><div ng:if=!cmd.busy><div ng:if=!appNode.active class="alert alert-warning"><i class="fa fa-warning"></i> <b>Not Available:</b> Application requires a NodeJS (or CommonJS) runtime. Web browsers do not have access to these advanced features...</div><div ng:if="cmd.active && !cmd.result.stderr" class="alert alert-success"><i class="fa fa-share-square"></i> <b>Success!</b> You are now conncted to the local host machine...</div><div ng:if=cmd.result.stderr class="alert alert-danger"><i class="fa fa-share-square"></i> <b>Error:</b> {{ cmd.result.stderr }}</div><div ng:if=false class="alert alert-info"><i class="fa fa-share-square"></i> <b>Info:</b></div></div><div ng:if=!appNode.active><h5>How to run this application</h5><ul style="padding-left: 20px"><li>This software requires access to the <a target=_blank href="https://nodejs.org/">NodeJS</a> framework for some advanced features.</li><li>Nodewebkit is a modified chromium build that adds NodeJS to the DOM script engine (V8).</li><li>See the node-webkit GitHub page for more info: <a target=_blank href="https://github.com/nwjs/nw.js/">https://github.com/nwjs/nw.js</a></li></ul></div><div ng:if=cmd.cwd><h5>Current Working Directory <small>{{ cmd.cwd.path }}</small></h5><ul ng:if=cmd.cwd.list style="padding: 12px; margin: 0"><li ng-repeat="path in cmd.cwd.list" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="cmd.utils.icon(cmd.cwd.path, path)"></i>&nbsp; <a href="" ng-click=cmd.utils.list(cmd.cwd.path) ng-class="{ \'glow-blue\': path == cmd.target.path }">{{ path }}</a><ul ng:if="false && cmd.cwd.path == cmd.target.path" style="padding: 0 0 0 8px; margin: 8px"><li ng:if="cmd.cwd.list.length == 0" style="list-style: none; padding: 0; margin: 0"><em>Nothing to display...</em></li><li ng-repeat="item in cmd.cwd.list" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="cmd.utils.icon(path, item)"></i> <a href="">{{item}}</a></li></ul></li></ul></div><div ng:if=cmd.result><h5>Additional System Paths</h5><ul ng:if=cmd.result.paths style="padding: 12px; margin: 0"><li ng-repeat="path in cmd.utils.getAllPaths()" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="cmd.utils.icon(path, null)"></i>&nbsp; <a href="" ng-click=cmd.utils.list(path) ng-class="{ \'glow-blue\': path == cmd.target.path }">{{ path }}</a><ul ng:if="path == cmd.target.path" style="padding: 0 0 0 8px; margin: 8px"><li ng:if="cmd.target.list.length == 0" style="list-style: none; padding: 0; margin: 0"><em>Nothing to display...</em></li><li ng-repeat="item in cmd.target.list" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="cmd.utils.icon(path, item)"></i> <a href="" ng-click="cmd.utils.call(path, item)">{{item}}</a></li></ul></li></ul></div></div></div>');
   $templateCache.put('modules/features/views/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=proto.cmd><i class=fa ng-class="{ \'fa-refresh glow-blue\': cmd.busy, \'fa-desktop glow-green\': !cmd.busy && appNode.active, \'fa-warning glow-orange\': !cmd.busy && !appNode.active }"></i>&nbsp; Explore All Features</a></li><li class=list-group-item ui:sref-active=active xng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.editor><i class="fa fa-edit"></i>&nbsp; File &amp; Text Editor</a></li><li class=list-group-item ui:sref-active=active xng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.console><i class="fa fa-terminal"></i>&nbsp; Console Application</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.explore data:eat-click-if=!appNode.active><i class="fa fa-folder"></i> Local Filesystem Viewer</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=sqlcmd.connect data:eat-click-if=!appNode.active><i class="fa fa-database"></i> Connect to Data Source</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=certs.info data:eat-click-if=!appNode.active><i class="fa fa-certificate"></i> Check Certificates</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.edge data:eat-click-if=!appNode.active><i class="fa fa-magic"></i> Interop with C#.net</a></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=proto.cmd><i class=fa ng-class="{ \'fa-refresh glow-blue\': cmd.busy, \'fa-desktop glow-green\': !cmd.busy && appNode.active, \'fa-warning glow-orange\': !cmd.busy && !appNode.active }"></i>&nbsp; Explore All Features</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.explore data:eat-click-if=!appNode.active><i class="fa fa-folder"></i> Local Filesystem Viewer</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=sqlcmd.connect data:eat-click-if=!appNode.active><i class="fa fa-database"></i> Connect to Data Source</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=certs.info data:eat-click-if=!appNode.active><i class="fa fa-certificate"></i> Check Certificates</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.edge data:eat-click-if=!appNode.active><i class="fa fa-magic"></i> Interop with C#.net</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.editor><i class="fa fa-edit"></i>&nbsp; File &amp; Text Editor</a></li><li class=list-group-item ui:sref-active=active xng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.console><i class="fa fa-terminal"></i>&nbsp; Console Application</a></li></ul>');
   $templateCache.put('views/about/connections.tpl.html',
     '<div ng:cloak style="width: 100%"><div ng-if=!state.showRaw class=results ng-init=detect()><div class="icon pull-left left"><i class="glyphicon glyphicon-globe"></i> <i class="sub-icon glyphicon" ng-class=getStatusColor()></i></div><div class="info pull-left"><div><div class=pull-right><a class=ctrl-sm ng-click="state.editMode = true" href=""><i class="glyphicon glyphicon-pencil"></i></a></div><h4 ng-if=!state.editMode><a href="{{ state.location }}">{{ state.location }}</a></h4></div><div ng-if=!state.editMode><div ng-if=state.location><p class=info-row><div class="info-col-primary pull-left">Protocol: <span class="btn-group btn-group-xs" role=group aria-label=...><button type=button ng-disabled=state.requireHttps class="btn btn-default" ng-click="setProtocol(\'http\')" ng-class="state.requireHttps ? \'disabled\' : getProtocolStyle(\'http\', \'btn-warning\')"><i class=glyphicon ng-class="getStatusIcon(\'glyphicon-eye-open\')" ng-if="state.location.indexOf(\'http://\') == 0"></i> HTTP</button> <button type=button class="btn btn-default" ng-click="setProtocol(\'https\')" ng-class="getProtocolStyle(\'https\')"><i class=glyphicon ng-class="getStatusIcon(\'glyphicon-eye-close\')" ng-if="state.location.indexOf(\'https://\') == 0"></i> HTTPS</button></span></div><div class="info-col-secondary pull-right"><span class="btn-group btn-group-xs" role=group><a ng-if=result.info class="btn btn-default" href="" ng-click="state.activeTab = (state.activeTab == \'result\') ? null : \'result\'" ng-class="{\'btn-info\':(state.activeTab == \'result\'), \'btn-default\':(state.activeTab != \'result\')}"><i class="glyphicon glyphicon-file"></i> View Result</a> <a ng-if=state.location class=btn href="" ng-click="state.activeTab = (state.activeTab == \'preview\') ? null : \'preview\'" ng-class="{\'btn-info\':(state.activeTab == \'preview\'), \'btn-default\':(state.activeTab != \'preview\')}"><i class=glyphicon ng-class="{\'glyphicon-eye-close\':state.showPreview, \'glyphicon-eye-open\':!state.showPreview}"></i> {{ state.showPreview ? \'Hide\' : \'Show\' }} Preview</a></span></div><br class="clearfix"></p><p class=info-row><div class="info-col-primary pull-left" ng-if=result><div class=info-col-ellipse>Latency: {{ result.received - result.sent }}ms <span ng-if=latency.desc ng-class=latency.style>(<em>{{ latency.desc }}</em>)</span></div></div><div class="info-col-primary pull-left" ng-if=!result><em>Checking...</em></div><div class="info-col-secondary pull-right"><span ng-if="status.code >= 0" class="pull-right label" ng-class=status.style title="Status: {{ status.desc }}, Code: {{ status.code }}">{{ status.desc }}: {{ status.code }}</span></div><br class="clearfix"></p></div><div ng-if="result != null"><p><div class="alert alert-warning" ng-if="result.valid && state.protocol == \'http\'"><i class="glyphicon glyphicon-eye-open"></i> <b>Warning:</b> The web connection <b class=text-danger>is not secure</b>, use <a href="" ng-click="setProtocol(\'https\')">HTTPS</a>.</div><div class="alert alert-success" ng-if="result.valid && state.protocol == \'https\'"><i class="glyphicon glyphicon-ok"></i> <b>Validated:</b> The web connection looks secure.</div><div class="alert alert-danger" ng-if="!result.valid && result.error && result.error != \'error\'"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Failed:</b> {{ result.error }}</div><div class="alert alert-danger" ng-if="!result.valid && !(result.error && result.error != \'error\')"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Offline:</b> Connection could not be established.</div></p></div></div><form ng-if=state.editMode><div class=form-group><h4 class=control-label for=txtTarget>Enter the website URL to connect to:</h4><input class=form-control id=txtTarget ng-model=state.location></div><div class=form-group><div class=checkbox><label><input type=checkbox ng-model=state.requireHttps> Require secure connection</label></div><div class=checkbox ng-class="\'disabled text-muted\'" ng-if=state.requireHttps><label><input type=checkbox ng-model=state.requireCert ng-disabled=true> Requires Client Certificate</label></div></div><div class=form-group ng-show=state.requireCert><label for=exampleInputFile>Select Client Certificate:</label><input type=file id=exampleInputFile><p class=help-block>This must be a valid client certificate.</p></div><button type=submit class="btn btn-primary" ng-click=submitForm()>Update</button></form></div></div><div ng-if="state.activeTab == \'preview\'" class="panel panel-default"><div class=panel-heading><b class=panel-title><i class="glyphicon glyphicon-globe"></i> <a target=_blank href="{{ state.location }}">{{ state.location }}</a></b></div><div class="panel-body info-row iframe-body" style="min-height: 480px"><iframe class=info-col-primary ng-src="{{ state.location }}" frameborder=0>IFrame not available</iframe></div></div><div ng-if="state.activeTab == \'result\'" class=source><span class=pull-right><a class="btn btn-sm btn-primary" ng-click="state.activeTab = null">Close</a></span> <samp><pre>{{ result.info }}</pre></samp></div></div><style>.results {\n' +
     '        min-width: 480px;\n' +
@@ -3289,7 +3297,7 @@ angular.module('prototyped.ng', [
 
 
   $templateCache.put('assets/css/prototyped.min.css',
-    "body .docked{height:100%;flex-grow:1;flex-shrink:1;display:flex;overflow:none}body .dragable{-webkit-app-region:drag;-webkit-user-select:none}body .non-dragable{-webkit-app-region:no-drag;-webkit-user-select:auto}body .inactive-gray{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(.5);-webkit-filter:grayscale(100%) opacity(.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .inactive-ctrl{opacity:.65;filter:alpha(opacity=65);filter:grayscale(100%) opacity(.65);-webkit-filter:grayscale(100%) opacity(.65);-moz-filter:alpha(opacity=65);-o-filter:alpha(opacity=65)}body .glow-green{color:#00b500;text-shadow:0 0 2px #00b500}body .glow-red{color:#d00;text-shadow:0 0 2px #d00}body .glow-orange{color:#ff8d00;text-shadow:0 0 2px #ff8d00}body .glow-blue{color:#0094ff;text-shadow:0 0 2px #0094ff}body .results{min-width:480px;display:flex}body .results .icon{margin:0 8px;font-size:128px;width:128px !important;height:128px !important;position:relative;flex-grow:0;flex-shrink:0}body .results .icon .sub-icon{font-size:64px !important;width:64px !important;height:64px !important;position:absolute;right:0;top:0;margin-top:100px}body .results .info{margin:0 16px;min-height:128px;min-width:300px;display:inline-block;flex-grow:1;flex-shrink:1}body .results .info h4{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .results .info h4 a{color:#000}body .info-row{display:flex}body .info-row-links{color:silver}body .info-row-links a{color:#4a4a4a;margin-left:8px}body .info-row-links a:hover{color:#000}body .info-col-primary{flex-grow:1;flex-shrink:1}body .info-col-secondary{flex-grow:0;flex-shrink:0}body .info-overview{vertical-align:top}body .info-overview .panel-icon-lg{width:128px;height:128px;padding:0;margin:0 auto 10px;display:block;position:relative;background-repeat:no-repeat;background-size:auto 128px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inner{width:92px;height:92px;margin:6px auto;background-repeat:no-repeat;background-size:auto 86px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-overlay{right:0;bottom:0;width:48px;height:48px;position:absolute;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inset{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-inset-bl{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center;width:64px;height:64px;left:10px;bottom:10px;background-size:auto 64px}body .info-overview .panel-label{margin:6px auto;text-align:center;text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .info-overview .panel-mid{text-align:center}body .info-tabs .trim-top{padding:10px;border-top:none;min-height:380px;border-top-left-radius:0;border-top-right-radius:0}body .img-clipper{width:48px;height:48px;padding:0;margin:3px auto;text-align:center;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .app-info-aside{display:flex;margin-bottom:12px}body .app-info-aside .app-info-icon{flex-grow:0;flex-shrink:0;flex-basis:64px;vertical-align:top}body .app-info-aside .app-info-info{flex-grow:1;flex-shrink:1;text-align:left;vertical-align:top}body .app-info-aside .app-info-info p{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .app-info-aside.info-disabled .app-info-icon{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(.5);-webkit-filter:grayscale(100%) opacity(.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .app-aside-collapser a{margin:0;padding:0;display:block;color:silver;text-decoration:none}body .app-aside-collapser a:hover{color:gray}body .iframe-body{margin:0;padding:0}body .iframe-body iframe{margin:0;padding:0}body .console .cmd-output{padding:8px;font-size:10.5px;font-family:Courier New,Courier,monospace;color:#2f4f4f}body .console .cmd-line{padding:0;margin:0}body .console .cmd-time{color:silver}body .console .cmd-text{white-space:pre}@media screen and (max-width:640px) and (max-height:480px){body .console .cmd-output{padding:4px;font-size:10.4px}}body .card-view{margin:0 auto;padding:0;color:#333;height:100%;overflow:auto}body .card-view.float-left .card{float:left}body .card-view .multi-column{columns:300px 3;-webkit-columns:300px 3}body .card-view a{color:#4c4c4c;text-decoration:none}body .card-view .boxed{margin:0 auto 36px;max-width:1056px;display:inline-block}body .card-view .card{width:320px;height:200px;padding:0;margin:15px 15px 0 15px;overflow:hidden;background:#fff;border:1px solid #aaa;border-bottom:3px solid #bbb}body .card-view .card:hover{-webkit-box-shadow:0 0 10px 1px rgba(128,128,128,.75);-moz-box-shadow:0 0 10px 1px rgba(128,128,128,.75);box-shadow:0 0 10px 1px rgba(128,128,128,.75)}body .card-view .card p{margin:0;padding:10px}body .card-view .card-image{width:100%;height:140px;padding:0;margin:0;position:relative;overflow:hidden;background-position:center;background-repeat:no-repeat}body .card-view .card-image .banner{height:50px;width:50px;top:0;right:0;background-position:top right;background-repeat:no-repeat;position:absolute}body .card-view .card-image h1,body .card-view .card-image h2,body .card-view .card-image h3,body .card-view .card-image h4,body .card-view .card-image h5,body .card-view .card-image h6{position:absolute;bottom:0;width:100%;color:#fff;background:rgba(0,0,0,.65);margin:0;padding:6px;border:none}body .card-view .small-only{display:none !important}body .card-view .rightColumn,body .card-view .leftColumn{display:inline-block;width:49%;vertical-align:top}body .card-view .column{display:inline-block;vertical-align:top}body .card-view .arrow{top:50%;width:50px;bottom:0;margin:auto 0;outline:medium none;position:absolute;font-size:40px;cursor:pointer;z-index:5}body .card-view .arrow i{top:-25px}body .card-view .arrow.prev{left:0;opacity:.2}body .card-view .arrow.prev:hover{opacity:1}body .card-view .arrow.next{right:0;opacity:.2;text-align:right}body .card-view .arrow.next:hover{opacity:1}body .card-view .img-default{background:#b3bead;background:-moz-linear-gradient(top,#fcfff4 0%,#dfe5d7 40%,#b3bead 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fcfff4),color-stop(40%,#dfe5d7),color-stop(100%,#b3bead));background:-webkit-linear-gradient(top,#fcfff4 0%,#dfe5d7 40%,#b3bead 100%);background:-o-linear-gradient(top,#fcfff4 0%,#dfe5d7 40%,#b3bead 100%);background:-ms-linear-gradient(top,#fcfff4 0%,#dfe5d7 40%,#b3bead 100%);background:linear-gradient(to bottom,#fcfff4 0%,#dfe5d7 40%,#b3bead 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fcfff4',endColorstr='#b3bead',GradientType=0)}body .card-view .img-explore{background-position:top left;background-image:url('https://farm6.staticflickr.com/5250/5279251697_3ab802e3ef.jpg')}body .card-view .img-editor{background-image:url('http://f.fastcompany.net/multisite_files/fastcompany/inline/2013/10/3020994-inline-d3-data-viz001.jpg');background-size:320px auto}body .card-view .img-console{background-image:url('http://shumakovich.com/uploads/useruploads/images/programming_256x256.png');background-size:auto auto;background-position:top}body .card-view .img-about{background-image:url('https://farm9.staticflickr.com/8282/7807659570_f5ba8dfc63.jpg');background-size:420px auto;background-position:center}body .card-view .img-sandbox{background-image:url('http://8020.photos.jpgmag.com/1727832_147374_5c80086d33_p.jpg');background-size:360px auto;background-position:top center}body .card-view .slider-nav{bottom:0;display:block;height:48px;left:0;margin:0 auto;padding:1em 0 .8em;position:absolute;right:0;text-align:center;width:100%;z-index:5}body .card-view .slider-nav li{margin:3px;padding:1px 3px;cursor:pointer;position:relative;display:inline-block;border:1px dotted #e0e0e0;background-color:rgba(255,255,255,.25)}body .card-view .slider-nav li a{color:rgba(128,128,128,.75)}body .card-view .slider-nav li.active{border:solid 1px #bbb;background-color:rgba(128,128,128,.25)}body .card-view .slider-nav li.active a{color:#000}body .card-view .slider{-webkit-perspective:1000px;-moz-perspective:1000px;-ms-perspective:1000px;-o-perspective:1000px;perspective:1000px;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d;-ms-transform-style:preserve-3d;-o-transform-style:preserve-3d;transform-style:preserve-3d}body .card-view .slide{-webkit-transition:1s linear all;-moz-transition:1s linear all;-o-transition:1s linear all;transition:1s linear all;opacity:1}body .card-view .slide.ng-hide-add{opacity:1}body .card-view .slide.ng-hide-add.ng-hide-add-active{opacity:0}body .card-view .slide.ng-hide-remove{opacity:0}body .card-view .slide.ng-hide-remove.ng-hide-remove-active{opacity:1}@media screen and (min-width:741px) and (max-width:1024px){.boxed{max-width:740px !important}}@media screen and (max-width:740px){.boxed{max-width:350px !important}.small-only{display:block !important}.card-view{height:100%;overflow:auto}.card-view .card{display:none}.card-view .card.active{display:block}}"
+    "body .docked{flex-grow:1;flex-shrink:1;display:flex;height:100%;overflow:none}body .dock-tight{flex-grow:0;flex-shrink:0}body .dock-fill{flex-grow:1;flex-shrink:1}body .ellipsis{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .dragable{-webkit-app-region:drag;-webkit-user-select:none}body .non-dragable{-webkit-app-region:no-drag;-webkit-user-select:auto}body .inactive-gray{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(.5);-webkit-filter:grayscale(100%) opacity(.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .inactive-ctrl{opacity:.65;filter:alpha(opacity=65);filter:grayscale(100%) opacity(.65);-webkit-filter:grayscale(100%) opacity(.65);-moz-filter:alpha(opacity=65);-o-filter:alpha(opacity=65)}body .glow-green{color:#00b500;text-shadow:0 0 2px #00b500}body .glow-red{color:#d00;text-shadow:0 0 2px #d00}body .glow-orange{color:#ff8d00;text-shadow:0 0 2px #ff8d00}body .glow-blue{color:#0094ff;text-shadow:0 0 2px #0094ff}body .results{min-width:480px;display:flex}body .results .icon{margin:0 8px;font-size:128px;width:128px !important;height:128px !important;position:relative;flex-grow:0;flex-shrink:0}body .results .icon .sub-icon{font-size:64px !important;width:64px !important;height:64px !important;position:absolute;right:0;top:0;margin-top:100px}body .results .info{margin:0 16px;min-height:128px;min-width:300px;display:inline-block;flex-grow:1;flex-shrink:1}body .results .info h4{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .results .info h4 a{color:#000}body .info-row{display:flex}body .info-row-links{color:silver}body .info-row-links a{color:#4a4a4a;margin-left:8px}body .info-row-links a:hover{color:#000}body .info-col-primary{flex-grow:1;flex-shrink:1}body .info-col-secondary{flex-grow:0;flex-shrink:0}body .info-overview{vertical-align:top}body .info-overview .panel-icon-lg{width:128px;height:128px;padding:0;margin:0 auto 10px;display:block;position:relative;background-repeat:no-repeat;background-size:auto 128px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inner{width:92px;height:92px;margin:6px auto;background-repeat:no-repeat;background-size:auto 86px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-overlay{right:0;bottom:0;width:48px;height:48px;position:absolute;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inset{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-inset-bl{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center;width:64px;height:64px;left:10px;bottom:10px;background-size:auto 64px}body .info-overview .panel-label{margin:6px auto;text-align:center;text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .info-overview .panel-mid{text-align:center}body .info-tabs .trim-top{padding:10px;border-top:none;min-height:380px;border-top-left-radius:0;border-top-right-radius:0}body .img-clipper{width:48px;height:48px;padding:0;margin:3px auto;text-align:center;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .app-info-aside{display:flex;margin-bottom:12px}body .app-info-aside .app-info-icon{flex-grow:0;flex-shrink:0;flex-basis:64px;vertical-align:top}body .app-info-aside .app-info-info{flex-grow:1;flex-shrink:1;text-align:left;vertical-align:top}body .app-info-aside .app-info-info p{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .app-info-aside.info-disabled .app-info-icon{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(.5);-webkit-filter:grayscale(100%) opacity(.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .app-aside-collapser a{margin:0;padding:0;display:block;color:silver;text-decoration:none}body .app-aside-collapser a:hover{color:gray}body .iframe-body{margin:0;padding:0}body .iframe-body iframe{margin:0;padding:0}body .console .cmd-output{padding:8px;font-size:10.5px;font-family:Courier New,Courier,monospace;color:#2f4f4f}body .console .cmd-line{padding:0;margin:0}body .console .cmd-time{color:silver}body .console .cmd-text{white-space:pre}@media screen and (max-width:640px) and (max-height:480px){body .console .cmd-output{padding:4px;font-size:10.4px}}body .card-view{margin:0 auto;padding:0;color:#333;height:100%;overflow:auto}body .card-view.float-left .card{float:left}body .card-view .multi-column{columns:300px 3;-webkit-columns:300px 3}body .card-view a{color:#4c4c4c;text-decoration:none}body .card-view .boxed{margin:0 auto 36px;max-width:1056px;display:inline-block}body .card-view .card{width:320px;height:200px;padding:0;margin:15px 15px 0 15px;overflow:hidden;background:#fff;border:1px solid #aaa;border-bottom:3px solid #bbb}body .card-view .card:hover{-webkit-box-shadow:0 0 10px 1px rgba(128,128,128,.75);-moz-box-shadow:0 0 10px 1px rgba(128,128,128,.75);box-shadow:0 0 10px 1px rgba(128,128,128,.75)}body .card-view .card p{margin:0;padding:10px}body .card-view .card-image{width:100%;height:140px;padding:0;margin:0;position:relative;overflow:hidden;background-position:center;background-repeat:no-repeat}body .card-view .card-image .banner{height:50px;width:50px;top:0;right:0;background-position:top right;background-repeat:no-repeat;position:absolute}body .card-view .card-image h1,body .card-view .card-image h2,body .card-view .card-image h3,body .card-view .card-image h4,body .card-view .card-image h5,body .card-view .card-image h6{position:absolute;bottom:0;left:0;width:100%;color:#fff;background:rgba(0,0,0,.65);margin:0;padding:6px 12px !important;border:none}body .card-view .small-only{display:none !important}body .card-view .rightColumn,body .card-view .leftColumn{display:inline-block;width:49%;vertical-align:top}body .card-view .column{display:inline-block;vertical-align:top}body .card-view .arrow{top:50%;width:50px;bottom:0;margin:auto 0;outline:medium none;position:absolute;font-size:40px;cursor:pointer;z-index:5}body .card-view .arrow i{top:-25px}body .card-view .arrow.prev{left:0;opacity:.2}body .card-view .arrow.prev:hover{opacity:1}body .card-view .arrow.next{right:0;opacity:.2;text-align:right}body .card-view .arrow.next:hover{opacity:1}body .card-view .img-default{background:#b3bead;background:-moz-linear-gradient(top,#fcfff4 0%,#dfe5d7 40%,#b3bead 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fcfff4),color-stop(40%,#dfe5d7),color-stop(100%,#b3bead));background:-webkit-linear-gradient(top,#fcfff4 0%,#dfe5d7 40%,#b3bead 100%);background:-o-linear-gradient(top,#fcfff4 0%,#dfe5d7 40%,#b3bead 100%);background:-ms-linear-gradient(top,#fcfff4 0%,#dfe5d7 40%,#b3bead 100%);background:linear-gradient(to bottom,#fcfff4 0%,#dfe5d7 40%,#b3bead 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fcfff4',endColorstr='#b3bead',GradientType=0)}body .card-view .img-explore{background-position:top left;background-image:url('https://farm6.staticflickr.com/5250/5279251697_3ab802e3ef.jpg')}body .card-view .img-editor{background-image:url('http://f.fastcompany.net/multisite_files/fastcompany/inline/2013/10/3020994-inline-d3-data-viz001.jpg');background-size:320px auto}body .card-view .img-console{background-image:url('http://shumakovich.com/uploads/useruploads/images/programming_256x256.png');background-size:auto auto;background-position:top}body .card-view .img-about{background-image:url('https://farm9.staticflickr.com/8282/7807659570_f5ba8dfc63.jpg');background-size:420px auto;background-position:center}body .card-view .img-sandbox{background-image:url('http://8020.photos.jpgmag.com/1727832_147374_5c80086d33_p.jpg');background-size:360px auto;background-position:top center}body .card-view .slider-nav{bottom:0;display:block;height:48px;left:0;margin:0 auto;padding:1em 0 .8em;position:absolute;right:0;text-align:center;width:100%;z-index:5}body .card-view .slider-nav li{margin:3px;padding:1px 3px;cursor:pointer;position:relative;display:inline-block;border:1px dotted #e0e0e0;background-color:rgba(255,255,255,.25)}body .card-view .slider-nav li a{color:rgba(128,128,128,.75)}body .card-view .slider-nav li.active{border:solid 1px #bbb;background-color:rgba(128,128,128,.25)}body .card-view .slider-nav li.active a{color:#000}body .card-view .slider{-webkit-perspective:1000px;-moz-perspective:1000px;-ms-perspective:1000px;-o-perspective:1000px;perspective:1000px;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d;-ms-transform-style:preserve-3d;-o-transform-style:preserve-3d;transform-style:preserve-3d}body .card-view .slide{-webkit-transition:1s linear all;-moz-transition:1s linear all;-o-transition:1s linear all;transition:1s linear all;opacity:1}body .card-view .slide.ng-hide-add{opacity:1}body .card-view .slide.ng-hide-add.ng-hide-add-active{opacity:0}body .card-view .slide.ng-hide-remove{opacity:0}body .card-view .slide.ng-hide-remove.ng-hide-remove-active{opacity:1}@media screen and (min-width:741px) and (max-width:1024px){#cardViewer .boxed{max-width:740px !important}}@media screen and (max-width:740px){#cardViewer .boxed{max-width:350px !important}#cardViewer .small-only{display:block !important}#cardViewer .card-view{height:100%;overflow:auto}#cardViewer .card-view .card{display:none}#cardViewer .card-view .card.active{display:block}}#fileExplorer{-webkit-user-select:none}#fileExplorer .folder-contents{padding:16px 8px;clear:both}#fileExplorer .file{color:#000;text-decoration:none}#fileExplorer .name{margin-top:6px;font-size:11px}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08c;-webkit-border-radius:4px}#fileExplorer .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .file .icon img{width:48px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-large{display:block}#fileExplorer .view-large .files{padding:0;margin:0}#fileExplorer .view-large .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-large .file.focus{background-color:#08c;-webkit-border-radius:4px}#fileExplorer .view-large .file .name{width:100px;word-wrap:break-word}#fileExplorer .view-large .file.focus .name{color:#fff}#fileExplorer .view-large .file .icon{margin:0 auto;width:60px}#fileExplorer .view-large .file .icon img{width:60px;height:auto}#fileExplorer .view-large .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-med .files{padding:0;margin:0}#fileExplorer .view-med .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-med .file.focus{background-color:#08c;-webkit-border-radius:4px}#fileExplorer .view-med .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .view-med .file.focus .name{color:#fff}#fileExplorer .view-med .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .view-med .file .icon img{width:48px;height:auto}#fileExplorer .view-med .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-details{display:block}#fileExplorer .view-details .files{padding:0;margin:0}#fileExplorer .view-details .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .view-details .file.focus{-webkit-border-radius:0}#fileExplorer .view-details .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .view-details .file .icon{margin:0;width:24px;display:inline}#fileExplorer .view-details .file .icon img{width:24px;height:auto}@media screen and (max-width:640px) and (max-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .file.focus{-webkit-border-radius:0}#fileExplorer .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .file .icon{margin:0;width:24px;display:inline}#fileExplorer .file .icon img{width:24px;height:auto}#fileExplorer .name{padding:3px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}}@media screen and (min-width:1024px) and (min-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08c;-webkit-border-radius:4px}#fileExplorer .file .name{width:100px;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;width:60px}#fileExplorer .file .icon img{width:60px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}}"
   );
 
 }]);;angular.module('prototyped.ng.sql', []).run(['$templateCache', function($templateCache) { 

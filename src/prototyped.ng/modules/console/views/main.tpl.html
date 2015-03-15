@@ -1,5 +1,22 @@
 ﻿<div class="console">
-    <div class="cmd-console btn-group btn-group-sm">
+    <style>
+        .contents.docked {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .console {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .cmd-output {
+            width: 100%;
+            padding: 6px;
+        }
+    </style>
+    <div class="dock-tight btn-group btn-group-sm">
         <a href="./index.html" class="btn btn-default pull-left"><i class="glyphicon glyphicon-chevron-left"></i></a>
         <div class="btn-group btn-group-sm pull-right">
             <a href="" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
@@ -18,7 +35,7 @@
             <input id="txtInput" type="text" class="cmd-input form-control" tabindex="1" ng-model="txtInput" ng-keypress="($event.which === 13)?myConsole.command(txtInput):0" placeholder="Enter Command Here" />
         </div>
     </div>
-    <div class="cmd-output dock-vert">
+    <div class="cmd-output dock-fill">
         <div class="cmd-line" ng-repeat="ln in lines">
             <span class="text-{{ln.type}}"><i class="glyphicon" title="{{ln.time | date:'hh:mm:ss'}}" ng-class="{ 'glyphicon-chevron-right':ln.type=='info', 'glyphicon-ok-sign':ln.type=='success', 'glyphicon-warning-sign':ln.type=='warning', 'glyphicon-exclamation-sign':ln.type=='error' }"></i> <span class="cmd-text">{{ln.text}}</span></span>
         </div>

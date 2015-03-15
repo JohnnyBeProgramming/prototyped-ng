@@ -24,5 +24,6 @@ angular.module('prototyped.editor', [
 
     .controller('proto.ng.editor.EditorController', [
         '$scope',
+        '$timeout',
         proto.ng.editor.EditorController
     ])

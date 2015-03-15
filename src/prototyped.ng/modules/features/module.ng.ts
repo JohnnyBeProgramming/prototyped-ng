@@ -13,7 +13,7 @@ angular.module('prototyped.features', [
 
         $stateProvider
             .state('proto.cmd', {
-                url: '/cmd',
+                url: '/explore',
                 views: {
                     'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                     'main@': {

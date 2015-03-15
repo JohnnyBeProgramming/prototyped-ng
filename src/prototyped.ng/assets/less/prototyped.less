@@ -1,10 +1,27 @@
 ﻿body {
     .docked {
-        height: 100%;
         flex-grow: 1;
         flex-shrink: 1;
         display: flex;
+        height: 100%;
         overflow: none;
+    }
+
+    .dock-tight {
+        flex-grow: 0;
+        flex-shrink: 0;
+    }
+
+    .dock-fill {
+        flex-grow: 1;
+        flex-shrink: 1;
+    }
+
+    .ellipsis {
+        text-wrap: avoid;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
     .dragable {
@@ -287,9 +304,6 @@
 
     .console {
 
-        .cmd-console {
-        }
-
         .cmd-input {
         }
 
@@ -378,8 +392,8 @@
         .card-image {
             width: 100%;
             height: 140px;
-            padding: 0px;
-            margin: 0px;
+            padding: 0;
+            margin: 0;
             position: relative;
             overflow: hidden;
             background-position: center;
@@ -403,12 +417,13 @@
             h5,
             h6 {
                 position: absolute;
-                bottom: 0px;
+                bottom: 0;
+                left: 0;
                 width: 100%;
                 color: white;
                 background: rgba(0,0,0,0.65);
-                margin: 0px;
-                padding: 6px;
+                margin: 0;
+                padding: 6px 12px !important;
                 border: none;
             }
         }
@@ -584,31 +599,206 @@
     }
 }
 
-@media screen and (min-width: 741px) and (max-width: 1024px) {
-    .boxed {
-        max-width: 740px !important;
+#cardViewer {
+    @media screen and (min-width: 741px) and (max-width: 1024px) {
+        .boxed {
+            max-width: 740px !important;
+        }
+    }
+
+    @media screen and (max-width: 740px) {
+        .boxed {
+            max-width: 350px !important;
+        }
+
+        .small-only {
+            display: block !important;
+        }
+
+        .card-view {
+            height: 100%;
+            overflow: auto;
+
+            .card {
+                display: none;
+
+                &.active {
+                    display: block;
+                }
+            }
+        }
     }
 }
 
-@media screen and (max-width: 740px) {
-    .boxed {
-        max-width: 350px !important;
+#fileExplorer {
+    -webkit-user-select: none;
+
+    .folder-contents {
+        padding: 16px 8px;
+        clear: both;
     }
 
-    .small-only {
-        display: block !important;
+    .file {
+        color: black;
+        text-decoration: none;
     }
 
-    .card-view {
-        height: 100%;
-        overflow: auto;
+    .name {
+        margin-top: 6px;
+        font-size: 11px;
+    }
 
-        .card {
-            display: none;
+    .view-med;
 
-            &.active {
-                display: block;
+    .view-large {
+        display: block;
+
+        .files {
+            padding: 0;
+            margin: 0;
+        }
+
+        .file {
+            float: left;
+            padding: 0px;
+            margin: 2px;
+            width: 100px;
+            display: inline-block;
+            text-align: center;
+            vertical-align: top;
+        }
+
+        .file.focus {
+            background-color: #08C;
+            -webkit-border-radius: 4px;
+        }
+
+        .file .name {
+            width: 100px;
+            word-wrap: break-word;
+        }
+
+        .file.focus .name {
+            color: white;
+        }
+
+        .file .icon {
+            margin: 0 auto;
+            width: 60px;
+
+            img {
+                width: 60px; /* you can use % */
+                height: auto;
             }
         }
+
+        .file.focus .icon {
+            -webkit-filter: invert(20%);
+        }
+    }
+
+    .view-med {
+
+        .files {
+            padding: 0;
+            margin: 0;
+        }
+
+        .file {
+            float: left;
+            padding: 2px;
+            margin: 2px;
+            width: 64px;
+            display: inline-block;
+            text-align: center;
+            vertical-align: top;
+        }
+
+        .file.focus {
+            background-color: #08C;
+            -webkit-border-radius: 4px;
+        }
+
+        .file .name {
+            width: 64px;
+            padding: 3px;
+            display: inline-block;
+            word-wrap: break-word;
+        }
+
+        .file.focus .name {
+            color: white;
+        }
+
+        .file .icon {
+            margin: 0 auto;
+            padding: 6px 0;
+            width: 48px;
+
+            img {
+                width: 48px; /* you can use % */
+                height: auto;
+            }
+        }
+
+        .file.focus .icon {
+            -webkit-filter: invert(20%);
+        }
+    }
+
+    .view-details {
+        display: block;
+
+        .files {
+            padding: 0;
+            margin: 0;
+        }
+
+        .file {
+            padding: 0px;
+            margin: 2px;
+            float: none;
+            display: block;
+            width: 100%;
+            text-align: left;
+        }
+
+        .file.focus {
+            -webkit-border-radius: 0px;
+        }
+
+        .file .name {
+            padding: 3px;
+            display: inline;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .file .icon {
+            margin: 0;
+            width: 24px;
+            display: inline;
+
+            img {
+                width: 24px; /* you can use % */
+                height: auto;
+            }
+        }
+    }
+
+    @media screen and (max-width: 640px) and (max-height: 480px) {
+        .view-details;
+
+        .name {
+            padding: 3px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+    }
+
+    @media screen and (min-width: 1024px) and (min-height: 480px) {
+        .view-large;
     }
 }

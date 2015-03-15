@@ -49,7 +49,7 @@
     <Content Include="modules\explore\views\addressbar.tpl.html" />
     <Content Include="modules\explore\views\index.tpl.html" />
     <Content Include="modules\features\appcmd.exe\certs.tpl.html" />
-    <Content Include="modules\edge\index.tpl.html" />
+    <Content Include="modules\edge\views\index.tpl.html" />
     <Content Include="modules\editor\views\main.tpl.html" />
     <Content Include="modules\features\views\index.tpl.html" />
     <Content Include="modules\features\views\left.tpl.html" />

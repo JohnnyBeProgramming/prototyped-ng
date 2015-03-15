@@ -13,7 +13,8 @@ angular.module('prototyped.explorer', [
                     'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/explore/views/index.tpl.html',
-                        controller: 'proto.explorer.ExplorerController'
+                        controller: 'proto.explorer.ExplorerController',
+                        controllerAs: 'ctrlExplorer'
                     },
                 }
             })
@@ -33,15 +34,15 @@ angular.module('prototyped.explorer', [
         };
     }])    
     .controller('proto.explorer.AddressBarController', [
+        '$rootScope',
         '$scope',
         '$q',
         proto.explorer.AddressBarController
     ])
 
     .controller('proto.explorer.ExplorerController', [
+        '$rootScope',
         '$scope',
-        '$route',
-        '$timeout',
         '$q',
         proto.explorer.ExplorerController
     ])

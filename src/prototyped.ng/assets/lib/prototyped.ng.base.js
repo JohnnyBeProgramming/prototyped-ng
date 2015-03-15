@@ -1,472 +1,4 @@
-﻿/// <reference path="../../imports.d.ts" />
-angular.module('prototyped.about', [
-    'prototyped.ng.views',
-    'prototyped.ng.styles',
-    'ui.router'
-]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Define the UI states
-        $stateProvider.state('about', {
-            url: '/about',
-            abstract: true
-        }).state('about.info', {
-            url: '/info',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/about/info.tpl.html',
-                    controller: 'AboutInfoController'
-                }
-            }
-        }).state('about.online', {
-            url: '^/contact',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': { templateUrl: 'views/about/contact.tpl.html' }
-            }
-        }).state('about.conection', {
-            url: '/conection',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/about/connections.tpl.html',
-                    controller: 'AboutConnectionController'
-                }
-            }
-        });
-    }]).controller('AboutInfoController', [
-    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
-        function css(a) {
-            var sheets = document.styleSheets, o = [];
-            for (var i in sheets) {
-                var rules = sheets[i].rules || sheets[i].cssRules;
-                for (var r in rules) {
-                    if (a.is(rules[r].selectorText)) {
-                        o.push(rules[r].selectorText);
-                    }
-                }
-            }
-            return o;
-        }
-
-        function selectorExists(selector) {
-            return false;
-            //var ret = css($(selector));
-            //return ret;
-        }
-
-        function getVersionInfo(ident) {
-            try  {
-                if (typeof process !== 'undefined' && process.versions) {
-                    return process.versions[ident];
-                }
-            } catch (ex) {
-            }
-            return null;
-        }
-
-        // Define a function to detect the capabilities
-        $scope.detectBrowserInfo = function () {
-            var info = {
-                about: null,
-                versions: {
-                    ie: null,
-                    html: null,
-                    jqry: null,
-                    css: null,
-                    js: null,
-                    ng: null,
-                    nw: null,
-                    njs: null,
-                    v8: null,
-                    openssl: null,
-                    chromium: null
-                },
-                detects: {
-                    jqry: false,
-                    less: false,
-                    bootstrap: false,
-                    ngAnimate: false,
-                    ngUiRouter: false,
-                    ngUiUtils: false,
-                    ngUiBootstrap: false
-                },
-                css: {
-                    boostrap2: null,
-                    boostrap3: null
-                },
-                codeName: navigator.appCodeName,
-                userAgent: navigator.userAgent
-            };
-
-            try  {
-                // Get IE version (if defined)
-                if (!!window['ActiveXObject']) {
-                    info.versions.ie = 10;
-                }
-
-                // Sanitize codeName and userAgentt
-                var cn = info.codeName;
-                var ua = info.userAgent;
-                if (ua) {
-                    // Remove start of string in UAgent upto CName or end of string if not found.
-                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
-
-                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
-                    ua = ua.substring(cn.length);
-
-                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
-                        ua = ua.substring(1);
-                    }
-
-                    // Remove the end of the string from first characrer that is not a number or point etc.
-                    var pointer = 0;
-                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
-                        pointer = pointer + 1;
-                    }
-                    ua = ua.substring(0, pointer);
-
-                    if (!window.isNaN(ua)) {
-                        if (parseInt(ua) > 0) {
-                            info.versions.html = ua;
-                        }
-                        if (parseFloat(ua) >= 5) {
-                            info.versions.css = '3.x';
-                            info.versions.js = '5.x';
-                        }
-                    }
-                }
-                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
-                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
-                info.versions.nw = getVersionInfo('node-webkit');
-                info.versions.njs = getVersionInfo('node');
-                info.versions.v8 = getVersionInfo('v8');
-                info.versions.openssl = getVersionInfo('openssl');
-                info.versions.chromium = getVersionInfo('chromium');
-
-                // Check for CSS extensions
-                info.css.boostrap2 = selectorExists('hero-unit');
-                info.css.boostrap3 = selectorExists('jumbotron');
-
-                // Detect selected features and availability
-                info.about = {
-                    protocol: $location.$$protocol,
-                    browser: {},
-                    server: {
-                        active: undefined,
-                        url: $location.$$absUrl
-                    },
-                    os: {},
-                    hdd: { type: null }
-                };
-
-                // Detect the operating system
-                var osName = 'Unknown OS';
-                var appVer = navigator.appVersion;
-                if (appVer) {
-                    if (appVer.indexOf("Win") != -1)
-                        osName = 'Windows';
-                    if (appVer.indexOf("Mac") != -1)
-                        osName = 'MacOS';
-                    if (appVer.indexOf("X11") != -1)
-                        osName = 'UNIX';
-                    if (appVer.indexOf("Linux") != -1)
-                        osName = 'Linux';
-                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
-                }
-                info.about.os.name = osName;
-
-                // Check for jQuery
-                info.detects.jqry = typeof jQuery !== 'undefined';
-
-                // Check for general header and body scripts
-                $("script").each(function () {
-                    var src = $(this).attr("src");
-                    if (src) {
-                        // Fast check on known script names
-                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
-                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
-                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
-                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
-                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
-                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
-                    }
-                });
-
-                // Get the client browser details (build a url string)
-                var detectUrl = (function () {
-                    var p = [], w = window, d = document, e = 0, f = 0;
-                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
-                    e |= w.ActiveXObject ? 1 : 0;
-                    e |= w.opera ? 2 : 0;
-                    e |= w.chrome ? 4 : 0;
-                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
-                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
-                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
-                    p.push('e=' + e);
-                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
-                    f |= 'WebSocket' in w ? 2 : 0;
-                    f |= w.Worker ? 4 : 0;
-                    f |= w.applicationCache ? 8 : 0;
-                    f |= w.history && history.pushState ? 16 : 0;
-                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
-                    f |= 'FileReader' in w ? 64 : 0;
-                    p.push('f=' + f);
-                    p.push('r=' + Math.random().toString(36).substring(7));
-                    p.push('w=' + screen.width);
-                    p.push('h=' + screen.height);
-                    var s = d.createElement('script');
-                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
-                })();
-
-                // Send a loaded package to a server to detect more features
-                $.getScript(detectUrl).done(function (script, textStatus) {
-                    $rootScope.$applyAsync(function () {
-                        // Browser info and details loaded
-                        var browserInfo = new window.WhichBrowser();
-                        angular.extend(info.about, browserInfo);
-                    });
-                }).fail(function (jqxhr, settings, exception) {
-                    console.error(exception);
-                });
-
-                // Set browser name to IE (if defined)
-                if (navigator.appName == 'Microsoft Internet Explorer') {
-                    info.about.browser.name = 'Internet Explorer';
-                }
-
-                // Check if the browser supports web db's
-                var webDB = info.about.webdb = {
-                    db: null,
-                    version: '1',
-                    active: null,
-                    size: 5 * 1024 * 1024,
-                    test: function (name, desc, dbVer, dbSize) {
-                        try  {
-                            // Try and open a web db
-                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
-                            webDB.onSuccess(null, null);
-                        } catch (ex) {
-                            // Nope, something went wrong
-                            webDB.onError(null, null);
-                        }
-                    },
-                    onSuccess: function (tx, r) {
-                        if (tx) {
-                            if (r) {
-                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
-                            }
-                            if (tx) {
-                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
-                            }
-                        }
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = true;
-                            webDB.used = JSON.stringify(webDB.db).length;
-                        });
-                    },
-                    onError: function (tx, e) {
-                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = false;
-                        });
-                    }
-                };
-                info.about.webdb.test();
-            } catch (ex) {
-                console.error(ex);
-            }
-
-            // Return the preliminary info
-            return info;
-        };
-
-        // Define the state
-        $scope.info = $scope.detectBrowserInfo();
-    }]).controller('AboutConnectionController', [
-    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
-        $scope.result = null;
-        $scope.status = null;
-        $scope.state = {
-            editMode: false,
-            location: $location.$$absUrl,
-            protocol: $location.$$protocol,
-            requireHttps: ($location.$$protocol == 'https')
-        };
-        $scope.detect = function () {
-            var target = $scope.state.location;
-            var started = Date.now();
-            $scope.result = null;
-            $scope.latency = null;
-            $scope.status = { code: 0, desc: '', style: 'label-default' };
-            $.ajax({
-                url: target,
-                crossDomain: true,
-                /*
-                username: 'user',
-                password: 'pass',
-                xhrFields: {
-                withCredentials: true
-                }
-                */
-                beforeSend: function (xhr) {
-                    $timeout(function () {
-                        //$scope.status.code = xhr.status;
-                        $scope.status.desc = 'sending';
-                        $scope.status.style = 'label-info';
-                    });
-                },
-                success: function (data, textStatus, xhr) {
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-success';
-                        $scope.result = {
-                            valid: true,
-                            info: data,
-                            sent: started,
-                            received: Date.now()
-                        };
-                    });
-                },
-                error: function (xhr, textStatus, error) {
-                    xhr.ex = error;
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-danger';
-                        $scope.result = {
-                            valid: false,
-                            info: xhr,
-                            sent: started,
-                            error: xhr.statusText,
-                            received: Date.now()
-                        };
-                    });
-                },
-                complete: function (xhr, textStatus) {
-                    console.debug(' - Status Code: ' + xhr.status);
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                    });
-                }
-            }).always(function (xhr) {
-                $timeout(function () {
-                    $scope.latency = $scope.getLatencyInfo();
-                });
-            });
-        };
-        $scope.setProtocol = function (protocol) {
-            var val = $scope.state.location;
-            var pos = val.indexOf('://');
-            if (pos > 0) {
-                val = protocol + val.substring(pos);
-            }
-            $scope.state.protocol = protocol;
-            $scope.state.location = val;
-            $scope.detect();
-        };
-        $scope.getProtocolStyle = function (protocol, activeStyle) {
-            var cssRes = '';
-            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
-            if (isValid) {
-                if (!$scope.result) {
-                    cssRes += 'btn-primary';
-                } else if ($scope.result.valid && activeStyle) {
-                    cssRes += activeStyle;
-                } else if ($scope.result) {
-                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
-                }
-            }
-            return cssRes;
-        };
-        $scope.getStatusIcon = function (activeStyle) {
-            var cssRes = '';
-            if (!$scope.result) {
-                cssRes += 'glyphicon-refresh';
-            } else if (activeStyle && $scope.result.valid) {
-                cssRes += activeStyle;
-            } else {
-                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
-            }
-            return cssRes;
-        };
-        $scope.submitForm = function () {
-            $scope.state.editMode = false;
-            if ($scope.state.requireHttps) {
-                $scope.setProtocol('https');
-            } else {
-                $scope.detect();
-            }
-        };
-        $scope.getStatusColor = function () {
-            var cssRes = $scope.getStatusIcon() + ' ';
-            if (!$scope.result) {
-                cssRes += 'busy';
-            } else if ($scope.result.valid) {
-                cssRes += 'success';
-            } else {
-                cssRes += 'error';
-            }
-            return cssRes;
-        };
-        $scope.getLatencyInfo = function () {
-            var cssNone = 'text-muted';
-            var cssHigh = 'text-success';
-            var cssMedium = 'text-warning';
-            var cssLow = 'text-danger';
-            var info = {
-                desc: '',
-                style: cssNone
-            };
-
-            if (!$scope.result) {
-                return info;
-            }
-
-            if (!$scope.result.valid) {
-                info.style = 'text-muted';
-                info.desc = 'Connection Failed';
-                return info;
-            }
-
-            var totalMs = $scope.result.received - $scope.result.sent;
-            if (totalMs > 2 * 60 * 1000) {
-                info.style = cssNone;
-                info.desc = 'Timed out';
-            } else if (totalMs > 1 * 60 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Impossibly slow';
-            } else if (totalMs > 30 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Very slow';
-            } else if (totalMs > 1 * 1000) {
-                info.style = cssMedium;
-                info.desc = 'Relatively slow';
-            } else if (totalMs > 500) {
-                info.style = cssMedium;
-                info.desc = 'Moderately slow';
-            } else if (totalMs > 250) {
-                info.style = cssMedium;
-                info.desc = 'Barely Responsive';
-            } else if (totalMs > 150) {
-                info.style = cssHigh;
-                info.desc = 'Average Response Time';
-            } else if (totalMs > 50) {
-                info.style = cssHigh;
-                info.desc = 'Responsive Enough';
-            } else if (totalMs > 15) {
-                info.style = cssHigh;
-                info.desc = 'Very Responsive';
-            } else {
-                info.style = cssHigh;
-                info.desc = 'Optimal';
-            }
-            return info;
-        };
-    }]);
-///<reference path="../../../imports.d.ts"/>
+﻿///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
     (function (ng) {
@@ -730,81 +262,6 @@ angular.module('prototyped.console', [
     '$scope',
     proto.ng.commands.ConsoleController
 ]);
-/// <reference path="../imports.d.ts" />
-angular.module('prototyped.default', [
-    'ui.router'
-]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Now set up the states
-        $stateProvider.state('default', {
-            url: '/',
-            views: {
-                'main@': {
-                    templateUrl: 'views/default.tpl.html',
-                    controller: 'CardViewCtrl',
-                    controllerAs: 'sliderCtrl'
-                }
-            }
-        });
-    }]).value('appPages', {
-    pages: [
-        {
-            url: '/proto',
-            style: 'img-explore',
-            title: 'Explore Features & Options',
-            desc: 'You can navigate your way around the site by clicking on this card...'
-        },
-        {
-            url: '/samples',
-            style: 'img-sandbox',
-            title: 'Prototyping Sandbox',
-            desc: 'A blank sandox working place fully pre-loaded to play and learn with.'
-        },
-        {
-            url: '/proto',
-            style: 'img-editor',
-            title: 'Import & Export Data',
-            desc: 'Load from external sources, modify and/or export to an external resource.'
-        },
-        {
-            url: '/about/info',
-            style: 'img-about',
-            title: 'About this software',
-            desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
-        }
-    ]
-}).controller('CardViewCtrl', [
-    '$scope', 'appPages', function ($scope, appPages) {
-        // Make sure 'mySiteMap' exists
-        $scope.pages = appPages.pages || [];
-
-        // initial image index
-        $scope._Index = 0;
-
-        $scope.count = function () {
-            return $scope.pages.length;
-        };
-
-        // if a current image is the same as requested image
-        $scope.isActive = function (index) {
-            return $scope._Index === index;
-        };
-
-        // show prev image
-        $scope.showPrev = function () {
-            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
-        };
-
-        // show next image
-        $scope.showNext = function () {
-            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
-        };
-
-        // show a certain image
-        $scope.showPhoto = function (index) {
-            $scope._Index = index;
-        };
-    }]);
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.edge', [
     'ui.router'
@@ -814,10 +271,9 @@ angular.module('prototyped.edge', [
         $stateProvider.state('proto.edge', {
             url: '^/edge',
             views: {
-                'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },
                 'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'modules/edge/index.tpl.html',
+                    templateUrl: 'modules/edge/views/index.tpl.html',
                     controller: 'edgeViewController'
                 }
             }
@@ -1007,7 +463,10 @@ var proto;
                     // Do post-new operations
                     this.$timeout(function () {
                         // Select file contents
-                        $('#FileContents').select();
+                        var elem = $('#FileContents');
+                        if (elem) {
+                            elem.select();
+                        }
                     });
                 };
 
@@ -1113,6 +572,7 @@ angular.module('prototyped.editor', [
         });
     }]).controller('proto.ng.editor.EditorController', [
     '$scope',
+    '$timeout',
     proto.ng.editor.EditorController
 ]);
 ///<reference path="../../../imports.d.ts"/>
@@ -1120,7 +580,9 @@ var proto;
 (function (proto) {
     (function (explorer) {
         var AddressBarController = (function () {
-            function AddressBarController($scope, $q) {
+            function AddressBarController($rootScope, $scope, $q) {
+                var _this = this;
+                this.$rootScope = $rootScope;
                 this.$scope = $scope;
                 this.$q = $q;
                 this.history = [];
@@ -1130,6 +592,14 @@ var proto;
                     var elem = $('#addressbar');
                     if (elem) {
                         this.init(elem);
+
+                        this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                            if (folder != _this.$scope.dir_path) {
+                                console.warn(' - Addressbar Navigate: ', folder);
+                                _this.$scope.dir_path = folder;
+                                _this.navigate(folder);
+                            }
+                        });
                     } else {
                         throw new Error('Element with id "addressbar" not found...');
                     }
@@ -1162,7 +632,6 @@ var proto;
             };
 
             AddressBarController.prototype.navigate = function (path) {
-                console.info(' - navigate: ', path);
                 this.generateOutput(path);
             };
 
@@ -1195,8 +664,10 @@ var proto;
                 // Set the current dir path
                 this.$scope.dir_path = dir_path;
                 this.$scope.dir_parts = this.generatePaths(dir_path);
-
                 this.history.push(dir_path);
+
+                // Breadcast event that path has changed
+                this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
             };
 
             AddressBarController.prototype.generatePaths = function (dir_path) {
@@ -1248,201 +719,162 @@ var proto;
 (function (proto) {
     (function (explorer) {
         var ExplorerController = (function () {
-            function ExplorerController($scope, $route, $timeout, $q) {
+            function ExplorerController($rootScope, $scope, $q) {
+                var _this = this;
+                this.$rootScope = $rootScope;
                 this.$scope = $scope;
-                this.$route = $route;
-                this.$timeout = $timeout;
                 this.$q = $q;
                 var dir = './';
-                var pkg = 'package.json';
                 try  {
                     // Hook up to the current scope
-                    this.$scope.myReader = this;
-                    this.$scope.isBusy = false;
-                    /*
-                    // Hook in the required libraries
-                    this._path = require('path');
-                    this._fs = require('fs');
-                    
+                    this.$scope.isBusy = true;
+
                     // Initialize the cotroller
                     this.init(dir);
-                    */
-                    // Test File Read...
-                    /*
-                    console.debug(' - Fetching file: ' + pkg);
-                    this.openFile(pkg, (data) => {
-                    console.info(data);
-                    }, console.warn);
-                    */
+
+                    // Hook event for when folder path changes
+                    this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                        if (folder != _this.$scope.dir_path) {
+                            console.warn(' - Explorer Navigate: ', folder);
+                            _this.$scope.dir_path = folder;
+                            _this.navigate(folder);
+                        }
+                    });
                 } catch (ex) {
                     console.error(ex);
                 }
             }
-            Object.defineProperty(ExplorerController.prototype, "FolderView", {
-                get: function () {
-                    return this._folderViewCtrl;
-                },
-                enumerable: true,
-                configurable: true
-            });
-
             ExplorerController.prototype.init = function (dir) {
-                // Check if file system is loaded
-                if (!$.isEmptyObject(this._fs)) {
-                    // Get and set current folder details
-                    this.TargetFolder = this._fs.realpathSync(dir);
-
-                    // Watch for changes on this folder (non-recursive)
-                    this._fs.watch('./', function () {
-                        // Changes Detected... Reload on changes?
-                        console.log(' - Changes Detected...');
-                    });
-
-                    // Make sure path is defined
-                    if (!$.isEmptyObject(this._path)) {
-                        // Link Address bar
-                        var addrBarElem = $('addressbar');
-                        if (addrBarElem)
-                            this.linkAddressBar(addrBarElem);
-
-                        // Link Folder Explorer
-                        var pathViewElem = $('#files');
-                        if (pathViewElem)
-                            this.createFolderView(pathViewElem);
-                    }
-                } else {
-                    // No access to the file system
-                    this.TargetFolder = null;
-                }
+                // Resolve the initial folder path
+                this.navigate(dir);
             };
 
-            ExplorerController.prototype.isExpanded = function () {
-                var result = this.$scope.navExpanded;
-                if (typeof result !== 'boolean') {
-                    var wdt = $(window).innerWidth();
-                    result = wdt > 500;
-                }
-                return result;
-            };
-
-            ExplorerController.prototype.linkAddressBar = function (elem) {
-                var _this = this;
-                // Try and load the address bar
-                if (this._addrBar) {
-                    var addressbar = new this._addrBar.AddressBar(elem);
-                    if (addressbar) {
-                        addressbar.on('navigate', function (dir) {
-                            _this.navigate(dir);
-                        });
-                    }
-                    this._addrBarCtrl = addressbar;
-                    this.refreshAddressBar(this.TargetFolder);
-                }
-            };
-
-            ExplorerController.prototype.refreshAddressBar = function (path) {
-                var result = this._addrBarCtrl.generatePaths(path);
-                this.$scope.paths = result;
-                if (!this.$scope.$$phase) {
-                    this.$scope.$apply();
-                }
-                ;
-            };
-
-            ExplorerController.prototype.navigate = function (path) {
+            ExplorerController.prototype.navigate = function (dir_path) {
                 var _this = this;
                 var deferred = this.$q.defer();
-                console.info(' - Navigate: ' + path);
+                try  {
+                    // Set busy flag
+                    this.$scope.isBusy = true;
+                    this.$scope.error = null;
 
-                // Set busy flag
-                this.$scope.isBusy = true;
-                this.$scope.error = '';
-                this.$timeout(function () {
-                    try  {
-                        // Opoen the specified folder
-                        _this._folderViewCtrl.open(path);
+                    // Resolve the full path
+                    var path = require('path');
+                    dir_path = path.resolve(dir_path);
 
-                        // Refresh  the address bar as well
-                        if (_this._addrBarCtrl) {
-                            _this.refreshAddressBar(path);
-                            //this._addrBarCtrl.enter(mime);
+                    // Read the folder contents (async)
+                    var fs = require('fs');
+                    fs.readdir(dir_path, function (error, files) {
+                        if (error) {
+                            deferred.reject(error);
+                            return;
                         }
 
+                        // Split and sort results
+                        var folders = [];
+                        var lsFiles = [];
+                        for (var i = 0; i < files.sort().length; ++i) {
+                            var targ = path.join(dir_path, files[i]);
+                            var stat = _this.mimeType(targ);
+                            if (stat.type == 'folder') {
+                                folders.push(stat);
+                            } else {
+                                lsFiles.push(stat);
+                            }
+                        }
+
+                        // Generate the contents
+                        var result = {
+                            path: dir_path,
+                            folders: folders,
+                            files: lsFiles
+                        };
+
                         // Mark promise as resolved
-                        deferred.resolve(path);
-                    } catch (ex) {
-                        // Mark promise and rejected
-                        deferred.reject(ex);
-                    }
-                });
+                        deferred.resolve(result);
+                    });
+                } catch (ex) {
+                    // Mark promise and rejected
+                    deferred.reject(ex);
+                }
+
+                // Handle the result and error conditions
                 deferred.promise.then(function (result) {
                     // Clear busy flag
                     _this.$scope.isBusy = false;
-                    _this.$scope.cwd = result;
+                    _this.$scope.dir_path = result.path;
+                    _this.$scope.files = result.files;
+                    _this.$scope.folders = result.folders;
+
+                    // Breadcast event that path has changed
+                    _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
                 }, function (error) {
                     // Clear busy flag
                     _this.$scope.isBusy = false;
                     _this.$scope.error = error;
                 });
+
+                return deferred.promise;
             };
 
-            ExplorerController.prototype.createFolderView = function (elem) {
-                var _this = this;
-                // Try and load the folder view
-                var folder = new this._folderView.Folder(elem);
-                if (folder) {
-                    folder.on('navigate', function (dir, mime) {
-                        if (mime.type == 'folder') {
-                            _this.navigate(mime.path);
-                        } else {
-                            var req = 'nw.gui';
-                            var gui = require(req);
-                            if (gui)
-                                gui.Shell.openItem(mime.path);
-                        }
-                    });
-                }
-                this._folderViewCtrl = folder;
-                this.navigate(this.TargetFolder);
+            ExplorerController.prototype.select = function (filePath) {
+                this.$scope.selected = filePath;
             };
 
-            ExplorerController.prototype.readFile = function (filePath, callback, errorHandler) {
-                // Make sure the required libraries exists
-                if (this._fs && this._path) {
-                    var targetPath = this._path.resolve(this.TargetFolder, filePath);
-                    try  {
-                        // Try and read the file
-                        this._fs.readFile(filePath, 'UTF-8', function (err, data) {
-                            if (err) {
-                                if (errorHandler)
-                                    errorHandler(err);
-                                return;
+            ExplorerController.prototype.open = function (filePath) {
+                var req = 'nw.gui';
+                var gui = require(req);
+                if (gui)
+                    gui.Shell.openItem(filePath);
+            };
+
+            ExplorerController.prototype.mimeType = function (filepath) {
+                var map = {
+                    'compressed': ['zip', 'rar', 'gz', '7z'],
+                    'text': ['txt', 'md', ''],
+                    'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
+                    'pdf': ['pdf'],
+                    'css': ['css'],
+                    'excel': ['csv', 'xls', 'xlsx'],
+                    'html': ['html'],
+                    'word': ['doc', 'docx'],
+                    'powerpoint': ['ppt', 'pptx'],
+                    'movie': ['mkv', 'avi', 'rmvb']
+                };
+                var cached = {};
+
+                var fs = require('fs');
+                var path = require('path');
+                var result = {
+                    name: path.basename(filepath),
+                    path: filepath,
+                    type: null
+                };
+
+                try  {
+                    var stat = fs.statSync(filepath);
+                    if (stat.isDirectory()) {
+                        result.type = 'folder';
+                    } else {
+                        var ext = path.extname(filepath).substr(1);
+                        result.type = cached[ext];
+                        if (!result.type) {
+                            for (var key in map) {
+                                var arr = map[key];
+                                if (arr.length > 0 && arr.indexOf(ext) >= 0) {
+                                    cached[ext] = result.type = key;
+                                    break;
+                                }
                             }
-                            if (callback)
-                                callback(data);
-                        });
-                    } catch (ex) {
-                        // File read error
-                        console.error(ex);
-                        if (errorHandler)
-                            errorHandler(ex);
+
+                            if (!result.type)
+                                result.type = 'blank';
+                        }
                     }
+                } catch (e) {
+                    console.error(e);
                 }
-            };
 
-            ExplorerController.prototype.openFolder = function (dir) {
-                if (!this._gui) {
-                    var nwGui = 'nw.gui';
-                    this._gui = require(nwGui);
-                }
-                if (!dir)
-                    dir = this.TargetFolder;
-                if (!$.isEmptyObject(this._gui)) {
-                    console.debug(' - Opening Folder: ' + dir);
-
-                    //this._gui.Shell.openItem(target);
-                    this._gui.Shell.openItem(dir + '/');
-                }
+                return result;
             };
             return ExplorerController;
         })();
@@ -1461,7 +893,8 @@ angular.module('prototyped.explorer', [
                 'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/explore/views/index.tpl.html',
-                    controller: 'proto.explorer.ExplorerController'
+                    controller: 'proto.explorer.ExplorerController',
+                    controllerAs: 'ctrlExplorer'
                 }
             }
         });
@@ -1478,13 +911,13 @@ angular.module('prototyped.explorer', [
             controllerAs: 'addrBar'
         };
     }]).controller('proto.explorer.AddressBarController', [
+    '$rootScope',
     '$scope',
     '$q',
     proto.explorer.AddressBarController
 ]).controller('proto.explorer.ExplorerController', [
+    '$rootScope',
     '$scope',
-    '$route',
-    '$timeout',
     '$q',
     proto.explorer.ExplorerController
 ]);
@@ -2382,7 +1815,7 @@ angular.module('prototyped.features', [
 ]).config([
     '$stateProvider', function ($stateProvider) {
         $stateProvider.state('proto.cmd', {
-            url: '/cmd',
+            url: '/explore',
             views: {
                 'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                 'main@': {
@@ -2563,6 +1996,552 @@ angular.module('prototyped.features', [
         angular.extend($scope.cmd, updates);
     }]);
 /// <reference path="../imports.d.ts" />
+angular.module('prototyped.default', [
+    'ui.router'
+]).value('appPages', {
+    pages: [
+        {
+            url: '/proto',
+            style: 'img-explore',
+            title: 'Explore Features & Options',
+            desc: 'You can explore locally installed features and find your way around the site by clicking on this card...'
+        },
+        {
+            url: '/samples',
+            style: 'img-sandbox',
+            title: 'Prototyped Sample Code',
+            desc: 'A selection of samples to test, play and learn about web technologies.'
+        },
+        {
+            url: '/sync',
+            style: 'img-editor',
+            title: 'Import & Export Data',
+            desc: 'Load from external sources, modify and/or export to an external resource.'
+        },
+        {
+            url: '/about',
+            style: 'img-about',
+            title: 'About this software',
+            desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
+        }
+    ]
+}).config([
+    '$stateProvider', function ($stateProvider) {
+        // Now set up the states
+        $stateProvider.state('default', {
+            url: '/',
+            views: {
+                'main@': {
+                    templateUrl: 'views/default.tpl.html',
+                    controller: 'CardViewCtrl',
+                    controllerAs: 'sliderCtrl'
+                }
+            }
+        });
+    }]).controller('CardViewCtrl', [
+    '$scope', 'appPages', function ($scope, appPages) {
+        // Make sure 'mySiteMap' exists
+        $scope.pages = appPages.pages || [];
+
+        // initial image index
+        $scope._Index = 0;
+
+        $scope.count = function () {
+            return $scope.pages.length;
+        };
+
+        // if a current image is the same as requested image
+        $scope.isActive = function (index) {
+            return $scope._Index === index;
+        };
+
+        // show prev image
+        $scope.showPrev = function () {
+            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
+        };
+
+        // show next image
+        $scope.showNext = function () {
+            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
+        };
+
+        // show a certain image
+        $scope.showPhoto = function (index) {
+            $scope._Index = index;
+        };
+    }]);
+/// <reference path="../../imports.d.ts" />
+angular.module('prototyped.about', [
+    'prototyped.ng.views',
+    'prototyped.ng.styles',
+    'ui.router'
+]).config([
+    '$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
+        // Define redirects
+        $urlRouterProvider.when('/about', '/about/info');
+
+        // Define the UI states
+        $stateProvider.state('about', {
+            url: '/about',
+            abstract: true
+        }).state('about.info', {
+            url: '/info',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/info.tpl.html',
+                    controller: 'AboutInfoController'
+                }
+            }
+        }).state('about.online', {
+            url: '^/contact',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': { templateUrl: 'views/about/contact.tpl.html' }
+            }
+        }).state('about.conection', {
+            url: '/conection',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/connections.tpl.html',
+                    controller: 'AboutConnectionController'
+                }
+            }
+        });
+    }]).controller('AboutInfoController', [
+    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
+        function css(a) {
+            var sheets = document.styleSheets, o = [];
+            for (var i in sheets) {
+                var rules = sheets[i].rules || sheets[i].cssRules;
+                for (var r in rules) {
+                    if (a.is(rules[r].selectorText)) {
+                        o.push(rules[r].selectorText);
+                    }
+                }
+            }
+            return o;
+        }
+
+        function selectorExists(selector) {
+            return false;
+            //var ret = css($(selector));
+            //return ret;
+        }
+
+        function getVersionInfo(ident) {
+            try  {
+                if (typeof process !== 'undefined' && process.versions) {
+                    return process.versions[ident];
+                }
+            } catch (ex) {
+            }
+            return null;
+        }
+
+        // Define a function to detect the capabilities
+        $scope.detectBrowserInfo = function () {
+            var info = {
+                about: null,
+                versions: {
+                    ie: null,
+                    html: null,
+                    jqry: null,
+                    css: null,
+                    js: null,
+                    ng: null,
+                    nw: null,
+                    njs: null,
+                    v8: null,
+                    openssl: null,
+                    chromium: null
+                },
+                detects: {
+                    jqry: false,
+                    less: false,
+                    bootstrap: false,
+                    ngAnimate: false,
+                    ngUiRouter: false,
+                    ngUiUtils: false,
+                    ngUiBootstrap: false
+                },
+                css: {
+                    boostrap2: null,
+                    boostrap3: null
+                },
+                codeName: navigator.appCodeName,
+                userAgent: navigator.userAgent
+            };
+
+            try  {
+                // Get IE version (if defined)
+                if (!!window['ActiveXObject']) {
+                    info.versions.ie = 10;
+                }
+
+                // Sanitize codeName and userAgentt
+                var cn = info.codeName;
+                var ua = info.userAgent;
+                if (ua) {
+                    // Remove start of string in UAgent upto CName or end of string if not found.
+                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
+
+                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
+                    ua = ua.substring(cn.length);
+
+                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
+                        ua = ua.substring(1);
+                    }
+
+                    // Remove the end of the string from first characrer that is not a number or point etc.
+                    var pointer = 0;
+                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
+                        pointer = pointer + 1;
+                    }
+                    ua = ua.substring(0, pointer);
+
+                    if (!window.isNaN(ua)) {
+                        if (parseInt(ua) > 0) {
+                            info.versions.html = ua;
+                        }
+                        if (parseFloat(ua) >= 5) {
+                            info.versions.css = '3.x';
+                            info.versions.js = '5.x';
+                        }
+                    }
+                }
+                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
+                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
+                info.versions.nw = getVersionInfo('node-webkit');
+                info.versions.njs = getVersionInfo('node');
+                info.versions.v8 = getVersionInfo('v8');
+                info.versions.openssl = getVersionInfo('openssl');
+                info.versions.chromium = getVersionInfo('chromium');
+
+                // Check for CSS extensions
+                info.css.boostrap2 = selectorExists('hero-unit');
+                info.css.boostrap3 = selectorExists('jumbotron');
+
+                // Detect selected features and availability
+                info.about = {
+                    protocol: $location.$$protocol,
+                    browser: {},
+                    server: {
+                        active: undefined,
+                        url: $location.$$absUrl
+                    },
+                    os: {},
+                    hdd: { type: null }
+                };
+
+                // Detect the operating system
+                var osName = 'Unknown OS';
+                var appVer = navigator.appVersion;
+                if (appVer) {
+                    if (appVer.indexOf("Win") != -1)
+                        osName = 'Windows';
+                    if (appVer.indexOf("Mac") != -1)
+                        osName = 'MacOS';
+                    if (appVer.indexOf("X11") != -1)
+                        osName = 'UNIX';
+                    if (appVer.indexOf("Linux") != -1)
+                        osName = 'Linux';
+                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
+                }
+                info.about.os.name = osName;
+
+                // Check for jQuery
+                info.detects.jqry = typeof jQuery !== 'undefined';
+
+                // Check for general header and body scripts
+                $("script").each(function () {
+                    var src = $(this).attr("src");
+                    if (src) {
+                        // Fast check on known script names
+                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
+                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
+                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
+                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
+                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
+                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
+                    }
+                });
+
+                // Get the client browser details (build a url string)
+                var detectUrl = (function () {
+                    var p = [], w = window, d = document, e = 0, f = 0;
+                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
+                    e |= w.ActiveXObject ? 1 : 0;
+                    e |= w.opera ? 2 : 0;
+                    e |= w.chrome ? 4 : 0;
+                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
+                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
+                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
+                    p.push('e=' + e);
+                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
+                    f |= 'WebSocket' in w ? 2 : 0;
+                    f |= w.Worker ? 4 : 0;
+                    f |= w.applicationCache ? 8 : 0;
+                    f |= w.history && history.pushState ? 16 : 0;
+                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
+                    f |= 'FileReader' in w ? 64 : 0;
+                    p.push('f=' + f);
+                    p.push('r=' + Math.random().toString(36).substring(7));
+                    p.push('w=' + screen.width);
+                    p.push('h=' + screen.height);
+                    var s = d.createElement('script');
+                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
+                })();
+
+                // Send a loaded package to a server to detect more features
+                $.getScript(detectUrl).done(function (script, textStatus) {
+                    $rootScope.$applyAsync(function () {
+                        // Browser info and details loaded
+                        var browserInfo = new window.WhichBrowser();
+                        angular.extend(info.about, browserInfo);
+                    });
+                }).fail(function (jqxhr, settings, exception) {
+                    console.error(exception);
+                });
+
+                // Set browser name to IE (if defined)
+                if (navigator.appName == 'Microsoft Internet Explorer') {
+                    info.about.browser.name = 'Internet Explorer';
+                }
+
+                // Check if the browser supports web db's
+                var webDB = info.about.webdb = {
+                    db: null,
+                    version: '1',
+                    active: null,
+                    size: 5 * 1024 * 1024,
+                    test: function (name, desc, dbVer, dbSize) {
+                        try  {
+                            // Try and open a web db
+                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
+                            webDB.onSuccess(null, null);
+                        } catch (ex) {
+                            // Nope, something went wrong
+                            webDB.onError(null, null);
+                        }
+                    },
+                    onSuccess: function (tx, r) {
+                        if (tx) {
+                            if (r) {
+                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
+                            }
+                            if (tx) {
+                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
+                            }
+                        }
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = true;
+                            webDB.used = JSON.stringify(webDB.db).length;
+                        });
+                    },
+                    onError: function (tx, e) {
+                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = false;
+                        });
+                    }
+                };
+                info.about.webdb.test();
+            } catch (ex) {
+                console.error(ex);
+            }
+
+            // Return the preliminary info
+            return info;
+        };
+
+        // Define the state
+        $scope.info = $scope.detectBrowserInfo();
+    }]).controller('AboutConnectionController', [
+    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
+        $scope.result = null;
+        $scope.status = null;
+        $scope.state = {
+            editMode: false,
+            location: $location.$$absUrl,
+            protocol: $location.$$protocol,
+            requireHttps: ($location.$$protocol == 'https')
+        };
+        $scope.detect = function () {
+            var target = $scope.state.location;
+            var started = Date.now();
+            $scope.result = null;
+            $scope.latency = null;
+            $scope.status = { code: 0, desc: '', style: 'label-default' };
+            $.ajax({
+                url: target,
+                crossDomain: true,
+                /*
+                username: 'user',
+                password: 'pass',
+                xhrFields: {
+                withCredentials: true
+                }
+                */
+                beforeSend: function (xhr) {
+                    $timeout(function () {
+                        //$scope.status.code = xhr.status;
+                        $scope.status.desc = 'sending';
+                        $scope.status.style = 'label-info';
+                    });
+                },
+                success: function (data, textStatus, xhr) {
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-success';
+                        $scope.result = {
+                            valid: true,
+                            info: data,
+                            sent: started,
+                            received: Date.now()
+                        };
+                    });
+                },
+                error: function (xhr, textStatus, error) {
+                    xhr.ex = error;
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-danger';
+                        $scope.result = {
+                            valid: false,
+                            info: xhr,
+                            sent: started,
+                            error: xhr.statusText,
+                            received: Date.now()
+                        };
+                    });
+                },
+                complete: function (xhr, textStatus) {
+                    console.debug(' - Status Code: ' + xhr.status);
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                    });
+                }
+            }).always(function (xhr) {
+                $timeout(function () {
+                    $scope.latency = $scope.getLatencyInfo();
+                });
+            });
+        };
+        $scope.setProtocol = function (protocol) {
+            var val = $scope.state.location;
+            var pos = val.indexOf('://');
+            if (pos > 0) {
+                val = protocol + val.substring(pos);
+            }
+            $scope.state.protocol = protocol;
+            $scope.state.location = val;
+            $scope.detect();
+        };
+        $scope.getProtocolStyle = function (protocol, activeStyle) {
+            var cssRes = '';
+            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
+            if (isValid) {
+                if (!$scope.result) {
+                    cssRes += 'btn-primary';
+                } else if ($scope.result.valid && activeStyle) {
+                    cssRes += activeStyle;
+                } else if ($scope.result) {
+                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
+                }
+            }
+            return cssRes;
+        };
+        $scope.getStatusIcon = function (activeStyle) {
+            var cssRes = '';
+            if (!$scope.result) {
+                cssRes += 'glyphicon-refresh';
+            } else if (activeStyle && $scope.result.valid) {
+                cssRes += activeStyle;
+            } else {
+                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
+            }
+            return cssRes;
+        };
+        $scope.submitForm = function () {
+            $scope.state.editMode = false;
+            if ($scope.state.requireHttps) {
+                $scope.setProtocol('https');
+            } else {
+                $scope.detect();
+            }
+        };
+        $scope.getStatusColor = function () {
+            var cssRes = $scope.getStatusIcon() + ' ';
+            if (!$scope.result) {
+                cssRes += 'busy';
+            } else if ($scope.result.valid) {
+                cssRes += 'success';
+            } else {
+                cssRes += 'error';
+            }
+            return cssRes;
+        };
+        $scope.getLatencyInfo = function () {
+            var cssNone = 'text-muted';
+            var cssHigh = 'text-success';
+            var cssMedium = 'text-warning';
+            var cssLow = 'text-danger';
+            var info = {
+                desc: '',
+                style: cssNone
+            };
+
+            if (!$scope.result) {
+                return info;
+            }
+
+            if (!$scope.result.valid) {
+                info.style = 'text-muted';
+                info.desc = 'Connection Failed';
+                return info;
+            }
+
+            var totalMs = $scope.result.received - $scope.result.sent;
+            if (totalMs > 2 * 60 * 1000) {
+                info.style = cssNone;
+                info.desc = 'Timed out';
+            } else if (totalMs > 1 * 60 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Impossibly slow';
+            } else if (totalMs > 30 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Very slow';
+            } else if (totalMs > 1 * 1000) {
+                info.style = cssMedium;
+                info.desc = 'Relatively slow';
+            } else if (totalMs > 500) {
+                info.style = cssMedium;
+                info.desc = 'Moderately slow';
+            } else if (totalMs > 250) {
+                info.style = cssMedium;
+                info.desc = 'Barely Responsive';
+            } else if (totalMs > 150) {
+                info.style = cssHigh;
+                info.desc = 'Average Response Time';
+            } else if (totalMs > 50) {
+                info.style = cssHigh;
+                info.desc = 'Responsive Enough';
+            } else if (totalMs > 15) {
+                info.style = cssHigh;
+                info.desc = 'Very Responsive';
+            } else {
+                info.style = cssHigh;
+                info.desc = 'Optimal';
+            }
+            return info;
+        };
+    }]);
+/// <reference path="../imports.d.ts" />
 /// <reference path="../modules/default.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
 angular.module('prototyped.ng', [
@@ -2578,14 +2557,14 @@ angular.module('prototyped.ng', [
     'prototyped.features'
 ]).config([
     '$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
+        // Define redirects
+        $urlRouterProvider.when('/proto', '/proto/explore').when('/sandbox', '/samples').when('/sync', '/edge');
+
         // Set up the routing...
         $stateProvider.state('proto', {
             url: '/proto',
             abstract: true
         });
-
-        // Define redirects
-        $urlRouterProvider.when('/proto', '/proto/cmd');
     }]).constant('appInfo', {
     version: '1.0.0.0'
 }).constant('appNode', {

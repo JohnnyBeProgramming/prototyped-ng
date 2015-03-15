@@ -19,6 +19,12 @@ angular.module('prototyped.ng', [
 
     .config(['$stateProvider', '$urlRouterProvider', ($stateProvider, $urlRouterProvider) => {
 
+        // Define redirects
+        $urlRouterProvider
+            .when('/proto', '/proto/explore')
+            .when('/sandbox', '/samples')
+            .when('/sync', '/edge');
+
         // Set up the routing...
         $stateProvider
             .state('proto', {
@@ -26,9 +32,6 @@ angular.module('prototyped.ng', [
                 abstract: true,
             })
 
-        // Define redirects
-        $urlRouterProvider
-            .when('/proto', '/proto/cmd');
     }])
 
     .constant('appInfo', {

@@ -4,197 +4,160 @@ module proto.explorer {
 
     export class ExplorerController {
 
-        public TargetFolder: string;
-
-        get FolderView(): any { return this._folderViewCtrl; }
-
-        private _gui: any;
-        private _path: any;
-        private _fs: any;
-        private _addrBar: any;
-        private _addrBarCtrl: any;
-        private _folderView: any;
-        private _folderViewCtrl: any;
-
-        constructor(private $scope: any, private $route: any, private $timeout: any, private $q: any) {
+        constructor(private $rootScope: any, private $scope: any, private $q: any) {
             var dir = './';
-            var pkg = 'package.json';
             try {
                 // Hook up to the current scope
-                this.$scope.myReader = this;
-                this.$scope.isBusy = false;
-
-                /*
-                // Hook in the required libraries
-                this._path = require('path');
-                this._fs = require('fs');
+                this.$scope.isBusy = true;
 
                 // Initialize the cotroller
                 this.init(dir);
-                */
 
-                // Test File Read...
-                /*
-                console.debug(' - Fetching file: ' + pkg);
-                this.openFile(pkg, (data) => {
-                    console.info(data);
-                }, console.warn);
-                */
+                // Hook event for when folder path changes
+                this.$rootScope.$on('event:folder-path:changed', (event, folder) => {
+                    if (folder != this.$scope.dir_path) {
+                        console.warn(' - Explorer Navigate: ', folder);
+                        this.$scope.dir_path = folder;
+                        this.navigate(folder);
+                    }
+                });
             } catch (ex) {
                 console.error(ex);
             }
         }
 
         init(dir: string) {
-            // Check if file system is loaded
-            if (!$.isEmptyObject(this._fs)) {
-
-                // Get and set current folder details
-                this.TargetFolder = this._fs.realpathSync(dir);
-
-                // Watch for changes on this folder (non-recursive)
-                this._fs.watch('./', () => {
-                    // Changes Detected... Reload on changes?
-                    console.log(' - Changes Detected...');
-                });
-
-                // Make sure path is defined
-                if (!$.isEmptyObject(this._path)) {
-                    // Link Address bar
-                    var addrBarElem = $('addressbar');
-                    if (addrBarElem) this.linkAddressBar(addrBarElem);
-
-                    // Link Folder Explorer
-                    var pathViewElem = $('#files');
-                    if (pathViewElem) this.createFolderView(pathViewElem);
-                }
-            } else {
-                // No access to the file system
-                this.TargetFolder = null;
-            }
+            // Resolve the initial folder path
+            this.navigate(dir);
         }
 
-        isExpanded(): boolean {
-            var result = this.$scope.navExpanded;
-            if (typeof result !== 'boolean') {
-                var wdt = $(window).innerWidth();
-                result = wdt > 500;
-            }
-            return result;
-        }
-
-        linkAddressBar(elem: JQuery) {
-            // Try and load the address bar
-            if (this._addrBar) {
-                var addressbar = new this._addrBar.AddressBar(elem);
-                if (addressbar) {
-                    addressbar.on('navigate', (dir) => {
-                        this.navigate(dir);
-                    });
-                }
-                this._addrBarCtrl = addressbar;
-                this.refreshAddressBar(this.TargetFolder);
-            }
-        }
-
-        refreshAddressBar(path: string) {
-            var result = this._addrBarCtrl.generatePaths(path);
-            this.$scope.paths = result;
-            if (!this.$scope.$$phase) {
-                this.$scope.$apply();
-            };
-        }
-
-        navigate(path: string) {
+        navigate(dir_path: string) {
             var deferred = this.$q.defer();
-            console.info(' - Navigate: ' + path);
+            try {
+                // Set busy flag
+                this.$scope.isBusy = true;
+                this.$scope.error = null;
 
-            // Set busy flag
-            this.$scope.isBusy = true;
-            this.$scope.error = '';
-            this.$timeout(() => {
-                try {
-                    // Opoen the specified folder
-                    this._folderViewCtrl.open(path);
+                // Resolve the full path
+                var path = require('path');
+                dir_path = path.resolve(dir_path);
 
-                    // Refresh  the address bar as well
-                    if (this._addrBarCtrl) {
-                        this.refreshAddressBar(path);
-                        //this._addrBarCtrl.enter(mime);
+                // Read the folder contents (async)
+                var fs = require('fs');
+                fs.readdir(dir_path, (error, files) => {
+                    if (error) {
+                        deferred.reject(error);
+                        return;
                     }
 
+                    // Split and sort results
+                    var folders = [];
+                    var lsFiles = [];
+                    for (var i = 0; i < files.sort().length; ++i) {
+                        var targ = path.join(dir_path, files[i]);
+                        var stat = this.mimeType(targ);
+                        if (stat.type == 'folder') {
+                            folders.push(stat);
+                        } else {
+                            lsFiles.push(stat);
+                        }
+                    }
+
+                    // Generate the contents
+                    var result = {
+                        path: dir_path,
+                        folders: folders,
+                        files: lsFiles
+                    };
+
                     // Mark promise as resolved
-                    deferred.resolve(path);
-                } catch (ex) {
-                    // Mark promise and rejected
-                    deferred.reject(ex);
-                }
-            });
+                    deferred.resolve(result);
+                });
+            } catch (ex) {
+                // Mark promise and rejected
+                deferred.reject(ex);
+            }
+
+            // Handle the result and error conditions
             deferred.promise.then(
                 (result) => {
                     // Clear busy flag
                     this.$scope.isBusy = false;
-                    this.$scope.cwd = result;
+                    this.$scope.dir_path = result.path;
+                    this.$scope.files = result.files;
+                    this.$scope.folders = result.folders;
+
+                    // Breadcast event that path has changed
+                    this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
                 },
                 (error) => {
                     // Clear busy flag
                     this.$scope.isBusy = false;
                     this.$scope.error = error;
                 });
+
+            return deferred.promise;
         }
 
-        createFolderView(elem: JQuery) {
-            // Try and load the folder view
-            var folder = new this._folderView.Folder(elem);
-            if (folder) {
-                folder.on('navigate', (dir, mime) => {
-                    if (mime.type == 'folder') {
-                        this.navigate(mime.path);
-                    } else {
-                        var req = 'nw.gui';
-                        var gui = require(req);
-                        if (gui) gui.Shell.openItem(mime.path);
-                    }
-                });
-            }
-            this._folderViewCtrl = folder;
-            this.navigate(this.TargetFolder);
+        select(filePath: any) {
+            this.$scope.selected = filePath;
         }
 
-        readFile(filePath: string, callback?: (data: any) => void, errorHandler?: (data: any) => void) {
-            // Make sure the required libraries exists
-            if (this._fs && this._path) {
-                var targetPath = this._path.resolve(this.TargetFolder, filePath);
-                try {
-                    // Try and read the file
-                    this._fs.readFile(filePath, 'UTF-8', (err, data) => {
-                        if (err) {
-                            if (errorHandler) errorHandler(err);
-                            return;
+        open(filePath: string) {
+            var req = 'nw.gui';
+            var gui = require(req);
+            if (gui) gui.Shell.openItem(filePath);
+        }
+
+        mimeType(filepath: string): any {
+            var map = {
+                'compressed': ['zip', 'rar', 'gz', '7z'],
+                'text': ['txt', 'md', ''],
+                'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
+                'pdf': ['pdf'],
+                'css': ['css'],
+                'excel': ['csv', 'xls', 'xlsx'],
+                'html': ['html'],
+                'word': ['doc', 'docx'],
+                'powerpoint': ['ppt', 'pptx'],
+                'movie': ['mkv', 'avi', 'rmvb'],
+            };
+            var cached = {};
+
+            var fs = require('fs');
+            var path = require('path');
+            var result = {
+                name: path.basename(filepath),
+                path: filepath,
+                type: null,
+            };
+
+            try {
+                var stat = fs.statSync(filepath);
+                if (stat.isDirectory()) {
+                    result.type = 'folder';
+                } else {
+                    var ext = path.extname(filepath).substr(1);
+                    result.type = cached[ext];
+                    if (!result.type) {
+                        for (var key in map) {
+                            var arr = map[key];
+                            if (arr.length > 0 && arr.indexOf(ext) >= 0) {
+                                cached[ext] = result.type = key;
+                                break;
+                            }
                         }
-                        if (callback) callback(data);
-                    });
-                } catch (ex) {
-                    // File read error
-                    console.error(ex);
-                    if (errorHandler) errorHandler(ex);
+
+                        if (!result.type)
+                            result.type = 'blank';
+                    }
                 }
+            } catch (e) {
+                console.error(e);
             }
-        }
 
-        openFolder(dir: string) {
-            if (!this._gui) {
-                var nwGui = 'nw.gui';
-                this._gui = require(nwGui);
-            }
-            if (!dir) dir = this.TargetFolder;
-            if (!$.isEmptyObject(this._gui)) {
-                console.debug(' - Opening Folder: ' + dir);
-                //this._gui.Shell.openItem(target);
-                this._gui.Shell.openItem(dir + '/');
-            }
+            return result;
         }
-
     }
 
 }

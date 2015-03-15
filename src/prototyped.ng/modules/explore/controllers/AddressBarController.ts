@@ -4,18 +4,24 @@ module proto.explorer {
 
     export class AddressBarController {
 
-        public TargetFolder: string;
-
         private element: any;
         private history: string[] = [];
 
-        constructor(private $scope: any, private $q: any) {
+        constructor(private $rootScope : any, private $scope: any, private $q: any) {
             $scope.busy = true;
             try {
                 // Initialise the address bar
                 var elem = $('#addressbar');
                 if (elem) {
                     this.init(elem);
+
+                    this.$rootScope.$on('event:folder-path:changed', (event, folder) => {
+                        if (folder != this.$scope.dir_path) {
+                            console.warn(' - Addressbar Navigate: ', folder);
+                            this.$scope.dir_path = folder;
+                            this.navigate(folder);
+                        }
+                    });
                 } else {
                     throw new Error('Element with id "addressbar" not found...');
                 }
@@ -49,7 +55,6 @@ module proto.explorer {
         }
 
         navigate(path?: string) {
-            console.info(' - navigate: ', path);
             this.generateOutput(path);
         }
 
@@ -82,8 +87,10 @@ module proto.explorer {
             // Set the current dir path
             this.$scope.dir_path = dir_path;
             this.$scope.dir_parts = this.generatePaths(dir_path);
-
             this.history.push(dir_path);
+
+            // Breadcast event that path has changed
+            this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
         }
 
         generatePaths(dir_path: string) {

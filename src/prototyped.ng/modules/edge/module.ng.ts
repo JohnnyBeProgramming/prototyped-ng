@@ -10,10 +10,9 @@ angular.module('prototyped.edge', ['ui.router',
             .state('proto.edge', {
                 url: '^/edge',
                 views: {
-                    'menu@': { templateUrl: 'modules/features/views/menu.tpl.html' },
                     'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                     'main@': {
-                        templateUrl: 'modules/edge/index.tpl.html',
+                        templateUrl: 'modules/edge/views/index.tpl.html',
                         controller: 'edgeViewController'
                     },
                 }
