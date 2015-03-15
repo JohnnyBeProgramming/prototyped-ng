@@ -13,12 +13,30 @@ angular.module('prototyped.explorer', [
                     'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/explore/views/index.tpl.html',
-                        controller: 'explorerViewController'
+                        controller: 'proto.explorer.ExplorerController'
                     },
                 }
             })
 
     }])
+
+    .directive('protoAddressBar', ['$q', ($q) => {
+        return {
+            restrict: 'EA',
+            scope: {
+                target: '=protoAddressBar'
+            },
+            transclude: false,
+            templateUrl: 'modules/explore/views/addressbar.tpl.html',
+            controller: 'proto.explorer.AddressBarController',
+            controllerAs: 'addrBar'
+        };
+    }])    
+    .controller('proto.explorer.AddressBarController', [
+        '$scope',
+        '$q',
+        proto.explorer.AddressBarController
+    ])
 
     .controller('proto.explorer.ExplorerController', [
         '$scope',
@@ -27,8 +45,4 @@ angular.module('prototyped.explorer', [
         '$q',
         proto.explorer.ExplorerController
     ])
-
-    .controller('explorerViewController', ['$rootScope', '$scope', '$state', '$window', '$location', '$timeout', function ($rootScope, $scope, $state, $window, $location, $timeout) {
-
-    }])
 

@@ -24,17 +24,14 @@ module proto.explorer {
                 this.$scope.myReader = this;
                 this.$scope.isBusy = false;
 
-                // Define all registered pages
-                this.extractRoutes();
-
+                /*
                 // Hook in the required libraries
-                this._folderView = require('folder_view');
-                this._addrBar = require('address_bar');
                 this._path = require('path');
                 this._fs = require('fs');
 
                 // Initialize the cotroller
                 this.init(dir);
+                */
 
                 // Test File Read...
                 /*
@@ -45,39 +42,6 @@ module proto.explorer {
                 */
             } catch (ex) {
                 console.error(ex);
-            }
-        }
-
-        extractRoutes() {
-            var pages = this.$scope.pages = [];
-            try {
-                // Iterate the list of all defined routes and build a sitemap
-                angular.forEach(this.$route.routes, function (config, route) {
-                    var isVisible = !config.redirectTo && (route != '/' && route != '');
-                    if (isVisible) {
-                        // Define the page
-                        var page = {
-                            url: route,
-                            label: route,
-                            config: config,
-                            iconCss: 'glyphicon glyphicon-file',
-                        };
-
-                        // Check if the route has a controller
-                        if (config.controller) {
-                            page.iconCss = 'glyphicon glyphicon-unchecked';
-                        }
-
-                        // Check for any params
-                        if (config.keys.length > 0) {
-                            page.iconCss = 'glyphicon glyphicon-expand';
-                        }
-
-                        pages.push(page);
-                    }
-                });
-            } finally {
-                this.$scope.pages = pages;
             }
         }
 

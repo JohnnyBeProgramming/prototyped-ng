@@ -29,14 +29,9 @@ angular.module('myApp', [
         },
         items: [
             {
-                label: 'Samples',
-                icon: 'fa fa-cubes',
-                value: 'samples.info',
-            },
-            {
                 shown: true,
-                label: 'Discover Features',
-                icon: 'fa fa-share-alt',
+                label: 'Explore',
+                icon: 'fa fa-cubes',
                 value: 'proto.cmd',
                 /*
                 value: [
@@ -46,6 +41,11 @@ angular.module('myApp', [
                     { label: 'Clean & Exit', icon: 'fa fa-recycle', value: 'modules.clear', },
                 ],
                 */
+            },
+            {
+                label: 'Samples',
+                icon: 'fa fa-share-alt',
+                value: 'samples.info',
             },
             {
                 label: 'About this app',

@@ -15,8 +15,7 @@ angular.module('prototyped.sqlcmd', [
             .state('sqlcmd.connect', {
                 url: '/connect/:path/:file',
                 views: {
-                    'menu@': { templateUrl: 'modules/features/sqlcmd.exe/views/menu.tpl.html' },
-                    'left@': { templateUrl: 'modules/features/sqlcmd.exe/views/left.tpl.html' },
+                    'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/features/sqlcmd.exe/views/connect.tpl.html',
                         controller: 'sqlCmdViewController'
@@ -26,8 +25,7 @@ angular.module('prototyped.sqlcmd', [
             .state('sqlcmd.connect.db', {
                 url: '/:dbname',
                 views: {
-                    'menu@': { templateUrl: 'modules/features/sqlcmd.exe/views/menu.tpl.html' },
-                    'left@': { templateUrl: 'modules/features/sqlcmd.exe/views/left.tpl.html' },
+                    'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/features/sqlcmd.exe/views/database.tpl.html',
                         controller: 'sqlCmdViewController'

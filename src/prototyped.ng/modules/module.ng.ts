@@ -27,7 +27,8 @@ angular.module('prototyped.ng', [
             })
 
         // Define redirects
-        $urlRouterProvider.when('/proto', '/proto/cmd');
+        $urlRouterProvider
+            .when('/proto', '/proto/cmd');
     }])
 
     .constant('appInfo', {

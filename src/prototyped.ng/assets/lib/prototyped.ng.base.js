@@ -741,191 +741,68 @@ angular.module('prototyped.default', [
             views: {
                 'main@': {
                     templateUrl: 'views/default.tpl.html',
-                    controller: 'HomeViewCtrl'
+                    controller: 'CardViewCtrl',
+                    controllerAs: 'sliderCtrl'
                 }
             }
         });
-    }]).controller('HomeViewCtrl', [
-    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
-        $scope.result = null;
-        $scope.status = null;
-        $scope.state = {
-            editMode: false,
-            location: $location.$$absUrl,
-            protocol: $location.$$protocol,
-            requireHttps: ($location.$$protocol == 'https')
-        };
-        $scope.detect = function () {
-            var target = $scope.state.location;
-            var started = Date.now();
-            $scope.result = null;
-            $scope.latency = null;
-            $scope.status = { code: 0, desc: '', style: 'label-default' };
-            $.ajax({
-                url: target,
-                crossDomain: true,
-                /*
-                username: 'user',
-                password: 'pass',
-                xhrFields: {
-                withCredentials: true
-                }
-                */
-                beforeSend: function (xhr) {
-                    $timeout(function () {
-                        //$scope.status.code = xhr.status;
-                        $scope.status.desc = 'sending';
-                        $scope.status.style = 'label-info';
-                    });
-                },
-                success: function (data, textStatus, xhr) {
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-success';
-                        $scope.result = {
-                            valid: true,
-                            info: data,
-                            sent: started,
-                            received: Date.now()
-                        };
-                    });
-                },
-                error: function (xhr, textStatus, error) {
-                    xhr.ex = error;
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-danger';
-                        $scope.result = {
-                            valid: false,
-                            info: xhr,
-                            sent: started,
-                            error: xhr.statusText,
-                            received: Date.now()
-                        };
-                    });
-                },
-                complete: function (xhr, textStatus) {
-                    console.debug(' - Status Code: ' + xhr.status);
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                    });
-                }
-            }).always(function (xhr) {
-                $timeout(function () {
-                    $scope.latency = $scope.getLatencyInfo();
-                });
-            });
-        };
-        $scope.setProtocol = function (protocol) {
-            var val = $scope.state.location;
-            var pos = val.indexOf('://');
-            if (pos > 0) {
-                val = protocol + val.substring(pos);
-            }
-            $scope.state.protocol = protocol;
-            $scope.state.location = val;
-            $scope.detect();
-        };
-        $scope.getProtocolStyle = function (protocol, activeStyle) {
-            var cssRes = '';
-            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
-            if (isValid) {
-                if (!$scope.result) {
-                    cssRes += 'btn-primary';
-                } else if ($scope.result.valid && activeStyle) {
-                    cssRes += activeStyle;
-                } else if ($scope.result) {
-                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
-                }
-            }
-            return cssRes;
-        };
-        $scope.getStatusIcon = function (activeStyle) {
-            var cssRes = '';
-            if (!$scope.result) {
-                cssRes += 'glyphicon-refresh';
-            } else if (activeStyle && $scope.result.valid) {
-                cssRes += activeStyle;
-            } else {
-                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
-            }
-            return cssRes;
-        };
-        $scope.submitForm = function () {
-            $scope.state.editMode = false;
-            if ($scope.state.requireHttps) {
-                $scope.setProtocol('https');
-            } else {
-                $scope.detect();
-            }
-        };
-        $scope.getStatusColor = function () {
-            var cssRes = $scope.getStatusIcon() + ' ';
-            if (!$scope.result) {
-                cssRes += 'busy';
-            } else if ($scope.result.valid) {
-                cssRes += 'success';
-            } else {
-                cssRes += 'error';
-            }
-            return cssRes;
-        };
-        $scope.getLatencyInfo = function () {
-            var cssNone = 'text-muted';
-            var cssHigh = 'text-success';
-            var cssMedium = 'text-warning';
-            var cssLow = 'text-danger';
-            var info = {
-                desc: '',
-                style: cssNone
-            };
+    }]).value('appPages', {
+    pages: [
+        {
+            url: '/proto',
+            style: 'img-explore',
+            title: 'Explore Features & Options',
+            desc: 'You can navigate your way around the site by clicking on this card...'
+        },
+        {
+            url: '/samples',
+            style: 'img-sandbox',
+            title: 'Prototyping Sandbox',
+            desc: 'A blank sandox working place fully pre-loaded to play and learn with.'
+        },
+        {
+            url: '/proto',
+            style: 'img-editor',
+            title: 'Import & Export Data',
+            desc: 'Load from external sources, modify and/or export to an external resource.'
+        },
+        {
+            url: '/about/info',
+            style: 'img-about',
+            title: 'About this software',
+            desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
+        }
+    ]
+}).controller('CardViewCtrl', [
+    '$scope', 'appPages', function ($scope, appPages) {
+        // Make sure 'mySiteMap' exists
+        $scope.pages = appPages.pages || [];
 
-            if (!$scope.result) {
-                return info;
-            }
+        // initial image index
+        $scope._Index = 0;
 
-            if (!$scope.result.valid) {
-                info.style = 'text-muted';
-                info.desc = 'Connection Failed';
-                return info;
-            }
+        $scope.count = function () {
+            return $scope.pages.length;
+        };
 
-            var totalMs = $scope.result.received - $scope.result.sent;
-            if (totalMs > 2 * 60 * 1000) {
-                info.style = cssNone;
-                info.desc = 'Timed out';
-            } else if (totalMs > 1 * 60 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Impossibly slow';
-            } else if (totalMs > 30 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Very slow';
-            } else if (totalMs > 1 * 1000) {
-                info.style = cssMedium;
-                info.desc = 'Relatively slow';
-            } else if (totalMs > 500) {
-                info.style = cssMedium;
-                info.desc = 'Moderately slow';
-            } else if (totalMs > 250) {
-                info.style = cssMedium;
-                info.desc = 'Barely Responsive';
-            } else if (totalMs > 150) {
-                info.style = cssHigh;
-                info.desc = 'Average Response Time';
-            } else if (totalMs > 50) {
-                info.style = cssHigh;
-                info.desc = 'Responsive Enough';
-            } else if (totalMs > 15) {
-                info.style = cssHigh;
-                info.desc = 'Very Responsive';
-            } else {
-                info.style = cssHigh;
-                info.desc = 'Optimal';
-            }
-            return info;
+        // if a current image is the same as requested image
+        $scope.isActive = function (index) {
+            return $scope._Index === index;
+        };
+
+        // show prev image
+        $scope.showPrev = function () {
+            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
+        };
+
+        // show next image
+        $scope.showNext = function () {
+            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
+        };
+
+        // show a certain image
+        $scope.showPhoto = function (index) {
+            $scope._Index = index;
         };
     }]);
 /// <reference path="../../imports.d.ts" />
@@ -1242,6 +1119,134 @@ angular.module('prototyped.editor', [
 var proto;
 (function (proto) {
     (function (explorer) {
+        var AddressBarController = (function () {
+            function AddressBarController($scope, $q) {
+                this.$scope = $scope;
+                this.$q = $q;
+                this.history = [];
+                $scope.busy = true;
+                try  {
+                    // Initialise the address bar
+                    var elem = $('#addressbar');
+                    if (elem) {
+                        this.init(elem);
+                    } else {
+                        throw new Error('Element with id "addressbar" not found...');
+                    }
+                } catch (ex) {
+                    // Initialisation failed
+                    console.error(ex);
+                }
+                $scope.busy = false;
+            }
+            AddressBarController.prototype.init = function (element) {
+                // Set the target HTML element
+                this.element = element;
+
+                // Generate the current folder parts
+                this.generateOutput('./');
+            };
+
+            AddressBarController.prototype.openFolder = function (path) {
+                try  {
+                    var nwGui = 'nw.gui';
+                    var gui = require(nwGui);
+                    if (!$.isEmptyObject(gui)) {
+                        console.debug(' - Opening Folder: ' + path);
+                        gui.Shell.openItem(path + '/');
+                    }
+                } catch (ex) {
+                    console.error(ex);
+                }
+                this.generateOutput(path);
+            };
+
+            AddressBarController.prototype.navigate = function (path) {
+                console.info(' - navigate: ', path);
+                this.generateOutput(path);
+            };
+
+            AddressBarController.prototype.select = function (file) {
+                console.info(' - select: ', file);
+                try  {
+                    var req = 'nw.gui';
+                    var gui = require(req);
+                    gui.Shell.openItem(file);
+                } catch (ex) {
+                    console.error(ex);
+                }
+            };
+
+            AddressBarController.prototype.back = function () {
+                var len = this.history ? this.history.length : -1;
+                if (len > 1) {
+                    var last = this.history[len - 2];
+                    this.history = this.history.splice(0, len - 2);
+                    this.generateOutput(last);
+                }
+            };
+
+            AddressBarController.prototype.hasHistory = function () {
+                var len = this.history ? this.history.length : -1;
+                return (len > 1);
+            };
+
+            AddressBarController.prototype.generateOutput = function (dir_path) {
+                // Set the current dir path
+                this.$scope.dir_path = dir_path;
+                this.$scope.dir_parts = this.generatePaths(dir_path);
+
+                this.history.push(dir_path);
+            };
+
+            AddressBarController.prototype.generatePaths = function (dir_path) {
+                try  {
+                    // Get dependecies
+                    var path = require('path');
+
+                    // Update current path
+                    this.$scope.dir_path = dir_path = path.resolve(dir_path);
+
+                    // Try and normalize the folder path
+                    var curr = path.normalize(dir_path);
+                    if (curr) {
+                        // Split path into separate elements
+                        var sequence = curr.split(path.sep);
+                        var result = [];
+
+                        var i = 0;
+                        for (; i < sequence.length; ++i) {
+                            result.push({
+                                name: sequence[i],
+                                path: sequence.slice(0, 1 + i).join(path.sep)
+                            });
+                        }
+
+                        // Add root for unix
+                        if (sequence[0] == '' && process.platform != 'win32') {
+                            result[0] = {
+                                name: 'root',
+                                path: '/'
+                            };
+                        }
+
+                        // Return thepath sequences
+                        return { sequence: result };
+                    }
+                } catch (ex) {
+                    console.error(ex);
+                }
+            };
+            return AddressBarController;
+        })();
+        explorer.AddressBarController = AddressBarController;
+    })(proto.explorer || (proto.explorer = {}));
+    var explorer = proto.explorer;
+})(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
+var proto;
+(function (proto) {
+    (function (explorer) {
         var ExplorerController = (function () {
             function ExplorerController($scope, $route, $timeout, $q) {
                 this.$scope = $scope;
@@ -1254,18 +1259,14 @@ var proto;
                     // Hook up to the current scope
                     this.$scope.myReader = this;
                     this.$scope.isBusy = false;
-
-                    // Define all registered pages
-                    this.extractRoutes();
-
+                    /*
                     // Hook in the required libraries
-                    this._folderView = require('folder_view');
-                    this._addrBar = require('address_bar');
                     this._path = require('path');
                     this._fs = require('fs');
-
+                    
                     // Initialize the cotroller
                     this.init(dir);
+                    */
                     // Test File Read...
                     /*
                     console.debug(' - Fetching file: ' + pkg);
@@ -1284,39 +1285,6 @@ var proto;
                 enumerable: true,
                 configurable: true
             });
-
-            ExplorerController.prototype.extractRoutes = function () {
-                var pages = this.$scope.pages = [];
-                try  {
-                    // Iterate the list of all defined routes and build a sitemap
-                    angular.forEach(this.$route.routes, function (config, route) {
-                        var isVisible = !config.redirectTo && (route != '/' && route != '');
-                        if (isVisible) {
-                            // Define the page
-                            var page = {
-                                url: route,
-                                label: route,
-                                config: config,
-                                iconCss: 'glyphicon glyphicon-file'
-                            };
-
-                            // Check if the route has a controller
-                            if (config.controller) {
-                                page.iconCss = 'glyphicon glyphicon-unchecked';
-                            }
-
-                            // Check for any params
-                            if (config.keys.length > 0) {
-                                page.iconCss = 'glyphicon glyphicon-expand';
-                            }
-
-                            pages.push(page);
-                        }
-                    });
-                } finally {
-                    this.$scope.pages = pages;
-                }
-            };
 
             ExplorerController.prototype.init = function (dir) {
                 // Check if file system is loaded
@@ -1493,19 +1461,33 @@ angular.module('prototyped.explorer', [
                 'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/explore/views/index.tpl.html',
-                    controller: 'explorerViewController'
+                    controller: 'proto.explorer.ExplorerController'
                 }
             }
         });
-    }]).controller('proto.explorer.ExplorerController', [
+    }]).directive('protoAddressBar', [
+    '$q', function ($q) {
+        return {
+            restrict: 'EA',
+            scope: {
+                target: '=protoAddressBar'
+            },
+            transclude: false,
+            templateUrl: 'modules/explore/views/addressbar.tpl.html',
+            controller: 'proto.explorer.AddressBarController',
+            controllerAs: 'addrBar'
+        };
+    }]).controller('proto.explorer.AddressBarController', [
+    '$scope',
+    '$q',
+    proto.explorer.AddressBarController
+]).controller('proto.explorer.ExplorerController', [
     '$scope',
     '$route',
     '$timeout',
     '$q',
     proto.explorer.ExplorerController
-]).controller('explorerViewController', [
-    '$rootScope', '$scope', '$state', '$window', '$location', '$timeout', function ($rootScope, $scope, $state, $window, $location, $timeout) {
-    }]);
+]);
 /// <reference path="../../../imports.d.ts" />
 angular.module('prototyped.certs', [
     'ui.router'
@@ -1747,8 +1729,7 @@ angular.module('prototyped.sqlcmd', [
         }).state('sqlcmd.connect', {
             url: '/connect/:path/:file',
             views: {
-                'menu@': { templateUrl: 'modules/features/sqlcmd.exe/views/menu.tpl.html' },
-                'left@': { templateUrl: 'modules/features/sqlcmd.exe/views/left.tpl.html' },
+                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/features/sqlcmd.exe/views/connect.tpl.html',
                     controller: 'sqlCmdViewController'
@@ -1757,8 +1738,7 @@ angular.module('prototyped.sqlcmd', [
         }).state('sqlcmd.connect.db', {
             url: '/:dbname',
             views: {
-                'menu@': { templateUrl: 'modules/features/sqlcmd.exe/views/menu.tpl.html' },
-                'left@': { templateUrl: 'modules/features/sqlcmd.exe/views/left.tpl.html' },
+                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/features/sqlcmd.exe/views/database.tpl.html',
                     controller: 'sqlCmdViewController'

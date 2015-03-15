@@ -1,19 +1,41 @@
-<div class="container">
-    <h4>
-        This is a prototyped web application <small>(or a clone of it at the very least)</small>
-    </h4>
-    <div class="alert alert-info animate-show">
-        <i class="glyphicon glyphicon-comment"></i>
-        <b>ToDo:</b>
-        <em>Replace this text with your implementation code</em>
-    </div>    
-    <h5>
-        &raquo; This web application comes pre-loaded with:
-    </h5>
-    <ul>
-        <li><b>JQuery</b> - Extended javascript funtionality</li>
-        <li><b>Bootstrap</b> - Default styles for UI components</li>
-        <li><b>AngularJS</b> - Responsive Single Page Applications</li>
-        <li><b>NodeJS</b> - <em>If Node-Webkit runtime is used</em></li>
-    </ul>
+<div id="cardViewer" class="docked float-left card-view card-view-x">
+    <style>
+        .contents {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        #cardViewer {
+            background: #E0E0E0;
+        }
+    </style>
+    <!-- slider container -->
+    <div class="slider docked">
+        <!-- prev / next controls -->
+        <a class="arrow prev" href="" ng-click="showPrev()"><i class="glyphicon glyphicon-chevron-left"></i></a>
+        <a class="arrow next" href="" ng-click="showNext()"><i class="glyphicon glyphicon-chevron-right"></i></a>
+
+        <div class="boxed">
+            <!-- enumerate all photos -->
+            <a class="card fixed-width slide"
+               ng-repeat="page in pages"
+               ng-href="{{page.url}}"
+               ng-class="{ 'active': isActive($index) }"
+               ng-swipe-right="showPrev()"
+               ng-swipe-left="showNext()">
+                <div class="card-image" ng-class="page.style">
+                    <div class="banner"></div>
+                    <h2>{{page.title}}</h2>
+                </div>
+                <p>{{page.desc}}</p>
+            </a>
+        </div>
+
+        <!-- extra navigation controls -->
+        <ul class="small-only slider-nav">
+            <li ng-repeat="page in pages" ng-class="{'active':isActive($index)}">
+                <a href="" ng-click="showPhoto($index);" title="{{page.title}}"><i class="glyphicon glyphicon-file"></i></a>
+            </li>
+        </ul>
+    </div>
 </div>

@@ -1,0 +1,33 @@
+﻿<div class="view-toolbar btn-group btn-group-sm">
+    <style>
+        #addressbar {
+            background: none;
+            padding: 0;
+            margin: 0;
+        }
+
+            #addressbar li {
+                padding: 0;
+                margin: 0;
+            }
+    </style>
+    <a href="" class="btn btn-default pull-right" ng-click="addrBar.openFolder(dir_path)" ng-disabled="!dir_parts">
+        <i class="glyphicon glyphicon-folder-open"></i>
+    </a>
+    <a href="" ng-click="addrBar.back()" class="btn btn-default pull-right" ng-disabled="!addrBar.hasHistory()">
+        <i class="glyphicon glyphicon-chevron-left"></i>
+    </a>
+    <div class="input-group input-group-sm">
+        <label class="input-group-addon">Path:</label>
+        <div class="form-control nav-address-bar">
+            <ul id="addressbar" class="breadcrumb" ng-show="dir_parts">
+                <li ng-repeat="itm in dir_parts.sequence" data-path="{{itm.path}}">
+                    <a href="" ng-click="addrBar.navigate(itm.path)">{{itm.name}}</a>
+                </li>
+            </ul>
+            <div class="text-error" style="padding-left: 8px;" ng-show="!dir_parts">
+                <i class="glyphicon glyphicon-bullhorn"></i> No access to local file system.
+            </div>
+        </div>
+    </div>
+</div>

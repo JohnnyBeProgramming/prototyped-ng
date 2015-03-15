@@ -1,6 +1,4 @@
 ﻿body {
-    
-
     .docked {
         height: 100%;
         flex-grow: 1;
@@ -18,7 +16,7 @@
         -webkit-app-region: no-drag;
         -webkit-user-select: auto;
     }
-    
+
     .inactive-gray {
         opacity: 0.50;
         filter: alpha(opacity=50);
@@ -321,6 +319,295 @@
             .cmd-output {
                 padding: 4px;
                 font-size: 10.4px;
+            }
+        }
+    }
+
+    .card-view {
+        margin: 0 auto;
+        padding: 0;
+        color: #333;
+        height: 100%;
+        overflow: auto;
+
+        &.float-left .card {
+            float: left;
+        }
+
+        .multi-column {
+            columns: 300px 3;
+            -webkit-columns: 300px 3;
+        }
+
+        a {
+            color: #4c4c4c;
+            text-decoration: none;
+        }
+
+        .boxed {
+            margin: 0 auto 36px;
+            max-width: 1056px;
+            display: inline-block;
+        }
+
+        .card {
+            width: 320px;
+            height: 200px;
+            padding: 0;
+            margin: 15px 15px 0 15px;
+            overflow: hidden;
+            background: #FFF;
+            border: 1px solid #AAA;
+            border-bottom: 3px solid #BBB;
+
+            &:hover {
+                -webkit-box-shadow: 0px 0px 10px 1px rgba(128,128,128,0.75);
+                -moz-box-shadow: 0px 0px 10px 1px rgba(128,128,128,0.75);
+                box-shadow: 0px 0px 10px 1px rgba(128,128,128,0.75);
+            }
+
+            &.active {
+            }
+
+            p {
+                margin: 0px;
+                padding: 10px;
+            }
+        }
+
+        .card-image {
+            width: 100%;
+            height: 140px;
+            padding: 0px;
+            margin: 0px;
+            position: relative;
+            overflow: hidden;
+            background-position: center;
+            background-repeat: no-repeat;
+
+            .banner {
+                height: 50px;
+                width: 50px;
+                top: 0px;
+                right: 0px;
+                background-position: top right;
+                background-repeat: no-repeat;
+                /*background-image: url('../images/new.png');*/
+                position: absolute;
+            }
+
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6 {
+                position: absolute;
+                bottom: 0px;
+                width: 100%;
+                color: white;
+                background: rgba(0,0,0,0.65);
+                margin: 0px;
+                padding: 6px;
+                border: none;
+            }
+        }
+
+        .small-only {
+            display: none !important;
+        }
+
+        .rightColumn,
+        .leftColumn {
+            display: inline-block;
+            width: 49%;
+            vertical-align: top;
+        }
+
+        .column {
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        .arrow {
+            top: 50%;
+            width: 50px;
+            bottom: 0;
+            margin: auto 0;
+            outline: medium none;
+            position: absolute;
+            font-size: 40px;
+            cursor: pointer;
+            z-index: 5;
+
+            i {
+                top: -25px;
+            }
+
+            &.prev {
+                left: 0;
+                opacity: 0.2;
+
+                &:hover {
+                    opacity: 1;
+                }
+            }
+
+            &.next {
+                right: 0;
+                opacity: 0.2;
+                text-align: right;
+
+                &:hover {
+                    opacity: 1;
+                }
+            }
+        }
+
+        .img-default {
+            background: rgba(179,190,173,1); /* Old browsers */
+            background: -moz-linear-gradient(top, rgba(252,255,244,1) 0%, rgba(223,229,215,1) 40%, rgba(179,190,173,1) 100%); /* FF3.6+ */
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,255,244,1)), color-stop(40%,rgba(223,229,215,1)), color-stop(100%,rgba(179,190,173,1))); /* Chrome,Safari4+ */
+            background: -webkit-linear-gradient(top, rgba(252,255,244,1) 0%,rgba(223,229,215,1) 40%,rgba(179,190,173,1) 100%); /* Chrome10+,Safari5.1+ */
+            background: -o-linear-gradient(top, rgba(252,255,244,1) 0%,rgba(223,229,215,1) 40%,rgba(179,190,173,1) 100%); /* Opera 11.10+ */
+            background: -ms-linear-gradient(top, rgba(252,255,244,1) 0%,rgba(223,229,215,1) 40%,rgba(179,190,173,1) 100%); /* IE10+ */
+            background: linear-gradient(to bottom, rgba(252,255,244,1) 0%,rgba(223,229,215,1) 40%,rgba(179,190,173,1) 100%); /* W3C */
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfff4', endColorstr='#b3bead',GradientType=0 ); /* IE6-9 */
+        }
+
+        .img-explore {
+            /* Image Credit: https://www.flickr.com/photos/68beats/5279251697/ */
+            background-position: top left;
+            background-image: url('https://farm6.staticflickr.com/5250/5279251697_3ab802e3ef.jpg');
+        }
+
+        .img-editor {
+            /* Image Credit: http://www.fastcolabs.com/3020994/the-one-tech-buzzword-every-journalist-should-know */
+            background-image: url('http://f.fastcompany.net/multisite_files/fastcompany/inline/2013/10/3020994-inline-d3-data-viz001.jpg');
+            background-size: 320px auto;
+        }
+
+        .img-console {
+            /* Image Credit: http://shumakovich.com/wps-cms.html */
+            background-image: url('http://shumakovich.com/uploads/useruploads/images/programming_256x256.png');
+            background-size: auto auto;
+            background-position: top;
+        }
+
+        .img-about {
+            /* Image Credit: https://www.flickr.com/photos/egouws/7807659570/ */
+            background-image: url('https://farm9.staticflickr.com/8282/7807659570_f5ba8dfc63.jpg');
+            background-size: 420px auto;
+            background-position: center;
+        }
+
+        .img-sandbox {
+            /* Image Credit:  */
+            background-image: url('http://8020.photos.jpgmag.com/1727832_147374_5c80086d33_p.jpg');
+            background-size: 360px auto;
+            background-position: top center;
+        }
+
+        .slider-nav {
+            bottom: 0;
+            display: block;
+            height: 48px;
+            left: 0;
+            margin: 0 auto;
+            padding: 1em 0 0.8em;
+            position: absolute;
+            right: 0;
+            text-align: center;
+            width: 100%;
+            z-index: 5;
+
+            li {
+                margin: 3px;
+                padding: 1px 3px;
+                cursor: pointer;
+                position: relative;
+                display: inline-block;
+                border: 1px dotted #E0E0E0;
+                background-color: rgba(255,255,255,0.25);
+
+                a {
+                    color: rgba(128,128,128,0.75);
+                }
+
+                &.active {
+                    border: solid 1px #BBB;
+                    background-color: rgba(128,128,128,0.25);
+
+                    a {
+                        color: #000;
+                    }
+                }
+            }
+        }
+
+        .slider {
+            -webkit-perspective: 1000px;
+            -moz-perspective: 1000px;
+            -ms-perspective: 1000px;
+            -o-perspective: 1000px;
+            perspective: 1000px;
+            -webkit-transform-style: preserve-3d;
+            -moz-transform-style: preserve-3d;
+            -ms-transform-style: preserve-3d;
+            -o-transform-style: preserve-3d;
+            transform-style: preserve-3d;
+        }
+
+        .slide {
+            -webkit-transition: 1s linear all;
+            -moz-transition: 1s linear all;
+            -o-transition: 1s linear all;
+            transition: 1s linear all;
+            opacity: 1;
+
+            &.ng-hide-add {
+                opacity: 1;
+
+                &.ng-hide-add-active {
+                    opacity: 0;
+                }
+            }
+
+            &.ng-hide-remove {
+                opacity: 0;
+
+                &.ng-hide-remove-active {
+                    opacity: 1;
+                }
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 741px) and (max-width: 1024px) {
+    .boxed {
+        max-width: 740px !important;
+    }
+}
+
+@media screen and (max-width: 740px) {
+    .boxed {
+        max-width: 350px !important;
+    }
+
+    .small-only {
+        display: block !important;
+    }
+
+    .card-view {
+        height: 100%;
+        overflow: auto;
+
+        .card {
+            display: none;
+
+            &.active {
+                display: block;
             }
         }
     }
