@@ -79,6 +79,8 @@ module.exports = function (grunt) {
                 {
                     key: 'build-prototyped-ng',
                     val: [
+                        'less:prototyped_ng',
+                        'cssmin:prototyped_ng',
                         'html2js:prototyped_ng',
                         'ngtemplates:prototyped_ng',
                         'ngtemplates:prototyped_ng_styles',
@@ -88,6 +90,7 @@ module.exports = function (grunt) {
                 {
                     key: 'build-prototyped-ng-samples',
                     val: [
+                        //'less:prototyped_ng_samples',
                         'html2js:prototyped_ng_samples',
                         //'ngtemplates:prototyped_ng_samples',
                         'concat:prototyped_ng_samples',
@@ -178,7 +181,18 @@ module.exports = function (grunt) {
                 files: {
                     "<%= cfg.web %>/<%= cfg.css %>/app.css": "<%= cfg.web %>/assets/less/app.less"
                 }
-            }
+            },
+            prototyped_ng: {
+                files: {
+                    "<%= cfg.base %>/prototyped.ng/assets/css/app.css": "<%= cfg.base %>/prototyped.ng/assets/less/app.less",
+                    "<%= cfg.base %>/prototyped.ng/assets/css/images.css": "<%= cfg.base %>/prototyped.ng/assets/less/images.less",
+                    "<%= cfg.base %>/prototyped.ng/assets/css/prototyped.css": "<%= cfg.base %>/prototyped.ng/assets/less/prototyped.less",
+                },
+            },
+            prototyped_ng_samples: {
+                files: {
+                },
+            },
         },
         // MINIFY CSS
         cssmin: {
@@ -192,7 +206,18 @@ module.exports = function (grunt) {
                 dest: '<%= cfg.web %>/<%= cfg.css %>/',
                 extDot: 'last',
                 ext: '.min.css'
-            }
+            },
+            prototyped_ng: {
+                expand: true,
+                cwd: '<%= cfg.base %>/prototyped.ng/<%= cfg.css %>/',
+                src: [
+                    '**/*.css',
+                    '!**/*.min.css'
+                ],
+                dest: '<%= cfg.base %>/prototyped.ng/<%= cfg.css %>/',
+                extDot: 'last',
+                ext: '.min.css'
+            },
         },
         // MINIFY JS FILE
         uglify: {

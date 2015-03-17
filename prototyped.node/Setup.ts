@@ -15,7 +15,8 @@ try {
         console.log(" - Setting up globals...");
 
         function npmInstallGlobal(key, ver) {
-            var cmd = 'call npm update -g ' + key;
+            var pre = (process.platform == 'win32') ? 'call' : 'sudo';
+            var cmd = pre + ' npm update -g ' + key;
             if (ver) cmd += '@' + ver;
             /* ToDo: Create process on a safe thread... 
             child_process.execFile('@npm', ['-v'], function (err, result) {
