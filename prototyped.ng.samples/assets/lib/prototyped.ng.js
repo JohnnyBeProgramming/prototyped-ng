@@ -3274,7 +3274,7 @@ angular.module('prototyped.ng', [
   $templateCache.put('views/about/left.tpl.html',
     '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.info><i class="fa fa-info-circle"></i>&nbsp; About this app</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.online><i class="fa fa-globe"></i>&nbsp; Visit us online</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.conection><i class="fa fa-plug"></i>&nbsp; Check Connectivity</a></li></ul>');
   $templateCache.put('views/default.tpl.html',
-    '<div id=cardViewer class="docked float-left card-view card-view-x"><style>.contents {\n' +
+    '<div id=cardViewer class="docked float-left card-view card-view-x"><style resx:import=assets/css/prototyped.min.css></style><style>.contents {\n' +
     '            margin: 0 !important;\n' +
     '            padding: 0 !important;\n' +
     '        }\n' +

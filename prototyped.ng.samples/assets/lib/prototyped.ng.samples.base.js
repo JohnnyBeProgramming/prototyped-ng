@@ -70,10 +70,39 @@ angular.module('myApp.samples.compression', []).config([
             lzw: lzwCompressor,
             scsu: {
                 encode: function (input) {
-                    return new SCSU().compress(input);
+                    try  {
+                        var scsu = new SCSU();
+                        if (scsu._isCompressible()) {
+                            return scsu.compress(input);
+                        } else
+                            throw new Error('Input string cannot be compressed by SCSU!');
+                    } catch (ex) {
+                        alert(ex.message);
+                    }
                 },
                 decode: function (input) {
-                    return new SCSU().decompress(input);
+                    try  {
+                        var scsu = new SCSU();
+                        return scsu.decompress(input);
+                    } catch (ex) {
+                        alert(ex.message);
+                    }
+                }
+            },
+            html: {
+                encode: function (input) {
+                    return encodeURIComponent(input);
+                },
+                decode: function (input) {
+                    return decodeURIComponent(input);
+                }
+            },
+            base64: {
+                encode: function (input) {
+                    return btoa(input);
+                },
+                decode: function (input) {
+                    return atob(input);
                 }
             }
         };

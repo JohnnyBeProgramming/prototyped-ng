@@ -41,10 +41,13 @@
                 </div>
                 <div class="col-md-6">
                     <span class="pull-right">
+                        Use Compression: 
                         <select ng-model="compression.target">
-                            <option value=""> - Use Default Encoder -</option>
-                            <option value="lzw">Use LZW Compression</option>
-                            <option value="scsu">Use SCSU Compression</option>
+                            <option value="">default</option>
+                            <option value="lzw">lzw</option>
+                            <option value="scsu">scsu</option>
+                            <option value="html">html</option>
+                            <option value="base64">base64</option>
                         </select>
                     </span>
                     <h5>
