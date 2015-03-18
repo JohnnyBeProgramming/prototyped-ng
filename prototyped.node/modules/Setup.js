@@ -36,7 +36,9 @@ var SetupManager = {
     },
     installGlobal: function (key, ver) {
         var passed = true;
-        var cmd = 'call npm update -g ' + key;
+        var isWin = /^win/.test(process.platform);
+        var pre = isWin ? 'call' : 'sudo';
+        var cmd = pre + ' npm update -g ' + key;
         if (ver)
             cmd += '@' + ver;
         console.log('   + ' + key + '@' + ver + '');
