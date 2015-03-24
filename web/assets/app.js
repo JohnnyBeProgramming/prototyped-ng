@@ -29,7 +29,7 @@ angular.module('myApp', [
         },
         items: [
             {
-                shown: true,
+                shown: typeof require !== 'undefined',
                 label: 'Explore',
                 icon: 'fa fa-cubes',
                 value: 'proto.cmd',

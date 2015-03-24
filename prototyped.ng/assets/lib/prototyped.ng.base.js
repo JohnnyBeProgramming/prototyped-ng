@@ -970,7 +970,7 @@ var proto;
                                     if (err) {
                                         throw new Error(err);
                                     } else {
-                                        _this.FileContents = data;
+                                        _this.setText(data);
                                         _this.FileLocation = filePath;
                                         _this.LastChanged = null;
                                         _this.LastOnSaved = null;
@@ -1003,24 +1003,9 @@ var proto;
                     this.LastOnSaved = null;
 
                     // Set some intial text
-                    this.FileContents = 'Enter some text';
+                    this.setText('Enter some text');
                     this.LastChanged = Date.now();
 
-                    if (!this._textArea) {
-                        var myTextArea = $('#FileContents');
-                        if (myTextArea.length > 0) {
-                            this._textArea = CodeMirror.fromTextArea(myTextArea[0], {
-                                mode: "javascript",
-                                autoClearEmptyLines: true,
-                                lineNumbers: true,
-                                indentUnit: 4
-                            });
-                        }
-                    }
-                    this._textArea.setValue(this.FileContents);
-
-                    //var totalLines = this._textArea.lineCount();
-                    //this._textArea.autoFormatRange({ line: 0, ch: 0 }, { line: totalLines });
                     // Do post-new operations
                     this.$timeout(function () {
                         // Select file contents
@@ -1071,6 +1056,31 @@ var proto;
                     } else {
                         console.warn(' - [ Editor ] Warning: Shell not available.');
                     }
+                };
+
+                EditorController.prototype.setText = function (value) {
+                    this.FileContents = value;
+
+                    if (!this._textArea) {
+                        var myTextArea = $('#FileContents');
+                        if (myTextArea.length > 0) {
+                            this._textArea = CodeMirror.fromTextArea(myTextArea[0], {
+                                //mode: "javascript",
+                                autoClearEmptyLines: true,
+                                lineNumbers: true,
+                                indentUnit: 4
+                            });
+                        }
+                        this._textArea.setValue(value);
+                    } else {
+                        this._textArea.setValue(value);
+                    }
+                    /*
+                    var totalLines = this._textArea.lineCount();
+                    if (totalLines) {
+                    this._textArea.autoFormatRange({ line: 0, ch: 0 }, { line: totalLines });
+                    }
+                    */
                 };
 
                 EditorController.prototype.test = function () {
