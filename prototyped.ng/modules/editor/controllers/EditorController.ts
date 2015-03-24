@@ -19,7 +19,7 @@ module proto.ng.editor {
         private _path: any;
         private _gui: any;
         private _buffer: string;
-        private _textArea: CodeMirror;
+        private _textArea: any;
 
         constructor(private $scope: any, private $timeout: any) {
             this.$scope.myWriter = this;
@@ -54,7 +54,7 @@ module proto.ng.editor {
                                 // Could not read file contents
                                 throw new Error(err);
                             } else {
-                                this.FileContents = data;
+                                this.setText(data);
                                 this.FileLocation = filePath;
                                 this.LastChanged = null;
                                 this.LastOnSaved = null;
@@ -86,23 +86,8 @@ module proto.ng.editor {
             this.LastOnSaved = null;
 
             // Set some intial text
-            this.FileContents = 'Enter some text';
+            this.setText('Enter some text');
             this.LastChanged = Date.now();
-
-            if (!this._textArea) {
-                var myTextArea = $('#FileContents');
-                if (myTextArea.length > 0) {
-                    this._textArea = CodeMirror.fromTextArea(myTextArea[0], {
-                        mode: "javascript",
-                        autoClearEmptyLines: true,
-                        lineNumbers: true,
-                        indentUnit: 4,
-                    });
-                }
-            }
-            this._textArea.setValue(this.FileContents);
-            //var totalLines = this._textArea.lineCount();
-            //this._textArea.autoFormatRange({ line: 0, ch: 0 }, { line: totalLines });
 
             // Do post-new operations
             this.$timeout(() => {
@@ -153,6 +138,31 @@ module proto.ng.editor {
             }
         }
 
+        setText(value: string) {
+            this.FileContents = value;
+
+            if (!this._textArea) {
+                var myTextArea = $('#FileContents');
+                if (myTextArea.length > 0) {
+                    this._textArea = CodeMirror.fromTextArea(myTextArea[0], {
+                        //mode: "javascript",
+                        autoClearEmptyLines: true,
+                        lineNumbers: true,
+                        indentUnit: 4,
+                    });
+                }
+                this._textArea.setValue(value);
+            } else {
+                this._textArea.setValue(value);
+            }
+            /*
+            var totalLines = this._textArea.lineCount();
+            if (totalLines) {
+                this._textArea.autoFormatRange({ line: 0, ch: 0 }, { line: totalLines });
+            }
+            */
+        }
+
         test() {
             throw new Error('Lala');
             try {
@@ -181,7 +191,7 @@ module proto.ng.editor {
             }
         }
 
-        checkUnsaved(msg?:string): boolean {
+        checkUnsaved(msg?: string): boolean {
             var msgCheck = msg || 'There are unsaved changes.\r\nAre you sure you want to continue?';
             var hasCheck = this.FileContents != null && this.HasChanges;
             return (hasCheck && confirm(msgCheck) == false);

@@ -1,474 +1,3 @@
-/// <reference path="../../imports.d.ts" />
-angular.module('prototyped.about', [
-    'prototyped.ng.views',
-    'prototyped.ng.styles',
-    'ui.router'
-]).config([
-    '$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
-        // Define redirects
-        $urlRouterProvider.when('/about', '/about/info');
-
-        // Define the UI states
-        $stateProvider.state('about', {
-            url: '/about',
-            abstract: true
-        }).state('about.info', {
-            url: '/info',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/about/info.tpl.html',
-                    controller: 'AboutInfoController'
-                }
-            }
-        }).state('about.online', {
-            url: '^/contact',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': { templateUrl: 'views/about/contact.tpl.html' }
-            }
-        }).state('about.conection', {
-            url: '/conection',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/about/connections.tpl.html',
-                    controller: 'AboutConnectionController'
-                }
-            }
-        });
-    }]).controller('AboutInfoController', [
-    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
-        function css(a) {
-            var sheets = document.styleSheets, o = [];
-            for (var i in sheets) {
-                var rules = sheets[i].rules || sheets[i].cssRules;
-                for (var r in rules) {
-                    if (a.is(rules[r].selectorText)) {
-                        o.push(rules[r].selectorText);
-                    }
-                }
-            }
-            return o;
-        }
-
-        function selectorExists(selector) {
-            return false;
-            //var ret = css($(selector));
-            //return ret;
-        }
-
-        function getVersionInfo(ident) {
-            try  {
-                if (typeof process !== 'undefined' && process.versions) {
-                    return process.versions[ident];
-                }
-            } catch (ex) {
-            }
-            return null;
-        }
-
-        // Define a function to detect the capabilities
-        $scope.detectBrowserInfo = function () {
-            var info = {
-                about: null,
-                versions: {
-                    ie: null,
-                    html: null,
-                    jqry: null,
-                    css: null,
-                    js: null,
-                    ng: null,
-                    nw: null,
-                    njs: null,
-                    v8: null,
-                    openssl: null,
-                    chromium: null
-                },
-                detects: {
-                    jqry: false,
-                    less: false,
-                    bootstrap: false,
-                    ngAnimate: false,
-                    ngUiRouter: false,
-                    ngUiUtils: false,
-                    ngUiBootstrap: false
-                },
-                css: {
-                    boostrap2: null,
-                    boostrap3: null
-                },
-                codeName: navigator.appCodeName,
-                userAgent: navigator.userAgent
-            };
-
-            try  {
-                // Get IE version (if defined)
-                if (!!window['ActiveXObject']) {
-                    info.versions.ie = 10;
-                }
-
-                // Sanitize codeName and userAgentt
-                var cn = info.codeName;
-                var ua = info.userAgent;
-                if (ua) {
-                    // Remove start of string in UAgent upto CName or end of string if not found.
-                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
-
-                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
-                    ua = ua.substring(cn.length);
-
-                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
-                        ua = ua.substring(1);
-                    }
-
-                    // Remove the end of the string from first characrer that is not a number or point etc.
-                    var pointer = 0;
-                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
-                        pointer = pointer + 1;
-                    }
-                    ua = ua.substring(0, pointer);
-
-                    if (!window.isNaN(ua)) {
-                        if (parseInt(ua) > 0) {
-                            info.versions.html = ua;
-                        }
-                        if (parseFloat(ua) >= 5) {
-                            info.versions.css = '3.x';
-                            info.versions.js = '5.x';
-                        }
-                    }
-                }
-                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
-                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
-                info.versions.nw = getVersionInfo('node-webkit');
-                info.versions.njs = getVersionInfo('node');
-                info.versions.v8 = getVersionInfo('v8');
-                info.versions.openssl = getVersionInfo('openssl');
-                info.versions.chromium = getVersionInfo('chromium');
-
-                // Check for CSS extensions
-                info.css.boostrap2 = selectorExists('hero-unit');
-                info.css.boostrap3 = selectorExists('jumbotron');
-
-                // Detect selected features and availability
-                info.about = {
-                    protocol: $location.$$protocol,
-                    browser: {},
-                    server: {
-                        active: undefined,
-                        url: $location.$$absUrl
-                    },
-                    os: {},
-                    hdd: { type: null }
-                };
-
-                // Detect the operating system
-                var osName = 'Unknown OS';
-                var appVer = navigator.appVersion;
-                if (appVer) {
-                    if (appVer.indexOf("Win") != -1)
-                        osName = 'Windows';
-                    if (appVer.indexOf("Mac") != -1)
-                        osName = 'MacOS';
-                    if (appVer.indexOf("X11") != -1)
-                        osName = 'UNIX';
-                    if (appVer.indexOf("Linux") != -1)
-                        osName = 'Linux';
-                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
-                }
-                info.about.os.name = osName;
-
-                // Check for jQuery
-                info.detects.jqry = typeof jQuery !== 'undefined';
-
-                // Check for general header and body scripts
-                $("script").each(function () {
-                    var src = $(this).attr("src");
-                    if (src) {
-                        // Fast check on known script names
-                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
-                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
-                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
-                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
-                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
-                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
-                    }
-                });
-
-                // Get the client browser details (build a url string)
-                var detectUrl = (function () {
-                    var p = [], w = window, d = document, e = 0, f = 0;
-                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
-                    e |= w.ActiveXObject ? 1 : 0;
-                    e |= w.opera ? 2 : 0;
-                    e |= w.chrome ? 4 : 0;
-                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
-                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
-                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
-                    p.push('e=' + e);
-                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
-                    f |= 'WebSocket' in w ? 2 : 0;
-                    f |= w.Worker ? 4 : 0;
-                    f |= w.applicationCache ? 8 : 0;
-                    f |= w.history && history.pushState ? 16 : 0;
-                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
-                    f |= 'FileReader' in w ? 64 : 0;
-                    p.push('f=' + f);
-                    p.push('r=' + Math.random().toString(36).substring(7));
-                    p.push('w=' + screen.width);
-                    p.push('h=' + screen.height);
-                    var s = d.createElement('script');
-                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
-                })();
-
-                // Send a loaded package to a server to detect more features
-                $.getScript(detectUrl).done(function (script, textStatus) {
-                    $rootScope.$applyAsync(function () {
-                        // Browser info and details loaded
-                        var browserInfo = new window.WhichBrowser();
-                        angular.extend(info.about, browserInfo);
-                    });
-                }).fail(function (jqxhr, settings, exception) {
-                    console.error(exception);
-                });
-
-                // Set browser name to IE (if defined)
-                if (navigator.appName == 'Microsoft Internet Explorer') {
-                    info.about.browser.name = 'Internet Explorer';
-                }
-
-                // Check if the browser supports web db's
-                var webDB = info.about.webdb = {
-                    db: null,
-                    version: '1',
-                    active: null,
-                    size: 5 * 1024 * 1024,
-                    test: function (name, desc, dbVer, dbSize) {
-                        try  {
-                            // Try and open a web db
-                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
-                            webDB.onSuccess(null, null);
-                        } catch (ex) {
-                            // Nope, something went wrong
-                            webDB.onError(null, null);
-                        }
-                    },
-                    onSuccess: function (tx, r) {
-                        if (tx) {
-                            if (r) {
-                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
-                            }
-                            if (tx) {
-                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
-                            }
-                        }
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = true;
-                            webDB.used = JSON.stringify(webDB.db).length;
-                        });
-                    },
-                    onError: function (tx, e) {
-                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = false;
-                        });
-                    }
-                };
-                info.about.webdb.test();
-            } catch (ex) {
-                console.error(ex);
-            }
-
-            // Return the preliminary info
-            return info;
-        };
-
-        // Define the state
-        $scope.info = $scope.detectBrowserInfo();
-    }]).controller('AboutConnectionController', [
-    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
-        $scope.result = null;
-        $scope.status = null;
-        $scope.state = {
-            editMode: false,
-            location: $location.$$absUrl,
-            protocol: $location.$$protocol,
-            requireHttps: ($location.$$protocol == 'https')
-        };
-        $scope.detect = function () {
-            var target = $scope.state.location;
-            var started = Date.now();
-            $scope.result = null;
-            $scope.latency = null;
-            $scope.status = { code: 0, desc: '', style: 'label-default' };
-            $.ajax({
-                url: target,
-                crossDomain: true,
-                /*
-                username: 'user',
-                password: 'pass',
-                xhrFields: {
-                withCredentials: true
-                }
-                */
-                beforeSend: function (xhr) {
-                    $timeout(function () {
-                        //$scope.status.code = xhr.status;
-                        $scope.status.desc = 'sending';
-                        $scope.status.style = 'label-info';
-                    });
-                },
-                success: function (data, textStatus, xhr) {
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-success';
-                        $scope.result = {
-                            valid: true,
-                            info: data,
-                            sent: started,
-                            received: Date.now()
-                        };
-                    });
-                },
-                error: function (xhr, textStatus, error) {
-                    xhr.ex = error;
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-danger';
-                        $scope.result = {
-                            valid: false,
-                            info: xhr,
-                            sent: started,
-                            error: xhr.statusText,
-                            received: Date.now()
-                        };
-                    });
-                },
-                complete: function (xhr, textStatus) {
-                    console.debug(' - Status Code: ' + xhr.status);
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                    });
-                }
-            }).always(function (xhr) {
-                $timeout(function () {
-                    $scope.latency = $scope.getLatencyInfo();
-                });
-            });
-        };
-        $scope.setProtocol = function (protocol) {
-            var val = $scope.state.location;
-            var pos = val.indexOf('://');
-            if (pos > 0) {
-                val = protocol + val.substring(pos);
-            }
-            $scope.state.protocol = protocol;
-            $scope.state.location = val;
-            $scope.detect();
-        };
-        $scope.getProtocolStyle = function (protocol, activeStyle) {
-            var cssRes = '';
-            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
-            if (isValid) {
-                if (!$scope.result) {
-                    cssRes += 'btn-primary';
-                } else if ($scope.result.valid && activeStyle) {
-                    cssRes += activeStyle;
-                } else if ($scope.result) {
-                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
-                }
-            }
-            return cssRes;
-        };
-        $scope.getStatusIcon = function (activeStyle) {
-            var cssRes = '';
-            if (!$scope.result) {
-                cssRes += 'glyphicon-refresh';
-            } else if (activeStyle && $scope.result.valid) {
-                cssRes += activeStyle;
-            } else {
-                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
-            }
-            return cssRes;
-        };
-        $scope.submitForm = function () {
-            $scope.state.editMode = false;
-            if ($scope.state.requireHttps) {
-                $scope.setProtocol('https');
-            } else {
-                $scope.detect();
-            }
-        };
-        $scope.getStatusColor = function () {
-            var cssRes = $scope.getStatusIcon() + ' ';
-            if (!$scope.result) {
-                cssRes += 'busy';
-            } else if ($scope.result.valid) {
-                cssRes += 'success';
-            } else {
-                cssRes += 'error';
-            }
-            return cssRes;
-        };
-        $scope.getLatencyInfo = function () {
-            var cssNone = 'text-muted';
-            var cssHigh = 'text-success';
-            var cssMedium = 'text-warning';
-            var cssLow = 'text-danger';
-            var info = {
-                desc: '',
-                style: cssNone
-            };
-
-            if (!$scope.result) {
-                return info;
-            }
-
-            if (!$scope.result.valid) {
-                info.style = 'text-muted';
-                info.desc = 'Connection Failed';
-                return info;
-            }
-
-            var totalMs = $scope.result.received - $scope.result.sent;
-            if (totalMs > 2 * 60 * 1000) {
-                info.style = cssNone;
-                info.desc = 'Timed out';
-            } else if (totalMs > 1 * 60 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Impossibly slow';
-            } else if (totalMs > 30 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Very slow';
-            } else if (totalMs > 1 * 1000) {
-                info.style = cssMedium;
-                info.desc = 'Relatively slow';
-            } else if (totalMs > 500) {
-                info.style = cssMedium;
-                info.desc = 'Moderately slow';
-            } else if (totalMs > 250) {
-                info.style = cssMedium;
-                info.desc = 'Barely Responsive';
-            } else if (totalMs > 150) {
-                info.style = cssHigh;
-                info.desc = 'Average Response Time';
-            } else if (totalMs > 50) {
-                info.style = cssHigh;
-                info.desc = 'Responsive Enough';
-            } else if (totalMs > 15) {
-                info.style = cssHigh;
-                info.desc = 'Very Responsive';
-            } else {
-                info.style = cssHigh;
-                info.desc = 'Optimal';
-            }
-            return info;
-        };
-    }]);
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
@@ -733,81 +262,6 @@ angular.module('prototyped.console', [
     '$scope',
     proto.ng.commands.ConsoleController
 ]);
-/// <reference path="../imports.d.ts" />
-angular.module('prototyped.default', [
-    'ui.router'
-]).value('appPages', {
-    pages: [
-        {
-            url: '/proto',
-            style: 'img-explore',
-            title: 'Explore Features & Options',
-            desc: 'You can explore locally installed features and find your way around the site by clicking on this card...'
-        },
-        {
-            url: '/samples',
-            style: 'img-sandbox',
-            title: 'Prototyped Sample Code',
-            desc: 'A selection of samples to test, play and learn about web technologies.'
-        },
-        {
-            url: '/sync',
-            style: 'img-editor',
-            title: 'Import & Export Data',
-            desc: 'Load from external sources, modify and/or export to an external resource.'
-        },
-        {
-            url: '/about',
-            style: 'img-about',
-            title: 'About this software',
-            desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
-        }
-    ]
-}).config([
-    '$stateProvider', function ($stateProvider) {
-        // Now set up the states
-        $stateProvider.state('default', {
-            url: '/',
-            views: {
-                'main@': {
-                    templateUrl: 'views/default.tpl.html',
-                    controller: 'CardViewCtrl',
-                    controllerAs: 'sliderCtrl'
-                }
-            }
-        });
-    }]).controller('CardViewCtrl', [
-    '$scope', 'appPages', function ($scope, appPages) {
-        // Make sure 'mySiteMap' exists
-        $scope.pages = appPages.pages || [];
-
-        // initial image index
-        $scope._Index = 0;
-
-        $scope.count = function () {
-            return $scope.pages.length;
-        };
-
-        // if a current image is the same as requested image
-        $scope.isActive = function (index) {
-            return $scope._Index === index;
-        };
-
-        // show prev image
-        $scope.showPrev = function () {
-            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
-        };
-
-        // show next image
-        $scope.showNext = function () {
-            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
-        };
-
-        // show a certain image
-        $scope.showPhoto = function (index) {
-            $scope._Index = index;
-        };
-    }]);
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.edge', [
     'ui.router'
@@ -970,7 +424,7 @@ var proto;
                                     if (err) {
                                         throw new Error(err);
                                     } else {
-                                        _this.FileContents = data;
+                                        _this.setText(data);
                                         _this.FileLocation = filePath;
                                         _this.LastChanged = null;
                                         _this.LastOnSaved = null;
@@ -1003,24 +457,9 @@ var proto;
                     this.LastOnSaved = null;
 
                     // Set some intial text
-                    this.FileContents = 'Enter some text';
+                    this.setText('Enter some text');
                     this.LastChanged = Date.now();
 
-                    if (!this._textArea) {
-                        var myTextArea = $('#FileContents');
-                        if (myTextArea.length > 0) {
-                            this._textArea = CodeMirror.fromTextArea(myTextArea[0], {
-                                mode: "javascript",
-                                autoClearEmptyLines: true,
-                                lineNumbers: true,
-                                indentUnit: 4
-                            });
-                        }
-                    }
-                    this._textArea.setValue(this.FileContents);
-
-                    //var totalLines = this._textArea.lineCount();
-                    //this._textArea.autoFormatRange({ line: 0, ch: 0 }, { line: totalLines });
                     // Do post-new operations
                     this.$timeout(function () {
                         // Select file contents
@@ -1071,6 +510,31 @@ var proto;
                     } else {
                         console.warn(' - [ Editor ] Warning: Shell not available.');
                     }
+                };
+
+                EditorController.prototype.setText = function (value) {
+                    this.FileContents = value;
+
+                    if (!this._textArea) {
+                        var myTextArea = $('#FileContents');
+                        if (myTextArea.length > 0) {
+                            this._textArea = CodeMirror.fromTextArea(myTextArea[0], {
+                                //mode: "javascript",
+                                autoClearEmptyLines: true,
+                                lineNumbers: true,
+                                indentUnit: 4
+                            });
+                        }
+                        this._textArea.setValue(value);
+                    } else {
+                        this._textArea.setValue(value);
+                    }
+                    /*
+                    var totalLines = this._textArea.lineCount();
+                    if (totalLines) {
+                    this._textArea.autoFormatRange({ line: 0, ch: 0 }, { line: totalLines });
+                    }
+                    */
                 };
 
                 EditorController.prototype.test = function () {
@@ -2557,6 +2021,552 @@ angular.module('prototyped.features', [
         angular.extend($scope.cmd, updates);
     }]);
 /// <reference path="../imports.d.ts" />
+angular.module('prototyped.default', [
+    'ui.router'
+]).value('appPages', {
+    pages: [
+        {
+            url: '/proto',
+            style: 'img-explore',
+            title: 'Explore Features & Options',
+            desc: 'You can explore locally installed features and find your way around the site by clicking on this card...'
+        },
+        {
+            url: '/samples',
+            style: 'img-sandbox',
+            title: 'Prototyped Sample Code',
+            desc: 'A selection of samples to test, play and learn about web technologies.'
+        },
+        {
+            url: '/sync',
+            style: 'img-editor',
+            title: 'Import & Export Data',
+            desc: 'Load from external sources, modify and/or export to an external resource.'
+        },
+        {
+            url: '/about',
+            style: 'img-about',
+            title: 'About this software',
+            desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
+        }
+    ]
+}).config([
+    '$stateProvider', function ($stateProvider) {
+        // Now set up the states
+        $stateProvider.state('default', {
+            url: '/',
+            views: {
+                'main@': {
+                    templateUrl: 'views/default.tpl.html',
+                    controller: 'CardViewCtrl',
+                    controllerAs: 'sliderCtrl'
+                }
+            }
+        });
+    }]).controller('CardViewCtrl', [
+    '$scope', 'appPages', function ($scope, appPages) {
+        // Make sure 'mySiteMap' exists
+        $scope.pages = appPages.pages || [];
+
+        // initial image index
+        $scope._Index = 0;
+
+        $scope.count = function () {
+            return $scope.pages.length;
+        };
+
+        // if a current image is the same as requested image
+        $scope.isActive = function (index) {
+            return $scope._Index === index;
+        };
+
+        // show prev image
+        $scope.showPrev = function () {
+            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
+        };
+
+        // show next image
+        $scope.showNext = function () {
+            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
+        };
+
+        // show a certain image
+        $scope.showPhoto = function (index) {
+            $scope._Index = index;
+        };
+    }]);
+/// <reference path="../../imports.d.ts" />
+angular.module('prototyped.about', [
+    'prototyped.ng.views',
+    'prototyped.ng.styles',
+    'ui.router'
+]).config([
+    '$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
+        // Define redirects
+        $urlRouterProvider.when('/about', '/about/info');
+
+        // Define the UI states
+        $stateProvider.state('about', {
+            url: '/about',
+            abstract: true
+        }).state('about.info', {
+            url: '/info',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/info.tpl.html',
+                    controller: 'AboutInfoController'
+                }
+            }
+        }).state('about.online', {
+            url: '^/contact',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': { templateUrl: 'views/about/contact.tpl.html' }
+            }
+        }).state('about.conection', {
+            url: '/conection',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/connections.tpl.html',
+                    controller: 'AboutConnectionController'
+                }
+            }
+        });
+    }]).controller('AboutInfoController', [
+    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
+        function css(a) {
+            var sheets = document.styleSheets, o = [];
+            for (var i in sheets) {
+                var rules = sheets[i].rules || sheets[i].cssRules;
+                for (var r in rules) {
+                    if (a.is(rules[r].selectorText)) {
+                        o.push(rules[r].selectorText);
+                    }
+                }
+            }
+            return o;
+        }
+
+        function selectorExists(selector) {
+            return false;
+            //var ret = css($(selector));
+            //return ret;
+        }
+
+        function getVersionInfo(ident) {
+            try  {
+                if (typeof process !== 'undefined' && process.versions) {
+                    return process.versions[ident];
+                }
+            } catch (ex) {
+            }
+            return null;
+        }
+
+        // Define a function to detect the capabilities
+        $scope.detectBrowserInfo = function () {
+            var info = {
+                about: null,
+                versions: {
+                    ie: null,
+                    html: null,
+                    jqry: null,
+                    css: null,
+                    js: null,
+                    ng: null,
+                    nw: null,
+                    njs: null,
+                    v8: null,
+                    openssl: null,
+                    chromium: null
+                },
+                detects: {
+                    jqry: false,
+                    less: false,
+                    bootstrap: false,
+                    ngAnimate: false,
+                    ngUiRouter: false,
+                    ngUiUtils: false,
+                    ngUiBootstrap: false
+                },
+                css: {
+                    boostrap2: null,
+                    boostrap3: null
+                },
+                codeName: navigator.appCodeName,
+                userAgent: navigator.userAgent
+            };
+
+            try  {
+                // Get IE version (if defined)
+                if (!!window['ActiveXObject']) {
+                    info.versions.ie = 10;
+                }
+
+                // Sanitize codeName and userAgentt
+                var cn = info.codeName;
+                var ua = info.userAgent;
+                if (ua) {
+                    // Remove start of string in UAgent upto CName or end of string if not found.
+                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
+
+                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
+                    ua = ua.substring(cn.length);
+
+                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
+                        ua = ua.substring(1);
+                    }
+
+                    // Remove the end of the string from first characrer that is not a number or point etc.
+                    var pointer = 0;
+                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
+                        pointer = pointer + 1;
+                    }
+                    ua = ua.substring(0, pointer);
+
+                    if (!window.isNaN(ua)) {
+                        if (parseInt(ua) > 0) {
+                            info.versions.html = ua;
+                        }
+                        if (parseFloat(ua) >= 5) {
+                            info.versions.css = '3.x';
+                            info.versions.js = '5.x';
+                        }
+                    }
+                }
+                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
+                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
+                info.versions.nw = getVersionInfo('node-webkit');
+                info.versions.njs = getVersionInfo('node');
+                info.versions.v8 = getVersionInfo('v8');
+                info.versions.openssl = getVersionInfo('openssl');
+                info.versions.chromium = getVersionInfo('chromium');
+
+                // Check for CSS extensions
+                info.css.boostrap2 = selectorExists('hero-unit');
+                info.css.boostrap3 = selectorExists('jumbotron');
+
+                // Detect selected features and availability
+                info.about = {
+                    protocol: $location.$$protocol,
+                    browser: {},
+                    server: {
+                        active: undefined,
+                        url: $location.$$absUrl
+                    },
+                    os: {},
+                    hdd: { type: null }
+                };
+
+                // Detect the operating system
+                var osName = 'Unknown OS';
+                var appVer = navigator.appVersion;
+                if (appVer) {
+                    if (appVer.indexOf("Win") != -1)
+                        osName = 'Windows';
+                    if (appVer.indexOf("Mac") != -1)
+                        osName = 'MacOS';
+                    if (appVer.indexOf("X11") != -1)
+                        osName = 'UNIX';
+                    if (appVer.indexOf("Linux") != -1)
+                        osName = 'Linux';
+                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
+                }
+                info.about.os.name = osName;
+
+                // Check for jQuery
+                info.detects.jqry = typeof jQuery !== 'undefined';
+
+                // Check for general header and body scripts
+                $("script").each(function () {
+                    var src = $(this).attr("src");
+                    if (src) {
+                        // Fast check on known script names
+                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
+                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
+                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
+                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
+                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
+                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
+                    }
+                });
+
+                // Get the client browser details (build a url string)
+                var detectUrl = (function () {
+                    var p = [], w = window, d = document, e = 0, f = 0;
+                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
+                    e |= w.ActiveXObject ? 1 : 0;
+                    e |= w.opera ? 2 : 0;
+                    e |= w.chrome ? 4 : 0;
+                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
+                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
+                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
+                    p.push('e=' + e);
+                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
+                    f |= 'WebSocket' in w ? 2 : 0;
+                    f |= w.Worker ? 4 : 0;
+                    f |= w.applicationCache ? 8 : 0;
+                    f |= w.history && history.pushState ? 16 : 0;
+                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
+                    f |= 'FileReader' in w ? 64 : 0;
+                    p.push('f=' + f);
+                    p.push('r=' + Math.random().toString(36).substring(7));
+                    p.push('w=' + screen.width);
+                    p.push('h=' + screen.height);
+                    var s = d.createElement('script');
+                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
+                })();
+
+                // Send a loaded package to a server to detect more features
+                $.getScript(detectUrl).done(function (script, textStatus) {
+                    $rootScope.$applyAsync(function () {
+                        // Browser info and details loaded
+                        var browserInfo = new window.WhichBrowser();
+                        angular.extend(info.about, browserInfo);
+                    });
+                }).fail(function (jqxhr, settings, exception) {
+                    console.error(exception);
+                });
+
+                // Set browser name to IE (if defined)
+                if (navigator.appName == 'Microsoft Internet Explorer') {
+                    info.about.browser.name = 'Internet Explorer';
+                }
+
+                // Check if the browser supports web db's
+                var webDB = info.about.webdb = {
+                    db: null,
+                    version: '1',
+                    active: null,
+                    size: 5 * 1024 * 1024,
+                    test: function (name, desc, dbVer, dbSize) {
+                        try  {
+                            // Try and open a web db
+                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
+                            webDB.onSuccess(null, null);
+                        } catch (ex) {
+                            // Nope, something went wrong
+                            webDB.onError(null, null);
+                        }
+                    },
+                    onSuccess: function (tx, r) {
+                        if (tx) {
+                            if (r) {
+                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
+                            }
+                            if (tx) {
+                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
+                            }
+                        }
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = true;
+                            webDB.used = JSON.stringify(webDB.db).length;
+                        });
+                    },
+                    onError: function (tx, e) {
+                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = false;
+                        });
+                    }
+                };
+                info.about.webdb.test();
+            } catch (ex) {
+                console.error(ex);
+            }
+
+            // Return the preliminary info
+            return info;
+        };
+
+        // Define the state
+        $scope.info = $scope.detectBrowserInfo();
+    }]).controller('AboutConnectionController', [
+    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
+        $scope.result = null;
+        $scope.status = null;
+        $scope.state = {
+            editMode: false,
+            location: $location.$$absUrl,
+            protocol: $location.$$protocol,
+            requireHttps: ($location.$$protocol == 'https')
+        };
+        $scope.detect = function () {
+            var target = $scope.state.location;
+            var started = Date.now();
+            $scope.result = null;
+            $scope.latency = null;
+            $scope.status = { code: 0, desc: '', style: 'label-default' };
+            $.ajax({
+                url: target,
+                crossDomain: true,
+                /*
+                username: 'user',
+                password: 'pass',
+                xhrFields: {
+                withCredentials: true
+                }
+                */
+                beforeSend: function (xhr) {
+                    $timeout(function () {
+                        //$scope.status.code = xhr.status;
+                        $scope.status.desc = 'sending';
+                        $scope.status.style = 'label-info';
+                    });
+                },
+                success: function (data, textStatus, xhr) {
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-success';
+                        $scope.result = {
+                            valid: true,
+                            info: data,
+                            sent: started,
+                            received: Date.now()
+                        };
+                    });
+                },
+                error: function (xhr, textStatus, error) {
+                    xhr.ex = error;
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-danger';
+                        $scope.result = {
+                            valid: false,
+                            info: xhr,
+                            sent: started,
+                            error: xhr.statusText,
+                            received: Date.now()
+                        };
+                    });
+                },
+                complete: function (xhr, textStatus) {
+                    console.debug(' - Status Code: ' + xhr.status);
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                    });
+                }
+            }).always(function (xhr) {
+                $timeout(function () {
+                    $scope.latency = $scope.getLatencyInfo();
+                });
+            });
+        };
+        $scope.setProtocol = function (protocol) {
+            var val = $scope.state.location;
+            var pos = val.indexOf('://');
+            if (pos > 0) {
+                val = protocol + val.substring(pos);
+            }
+            $scope.state.protocol = protocol;
+            $scope.state.location = val;
+            $scope.detect();
+        };
+        $scope.getProtocolStyle = function (protocol, activeStyle) {
+            var cssRes = '';
+            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
+            if (isValid) {
+                if (!$scope.result) {
+                    cssRes += 'btn-primary';
+                } else if ($scope.result.valid && activeStyle) {
+                    cssRes += activeStyle;
+                } else if ($scope.result) {
+                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
+                }
+            }
+            return cssRes;
+        };
+        $scope.getStatusIcon = function (activeStyle) {
+            var cssRes = '';
+            if (!$scope.result) {
+                cssRes += 'glyphicon-refresh';
+            } else if (activeStyle && $scope.result.valid) {
+                cssRes += activeStyle;
+            } else {
+                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
+            }
+            return cssRes;
+        };
+        $scope.submitForm = function () {
+            $scope.state.editMode = false;
+            if ($scope.state.requireHttps) {
+                $scope.setProtocol('https');
+            } else {
+                $scope.detect();
+            }
+        };
+        $scope.getStatusColor = function () {
+            var cssRes = $scope.getStatusIcon() + ' ';
+            if (!$scope.result) {
+                cssRes += 'busy';
+            } else if ($scope.result.valid) {
+                cssRes += 'success';
+            } else {
+                cssRes += 'error';
+            }
+            return cssRes;
+        };
+        $scope.getLatencyInfo = function () {
+            var cssNone = 'text-muted';
+            var cssHigh = 'text-success';
+            var cssMedium = 'text-warning';
+            var cssLow = 'text-danger';
+            var info = {
+                desc: '',
+                style: cssNone
+            };
+
+            if (!$scope.result) {
+                return info;
+            }
+
+            if (!$scope.result.valid) {
+                info.style = 'text-muted';
+                info.desc = 'Connection Failed';
+                return info;
+            }
+
+            var totalMs = $scope.result.received - $scope.result.sent;
+            if (totalMs > 2 * 60 * 1000) {
+                info.style = cssNone;
+                info.desc = 'Timed out';
+            } else if (totalMs > 1 * 60 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Impossibly slow';
+            } else if (totalMs > 30 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Very slow';
+            } else if (totalMs > 1 * 1000) {
+                info.style = cssMedium;
+                info.desc = 'Relatively slow';
+            } else if (totalMs > 500) {
+                info.style = cssMedium;
+                info.desc = 'Moderately slow';
+            } else if (totalMs > 250) {
+                info.style = cssMedium;
+                info.desc = 'Barely Responsive';
+            } else if (totalMs > 150) {
+                info.style = cssHigh;
+                info.desc = 'Average Response Time';
+            } else if (totalMs > 50) {
+                info.style = cssHigh;
+                info.desc = 'Responsive Enough';
+            } else if (totalMs > 15) {
+                info.style = cssHigh;
+                info.desc = 'Very Responsive';
+            } else {
+                info.style = cssHigh;
+                info.desc = 'Optimal';
+            }
+            return info;
+        };
+    }]);
+/// <reference path="../imports.d.ts" />
 /// <reference path="../modules/default.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
 angular.module('prototyped.ng', [
@@ -3165,7 +3175,7 @@ angular.module('prototyped.ng', [
   $templateCache.put('modules/features/views/index.tpl.html',
     '<div class=container><h4>Prototyping Local Resources <small>Discover features and command line utilities</small></h4><div ng:cloak><div ng:if=cmd.busy><div class=app-loading><div class=loadtext><label id=preLoaderText>Loading, please wait...</label><div class=spinner><div class=rect1></div><div class=rect2></div><div class=rect3></div><div class=rect4></div><div class=rect5></div><div class=rect7></div><div class=rect7></div><div class=rect8></div><div class=rect9></div><div class=rect10></div><div class=rect11></div><div class=rect12></div></div></div></div></div><div ng:if=!cmd.busy><div ng:if=!appNode.active class="alert alert-warning"><i class="fa fa-warning"></i> <b>Not Available:</b> Application requires a NodeJS (or CommonJS) runtime. Web browsers do not have access to these advanced features...</div><div ng:if="cmd.active && !cmd.result.stderr" class="alert alert-success"><i class="fa fa-share-square"></i> <b>Success!</b> You are now conncted to the local host machine...</div><div ng:if=cmd.result.stderr class="alert alert-danger"><i class="fa fa-share-square"></i> <b>Error:</b> {{ cmd.result.stderr }}</div><div ng:if=false class="alert alert-info"><i class="fa fa-share-square"></i> <b>Info:</b></div></div><div ng:if=!appNode.active><h5>How to run this application</h5><ul style="padding-left: 20px"><li>This software requires access to the <a target=_blank href="https://nodejs.org/">NodeJS</a> framework for some advanced features.</li><li>Nodewebkit is a modified chromium build that adds NodeJS to the DOM script engine (V8).</li><li>See the node-webkit GitHub page for more info: <a target=_blank href="https://github.com/nwjs/nw.js/">https://github.com/nwjs/nw.js</a></li></ul></div><div ng:if=cmd.cwd><h5>Current Working Directory <small>{{ cmd.cwd.path }}</small></h5><ul ng:if=cmd.cwd.list style="padding: 12px; margin: 0"><li ng-repeat="path in cmd.cwd.list" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="cmd.utils.icon(cmd.cwd.path, path)"></i>&nbsp; <a href="" ng-click=cmd.utils.list(cmd.cwd.path) ng-class="{ \'glow-blue\': path == cmd.target.path }">{{ path }}</a><ul ng:if="false && cmd.cwd.path == cmd.target.path" style="padding: 0 0 0 8px; margin: 8px"><li ng:if="cmd.cwd.list.length == 0" style="list-style: none; padding: 0; margin: 0"><em>Nothing to display...</em></li><li ng-repeat="item in cmd.cwd.list" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="cmd.utils.icon(path, item)"></i> <a href="">{{item}}</a></li></ul></li></ul></div><div ng:if=cmd.result><h5>Additional System Paths</h5><ul ng:if=cmd.result.paths style="padding: 12px; margin: 0"><li ng-repeat="path in cmd.utils.getAllPaths()" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="cmd.utils.icon(path, null)"></i>&nbsp; <a href="" ng-click=cmd.utils.list(path) ng-class="{ \'glow-blue\': path == cmd.target.path }">{{ path }}</a><ul ng:if="path == cmd.target.path" style="padding: 0 0 0 8px; margin: 8px"><li ng:if="cmd.target.list.length == 0" style="list-style: none; padding: 0; margin: 0"><em>Nothing to display...</em></li><li ng-repeat="item in cmd.target.list" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="cmd.utils.icon(path, item)"></i> <a href="" ng-click="cmd.utils.call(path, item)">{{item}}</a></li></ul></li></ul></div></div></div>');
   $templateCache.put('modules/features/views/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=proto.cmd><i class=fa ng-class="{ \'fa-refresh glow-blue\': cmd.busy, \'fa-desktop glow-green\': !cmd.busy && appNode.active, \'fa-warning glow-orange\': !cmd.busy && !appNode.active }"></i>&nbsp; Explore All Features</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.explore data:eat-click-if=!appNode.active><i class="fa fa-folder"></i> Local Filesystem Viewer</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=sqlcmd.connect data:eat-click-if=!appNode.active><i class="fa fa-database"></i> Connect to Data Source</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=certs.info data:eat-click-if=!appNode.active><i class="fa fa-certificate"></i> Check Certificates</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.edge data:eat-click-if=!appNode.active><i class="fa fa-magic"></i> Interop with C#.net</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.editor><i class="fa fa-edit"></i>&nbsp; File &amp; Text Editor</a></li><li class=list-group-item ui:sref-active=active xng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.console><i class="fa fa-terminal"></i>&nbsp; Console Application</a></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=proto.cmd><i class=fa ng-class="{ \'fa-refresh glow-blue\': cmd.busy, \'fa-desktop glow-green\': !cmd.busy && appNode.active, \'fa-warning glow-orange\': !cmd.busy && !appNode.active }"></i>&nbsp; Explore All Features</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.explore data:eat-click-if=!appNode.active><i class="fa fa-folder"></i> Local Filesystem Viewer</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=sqlcmd.connect data:eat-click-if=!appNode.active><i class="fa fa-database"></i> Connect to Data Source</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=certs.info data:eat-click-if=!appNode.active><i class="fa fa-certificate"></i> Check Certificates</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.edge data:eat-click-if=!appNode.active><i class="fa fa-magic"></i> Interop with C#.net</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.editor><i class="fa fa-edit"></i>&nbsp; File &amp; Text Editor</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.console><i class="fa fa-terminal"></i>&nbsp; Console Application</a></li></ul>');
   $templateCache.put('views/about/connections.tpl.html',
     '<div ng:cloak style="width: 100%"><div ng-if=!state.showRaw class=results ng-init=detect()><div class="icon pull-left left"><i class="glyphicon glyphicon-globe"></i> <i class="sub-icon glyphicon" ng-class=getStatusColor()></i></div><div class="info pull-left"><div><div class=pull-right><a class=ctrl-sm ng-click="state.editMode = true" href=""><i class="glyphicon glyphicon-pencil"></i></a></div><h4 ng-if=!state.editMode><a href="{{ state.location }}">{{ state.location }}</a></h4></div><div ng-if=!state.editMode><div ng-if=state.location><p class=info-row><div class="info-col-primary pull-left">Protocol: <span class="btn-group btn-group-xs" role=group aria-label=...><button type=button ng-disabled=state.requireHttps class="btn btn-default" ng-click="setProtocol(\'http\')" ng-class="state.requireHttps ? \'disabled\' : getProtocolStyle(\'http\', \'btn-warning\')"><i class=glyphicon ng-class="getStatusIcon(\'glyphicon-eye-open\')" ng-if="state.location.indexOf(\'http://\') == 0"></i> HTTP</button> <button type=button class="btn btn-default" ng-click="setProtocol(\'https\')" ng-class="getProtocolStyle(\'https\')"><i class=glyphicon ng-class="getStatusIcon(\'glyphicon-eye-close\')" ng-if="state.location.indexOf(\'https://\') == 0"></i> HTTPS</button></span></div><div class="info-col-secondary pull-right"><span class="btn-group btn-group-xs" role=group><a ng-if=result.info class="btn btn-default" href="" ng-click="state.activeTab = (state.activeTab == \'result\') ? null : \'result\'" ng-class="{\'btn-info\':(state.activeTab == \'result\'), \'btn-default\':(state.activeTab != \'result\')}"><i class="glyphicon glyphicon-file"></i> View Result</a> <a ng-if=state.location class=btn href="" ng-click="state.activeTab = (state.activeTab == \'preview\') ? null : \'preview\'" ng-class="{\'btn-info\':(state.activeTab == \'preview\'), \'btn-default\':(state.activeTab != \'preview\')}"><i class=glyphicon ng-class="{\'glyphicon-eye-close\':state.showPreview, \'glyphicon-eye-open\':!state.showPreview}"></i> {{ state.showPreview ? \'Hide\' : \'Show\' }} Preview</a></span></div><br class="clearfix"></p><p class=info-row><div class="info-col-primary pull-left" ng-if=result><div class=info-col-ellipse>Latency: {{ result.received - result.sent }}ms <span ng-if=latency.desc ng-class=latency.style>(<em>{{ latency.desc }}</em>)</span></div></div><div class="info-col-primary pull-left" ng-if=!result><em>Checking...</em></div><div class="info-col-secondary pull-right"><span ng-if="status.code >= 0" class="pull-right label" ng-class=status.style title="Status: {{ status.desc }}, Code: {{ status.code }}">{{ status.desc }}: {{ status.code }}</span></div><br class="clearfix"></p></div><div ng-if="result != null"><p><div class="alert alert-warning" ng-if="result.valid && state.protocol == \'http\'"><i class="glyphicon glyphicon-eye-open"></i> <b>Warning:</b> The web connection <b class=text-danger>is not secure</b>, use <a href="" ng-click="setProtocol(\'https\')">HTTPS</a>.</div><div class="alert alert-success" ng-if="result.valid && state.protocol == \'https\'"><i class="glyphicon glyphicon-ok"></i> <b>Validated:</b> The web connection looks secure.</div><div class="alert alert-danger" ng-if="!result.valid && result.error && result.error != \'error\'"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Failed:</b> {{ result.error }}</div><div class="alert alert-danger" ng-if="!result.valid && !(result.error && result.error != \'error\')"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Offline:</b> Connection could not be established.</div></p></div></div><form ng-if=state.editMode><div class=form-group><h4 class=control-label for=txtTarget>Enter the website URL to connect to:</h4><input class=form-control id=txtTarget ng-model=state.location></div><div class=form-group><div class=checkbox><label><input type=checkbox ng-model=state.requireHttps> Require secure connection</label></div><div class=checkbox ng-class="\'disabled text-muted\'" ng-if=state.requireHttps><label><input type=checkbox ng-model=state.requireCert ng-disabled=true> Requires Client Certificate</label></div></div><div class=form-group ng-show=state.requireCert><label for=exampleInputFile>Select Client Certificate:</label><input type=file id=exampleInputFile><p class=help-block>This must be a valid client certificate.</p></div><button type=submit class="btn btn-primary" ng-click=submitForm()>Update</button></form></div></div><div ng-if="state.activeTab == \'preview\'" class="panel panel-default"><div class=panel-heading><b class=panel-title><i class="glyphicon glyphicon-globe"></i> <a target=_blank href="{{ state.location }}">{{ state.location }}</a></b></div><div class="panel-body info-row iframe-body" style="min-height: 480px"><iframe class=info-col-primary ng-src="{{ state.location }}" frameborder=0>IFrame not available</iframe></div></div><div ng-if="state.activeTab == \'result\'" class=source><span class=pull-right><a class="btn btn-sm btn-primary" ng-click="state.activeTab = null">Close</a></span> <samp><pre>{{ result.info }}</pre></samp></div></div><style>.results {\n' +
     '        min-width: 480px;\n' +
