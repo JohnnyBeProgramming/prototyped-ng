@@ -453,7 +453,7 @@ module.exports = function (grunt) {
                 },
                 src: [
                     '<%= cfg.base %>/prototyped.ng/assets/css/!app*.css',
-                    '<%= cfg.base %>/prototyped.ng/assets/css/**.min.css'
+                    '<%= cfg.base %>/prototyped.ng/**/**.min.css'
                 ],
                 dest: '<%= cfg.base %>/prototyped.ng/<%= cfg.lib %>/prototyped.ng.styles.js',
                 module: 'prototyped.ng.styles',

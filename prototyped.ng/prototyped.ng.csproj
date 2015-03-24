@@ -46,6 +46,10 @@
     <TypeScriptCompile Include="modules\explore\module.ng.ts" />
     <TypeScriptCompile Include="modules\features\module.ng.ts" />
     <TypeScriptCompile Include="modules\features\appcmd.exe\certs.ng.ts" />
+    <Content Include="modules\editor\styles\css\editor.css" />
+    <Content Include="modules\editor\styles\css\editor.min.css">
+      <DependentUpon>editor.css</DependentUpon>
+    </Content>
     <Content Include="modules\explore\views\addressbar.tpl.html" />
     <Content Include="modules\explore\views\index.tpl.html" />
     <Content Include="modules\features\appcmd.exe\certs.tpl.html" />
@@ -100,7 +104,14 @@
       <DependentUpon>images.css</DependentUpon>
     </Content>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="modules\editor\styles\less\editor.less" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="modules\editor\styles\css\editor.css.map">
+      <DependentUpon>editor.css</DependentUpon>
+    </Content>
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>

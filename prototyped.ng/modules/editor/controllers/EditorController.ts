@@ -19,6 +19,7 @@ module proto.ng.editor {
         private _path: any;
         private _gui: any;
         private _buffer: string;
+        private _textArea: CodeMirror;
 
         constructor(private $scope: any, private $timeout: any) {
             this.$scope.myWriter = this;
@@ -87,6 +88,21 @@ module proto.ng.editor {
             // Set some intial text
             this.FileContents = 'Enter some text';
             this.LastChanged = Date.now();
+
+            if (!this._textArea) {
+                var myTextArea = $('#FileContents');
+                if (myTextArea.length > 0) {
+                    this._textArea = CodeMirror.fromTextArea(myTextArea[0], {
+                        mode: "javascript",
+                        autoClearEmptyLines: true,
+                        lineNumbers: true,
+                        indentUnit: 4,
+                    });
+                }
+            }
+            this._textArea.setValue(this.FileContents);
+            //var totalLines = this._textArea.lineCount();
+            //this._textArea.autoFormatRange({ line: 0, ch: 0 }, { line: totalLines });
 
             // Do post-new operations
             this.$timeout(() => {
