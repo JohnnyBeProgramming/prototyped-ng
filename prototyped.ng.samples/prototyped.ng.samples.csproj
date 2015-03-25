@@ -18,8 +18,12 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="assets\app.css" />
-    <Content Include="assets\app.js" />
+    <Content Include="index.css">
+      <DependentUpon>index.html</DependentUpon>
+    </Content>
+    <Content Include="index.js">
+      <DependentUpon>index.html</DependentUpon>
+    </Content>
     <Content Include="assets\lib\prototyped.ng.js" />
     <Content Include="assets\lib\prototyped.ng.samples.base.js" />
     <Content Include="assets\lib\prototyped.ng.samples.views.js" />
@@ -60,6 +64,9 @@
       <Project>{42656789-35a8-4bcf-b2b0-8454a32a1db5}</Project>
       <Name>prototyped.ng</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="package.json" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
@@ -102,7 +109,8 @@
     <PreBuildEvent>copy ..\..\web\assets\lib\prototyped.ng.js ..\assets\lib\</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>call grunt build-prototyped-ng-samples --no-color --gruntfile "../../Gruntfile.js"
-</PostBuildEvent>
+    <PostBuildEvent>
+      call grunt build-prototyped-ng-samples --no-color --gruntfile "../../Gruntfile.js"
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>

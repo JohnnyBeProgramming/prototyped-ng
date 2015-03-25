@@ -2569,7 +2569,14 @@ angular.module('prototyped.about', [
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/default.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
+// Constant object with default values
+angular.module('prototyped.ng.config', []).constant('appConfig', {
+    version: '1.0.0.0'
+});
+
+// Define main module with all dependencies
 angular.module('prototyped.ng', [
+    'prototyped.ng.config',
     'prototyped.ng.views',
     'prototyped.ng.styles',
     'prototyped.ng.sql',
@@ -2590,9 +2597,7 @@ angular.module('prototyped.ng', [
             url: '/proto',
             abstract: true
         });
-    }]).constant('appInfo', {
-    version: '1.0.0.0'
-}).constant('appNode', {
+    }]).constant('appNode', {
     html5: true,
     active: typeof require !== 'undefined',
     ui: function () {
@@ -2747,7 +2752,7 @@ angular.module('prototyped.ng', [
             });
         };
     }]).directive('appVersion', [
-    'appInfo', 'appNode', function (appInfo, appNode) {
+    'appConfig', 'appNode', function (appConfig, appNode) {
         function getVersionInfo(ident) {
             try  {
                 if (typeof process !== 'undefined' && process.versions) {
@@ -2762,7 +2767,7 @@ angular.module('prototyped.ng', [
             var targ = attrs['appVersion'];
             var val = null;
             if (!targ) {
-                val = appInfo.version;
+                val = appConfig.version;
             } else
                 switch (targ) {
                     case 'angular':
@@ -2813,8 +2818,7 @@ angular.module('prototyped.ng', [
     return function (input) {
         return !angular.isArray(input);
     };
-}).filter('typeCount', [
-    'appStatus', function (appStatus) {
+}).filter('typeCount', [function () {
         return function (input, type) {
             var count = 0;
             if (input.length > 0) {
@@ -3025,14 +3029,14 @@ angular.module('prototyped.ng', [
             }
         };
     }]).run([
-    '$rootScope', '$state', 'appInfo', 'appNode', 'appStatus', function ($rootScope, $state, appInfo, appNode, appStatus) {
+    '$rootScope', '$state', 'appConfig', 'appNode', 'appStatus', function ($rootScope, $state, appConfig, appNode, appStatus) {
         // Extend root scope with (global) vars
         angular.extend($rootScope, {
-            state: $state,
-            appInfo: appInfo,
+            appConfig: appConfig,
             appNode: appNode,
             status: appStatus,
-            startAt: Date.now()
+            startAt: Date.now(),
+            state: $state
         });
     }]);
 //# sourceMappingURL=prototyped.ng.base.js.map

@@ -69,5 +69,32 @@
     <div id="footer" ui:view="footer">
         <em>Footer View</em>
     </div>
+    <script>
+        // Load the config (async) and bootstrab angular
+        !(function (window, angular, elem, ngTargetApp, configUrl) {
+            window.onload = function () {
+                if (!configUrl) {
+                    console.log('Starting app ' + ngTargetApp + '...');
+                    angular.bootstrap(elem, [ngTargetApp]);
+                } else {
+                    var $http = angular.injector(['ng']).get('$http');
+                    $http({
+                        method: 'GET',
+                        url: configUrl,
+                    }).success(function (data, status, headers, config) {
+                        var newConfig = {
+                            version: data.version,
+                        };
+                        console.log('Configuring ' + ngTargetApp + '...');
+                        angular.module('prototyped.ng.config', []).constant('appConfig', newConfig);
+                        angular.bootstrap(elem, [ngTargetApp]);
+                    }).error(function (ex) {
+                        console.log(' - Starting ' + ngTargetApp + ' with default config.');
+                        angular.bootstrap(elem, [ngTargetApp]);
+                    });
+                }
+            };
+        }(window, angular, $('#testApp'), 'testApp', 'package.json'));
+    </script>
 </body>
 </html>

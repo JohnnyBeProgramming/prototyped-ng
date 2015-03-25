@@ -112,10 +112,3 @@ angular.module('testApp', [
             startAt: Date.now(),
         });
     }])
-
-
-window.onload = function () {
-    console.log('Startinng test app...');
-
-    angular.bootstrap($('#testApp'), ['testApp']);
-};
