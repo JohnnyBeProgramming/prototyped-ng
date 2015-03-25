@@ -8,6 +8,7 @@
 /// <reference path="styles3d/module.ng.ts" />
 
 angular.module('prototyped.ng.samples', [
+    'prototyped.ng.config',
     'prototyped.ng.samples.views',
 
     'myApp.samples.errorHandlers',
@@ -19,6 +20,15 @@ angular.module('prototyped.ng.samples', [
     'myApp.samples.compression',
     'myApp.samples.styles3d',
 ])
+
+    // Extend appConfig with module config
+    .config(['appConfigProvider', function (appConfigProvider) {
+        appConfigProvider.set({
+            'prototyped.ng.samples': {
+                active: true,
+            }
+        });
+    }])
 
     .config(['$stateProvider', function ($stateProvider) {
         // Now set up the states
@@ -42,7 +52,7 @@ angular.module('prototyped.ng.samples', [
 
     .controller('sampleViewController', ['$rootScope', '$scope', '$state', function ($rootScope, $scope, $state) {
         // Define the model
-        var context = $scope.sample = {
+        var context : any = $scope.sample = {
             busy: true,
             text: '',
             utils: {

@@ -2422,6 +2422,7 @@ angular.module('myApp.samples.styles3d', []).config([
 /// <reference path="sampleData/module.ng.ts" />
 /// <reference path="styles3d/module.ng.ts" />
 angular.module('prototyped.ng.samples', [
+    'prototyped.ng.config',
     'prototyped.ng.samples.views',
     'myApp.samples.errorHandlers',
     'myApp.samples.sampleData',
@@ -2432,6 +2433,13 @@ angular.module('prototyped.ng.samples', [
     'myApp.samples.compression',
     'myApp.samples.styles3d'
 ]).config([
+    'appConfigProvider', function (appConfigProvider) {
+        appConfigProvider.set({
+            'prototyped.ng.samples': {
+                active: true
+            }
+        });
+    }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples', {

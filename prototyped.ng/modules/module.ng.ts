@@ -2,12 +2,23 @@
 /// <reference path="../modules/default.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
 
-
 // Constant object with default values
 angular.module('prototyped.ng.config', [])
-    .constant('appConfig', {
+    .constant('appDefaultConfig', {
         version: '1.0.0.0',
-    });
+        routers: [],
+    })
+    .provider('appConfig', ['appDefaultConfig', function (appDefaultConfig) {
+        var config = appDefaultConfig;
+        return {
+            set: function (options) {
+                angular.extend(config, options);
+            },
+            $get: function () {
+                return config;
+            }
+        };
+    }])
 
 // Define main module with all dependencies
 angular.module('prototyped.ng', [
@@ -25,6 +36,15 @@ angular.module('prototyped.ng', [
     'prototyped.console',
     'prototyped.features',
 ])
+
+    // Extend appConfig with module config
+    .config(['appConfigProvider', function (appConfigProvider) {
+        appConfigProvider.set({
+            'prototyped.ng': {
+                active: true,
+            }
+        });
+    }])
 
     .config(['$stateProvider', '$urlRouterProvider', ($stateProvider, $urlRouterProvider) => {
 
@@ -487,4 +507,7 @@ angular.module('prototyped.ng', [
             state: $state,
         });
 
+    }])
+    .run(['appConfig', function (appConfig) {
+        console.log(' - Current Config: ', appConfig);
     }])

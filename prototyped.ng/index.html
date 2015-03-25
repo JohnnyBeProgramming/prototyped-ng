@@ -82,11 +82,13 @@
                         method: 'GET',
                         url: configUrl,
                     }).success(function (data, status, headers, config) {
-                        var newConfig = {
+                        console.log('Configuring ' + ngTargetApp + '...')
+                        var cfgModule = angular.module('prototyped.ng.config');
+                        var oldConfig = angular.injector(['prototyped.ng.config']).get('appConfig');
+                        angular.extend(oldConfig, {
                             version: data.version,
-                        };
-                        console.log('Configuring ' + ngTargetApp + '...');
-                        angular.module('prototyped.ng.config', []).constant('appConfig', newConfig);
+                        })
+                        cfgModule.constant('appConfig', oldConfig);
                         angular.bootstrap(elem, [ngTargetApp]);
                     }).error(function (ex) {
                         console.log(' - Starting ' + ngTargetApp + ' with default config.');

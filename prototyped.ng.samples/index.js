@@ -18,6 +18,8 @@ angular.module('testApp', [
 
 ])
 
+    
+
     .constant('appStatus', {
         logs: [],
         show: {

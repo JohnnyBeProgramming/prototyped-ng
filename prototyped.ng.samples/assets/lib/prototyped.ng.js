@@ -2570,9 +2570,21 @@ angular.module('prototyped.about', [
 /// <reference path="../modules/default.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
 // Constant object with default values
-angular.module('prototyped.ng.config', []).constant('appConfig', {
-    version: '1.0.0.0'
-});
+angular.module('prototyped.ng.config', []).constant('appDefaultConfig', {
+    version: '1.0.0.0',
+    routers: []
+}).provider('appConfig', [
+    'appDefaultConfig', function (appDefaultConfig) {
+        var config = appDefaultConfig;
+        return {
+            set: function (options) {
+                angular.extend(config, options);
+            },
+            $get: function () {
+                return config;
+            }
+        };
+    }]);
 
 // Define main module with all dependencies
 angular.module('prototyped.ng', [
@@ -2588,6 +2600,13 @@ angular.module('prototyped.ng', [
     'prototyped.console',
     'prototyped.features'
 ]).config([
+    'appConfigProvider', function (appConfigProvider) {
+        appConfigProvider.set({
+            'prototyped.ng': {
+                active: true
+            }
+        });
+    }]).config([
     '$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
         // Define redirects
         $urlRouterProvider.when('/proto', '/proto/explore').when('/sandbox', '/samples').when('/sync', '/edge');
@@ -3038,6 +3057,9 @@ angular.module('prototyped.ng', [
             startAt: Date.now(),
             state: $state
         });
+    }]).run([
+    'appConfig', function (appConfig) {
+        console.log(' - Current Config: ', appConfig);
     }]);
 //# sourceMappingURL=prototyped.ng.base.js.map
 ;angular.module('prototyped.ng.views', []).run(['$templateCache', function($templateCache) {
