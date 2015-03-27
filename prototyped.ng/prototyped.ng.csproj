@@ -22,6 +22,7 @@
     <Content Include="assets\lib\prototyped.ng.sqlx.js" />
     <Content Include="assets\lib\prototyped.ng.styles.js" />
     <Content Include="assets\lib\prototyped.ng.views.js" />
+    <Content Include="Gruntfile.js" />
     <Content Include="index.js">
       <DependentUpon>index.html</DependentUpon>
     </Content>
@@ -38,6 +39,7 @@
       <DependentUpon>prototyped.css</DependentUpon>
     </Content>
     <Content Include="index.html" />
+    <TypeScriptCompile Include="modules\config.ng.ts" />
     <TypeScriptCompile Include="modules\console\controllers\ConsoleController.ts" />
     <TypeScriptCompile Include="modules\console\module.ng.ts" />
     <TypeScriptCompile Include="modules\edge\module.ng.ts" />
@@ -154,10 +156,9 @@
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
   <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
+    <PreBuildEvent>if not exist "node_modules" npm install</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>call grunt build-prototyped-ng --no-color --gruntfile "../../Gruntfile.js"</PostBuildEvent>
+    <PostBuildEvent>call grunt --no-color --gruntfile "..\Gruntfile.js"</PostBuildEvent>
   </PropertyGroup>
 </Project>
