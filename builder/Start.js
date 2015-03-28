@@ -1,15 +1,22 @@
-module.exports = function (grunt) {
+/// <reference path="typings/imports.d.ts" />
 
-    grunt.registerTask('app-run', function () {
+/* -------------------------------------------------------------------------------
+Example of a custom HTTP Server
+------------------------------------------------------------------------------- */
 
-        // Start the web server prior to opening the window
-        var httpHost = require('../Server.js');
-        var url = httpHost.baseUrl;
+// Start the web server prior to opening the window
+var httpHost = require('../prototyped.node/modules/Server.js');
+if (httpHost) {
+    httpHost.port = 8008;
+    httpHost.path = '../web';
+    //httpHost.pfxPath = './sample.pfx'; // Enable to allow HTTPS
 
-        // Start a Node Webkit window and point it to our starting url...
-        console.log('-------------------------------------------------------------------------------');
-        var www = '../web';
-        var cmd = '"../node_modules/.bin/nw" "' + www + '/"';
+    // Try and start the dev server
+    if (!httpHost.start()) {
+        console.warn(' - Warning: Http server was not started...');
+    } else {
+        var www = httpHost.path;
+        var cmd = '"./node_modules/.bin/nw" "' + www + '/"';
         var proc = require("child_process");
         if (proc) {
             console.info(' - Starting node webkit window...');
@@ -26,7 +33,7 @@ module.exports = function (grunt) {
                 }
             });
         }
-        console.log('-------------------------------------------------------------------------------');
-    });
+    }
+}
 
-};
+module.exports = httpHost;

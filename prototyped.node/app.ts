@@ -32,9 +32,7 @@ if (httpHost) {
     httpHost.port = 8008;
     httpHost.path = '../web';
     //httpHost.pfxPath = './sample.pfx'; // Enable to allow HTTPS
-    if (httpHost.start()) {
-        console.info(' - Static Http server now active...');
-    } else {
+    if (!httpHost.start()) {
         console.warn(' - Warning: Http server was not started...');
     }
 }

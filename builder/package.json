@@ -12,7 +12,7 @@
   "scripts": {
     "preinstall": "node Setup.js",
     "prestart": "grunt",
-    "start": "node Server.js",
+    "start": "node Start.js",
     "poststart": "pause"
   },
   "globals": {
@@ -28,6 +28,7 @@
     "grunt": "0.4.5",
     "grunt-contrib-copy": "^0.7.0",
     "grunt-contrib-watch": "0.6.1",
+    "grunt-hub": "^0.7.0",
     "grunt-notify": "^0.4.1",
     "load-grunt-configs": "^0.4.2",
     "load-grunt-tasks": "^3.1.0",

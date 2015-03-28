@@ -26,7 +26,6 @@ module.exports = function (grunt) {
     // Define the default task(s)
     grunt.registerTask('default', [
         'build',
-        //'watch'
     ]);
     grunt.registerTask('build', [
         'copy:dependencies',

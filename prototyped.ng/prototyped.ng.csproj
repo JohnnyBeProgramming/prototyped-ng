@@ -161,9 +161,11 @@
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
   <PropertyGroup>
-    <PreBuildEvent>cd ../builder &amp; if not exist "node_modules" npm update</PreBuildEvent>
+    <PreBuildEvent>cd ../builder 
+if not exist "node_modules" npm update</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>cd ../builder &amp; npm start</PostBuildEvent>
+    <PostBuildEvent>cd ../builder
+npm start</PostBuildEvent>
   </PropertyGroup>
 </Project>

@@ -25,10 +25,11 @@ module.exports = function (grunt) {
 
     // Define the default task(s)
     grunt.registerTask('default', [
+        'hub',
         'build',
-        'app-run',
+        //'app-run',
         //'notify:ready',
-        'watch'
+        //'watch',
     ]);
     grunt.registerTask('build', [
         //'copy:dependencies',

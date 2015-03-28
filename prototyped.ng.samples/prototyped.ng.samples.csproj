@@ -22,6 +22,18 @@
     <Content Include="assets\css\samples.min.css">
       <DependentUpon>samples.css</DependentUpon>
     </Content>
+    <Content Include="builder\config\banner.js" />
+    <Content Include="builder\config\concat.js" />
+    <Content Include="builder\config\copy.js" />
+    <Content Include="builder\config\cssmin.js" />
+    <Content Include="builder\config\html2js.js" />
+    <Content Include="builder\config\jqueryCheck.js" />
+    <Content Include="builder\config\jshint.js" />
+    <Content Include="builder\config\less.js" />
+    <Content Include="builder\config\ngtemplates.js" />
+    <Content Include="builder\config\notify_hooks.js" />
+    <Content Include="builder\config\uglify.js" />
+    <Content Include="builder\config\watch.js" />
     <Content Include="builder\Gruntfile.js" />
     <Content Include="index.css">
       <DependentUpon>index.html</DependentUpon>
@@ -122,9 +134,11 @@
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
   <PropertyGroup>
-    <PreBuildEvent>cd ../builder &amp; npm update</PreBuildEvent>
+    <PreBuildEvent>cd ../builder 
+if not exist "node_modules" npm update</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>cd ../builder &amp; npm start</PostBuildEvent>
+    <PostBuildEvent>cd ../builder 
+npm start</PostBuildEvent>
   </PropertyGroup>
 </Project>
