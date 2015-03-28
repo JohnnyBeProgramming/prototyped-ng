@@ -1,6 +1,6 @@
 {
   "private": true,
-  "version": "1.0.0.2",
+  "version": "1.0.2",
   "name": "prototyped-ng-samples",
   "author": "Johnathan Lodder",
   "description": "Prototyped software for responsive web-based solutions.",
@@ -12,8 +12,7 @@
     "grunt-init": "0.3.2",
     "grunt-cli": "0.1.13"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "grunt": "0.4.5",
     "grunt-angular-templates": "^0.5.7",

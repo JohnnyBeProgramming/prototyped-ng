@@ -18,6 +18,11 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="assets\css\samples.css" />
+    <Content Include="assets\css\samples.min.css">
+      <DependentUpon>samples.css</DependentUpon>
+    </Content>
+    <Content Include="Gruntfile.js" />
     <Content Include="index.css">
       <DependentUpon>index.html</DependentUpon>
     </Content>
@@ -68,6 +73,14 @@
   <ItemGroup>
     <Content Include="package.json" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\less\samples.less" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\css\samples.css.map">
+      <DependentUpon>samples.css</DependentUpon>
+    </Content>
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>
@@ -106,11 +119,9 @@
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
   <PropertyGroup>
-    <PreBuildEvent>copy ..\..\web\assets\lib\prototyped.ng.js ..\assets\lib\</PreBuildEvent>
+    <PreBuildEvent>if not exist "node_modules" npm install</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>
-      call grunt build-prototyped-ng-samples --no-color --gruntfile "../../Gruntfile.js"
-    </PostBuildEvent>
+    <PostBuildEvent>call grunt --no-color --gruntfile "Gruntfile.js"</PostBuildEvent>
   </PropertyGroup>
 </Project>

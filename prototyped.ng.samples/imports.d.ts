@@ -7,6 +7,8 @@ interface Window {
     isNaN: (input: any) => boolean;
     isFinite: (input: any) => boolean;
 }
+declare var moment: any;
 declare var process: any;
 declare var require: (name: string) => any;
 declare var openDatabase: (name: string, version: string, desc: string, size: number) => void;
+declare var CodeMirror: any;
