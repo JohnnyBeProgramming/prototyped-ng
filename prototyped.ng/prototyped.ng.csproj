@@ -43,6 +43,17 @@
     <Content Include="assets\lib\prototyped.ng.sqlx.js" />
     <Content Include="assets\lib\prototyped.ng.styles.js" />
     <Content Include="assets\lib\prototyped.ng.views.js" />
+    <Content Include="builder\config\banner.js" />
+    <Content Include="builder\config\concat.js" />
+    <Content Include="builder\config\copy.js" />
+    <Content Include="builder\config\cssmin.js" />
+    <Content Include="builder\config\html2js.js" />
+    <Content Include="builder\config\jqueryCheck.js" />
+    <Content Include="builder\config\jshint.js" />
+    <Content Include="builder\config\less.js" />
+    <Content Include="builder\config\ngtemplates.js" />
+    <Content Include="builder\config\uglify.js" />
+    <Content Include="builder\config\watch.js" />
     <Content Include="builder\Gruntfile.js" />
     <Content Include="index.js">
       <DependentUpon>index.html</DependentUpon>
