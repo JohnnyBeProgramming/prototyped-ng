@@ -6,8 +6,8 @@
 module.exports = function (grunt) {
     'use strict';
     var cfg = {
-        base: './',
-        dest: '../app/',
+        base: '../',
+        dest: '../../web/',
         mod: 'prototyped.ng',
         css: 'assets/css',
         lib: 'assets/lib'
@@ -299,19 +299,15 @@ module.exports = function (grunt) {
         },
         copy: {
             dest: {
-                files: [
-                    // includes files within path
-                    {
-                        expand: true,
-                        src: [
-                            '**/package.json',
-                            'assets/lib/*.min.js'
-                        ],
-                        cwd: '<%= cfg.mod %>/',
-                        dest: '<%= cfg.dest %>',
-                        filter: 'isFile'
-                    }
-                ]
+                files: [{
+                    expand: true,
+                    src: [
+                        'assets/lib/*.min.js'
+                    ],
+                    cwd: '<%= cfg.mod %>/',
+                    dest: '<%= cfg.dest %>',
+                    filter: 'isFile'
+                }]
             }
         },
         // WATCH FILES FOR CHANGES

@@ -22,7 +22,7 @@
     <Content Include="assets\css\samples.min.css">
       <DependentUpon>samples.css</DependentUpon>
     </Content>
-    <Content Include="Gruntfile.js" />
+    <Content Include="builder\Gruntfile.js" />
     <Content Include="index.css">
       <DependentUpon>index.html</DependentUpon>
     </Content>
@@ -71,7 +71,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="package.json" />
+    <Content Include="builder\package.json" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="assets\less\samples.less" />
@@ -119,9 +119,9 @@
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
   <PropertyGroup>
-    <PreBuildEvent>if not exist "node_modules" npm install</PreBuildEvent>
+    <PreBuildEvent>cd ../builder &amp; if not exist "node_modules" npm update</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>call grunt --no-color --gruntfile "Gruntfile.js"</PostBuildEvent>
+    <PostBuildEvent>cd ../builder &amp; npm start</PostBuildEvent>
   </PropertyGroup>
 </Project>

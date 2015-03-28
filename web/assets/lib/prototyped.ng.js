@@ -1,3 +1,23 @@
+/// <reference path="../imports.d.ts" />
+// Constant object with default values
+angular.module('prototyped.ng.config', []).constant('appDefaultConfig', {
+    version: '1.0.0.0',
+    routers: []
+}).provider('appConfig', [
+    'appDefaultConfig', function (appDefaultConfig) {
+        var config = appDefaultConfig;
+        return {
+            set: function (options) {
+                angular.extend(config, options);
+            },
+            clear: function () {
+                config = appDefaultConfig;
+            },
+            $get: function () {
+                return config;
+            }
+        };
+    }]);
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
@@ -2567,25 +2587,9 @@ angular.module('prototyped.about', [
         };
     }]);
 /// <reference path="../imports.d.ts" />
+/// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/default.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
-// Constant object with default values
-angular.module('prototyped.ng.config', []).constant('appDefaultConfig', {
-    version: '1.0.0.0',
-    routers: []
-}).provider('appConfig', [
-    'appDefaultConfig', function (appDefaultConfig) {
-        var config = appDefaultConfig;
-        return {
-            set: function (options) {
-                angular.extend(config, options);
-            },
-            $get: function () {
-                return config;
-            }
-        };
-    }]);
-
 // Define main module with all dependencies
 angular.module('prototyped.ng', [
     'prototyped.ng.config',
@@ -3063,6 +3067,32 @@ angular.module('prototyped.ng', [
     }]);
 //# sourceMappingURL=prototyped.ng.base.js.map
 ;angular.module('prototyped.ng.views', []).run(['$templateCache', function($templateCache) {
+  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/jade_include.jade',
+    '<h1>I\'m an include!</h1>');
+  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/process_jade.jade',
+    '<p class=example>Hello World!</p><div id=greeting>Nice</div>');
+  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/process_jade_custom.jade',
+    '<a href=href>Great</a>');
+  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/process_jade_with_include.jade',
+    '<h1>I\'m an include!</h1>');
+  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/empty_attribute.tpl.html',
+    '<div ui-view></div>');
+  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/five.tpl.html',
+    '<div class="quotes should be escaped"><span><span><span>Lorem ipsum</span></span></span></div>');
+  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/four.tpl.html',
+    'This data is "in quotes" And this data is \'in single quotes\'');
+  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/one.tpl.html',
+    '1 2 3');
+  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/pattern.tpl.html',
+    '<form><span class=registration-error ng-show=regForm.password.$error.pattern>- Fail to match..</span> <input type=password ng-model=registerForm.password name=password ng-pattern="/^.*(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*[\\d\\W]).*$/" required></form>');
+  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/process_function.tpl.html',
+    '<h1>(ONE)</h1><h2>(TWO)</h2><h3>(THREE)</h3>');
+  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/process_template.tpl.html',
+    '<h1><%= html2js.process_template.testMessages.title %></h1><h2><%= html2js.process_template.testMessages.subtitle %></h2>');
+  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/three.tpl.html',
+    'Multiple Lines');
+  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/two.tpl.html',
+    'Testing');
   $templateCache.put('modules/console/views/main.tpl.html',
     '<div class=console><style>.contents.docked {\n' +
     '            padding: 0 !important;\n' +

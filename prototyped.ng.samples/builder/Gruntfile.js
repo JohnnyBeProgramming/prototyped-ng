@@ -6,13 +6,12 @@
 module.exports = function (grunt) {
     'use strict';
     var cfg = {
-        base: './',
-        dest: '../app/',
+        base: '../',
+        dest: '../../web/',
         mod: 'prototyped.ng.samples',
         css: 'assets/css',
         lib: 'assets/lib'
     };
-
 
     grunt.loadNpmTasks('grunt-contrib-less');
     grunt.loadNpmTasks('grunt-contrib-jshint');
@@ -26,15 +25,15 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-devtools');
     grunt.loadNpmTasks('grunt-angular-templates');
 
-
     grunt.registerTask('default', [
         'build',
         //'watch'
     ]);
     grunt.registerTask('build', [
+        'copy:dependencies',
         'build-styles',
         'build-scripts',
-        'copy',
+        'copy:destination',
     ]);
     grunt.registerTask('build-styles', [
         'less',
@@ -280,20 +279,27 @@ module.exports = function (grunt) {
             },
         },
         copy: {
-            dest: {
-                files: [
-                    // includes files within path
-                    {
-                        expand: true,
-                        src: [
-                            '**/package.json',
-                            'assets/lib/*.min.js'
-                        ],
-                        cwd: '<%= cfg.mod %>/',
-                        dest: '<%= cfg.dest %>',
-                        filter: 'isFile'
-                    }
-                ]
+            dependencies: {
+                files: [{
+                    expand: true,
+                    src: [
+                        'prototyped.ng.js',
+                    ],
+                    cwd: '<%= cfg.dest %><%= cfg.lib %>/',
+                    dest: '<%= cfg.base %><%= cfg.lib %>/',
+                    filter: 'isFile'
+                }]
+            },
+            destination: {
+                files: [{
+                    expand: true,
+                    src: [
+                        'assets/lib/*.min.js'
+                    ],
+                    cwd: '<%= cfg.mod %>/',
+                    dest: '<%= cfg.dest %>',
+                    filter: 'isFile'
+                }]
             }
         },
         // WATCH FILES FOR CHANGES

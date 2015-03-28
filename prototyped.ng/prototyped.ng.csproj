@@ -18,25 +18,34 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="assets\lib\prototyped.ng.base.js" />
-    <Content Include="assets\lib\prototyped.ng.sqlx.js" />
-    <Content Include="assets\lib\prototyped.ng.styles.js" />
-    <Content Include="assets\lib\prototyped.ng.views.js" />
-    <Content Include="Gruntfile.js" />
-    <Content Include="index.js">
-      <DependentUpon>index.html</DependentUpon>
-    </Content>
     <Content Include="assets\css\app.css" />
+    <Content Include="assets\css\app.css.map">
+      <DependentUpon>app.css</DependentUpon>
+    </Content>
     <Content Include="assets\css\app.min.css">
       <DependentUpon>app.css</DependentUpon>
     </Content>
     <Content Include="assets\css\images.css" />
+    <Content Include="assets\css\images.css.map">
+      <DependentUpon>images.css</DependentUpon>
+    </Content>
     <Content Include="assets\css\images.min.css">
       <DependentUpon>images.css</DependentUpon>
     </Content>
     <Content Include="assets\css\prototyped.css" />
+    <Content Include="assets\css\prototyped.css.map">
+      <DependentUpon>prototyped.css</DependentUpon>
+    </Content>
     <Content Include="assets\css\prototyped.min.css">
       <DependentUpon>prototyped.css</DependentUpon>
+    </Content>
+    <Content Include="assets\lib\prototyped.ng.base.js" />
+    <Content Include="assets\lib\prototyped.ng.sqlx.js" />
+    <Content Include="assets\lib\prototyped.ng.styles.js" />
+    <Content Include="assets\lib\prototyped.ng.views.js" />
+    <Content Include="builder\Gruntfile.js" />
+    <Content Include="index.js">
+      <DependentUpon>index.html</DependentUpon>
     </Content>
     <Content Include="index.html" />
     <TypeScriptCompile Include="modules\config.ng.ts" />
@@ -88,25 +97,10 @@
     <Content Include="assets\less\app.less" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="assets\css\app.css.map">
-      <DependentUpon>app.css</DependentUpon>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="assets\less\prototyped.less" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="assets\css\prototyped.css.map">
-      <DependentUpon>prototyped.css</DependentUpon>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="assets\less\images.less" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="assets\css\images.css.map">
-      <DependentUpon>images.css</DependentUpon>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="modules\editor\styles\less\editor.less" />
@@ -117,7 +111,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="package.json" />
+    <Content Include="builder\package.json" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
@@ -156,9 +150,9 @@
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
   <PropertyGroup>
-    <PreBuildEvent>if not exist "node_modules" npm install</PreBuildEvent>
+    <PreBuildEvent>cd ../builder &amp; if not exist "node_modules" npm update</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>call grunt --no-color --gruntfile "..\Gruntfile.js"</PostBuildEvent>
+    <PostBuildEvent>cd ../builder &amp; npm start</PostBuildEvent>
   </PropertyGroup>
 </Project>

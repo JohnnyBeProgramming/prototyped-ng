@@ -7,3 +7,7 @@ node_modules/
 /app
 *.suo
 /packager.exe
+/prototyped.ng/assets/css
+/prototyped.ng.samples/assets/css
+/prototyped.ng.samples/assets/lib/prototyped.ng.js
+/prototyped.node/.ntvs_analysis.dat
