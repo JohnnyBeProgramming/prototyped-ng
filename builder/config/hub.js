@@ -6,7 +6,7 @@
     projects: {
         src: [
             '../prototyped.ng/builder/Gruntfile.js',
-            '../prototyped.ng.samples/builder/Gruntfile.js',
+            '../**/builder/Gruntfile.js',
         ],
         tasks: ['default'],
     },

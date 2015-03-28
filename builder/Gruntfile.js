@@ -25,9 +25,8 @@ module.exports = function (grunt) {
 
     // Define the default task(s)
     grunt.registerTask('default', [
-        'hub',
+        //'hub',
         'build',
-        //'app-run',
         //'notify:ready',
         //'watch',
     ]);
