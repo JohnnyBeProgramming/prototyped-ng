@@ -1,1 +1,1 @@
-npm start
+cd "builder" & Start.cmd

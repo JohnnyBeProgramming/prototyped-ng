@@ -1,1 +1,1 @@
-npm install
+cd "builder" & Setup.cmd
