@@ -17,6 +17,7 @@ module.exports = function (grunt) {
     };
 
     // Load all grunt tasks defined in the package.json file
+    require('time-grunt')(grunt);
     require('load-grunt-tasks')(grunt);
 
     // Load custom grunt tasks from './tasks/' 

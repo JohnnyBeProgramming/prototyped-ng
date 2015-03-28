@@ -14,7 +14,6 @@ module.exports = {
     files: [{
       expand: true,
       src: [
-          'assets/lib/*.min.js'
       ],
       cwd: '<%= cfg.mod %>/',
       dest: '<%= cfg.dest %>',

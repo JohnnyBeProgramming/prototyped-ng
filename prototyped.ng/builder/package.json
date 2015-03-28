@@ -25,9 +25,11 @@
     "grunt-contrib-watch": "0.6.1",
     "grunt-devtools": "0.2.1",
     "grunt-html2js": "^0.3.0",
+    "grunt-notify": "^0.4.1",
     "grunt-usemin": "^3.0.0",
     "load-grunt-configs": "^0.4.2",
     "load-grunt-tasks": "3.1.0",
-    "minimatch": "0.3"
+    "minimatch": "0.3",
+    "time-grunt": "^1.1.0"
   }
 }

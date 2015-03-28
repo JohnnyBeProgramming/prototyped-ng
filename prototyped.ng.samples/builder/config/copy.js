@@ -2,7 +2,9 @@ module.exports = {
   dependencies: {
     files: [{
       expand: true,
-      src: ['prototyped.ng.js'],
+      src: [
+          'prototyped.ng.js'
+      ],
       cwd: '<%= cfg.dest %><%= cfg.lib %>/',
       dest: '<%= cfg.base %><%= cfg.lib %>/',
       filter: 'isFile'
@@ -11,7 +13,8 @@ module.exports = {
   destination: {
     files: [{
       expand: true,
-      src: ['assets/lib/*.min.js'],
+      src: [
+      ],
       cwd: '<%= cfg.mod %>/',
       dest: '<%= cfg.dest %>',
       filter: 'isFile'
