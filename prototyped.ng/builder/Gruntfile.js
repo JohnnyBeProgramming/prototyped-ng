@@ -16,7 +16,7 @@ module.exports = function (grunt) {
         }
     };
 
-    // Load all grunt tasks defined in the package.json file
+    // Load grunt tasks dynamically & from the package.json file
     require('time-grunt')(grunt);
     require('load-grunt-tasks')(grunt);
 
@@ -47,6 +47,6 @@ module.exports = function (grunt) {
 
     // Define and extent with dynamic configuration(s)
     var configs = require('load-grunt-configs')(grunt);
-    grunt.util._.extend(configs, config)
+    grunt.util._.extend(configs, config);
     grunt.initConfig(configs);
 };

@@ -6,7 +6,7 @@ node_modules/
 **/tmp/**
 /app
 *.suo
-/packager.exe
+/**/packager.exe
 /prototyped.ng/assets/css
 /prototyped.ng.samples/assets/css
 /prototyped.ng.samples/assets/lib/prototyped.ng.js
