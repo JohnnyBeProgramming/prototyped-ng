@@ -2,7 +2,7 @@ module.exports = {
     options: {
         separator: ';'
     },
-    module_js: {
+    module_min_js: {
         files: [{
             src: [
                 '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.base.js',

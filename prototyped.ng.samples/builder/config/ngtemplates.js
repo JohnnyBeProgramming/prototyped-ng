@@ -2,8 +2,14 @@ module.exports = {
     options: {
         singleModule: true,
         htmlmin: {
-            collapseWhitespace: true,
-            collapseBooleanAttributes: false
+            collapseBooleanAttributes: false,
+            collapseWhitespace: false,
+            removeAttributeQuotes: false,
+            removeComments: false,
+            removeEmptyAttributes: false,
+            removeRedundantAttributes: false,
+            removeScriptTypeAttributes: false,
+            removeStyleLinkTypeAttributes: false
         },
         url: function (url) {
             // Remove the prefix (if exists)
@@ -95,36 +101,17 @@ module.exports = {
             return content;
         },
     },
-    prototyped_ng_styles: {
+    module_styles: {
         options: {
-            module: '<%= cfg.mod %>.styles',
             base: '<%= cfg.base %>',
-            htmlmin: {
-                collapseWhitespace: false,
-                collapseBooleanAttributes: false,
-            },
+            module: '<%= cfg.mod %>.styles',
         },
         src: [
-            '<%= cfg.base %>**/**.min.css',
-            '!<%= cfg.base %>node_modules/**',
+            '<%= cfg.base %>**/*.min.css',
+            '!<%= cfg.base %>**/builder/**',
+            '!<%= cfg.base %>**/node_modules/**',
         ],
         dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.styles.js',
         module: '<%= cfg.mod %>.styles',
     },
-//    prototyped_ng_scripts: {
-//        options: {
-//            module: '<%= cfg.mod %>.sql',
-//            base: '<%= cfg.base %>',
-//            htmlmin: {
-//                collapseWhitespace: false,
-//                collapseBooleanAttributes: false,
-//            },
-//        },
-//        src: [
-//            '<%= cfg.base %>**/*.sql',
-//            '!<%= cfg.base %>node_modules/**',
-//        ],
-//        dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.sqlx.js',
-//        module: '<%= cfg.mod %>.sql',
-//    },
 };

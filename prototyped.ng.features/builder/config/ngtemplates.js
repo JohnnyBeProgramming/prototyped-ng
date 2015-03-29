@@ -2,8 +2,14 @@ module.exports = {
     options: {
         singleModule: true,
         htmlmin: {
-            collapseWhitespace: true,
-            collapseBooleanAttributes: false
+            collapseBooleanAttributes: false,
+            collapseWhitespace: false,
+            removeAttributeQuotes: false,
+            removeComments: false,
+            removeEmptyAttributes: false,
+            removeRedundantAttributes: false,
+            removeScriptTypeAttributes: false,
+            removeStyleLinkTypeAttributes: false
         },
         url: function (url) {
             // Remove the prefix (if exists)
@@ -95,14 +101,23 @@ module.exports = {
             return content;
         },
     },
+    module_styles: {
+        options: {
+            base: '<%= cfg.base %>',
+            module: '<%= cfg.mod %>.styles',
+        },
+        src: [
+            '<%= cfg.base %>**/*.min.css',
+            '!<%= cfg.base %>**/builder/**',
+            '!<%= cfg.base %>**/node_modules/**',
+        ],
+        dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.styles.js',
+        module: '<%= cfg.mod %>.styles',
+    },
     module_scripts: {
         options: {
             base: '<%= cfg.base %>',
             module: '<%= cfg.mod %>.scripts',
-            htmlmin: {
-                collapseWhitespace: false,
-                collapseBooleanAttributes: false,
-            },
         },
         src: [
             '<%= cfg.base %>**/*.sql',
@@ -111,24 +126,6 @@ module.exports = {
         ],
         dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.scripts.js',
         module: '<%= cfg.mod %>.scripts',
-    },
-    module_styles: {
-        options: {
-            base: '<%= cfg.base %>',
-            module: '<%= cfg.mod %>.styles',
-            htmlmin: {
-                collapseWhitespace: false,
-                collapseBooleanAttributes: false,
-            },
-        },
-        src: [
-            '<%= cfg.base %>**/**.sql',
-            //'<%= cfg.base %>**/**.min.css',
-            '!<%= cfg.base %>**/builder/**',
-            '!<%= cfg.base %>**/node_modules/**',
-        ],
-        dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.styles.js',
-        module: '<%= cfg.mod %>.styles',
     },
 
 };

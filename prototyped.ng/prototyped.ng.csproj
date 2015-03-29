@@ -59,34 +59,18 @@
     <TypeScriptCompile Include="modules\config.ng.ts" />
     <TypeScriptCompile Include="modules\console\controllers\ConsoleController.ts" />
     <TypeScriptCompile Include="modules\console\module.ng.ts" />
-    <TypeScriptCompile Include="modules\edge\module.ng.ts" />
     <TypeScriptCompile Include="modules\editor\controllers\EditorController.ts" />
     <TypeScriptCompile Include="modules\editor\module.ng.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\AddressBarController.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\ExplorerController.ts" />
     <TypeScriptCompile Include="modules\explore\module.ng.ts" />
-    <TypeScriptCompile Include="modules\features\module.ng.ts" />
-    <TypeScriptCompile Include="modules\features\appcmd.exe\certs.ng.ts" />
     <Content Include="modules\editor\styles\css\editor.css" />
     <Content Include="modules\editor\styles\css\editor.min.css">
       <DependentUpon>editor.css</DependentUpon>
     </Content>
     <Content Include="modules\explore\views\addressbar.tpl.html" />
     <Content Include="modules\explore\views\index.tpl.html" />
-    <Content Include="modules\features\appcmd.exe\certs.tpl.html" />
-    <Content Include="modules\edge\views\index.tpl.html" />
     <Content Include="modules\editor\views\main.tpl.html" />
-    <Content Include="modules\features\views\index.tpl.html" />
-    <Content Include="modules\features\views\left.tpl.html" />
-    <Content Include="modules\features\sqlcmd.exe\dialogs\dbActions.tpl.html" />
-    <TypeScriptCompile Include="modules\features\sqlcmd.exe\module.ng.ts" />
-    <Content Include="modules\features\sqlcmd.exe\scripts\utils\FileSizes.sql" />
-    <Content Include="modules\features\sqlcmd.exe\scripts\utils\ListViews.sql" />
-    <Content Include="modules\features\sqlcmd.exe\scripts\utils\NoCounts.sql" />
-    <Content Include="modules\features\sqlcmd.exe\scripts\utils\ShrinkDB.sql" />
-    <Content Include="modules\features\sqlcmd.exe\scripts\utils\TableSizes.sql" />
-    <Content Include="modules\features\sqlcmd.exe\views\connect.tpl.html" />
-    <Content Include="modules\features\sqlcmd.exe\views\database.tpl.html" />
     <Content Include="views\about\connections.tpl.html" />
     <Content Include="views\about\contact.tpl.html" />
     <Content Include="views\about\info.tpl.html" />
