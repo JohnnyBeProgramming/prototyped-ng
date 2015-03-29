@@ -93,16 +93,6 @@ angular.module('myApp.samples.notifications', [])
 
         // Get the value from persisted store
         cfg.enabled = cfg.getPersisted('notifications.enabled') == '1';
-
-        // Register the notification api
-        if (cfg.enabled) {
-            cfg.hookNotifications(function () {
-                if (cfg.debug) console.log(' - Notifications enabled.');
-            }, function () {
-                if (cfg.debug) console.warn(' - Notifications not available.');
-            });
-        }
-
     }])
 
     .controller('notificationsController', ['$rootScope', '$scope', '$state', '$stateParams', '$q', '$timeout', '$window', 'notificationsConfig', function ($rootScope, $scope, $state, $stateParams, $q, $timeout, $window, cfg) {
@@ -180,7 +170,17 @@ angular.module('myApp.samples.notifications', [])
 
     }])
 
-    .run(['$state', '$templateCache', 'notificationsConfig', function ($state, $templateCache, cfg) {
-
+    .run(['notificationsConfig', function (cfg) {
+        // Register the notification api
+        if (cfg.enabled) {
+            cfg.hookNotifications(
+                () => {
+                    // Notifications enabled by user
+                    console.debug(' - Notifications enabled.');
+                },
+                () => {
+                    // User canceled or not available
+                    console.warn(' - Notifications not available.');
+                });
+        }
     }])
-;

@@ -8,6 +8,7 @@
 /// <reference path="styles3d/module.ng.ts" />
 
 angular.module('prototyped.ng.samples', [
+    'prototyped.ng',
     'prototyped.ng.config',
     'prototyped.ng.samples.views',
 
@@ -21,13 +22,30 @@ angular.module('prototyped.ng.samples', [
     'myApp.samples.styles3d',
 ])
 
-    // Extend appConfig with module config
+// Extend appConfig with module config
     .config(['appConfigProvider', function (appConfigProvider) {
+
+        // Define module configuration
         appConfigProvider.set({
             'prototyped.ng.samples': {
                 active: true,
             }
         });
+        var appConfig = appConfigProvider.$get();
+        if (appConfig) {
+            // Define module routes
+            appConfig.routers.push({
+                url: '/samples',
+                menuitem: {
+                    label: 'Samples',
+                },
+                cardview: {
+                    style: 'img-sandbox',
+                    title: 'Prototyped Sample Code',
+                    desc: 'A selection of samples to test, play and learn about web technologies.'
+                },
+            });
+        }
     }])
 
     .config(['$stateProvider', function ($stateProvider) {
@@ -52,7 +70,7 @@ angular.module('prototyped.ng.samples', [
 
     .controller('sampleViewController', ['$rootScope', '$scope', '$state', function ($rootScope, $scope, $state) {
         // Define the model
-        var context : any = $scope.sample = {
+        var context: any = $scope.sample = {
             busy: true,
             text: '',
             utils: {

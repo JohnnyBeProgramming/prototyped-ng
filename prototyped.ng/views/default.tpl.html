@@ -5,31 +5,29 @@
         .contents {
             margin: 0 !important;
             padding: 0 !important;
-        }
-
-        #cardViewer {
-            background: #E0E0E0;
+            background: #E0E0E0!important;
         }
     </style>
     <!-- slider container -->
     <div class="slider docked">
         <!-- prev / next controls -->
-        <a class="arrow prev" href="" ng-click="showPrev()"><i class="glyphicon glyphicon-chevron-left"></i></a>
-        <a class="arrow next" href="" ng-click="showNext()"><i class="glyphicon glyphicon-chevron-right"></i></a>
+        <a class="arrow prev" href="" ng-show="false" ng-click="showPrev()"><i class="glyphicon glyphicon-chevron-left"></i></a>
+        <a class="arrow next" href="" ng-show="false" ng-click="showNext()"><i class="glyphicon glyphicon-chevron-right"></i></a>
 
         <div class="boxed">
             <!-- enumerate all photos -->
             <a class="card fixed-width slide"
-               ng-repeat="page in pages"
-               ng-href="{{page.url}}"
+               ng-repeat="route in pages | orderBy:'(priority || 1)'"
+               ng-if="route.cardview && (!route.visible || route.visible())"
+               ng-href="{{route.url}}"
                ng-class="{ 'active': isActive($index) }"
                ng-swipe-right="showPrev()"
                ng-swipe-left="showNext()">
-                <div class="card-image" ng-class="page.style">
+                <div class="card-image" ng-class="route.cardview.style">
                     <div class="banner"></div>
-                    <h2>{{page.title}}</h2>
+                    <h2>{{route.cardview.title}}</h2>
                 </div>
-                <p>{{page.desc}}</p>
+                <p>{{route.cardview.desc}}</p>
             </a>
         </div>
 

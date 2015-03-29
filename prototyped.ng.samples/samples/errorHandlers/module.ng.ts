@@ -37,7 +37,7 @@ angular.module('myApp.samples.errorHandlers', [])
             $log.error.apply($log, args);
         }
         if ($window.Raven) {
-            console.log(' - Using the RavenJS exception handler.');
+            console.debug(' - Using the RavenJS exception handler.');
             var ctx = { tags: { source: "Angular Unhandled Exception" } };
             return function (exception, cause) {
                 // Update the exception message
@@ -45,13 +45,13 @@ angular.module('myApp.samples.errorHandlers', [])
                 Raven.captureException(exception, ctx);
             };
         } else if (appNode.active) {
-            console.log(' - Using node webkit specific exception handler.');
+            console.debug(' - Using node webkit specific exception handler.');
             return function (exception, cause) {
                 setUpdatedErrorMessage(arguments, 'Internal [ NW ]: ');
                 // ToDo: Hook in some routing or something...
             };
         } else {
-            console.log(' - Using the default logging exception handler.');
+            console.debug(' - Using the default logging exception handler.');
             return function (exception, cause) {
                 setUpdatedErrorMessage(arguments, 'Internal [ JS ]: ');
             };

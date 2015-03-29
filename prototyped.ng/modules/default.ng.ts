@@ -5,35 +5,6 @@ angular.module('prototyped.default', [
     'ui.router',
 ])
 
-    .value('appPages', {
-        pages: [
-            {
-                url: '/proto',
-                style: 'img-explore',
-                title: 'Explore Features & Options',
-                desc: 'You can explore locally installed features and find your way around the site by clicking on this card...'
-            },
-            {
-                url: '/samples',
-                style: 'img-sandbox',
-                title: 'Prototyped Sample Code',
-                desc: 'A selection of samples to test, play and learn about web technologies.'
-            },
-            {
-                url: '/sync',
-                style: 'img-editor',
-                title: 'Import & Export Data',
-                desc: 'Load from external sources, modify and/or export to an external resource.'
-            },
-            {
-                url: '/about',
-                style: 'img-about',
-                title: 'About this software',
-                desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
-            },
-        ]
-    })
-
     .config(['$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider
@@ -49,10 +20,9 @@ angular.module('prototyped.default', [
           })
     }])
 
-
-    .controller('CardViewCtrl', ['$scope', 'appPages', function ($scope, appPages) {
+    .controller('CardViewCtrl', ['$scope', 'appConfig', function ($scope, appConfig) {
         // Make sure 'mySiteMap' exists
-        $scope.pages = appPages.pages || [];
+        $scope.pages = appConfig.routers || [];
 
         // initial image index
         $scope._Index = 0;

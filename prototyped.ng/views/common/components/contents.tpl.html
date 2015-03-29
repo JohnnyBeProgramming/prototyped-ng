@@ -1,0 +1,9 @@
+﻿<div id="contents" class="contents">
+    <div id="left" ui:view="left" xxx-ng:include="views/common/components/left.tpl.html"
+         ng:show="state.current.views['left'] || state.current.views['left@']">
+        <em>Left View</em>
+    </div>
+    <div id="main" ui:view="main" xxx-ng:include="views/common/components/main.tpl.html">
+        <em>Main View</em>
+    </div>
+</div>

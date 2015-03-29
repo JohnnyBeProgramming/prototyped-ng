@@ -55,9 +55,6 @@
     <Content Include="builder\config\uglify.js" />
     <Content Include="builder\config\watch.js" />
     <Content Include="builder\Gruntfile.js" />
-    <Content Include="index.js">
-      <DependentUpon>index.html</DependentUpon>
-    </Content>
     <Content Include="index.html" />
     <TypeScriptCompile Include="modules\config.ng.ts" />
     <TypeScriptCompile Include="modules\console\controllers\ConsoleController.ts" />
@@ -95,6 +92,11 @@
     <Content Include="views\about\info.tpl.html" />
     <Content Include="views\about\left.tpl.html" />
     <Content Include="modules\console\views\main.tpl.html" />
+    <Content Include="views\common\components\contents.tpl.html" />
+    <Content Include="views\common\components\footer.tpl.html" />
+    <Content Include="views\common\components\left.tpl.html" />
+    <Content Include="views\common\components\main.tpl.html" />
+    <Content Include="views\common\components\menu.tpl.html" />
     <Content Include="views\default.tpl.html" />
     <Content Include="web.config" />
   </ItemGroup>
@@ -124,6 +126,7 @@
   <ItemGroup>
     <Content Include="builder\package.json" />
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>

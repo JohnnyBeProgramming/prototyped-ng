@@ -22,73 +22,69 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.js"></script>
     <script src="https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.js"></script>
     <!--<![endif]-->
+
+</head>
+<body id="testApp">
+    <!-- Define the assets and components to be loaded (async) -->
+    <style resx:import="assets/css/app.min.css"></style>
+    <style resx:import="assets/css/prototyped.min.css"></style>
+    <div dom:replace ng:include="'views/common/components/menu.tpl.html'"></div>
+    <div dom:replace ng:include="'views/common/components/contents.tpl.html'"></div>
+    <div dom:replace ng:include="'views/common/components/footer.tpl.html'"></div>
+
     <!-- Load this module's libraries -->
     <script src="assets/lib/prototyped.ng.js"></script>
     <script src="assets/lib/prototyped.ng.samples.base.js"></script>
-    <!--script src="assets/lib/prototyped.samples.ng.views.js"></script -->
+    <script src="assets/lib/prototyped.ng.samples.views.js"></script>
+    <script src="assets/lib/prototyped.ng.samples.styles.js"></script>
     <script>
-        // Mock the template cache (clears pre-loaded templates and load rather from source)
+        // Mock the template caches (clears pre-loaded templates and load rather from source)
         angular.module('prototyped.ng.samples.views', []).run(['$templateCache', function ($templateCache) { }]);
+        angular.module('prototyped.ng.samples.styles', []).run(['$templateCache', function ($templateCache) { }]);
     </script>
-
-    <!-- Load some styles and logic just for testing this app... -->
-    <script src="index.js"></script>
-</head>
-<body id="testApp">
-    <style resx:import="assets/css/app.min.css"></style>
-    <style resx:import="assets/css/prototyped.min.css"></style>
-    <div id="menu">
-        <div class="dragable">
-            <a ui:sref="default" class="pull-right btn btn-default">Home</a>
-        </div>
-        <div ui:view="menu">
-            <ul class="nav navbar-nav">
-                <li ui:sref-active="open">
-                    <a ui:sref="samples.info">Samples</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-    <div id="contents">
-        <div id="left" ui:view="left"
-             ng:show="state.current.views['left'] || state.current.views['left@']">
-            <em>Left View</em>
-        </div>
-        <div id="main" ui:view="main">
-            <em>Main View</em>
-        </div>
-    </div>
-    <div id="footer" ui:view="footer">
-        <em>Footer View</em>
-    </div>
     <script>
-        // Load the config (async) and bootstrab angular
-        !(function (window, angular, elem, ngTargetApp, configUrl) {
-            window.onload = function () {
-                if (!configUrl) {
-                    console.log('Starting app ' + ngTargetApp + '...');
-                    angular.bootstrap(elem, [ngTargetApp]);
-                } else {
-                    var $http = angular.injector(['ng']).get('$http');
-                    $http({
-                        method: 'GET',
-                        url: configUrl,
-                    }).success(function (data, status, headers, config) {
-                        console.log('Configuring ' + ngTargetApp + '...')
-                        var cfgModule = angular.module('prototyped.ng.config');
-                        var oldConfig = angular.injector(['prototyped.ng.config']).get('appConfig');
-                        angular.extend(oldConfig, {
-                            version: data.version,
-                        })
-                        cfgModule.constant('appConfig', oldConfig);
-                        angular.bootstrap(elem, [ngTargetApp]);
-                    }).error(function (ex) {
-                        console.log(' - Starting ' + ngTargetApp + ' with default config.');
-                        angular.bootstrap(elem, [ngTargetApp]);
+        // Load the test app (async), with extended config (if available)
+        !(function (document, angular, $) {
+
+            // Declare test page application
+            angular.module('testApp', [
+                'ui.utils',
+                'ui.router',
+                'ui.bootstrap',
+                'angularMoment',
+                'angular-loading-bar',
+                'prototyped.ng.samples'
+            ])
+                .config(['$urlRouterProvider', function ($urlRouterProvider) {
+                    $urlRouterProvider // Set up default routes
+                        .when('', '/')
+                        .when('/', '/default')
+                        .when('/index.html', '/')
+                }])
+                .config(['$locationProvider', function ($locationProvider) {
+                    $locationProvider.html5Mode(true); // Configure HTML5 mode
+                }])
+                .run(['$rootScope', '$state', function ($rootScope, $state) {
+                    angular.extend($rootScope, {
+                        state: $state,
+                        startAt: Date.now(),
                     });
-                }
-            };
-        }(window, angular, $('#testApp'), 'testApp', 'package.json'));
+                }])
+
+            // Bootstrap the application (async)
+            angular
+                .injector(['prototyped.ng.config'])
+                .get('appLoader')
+                .init({
+                    name: 'testApp',
+                    path: 'builder/package.json',
+                    elem: $('#testApp') || document.body,
+                    opts: {
+                        showDefaultItems: false,
+                    },
+                });
+
+        }(document, angular, $));
     </script>
 </body>
 </html>

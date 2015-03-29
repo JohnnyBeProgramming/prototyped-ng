@@ -20,24 +20,83 @@ angular.module('prototyped.ng', [
     'prototyped.features',
 ])
 
-    // Extend appConfig with module config
     .config(['appConfigProvider', function (appConfigProvider) {
+
+        // Define module configuration
         appConfigProvider.set({
             'prototyped.ng': {
                 active: true,
             }
         });
-    }])
 
-    .config(['$stateProvider', '$urlRouterProvider', ($stateProvider, $urlRouterProvider) => {
+        // Define the routing components (menus, card views etc...)
+        var appConfig = appConfigProvider.$get();
+        if (appConfig) {
+            // Define module routes
+            appConfig.routers.push({
+                url: '/proto',
+                abstract: true,
+                priority: 0,
+                menuitem: {
+                    label: 'Explore',
+                    state: 'proto.cmd',
+                },
+                cardview: {
+                    style: 'img-explore',
+                    title: 'Explore Features & Options',
+                    desc: 'You can explore locally installed features and find your way around the site by clicking on this card...'
+                },
+                visible: function () {
+                    return appConfig.options.showDefaultItems;
+                },
+            });
+            appConfig.routers.push({
+                url: '/about',
+                abstract: true,
+                priority: 1000,
+                menuitem: {
+                    label: 'About',
+                    state: 'about.info',
+                },
+                cardview: {
+                    style: 'img-about',
+                    title: 'About this software',
+                    desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
+                },
+                visible: function () {
+                    return appConfig.options.showAboutPage;
+                },
+            });
+            appConfig.routers.push({
+                url: '/imports',
+                abstract: true,
+                menuitem: {
+                    label: 'Imports',
+                },
+                cardview: {
+                    style: 'img-editor',
+                    title: 'Import & Export Data',
+                    desc: 'Load from external sources, modify and/or export to an external resource.'
+                },
+                visible: function () {
+                    return appConfig.options.showDefaultItems;
+                },
+            });
+        }
+
+    }])
+    .config(['$urlRouterProvider', ($urlRouterProvider) => {
 
         // Define redirects
         $urlRouterProvider
             .when('/proto', '/proto/explore')
             .when('/sandbox', '/samples')
-            .when('/sync', '/edge');
+            .when('/imports', '/edge');
 
-        // Set up the routing...
+    }])
+    .config(['$stateProvider', ($stateProvider) => {
+
+        // Set up routing...
         $stateProvider
             .state('proto', {
                 url: '/proto',
@@ -439,6 +498,15 @@ angular.module('prototyped.ng', [
         }
     }])
 
+    .directive('domReplace', function () {
+        return {
+            restrict: 'A',
+            require: 'ngInclude',
+            link: function (scope, el, attrs) {
+                el.replaceWith(el.children());
+            }
+        };
+    })
     .directive('resxInclude', ['$templateCache', function ($templateCache) {
         return {
             priority: 100,
@@ -448,6 +516,7 @@ angular.module('prototyped.ng', [
                 var cache = $templateCache.get(ident);
                 if (cache) {
                     $element.text(cache);
+                    //$element.replaceWith(cache);
                 }
                 return {
                     pre: (scope, element) => { },
@@ -464,13 +533,24 @@ angular.module('prototyped.ng', [
                 var ident = attr.resxImport;
                 var cache = $templateCache.get(ident);
                 if ($('[resx-src="' + ident + '"]').length <= 0) {
+                    var html = '';
                     if (/(.*)(\.css)/i.test(ident)) {
-                        $('head').append('<style resx-src="' + ident + '">' + cache + '</style>');
+                        if (cache != null) {
+                            html = '<style resx-src="' + ident + '">' + cache + '</style>';
+                        } else {
+                            html = '<link resx-src="' + ident + '" href="' + ident + '" rel="stylesheet" type="text/css" />';
+                        }
                     } else if (/(.*)(\.js)/i.test(ident)) {
-                        $('head').append('<script resx-src="' + ident + '">' + cache + '</script>');
+                        if (cache != null) {
+                            html = '<script resx-src="' + ident + '">' + cache + '</script>';
+                        } else {
+                            html = '<script resx-src="' + ident + '" src="' + ident + '">' + cache + '</script>';
+                        }
+                    }
+                    if (html) {
+                        $element.replaceWith(html);
                     }
                 }
-                //$element.remove();
                 return {
                     pre: (scope, element) => { },
                     post: (scope, element) => { }
@@ -492,5 +572,5 @@ angular.module('prototyped.ng', [
 
     }])
     .run(['appConfig', function (appConfig) {
-        console.log(' - Current Config: ', appConfig);
+        console.debug(' - Current Config: ', appConfig);
     }])

@@ -1,22 +1,26 @@
-﻿<div class="alert" role="alert" style="cursor:pointer; margin: 0; padding: 3px; border-radius:0;"
-     ng-class="{ 'alert-danger':position.failed, 'alert-info': position.isBusy, 'alert-success': position.coords, 'alert-warning': !position }"
-     ng-click="geoCtrl.getPosition()"
+﻿<div class="alert" role="alert"
+     style="margin: 0; padding: 3px; border-radius:0;"
+     ng-class="{ 'alert-danger':position.failed, 'alert-info': position.isBusy, 'alert-success': position.coords, 'alert-warning': !position }"     
      ng-show="!geoCtrl.hideStatus">
-    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-    <i class="glyphicon" ng-class="{ 'glyphicon-eye-close':position.failed, 'glyphicon-refresh': position.isBusy, 'glyphicon-ok': position.coords, 'glyphicon-eye-open': !position }"></i>
-    <span ng-if="!position && !client">
-        Locating your current position...
-    </span>
-    <span ng-if="!position.failed && !position.coords && !position.isBusy && client">
-        <b>Please Note: </b> Tracking you (passively) via your IP address. <em>Click here for a more accurate position.</em>
-    </span>
-    <span ng-if="!position.failed && !position.coords && position.isBusy">
-        <b>Requesting: </b> Please accept or discard the request for your current location...
-    </span>
-    <span ng-if="position.failed">
-        <b>Warning: </b> You declined to share your location info, passively tracking your IP address...
-    </span>
-    <span ng-if="position.coords">
-        <b>Success: </b> Current position found via browser. Processing info...
-    </span>
+    <a href="" style="color: #000; text-decoration: none;" class="pull-right" data-dismiss="alert">
+        <i class="glyphicon glyphicon-remove" aria-hidden="true"></i>
+    </a>
+    <a href="" style="color: #000; text-decoration: none;" ng-click="geoCtrl.getPosition()">
+        <i class="glyphicon" ng-class="{ 'glyphicon-eye-close':position.failed, 'glyphicon-refresh': position.isBusy, 'glyphicon-ok': position.coords, 'glyphicon-eye-open': !position }"></i>
+        <span ng-if="!position && !client">
+            Locating your current position...
+        </span>
+        <span ng-if="!position.failed && !position.coords && !position.isBusy && client">
+            <b>Please Note: </b> Tracking you (passively) via your IP address. <em>Click here for a more accurate position.</em>
+        </span>
+        <span ng-if="!position.failed && !position.coords && position.isBusy">
+            <b>Requesting: </b> Please accept or discard the request for your current location...
+        </span>
+        <span ng-if="position.failed">
+            <b>Warning: </b> You declined to share your location info, passively tracking your IP address...
+        </span>
+        <span ng-if="position.coords">
+            <b>Success: </b> Current position found via browser. Processing info...
+        </span>
+    </a>
 </div>

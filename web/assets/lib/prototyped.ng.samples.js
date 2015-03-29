@@ -767,7 +767,7 @@ angular.module('myApp.samples.errorHandlers', []).config([
             $log.error.apply($log, args);
         }
         if ($window.Raven) {
-            console.log(' - Using the RavenJS exception handler.');
+            console.debug(' - Using the RavenJS exception handler.');
             var ctx = { tags: { source: "Angular Unhandled Exception" } };
             return function (exception, cause) {
                 // Update the exception message
@@ -775,7 +775,7 @@ angular.module('myApp.samples.errorHandlers', []).config([
                 Raven.captureException(exception, ctx);
             };
         } else if (appNode.active) {
-            console.log(' - Using node webkit specific exception handler.');
+            console.debug(' - Using node webkit specific exception handler.');
             return function (exception, cause) {
                 setUpdatedErrorMessage(arguments, 'Internal [ NW ]: ');
                 // ToDo: Hook in some routing or something...
@@ -2084,17 +2084,6 @@ angular.module('myApp.samples.notifications', []).config([
     '$httpProvider', 'notificationsConfig', function ($httpProvider, cfg) {
         // Get the value from persisted store
         cfg.enabled = cfg.getPersisted('notifications.enabled') == '1';
-
-        // Register the notification api
-        if (cfg.enabled) {
-            cfg.hookNotifications(function () {
-                if (cfg.debug)
-                    console.log(' - Notifications enabled.');
-            }, function () {
-                if (cfg.debug)
-                    console.warn(' - Notifications not available.');
-            });
-        }
     }]).controller('notificationsController', [
     '$rootScope', '$scope', '$state', '$stateParams', '$q', '$timeout', '$window', 'notificationsConfig', function ($rootScope, $scope, $state, $stateParams, $q, $timeout, $window, cfg) {
         // Define the model
@@ -2169,7 +2158,17 @@ angular.module('myApp.samples.notifications', []).config([
             angular.extend(context, updates);
         }
     }]).run([
-    '$state', '$templateCache', 'notificationsConfig', function ($state, $templateCache, cfg) {
+    'notificationsConfig', function (cfg) {
+        // Register the notification api
+        if (cfg.enabled) {
+            cfg.hookNotifications(function () {
+                // Notifications enabled by user
+                console.debug(' - Notifications enabled.');
+            }, function () {
+                // User canceled or not available
+                console.warn(' - Notifications not available.');
+            });
+        }
     }]);
 /// <reference path="../../imports.d.ts" />
 angular.module('myApp.samples.sampleData', []).config([
@@ -2422,6 +2421,7 @@ angular.module('myApp.samples.styles3d', []).config([
 /// <reference path="sampleData/module.ng.ts" />
 /// <reference path="styles3d/module.ng.ts" />
 angular.module('prototyped.ng.samples', [
+    'prototyped.ng',
     'prototyped.ng.config',
     'prototyped.ng.samples.views',
     'myApp.samples.errorHandlers',
@@ -2434,11 +2434,27 @@ angular.module('prototyped.ng.samples', [
     'myApp.samples.styles3d'
 ]).config([
     'appConfigProvider', function (appConfigProvider) {
+        // Define module configuration
         appConfigProvider.set({
             'prototyped.ng.samples': {
                 active: true
             }
         });
+        var appConfig = appConfigProvider.$get();
+        if (appConfig) {
+            // Define module routes
+            appConfig.routers.push({
+                url: '/samples',
+                menuitem: {
+                    label: 'Samples'
+                },
+                cardview: {
+                    style: 'img-sandbox',
+                    title: 'Prototyped Sample Code',
+                    desc: 'A selection of samples to test, play and learn about web technologies.'
+                }
+            });
+        }
     }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states

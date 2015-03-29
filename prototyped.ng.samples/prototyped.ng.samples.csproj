@@ -35,12 +35,6 @@
     <Content Include="builder\config\uglify.js" />
     <Content Include="builder\config\watch.js" />
     <Content Include="builder\Gruntfile.js" />
-    <Content Include="index.css">
-      <DependentUpon>index.html</DependentUpon>
-    </Content>
-    <Content Include="index.js">
-      <DependentUpon>index.html</DependentUpon>
-    </Content>
     <Content Include="assets\lib\prototyped.ng.js" />
     <Content Include="assets\lib\prototyped.ng.samples.base.js" />
     <Content Include="assets\lib\prototyped.ng.samples.views.js" />
