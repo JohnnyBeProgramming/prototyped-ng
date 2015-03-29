@@ -23,38 +23,6 @@ angular.module('myApp', [
   'prototyped.ng.features',
 ])
 
-    .value('appMenu', {
-        options: {
-            showRoot: true,
-        },
-        items: [
-            {
-                shown: typeof require !== 'undefined',
-                label: 'Explore',
-                icon: 'fa fa-cubes',
-                value: 'proto.cmd',
-                /*
-                value: [
-                    { label: 'Discovery', icon: 'fa fa-refresh', value: 'modules.discover', },
-                    { label: 'Connnect', icon: 'fa fa-gears', value: 'modules.connect', },
-                    { divider: true },
-                    { label: 'Clean & Exit', icon: 'fa fa-recycle', value: 'modules.clear', },
-                ],
-                */
-            },
-            {
-                label: 'Samples',
-                icon: 'fa fa-share-alt',
-                value: 'samples.info',
-            },
-            {
-                label: 'About this app',
-                icon: 'fa fa-info-circle',
-                value: 'about.info',
-            },
-        ],
-    })
-
     .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
         // Set up default routes
         $urlRouterProvider
@@ -239,11 +207,10 @@ angular.module('myApp', [
         };
     }])
 
-    .run(['$rootScope', '$state', '$window', '$filter', 'appMenu', 'appNode', 'appStatus', function ($rootScope, $state, $window, $filter, appMenu, appNode, appStatus) {
+    .run(['$rootScope', '$state', function ($rootScope, $state) {
 
         angular.extend($rootScope, {
             state: $state,
-            appMenu: appMenu,
             startAt: Date.now(),
         });
 

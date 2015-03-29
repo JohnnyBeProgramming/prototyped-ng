@@ -123,7 +123,7 @@
                 </ul>
                 <div class="non-dragable ng-cloak hidden-xs" style="display: inline-block" ui:view="menu">
                     <!-- Begin: Default menu toolbar -->
-                    <ul class="nav navbar-nav" app:menu="appMenu.items"></ul>
+                    <ul class="nav navbar-nav" app:menu="appConfig.routers"></ul>
                     <!-- End: Default menu toolbar -->
                 </div>
                 <ul class="non-dragable nav navbar-nav pull-right toolbar-ctrls hidden-xs">
@@ -177,6 +177,9 @@
                     <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
                     <a href="" class="ng-cloak">Warnings ({{ status.logs | typeCount:'warn' }})</a>
                 </label>
+            </span>
+            <span ng:if="false">
+                <em><i class="fa fa-spinner fa-spin"></i> Loading...</em>
             </span>
             <span ng:if="true" class="ng-cloak">
                 Client Version: <span app:version><em>Loading...</em></span> |
