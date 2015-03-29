@@ -21,9 +21,9 @@ angular.module('prototyped.ng.features', [
                     label: 'Explore'
                 },
                 cardview: {
-                    style: 'img-sandbox',
-                    title: 'Advanced Features',
-                    desc: 'Examples based on feature detection. Some are only available for specific operating systems.'
+                    style: 'img-advanced',
+                    title: 'Advanced Feature Detection',
+                    desc: 'Based on feature detection. Some features are available for specific operating systems only.'
                 }
             });
         }
@@ -118,7 +118,7 @@ angular.module('prototyped.ng.features', [
   'use strict';
 
   $templateCache.put('assets/css/features.min.css',
-    "body .features-info{padding:8px}"
+    "body .card-view .img-advanced{filter:grayscale(100%);background-size:715px auto;background-position:top right;background-image:url(http://cywee.com/wp-content/uploads/2013/04/Advanced-Technology-715x250.jpg)}"
   );
 
 }]);

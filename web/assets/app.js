@@ -20,7 +20,7 @@ angular.module('myApp', [
   // Prototyped modules
   'prototyped.ng',
   'prototyped.ng.samples',
-
+  'prototyped.ng.features',
 ])
 
     .value('appMenu', {

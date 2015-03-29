@@ -2424,6 +2424,7 @@ angular.module('prototyped.ng.samples', [
     'prototyped.ng',
     'prototyped.ng.config',
     'prototyped.ng.samples.views',
+    'prototyped.ng.samples.styles',
     'myApp.samples.errorHandlers',
     'myApp.samples.sampleData',
     'myApp.samples.location',

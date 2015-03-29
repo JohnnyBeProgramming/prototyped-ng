@@ -25,9 +25,9 @@ angular.module('prototyped.ng.features', [
                     label: 'Explore',
                 },
                 cardview: {
-                    style: 'img-sandbox',
-                    title: 'Advanced Features',
-                    desc: 'Examples based on feature detection. Some are only available for specific operating systems.'
+                    style: 'img-advanced',
+                    title: 'Advanced Feature Detection',
+                    desc: 'Based on feature detection. Some features are available for specific operating systems only.'
                 },
             });
         }

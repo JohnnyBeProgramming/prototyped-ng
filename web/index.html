@@ -10,7 +10,7 @@
     <meta charset="utf-8">
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link href="assets/favicon.ico" rel="shortcut icon">
     <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
@@ -105,6 +105,8 @@
     <!--[if lt IE 9]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a target="_self" href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p><![endif]-->
     <div id="myApp" class="docked">
         <style resx:import="assets/css/prototyped.min.css"></style>
+        <style resx:import="assets/css/samples.min.css"></style>
+        <style resx:import="assets/css/features.min.css"></style>
         <div class="dragable navbar navbar-default navbar-fixed-top">
             <div class="navbar-inner">
                 <ul class="non-dragable nav navbar-nav navheading ng-cloak">
@@ -217,7 +219,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.js"></script>
     <script src="https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.js"></script>
     <!--<![endif]-->
-
     <!-- build:loader ../app/assets/lib/app.loader.dll.js -->
     <script src="assets/app.loader.js"></script>
     <script src="assets/app.settings.js"></script>
@@ -233,6 +234,7 @@
             // Load prototyped module libraries
             'assets/lib/prototyped.ng.js',
             'assets/lib/prototyped.ng.samples.js',
+            'assets/lib/prototyped.ng.features.js',
         ];
 
         // Define helper method to set error meesage
