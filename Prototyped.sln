@@ -48,6 +48,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prototyped.ng", "prototyped
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prototyped.ng.samples", "prototyped.ng.samples\prototyped.ng.samples.csproj", "{EEFED0D7-A24E-4EAC-8421-8F6C809B8997}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prototyped.ng.features", "prototyped.ng.features\prototyped.ng.features.csproj", "{097E61AD-1A41-43CC-8269-37F2EAD927EA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -70,6 +72,10 @@ Global
 		{EEFED0D7-A24E-4EAC-8421-8F6C809B8997}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EEFED0D7-A24E-4EAC-8421-8F6C809B8997}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EEFED0D7-A24E-4EAC-8421-8F6C809B8997}.Release|Any CPU.Build.0 = Release|Any CPU
+		{097E61AD-1A41-43CC-8269-37F2EAD927EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{097E61AD-1A41-43CC-8269-37F2EAD927EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{097E61AD-1A41-43CC-8269-37F2EAD927EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{097E61AD-1A41-43CC-8269-37F2EAD927EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -80,5 +86,6 @@ Global
 		{5980A535-612C-4A86-80B7-886F5A26D1A3} = {95171BE4-02D1-487C-928F-469578B68BA1}
 		{42656789-35A8-4BCF-B2B0-8454A32A1DB5} = {C5E9870A-A07C-4B3D-9904-3D5F6653C66D}
 		{EEFED0D7-A24E-4EAC-8421-8F6C809B8997} = {C5E9870A-A07C-4B3D-9904-3D5F6653C66D}
+		{097E61AD-1A41-43CC-8269-37F2EAD927EA} = {C5E9870A-A07C-4B3D-9904-3D5F6653C66D}
 	EndGlobalSection
 EndGlobal

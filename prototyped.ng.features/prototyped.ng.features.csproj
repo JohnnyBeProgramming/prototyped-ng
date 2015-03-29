@@ -3,7 +3,7 @@
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <ProjectGuid>{EEFED0D7-A24E-4EAC-8421-8F6C809B8997}</ProjectGuid>
+    <ProjectGuid>{097E61AD-1A41-43CC-8269-37F2EAD927EA}</ProjectGuid>
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <OutputPath>bin</OutputPath>
@@ -18,11 +18,13 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="assets\css\samples.css" />
-    <Content Include="assets\css\samples.min.css">
-      <DependentUpon>samples.css</DependentUpon>
+    <Content Include="assets\css\features.css" />
+    <Content Include="assets\css\features.min.css">
+      <DependentUpon>features.css</DependentUpon>
     </Content>
-    <Content Include="assets\lib\prototyped.ng.samples.styles.js" />
+    <Content Include="assets\lib\prototyped.ng.features.base.js" />
+    <Content Include="assets\lib\prototyped.ng.features.styles.js" />
+    <Content Include="assets\lib\prototyped.ng.features.views.js" />
     <Content Include="builder\config\banner.js" />
     <Content Include="builder\config\concat.js" />
     <Content Include="builder\config\copy.js" />
@@ -36,39 +38,12 @@
     <Content Include="builder\config\uglify.js" />
     <Content Include="builder\config\watch.js" />
     <Content Include="builder\Gruntfile.js" />
-    <Content Include="assets\lib\prototyped.ng.samples.base.js" />
-    <Content Include="assets\lib\prototyped.ng.samples.views.js" />
-    <Content Include="assets\lib\screen.js" />
     <Content Include="index.html" />
-    <Content Include="samples\compression\main.tpl.html" />
-    <TypeScriptCompile Include="samples\compression\module.ng.ts" />
-    <Content Include="samples\decorators\dialogs\interceptor.tpl.html" />
-    <Content Include="samples\decorators\main.tpl.html" />
-    <TypeScriptCompile Include="samples\decorators\module.ng.ts" />
-    <Content Include="samples\errorHandlers\main.tpl.html" />
-    <TypeScriptCompile Include="samples\errorHandlers\module.ng.ts" />
-    <Content Include="samples\interceptors\main.tpl.html" />
-    <TypeScriptCompile Include="samples\interceptors\module.ng.ts" />
-    <Content Include="samples\left.tpl.html" />
-    <Content Include="samples\location\views\aside.tpl.html" />
-    <Content Include="samples\location\views\main.tpl.html" />
-    <Content Include="samples\location\views\status.tpl.html" />
-    <Content Include="samples\main.tpl.html" />
-    <TypeScriptCompile Include="samples\location\controllers\proto.ts" />
-    <TypeScriptCompile Include="samples\location\controllers\proto.utils.ts" />
-    <TypeScriptCompile Include="samples\location\module.ng.ts" />
-    <TypeScriptCompile Include="samples\location\controllers\GeoController.ts" />
-    <TypeScriptCompile Include="samples\module.ng.ts" />
-    <Content Include="samples\notifications\main.tpl.html" />
-    <TypeScriptCompile Include="samples\notifications\module.ng.ts" />
-    <Content Include="samples\sampleData\main.tpl.html" />
-    <TypeScriptCompile Include="samples\sampleData\module.ng.ts" />
-    <Content Include="samples\styles3d\main.tpl.html" />
-    <TypeScriptCompile Include="samples\styles3d\module.ng.ts" />
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="imports.d.ts" />
+    <TypeScriptCompile Include="modules\module.ng.ts" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\prototyped.ng\prototyped.ng.csproj">
@@ -80,21 +55,21 @@
     <Content Include="builder\package.json" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="assets\less\samples.less" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="assets\css\samples.css.map">
-      <DependentUpon>samples.css</DependentUpon>
-    </Content>
+    <Content Include="assets\less\features.less" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="builder\tasks\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\css\features.css.map">
+      <DependentUpon>features.css</DependentUpon>
+    </Content>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <RootNamespace>prototyped.ng.samples</RootNamespace>
+    <RootNamespace>prototyped.ng.features</RootNamespace>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\WebApplications\Microsoft.WebApplication.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\WebApplications\Microsoft.WebApplication.targets')" />
@@ -119,7 +94,7 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <TypeScriptRemoveComments>false</TypeScriptRemoveComments>
     <TypeScriptSourceMap>true</TypeScriptSourceMap>
-    <TypeScriptOutFile>assets\lib\prototyped.ng.samples.base.js</TypeScriptOutFile>
+    <TypeScriptOutFile>assets\lib\prototyped.ng.features.base.js</TypeScriptOutFile>
     <TypeScriptModuleKind>commonjs</TypeScriptModuleKind>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">

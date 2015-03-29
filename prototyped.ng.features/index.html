@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <base href="/">
+    <meta charset="utf-8" />
+    <title>Module Sandbox</title>
+
+    <!-- Load AngularJS and all the required libraries (exclude IE < 10 from the party) -->
+    <!--[if gt IE 9]><!-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/less.js/2.3.1/less.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-route.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular-animate.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-utils/0.1.1/angular-ui-utils.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.13/angular-ui-router.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.0/ui-bootstrap-tpls.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.js"></script>
+    <script src="https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.js"></script>
+    <!--<![endif]-->
+
+</head>
+<body id="testApp">
+    <!-- Define the assets and components to be loaded (async) -->
+    <style resx:import="assets/css/app.min.css"></style>
+    <style resx:import="assets/css/prototyped.min.css"></style>
+    <div dom:replace ng:include="'views/common/components/menu.tpl.html'"></div>
+    <div dom:replace ng:include="'views/common/components/contents.tpl.html'"></div>
+    <div dom:replace ng:include="'views/common/components/footer.tpl.html'"></div>
+
+    <!-- Load this module's libraries -->
+    <script src="assets/lib/prototyped.ng.js"></script>
+    <script src="assets/lib/prototyped.ng.features.base.js"></script>
+    <script src="assets/lib/prototyped.ng.features.views.js"></script>
+    <script src="assets/lib/prototyped.ng.features.styles.js"></script>
+    <script>
+        // Mock the template caches (clears pre-loaded templates and load rather from source)
+        angular.module('prototyped.ng.features.views', []).run(['$templateCache', function ($templateCache) { }]);
+        angular.module('prototyped.ng.features.styles', []).run(['$templateCache', function ($templateCache) { }]);
+    </script>
+    <script>
+        // Load the test app (async), with extended config (if available)
+        !(function (document, angular, $) {
+
+            // Declare test page application
+            angular.module('testApp', [
+                'ui.utils',
+                'ui.router',
+                'ui.bootstrap',
+                'angularMoment',
+                'angular-loading-bar',
+                'prototyped.ng.samples'
+            ])
+                .config(['$urlRouterProvider', function ($urlRouterProvider) {
+                    $urlRouterProvider // Set up default routes
+                        .when('', '/')
+                        .when('/', '/default')
+                        .when('/index.html', '/')
+                }])
+                .config(['$locationProvider', function ($locationProvider) {
+                    $locationProvider.html5Mode(true); // Configure HTML5 mode
+                }])
+                .run(['$rootScope', '$state', function ($rootScope, $state) {
+                    angular.extend($rootScope, {
+                        state: $state,
+                        startAt: Date.now(),
+                    });
+                }])
+
+            // Bootstrap the application (async)
+            angular
+                .injector(['prototyped.ng.config'])
+                .get('appLoader')
+                .init({
+                    name: 'testApp',
+                    path: 'builder/package.json',
+                    elem: $('#testApp') || document.body,
+                    opts: {
+                        showDefaultItems: false,
+                    },
+                });
+
+        }(document, angular, $));
+    </script>
+</body>
+</html>
