@@ -2447,7 +2447,8 @@ angular.module('prototyped.ng.samples', [
             appConfig.routers.push({
                 url: '/samples',
                 menuitem: {
-                    label: 'Samples'
+                    label: 'Samples',
+                    icon: 'fa fa-share-alt'
                 },
                 cardview: {
                     style: 'img-sandbox',

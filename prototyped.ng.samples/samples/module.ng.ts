@@ -39,6 +39,7 @@ angular.module('prototyped.ng.samples', [
                 url: '/samples',
                 menuitem: {
                     label: 'Samples',
+                    icon: 'fa fa-share-alt',                
                 },
                 cardview: {
                     style: 'img-sandbox',
