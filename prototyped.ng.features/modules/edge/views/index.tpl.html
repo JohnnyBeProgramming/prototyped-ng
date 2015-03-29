@@ -1,0 +1,22 @@
+﻿<div class="container">
+    <h4>
+        Prototyping EdgeJS
+        <small>Interoperability between JavaScript and C#.net, SQL and more</small>
+    </h4>
+    <div ng:cloak>
+        <div class="alert" ng-class="{ 'alert-success': edge.active, 'alert-warning': !edge.active, 'alert-danger': edge.error}">
+            <div ng-if="!edge.error">
+                <i class="glyphicon" ng-class="{ 'glyphicon-ok':edge.active, 'glyphicon-warning-sign': !edge.active }"></i>
+                <b>EdgeJS:</b> The current status is <em>{{ edge.active ? 'Connected' : 'Offline' }}</em>.
+            </div>
+            <div ng-if="edge.error">
+                <i class="glyphicon glyphicon-exclamation-sign"></i>
+                <b>Error:</b> {{ edge.error.message ? edge.error.message : edge.error }}.
+            </div>
+        </div>
+        <div class="btn-group btn-group-sm">
+            <a class="btn btn-primary" ng-if="!edge.active" href="" ng-click="edge.active = edge.detect()">Connnect</a>
+            <a class="btn btn-warning" ng-if="edge.active" href="" ng-click="edge.active = false">Disconnect</a>
+        </div>
+    </div>
+</div>

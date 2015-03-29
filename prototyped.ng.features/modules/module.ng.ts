@@ -1,10 +1,16 @@
 /// <reference path="../imports.d.ts" />
+/// <reference path="cli/module.ng.ts" />
+/// <reference path="edge/module.ng.ts" />
 
 angular.module('prototyped.ng.features', [
     'prototyped.ng',
     'prototyped.ng.config',
     'prototyped.ng.features.views',
     'prototyped.ng.features.styles',
+
+// Define sub modules
+    'prototyped.cli',
+    'prototyped.edge',
 ])
 
 // Extend appConfig with module config
@@ -14,22 +20,51 @@ angular.module('prototyped.ng.features', [
         appConfigProvider.set({
             'prototyped.ng.features': {
                 active: true,
+                hideInBrowserMode: true,
             }
         });
+
         var appConfig = appConfigProvider.$get();
         if (appConfig) {
             // Define module routes
             appConfig.routers.push({
                 url: '/features',
+                priority: 100,
                 menuitem: {
-                    label: 'Explore',
+                    label: 'Features',
+                    icon: 'fa fa-flask',
                 },
                 cardview: {
-                    style: 'img-advanced',
+                    style: typeof require !== 'undefined' ? 'img-advanced' : 'img-advanced-restricted',
                     title: 'Advanced Feature Detection',
-                    desc: 'Based on feature detection. Some features are available for specific operating systems only.'
+                    desc: 'Samples based on feature detection. Some may not be available for your browser or operating system.'
+                },
+                visible: function () {
+                    var opts = appConfig['prototyped.ng.features']
+                    return opts && opts.hideInBrowserMode
+                        ? typeof require !== 'undefined'
+                        : appConfig.options.showDefaultItems || !opts.hideInBrowserMode;
                 },
             });
+            appConfig.routers.push({
+                url: '/imports',
+                abstract: true,
+                priority: 100,
+                menuitem: {
+                    label: 'Imports',
+                    icon: 'fa fa-cloud-download',
+                },
+                cardview: {
+                    style: 'img-editor',
+                    title: 'Import Additional Modules',
+                    desc: 'Load from external sources, modify and/or export to an online repository.'
+                },
+                visible: function () {
+                    var opts = appConfig['prototyped.ng.features']
+                    return opts && opts.hideInBrowserMode;
+                },
+            });
+
         }
     }])
 

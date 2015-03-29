@@ -8,7 +8,7 @@ angular.module('prototyped.ng', [
     'prototyped.ng.config',
     'prototyped.ng.views',
     'prototyped.ng.styles',
-    'prototyped.ng.sql',
+    'prototyped.ng.scripts',
 
 // Define sub modules
     'prototyped.default',

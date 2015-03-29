@@ -39,10 +39,26 @@
     <Content Include="builder\config\watch.js" />
     <Content Include="builder\Gruntfile.js" />
     <Content Include="index.html" />
+    <Content Include="modules\edge\views\index.tpl.html" />
+    <Content Include="modules\cli\win\appcmd.exe\certs.tpl.html" />
+    <Content Include="modules\cli\win\sqlcmd.exe\dialogs\dbActions.tpl.html" />
+    <Content Include="modules\cli\win\sqlcmd.exe\scripts\utils\FileSizes.sql" />
+    <Content Include="modules\cli\win\sqlcmd.exe\scripts\utils\ListViews.sql" />
+    <Content Include="modules\cli\win\sqlcmd.exe\scripts\utils\NoCounts.sql" />
+    <Content Include="modules\cli\win\sqlcmd.exe\scripts\utils\ShrinkDB.sql" />
+    <Content Include="modules\cli\win\sqlcmd.exe\scripts\utils\TableSizes.sql" />
+    <Content Include="modules\cli\win\sqlcmd.exe\views\connect.tpl.html" />
+    <Content Include="modules\cli\win\sqlcmd.exe\views\database.tpl.html" />
+    <Content Include="views\index.tpl.html" />
+    <Content Include="views\left.tpl.html" />
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="imports.d.ts" />
+    <TypeScriptCompile Include="modules\cli\module.ng.ts" />
+    <TypeScriptCompile Include="modules\edge\module.ng.ts" />
+    <TypeScriptCompile Include="modules\cli\win\appcmd.exe\certs.ng.ts" />
+    <TypeScriptCompile Include="modules\cli\win\sqlcmd.exe\module.ng.ts" />
     <TypeScriptCompile Include="modules\module.ng.ts" />
   </ItemGroup>
   <ItemGroup>
@@ -64,6 +80,9 @@
     <Content Include="assets\css\features.css.map">
       <DependentUpon>features.css</DependentUpon>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="package.json" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>

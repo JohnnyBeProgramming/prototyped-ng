@@ -1,5 +1,5 @@
 module.exports = {
-  prototyped_ng: {
+  module_cssmin: {
     expand: true,
     cwd: '<%= cfg.base %><%= cfg.css %>/',
     src: ['**/*.css', '!**/*.min.css'],

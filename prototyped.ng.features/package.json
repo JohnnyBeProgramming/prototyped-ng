@@ -1,0 +1,28 @@
+{
+    "private": true,
+    "version": "1.0.0.3",
+    "name": "Prototyped Features",
+    "main": "http://localhost:49942/",
+    "single-instance": true,
+    "window": {
+        "fullscreen": true,
+        "title": "Prototyped Features",
+        "icon": "assets/favicon.ico",
+        "toolbar": false,
+        "frame": false,
+        "width": 1024,
+        "height": 768,
+        "min_width": 800,
+        "min_height": 600,
+        "position": "center",
+        "show_in_taskbar": true,
+        "transparent": false,
+        "kiosk": false
+    },
+    "webkit": {
+        "plugin": false,
+        "page-cache": false
+    },
+    "node-remote": "<local>", // "https://*"
+    "chromium-args": "--child-clean-exit"
+}

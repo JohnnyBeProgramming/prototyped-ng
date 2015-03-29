@@ -56,16 +56,19 @@
                 'angular-loading-bar',
                 'prototyped.ng.features'
             ])
-                .config(['$urlRouterProvider', function ($urlRouterProvider) {
+                .config(['$urlRouterProvider', '$locationProvider', function ($urlRouterProvider, $locationProvider) {
+                    $locationProvider.html5Mode(true); // Configure HTML5 mode
                     $urlRouterProvider // Set up default routes
                         .when('', '/')
                         .when('/', '/default')
                         .when('/index.html', '/')
                 }])
-                .config(['$locationProvider', function ($locationProvider) {
-                    $locationProvider.html5Mode(true); // Configure HTML5 mode
-                }])
-                .run(['$rootScope', '$state', function ($rootScope, $state) {
+                .run(['$rootScope', '$state', 'appConfig', function ($rootScope, $state, appConfig) {
+                    var moduleOptions = appConfig['prototyped.ng.features'];
+                    if (moduleOptions) {
+                        // Display the menu items just for testing
+                        moduleOptions.hideInBrowserMode = false;
+                    }
                     angular.extend($rootScope, {
                         state: $state,
                         startAt: Date.now(),
@@ -82,6 +85,7 @@
                     elem: $('#testApp') || document.body,
                     opts: {
                         showDefaultItems: false,
+                        showAboutPage: false,
                     },
                 });
 

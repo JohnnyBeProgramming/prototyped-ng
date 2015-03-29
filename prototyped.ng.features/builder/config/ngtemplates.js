@@ -95,36 +95,40 @@ module.exports = {
             return content;
         },
     },
-    prototyped_ng_styles: {
+    module_scripts: {
         options: {
-            module: '<%= cfg.mod %>.styles',
             base: '<%= cfg.base %>',
+            module: '<%= cfg.mod %>.scripts',
             htmlmin: {
                 collapseWhitespace: false,
                 collapseBooleanAttributes: false,
             },
         },
         src: [
-            '<%= cfg.base %>**/**.min.css',
-            '!<%= cfg.base %>node_modules/**',
+            '<%= cfg.base %>**/*.sql',
+            '!<%= cfg.base %>**/builder/**',
+            '!<%= cfg.base %>**/node_modules/**',
+        ],
+        dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.scripts.js',
+        module: '<%= cfg.mod %>.scripts',
+    },
+    module_styles: {
+        options: {
+            base: '<%= cfg.base %>',
+            module: '<%= cfg.mod %>.styles',
+            htmlmin: {
+                collapseWhitespace: false,
+                collapseBooleanAttributes: false,
+            },
+        },
+        src: [
+            '<%= cfg.base %>**/**.sql',
+            //'<%= cfg.base %>**/**.min.css',
+            '!<%= cfg.base %>**/builder/**',
+            '!<%= cfg.base %>**/node_modules/**',
         ],
         dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.styles.js',
         module: '<%= cfg.mod %>.styles',
     },
-//    prototyped_ng_scripts: {
-//        options: {
-//            module: '<%= cfg.mod %>.sql',
-//            base: '<%= cfg.base %>',
-//            htmlmin: {
-//                collapseWhitespace: false,
-//                collapseBooleanAttributes: false,
-//            },
-//        },
-//        src: [
-//            '<%= cfg.base %>**/*.sql',
-//            '!<%= cfg.base %>node_modules/**',
-//        ],
-//        dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.sqlx.js',
-//        module: '<%= cfg.mod %>.sql',
-//    },
+
 };

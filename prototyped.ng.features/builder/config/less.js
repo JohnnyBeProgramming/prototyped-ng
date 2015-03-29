@@ -4,7 +4,7 @@ module.exports = {
         banner: '<%= banner %>',
         paths: ["assets/css"],
     },
-    prototyped_ng: {
+    module_less: {
         files: {
             '<%= cfg.base %>assets/css/features.css': '<%= cfg.base %>assets/less/features.less'
         }

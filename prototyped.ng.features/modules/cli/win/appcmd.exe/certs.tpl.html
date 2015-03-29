@@ -1,0 +1,186 @@
+<div ng-if="!state.current" class="results" ng-init="detect()">
+    <div class="icon pull-left left">
+        <i class="glyphicon glyphicon-certificate">
+        </i>
+        <i class="sub-icon glyphicon" ng-class="getStatusColor()"></i>
+    </div>
+    <div class="info pull-left">
+        <div ng-if="!state.editMode">
+            <div class="pull-right">
+                <a class="ctrl-sm" ng-click="state.editMode = true" href="" ng-hide="result.isDone && !result.valid">
+                    <i class="glyphicon glyphicon-plus"></i> New
+                </a>
+            </div>
+            <h4>Security Certificates <small ng-if="result.certs.store">&nbsp;{{ result.certs.store }}<span ng-if="result.certs.store">, {{ result.certs.desc }}</span></small></h4>
+        </div>
+        <div ng-if="!state.editMode">
+            <p ng-if="!result.isDone">
+                <em>Please wait, loading...</em>
+            </p>
+            <ul ng-if="result.isDone && !result.valid">
+                <li>
+                    <b>NodeJS Required</b>: Try running this application inside something like <a target="_blank" href="https://github.com/rogerwang/node-webkit">Node Webkit</a>.
+                </li>
+                <li>
+                    <b>Not Available:</b> You cannot access the local computer's certificate store from a browser window.
+                </li>
+            </ul>
+            <div ng-if="result != null && result.isDone">
+                <div class="alert alert-danger" ng-if="!result.valid && !$.isEmptyObject(result.error)">
+                    <i class="glyphicon glyphicon-exclamation-sign"></i> <b>Error:</b> {{ result.error }}
+                </div>
+                <div class="alert alert-warning" ng-if="!result.valid && $.isEmptyObject(result.error)">
+                    <i class="glyphicon glyphicon-warning-sign"></i> <b>Warning:</b> Limited access to the <em>certificate store</em>.
+                </div>
+            </div>
+            <div ng-if="result.valid">
+                <table class="table table-hover table-condensed">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Thumbprint</th>
+                            <th><div class="pull-right">Actions</div></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="inactive" ng-if="!result.items.length">
+                            <td><span class="text-muted">No results</span></td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr class="compact" ng-repeat="itm in result.items">
+                            <td>{{ itm.name }}</td>
+                            <td>{{ itm.hash }}</td>
+                            <td>
+                                <a href="" ng-click="exportCert(itm)">Export</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div ng-if="result.isDone" class="text-muted">Last Checked: {{ result.lastUpdated | date:'mediumTime' }}</div>
+        </div>
+        <form class="" ng-if="state.editMode">
+            <div class="form-group">
+                <h4 class="control-label" for="txtTarget">New Certificate Name:</h4>
+                <input type="text" class="form-control" id="txtName" ng-model="state.certName">
+            </div>
+            <!--
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" ng-model="state.requireHttps"> Require secure connection
+                    </label>
+                </div>
+                <div class="checkbox" ng-if="state.requireHttps">
+                    <label>
+                        <input type="checkbox" ng-model="state.requireCert"> Requires Client Certificate
+                    </label>
+                </div>
+            </div>
+            <div class="form-group" ng-show="state.requireCert">
+                <label for="exampleInputFile">Select Client Certificate:</label>
+                <input type="file" id="exampleInputFile">
+                <p class="help-block">This must be a valid client certificate.</p>
+            </div>
+            -->
+            <button type="submit" class="btn btn-primary" ng-click="state.editMode = false;">Create</button>
+        </form>
+    </div>
+</div>
+<div ng-if="state.current">
+    <span class="pull-right">
+        <a class="btn btn-sm btn-primary" ng-click="state.current = null">Go Back</a>
+    </span>
+    <samp><pre>{{ state.current }}</pre></samp>
+</div>
+<style>
+    .results {
+        min-width: 480px;
+        display: flex;
+    }
+
+        .results .icon {
+            margin: 0 8px;
+            font-size: 128px;
+            width: 128px !important;
+            height: 128px !important;
+            position: relative;
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
+
+            .results .icon .sub-icon {
+                font-size: 64px !important;
+                width: 64px !important;
+                height: 64px !important;
+                position: absolute;
+                right: 0;
+                top: 0;
+                margin-top: 100px;
+            }
+
+                .results .icon .sub-icon.success {
+                    color: #080;
+                }
+
+                .results .icon .sub-icon.error {
+                    color: #D00;
+                }
+
+                .results .icon .sub-icon.warning {
+                    color: #0094ff;
+                }
+
+                .results .icon .sub-icon.busy {
+                    color: #0094ff;
+                }
+
+        .results .info {
+            margin: 0 16px;
+            min-height: 128px;
+            min-width: 300px;
+            display: inline-block;
+            flex-grow: 1;
+            flex-shrink: 1;
+        }
+
+
+            .results .info h4 {
+                text-wrap: avoid;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+
+                .results .info h4 a {
+                    color: black;
+                }
+
+            .results .info .ctrl-sm {
+                font-size: larger;
+                margin-left: 8px;
+                color: black;
+            }
+
+    .ellipse {
+        text-wrap: avoid;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .info-row {
+        display: inline-flex;
+    }
+
+    .info-col-primary {
+        flex-grow: 1;
+        flex-shrink: 1;
+    }
+
+    .info-col-secondary {
+        flex-grow: 0;
+        flex-shrink: 0;
+    }
+</style>
