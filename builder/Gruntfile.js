@@ -41,8 +41,8 @@ module.exports = function (grunt) {
         //'cssmin'
     ]);
     grunt.registerTask('build-scripts', [
-        //'html2js',
-        //'ngtemplates',
+        'html2js',
+        'ngtemplates',
         //'uglify',
         //'concat'
     ]);
