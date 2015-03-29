@@ -12,7 +12,7 @@ angular.module('prototyped.console', [
             .state('proto.console', {
                 url: '/console',
                 views: {
-                    'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                    'left@': { templateUrl: 'views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/console/views/main.tpl.html',
                         controller: 'proto.ng.commands.ConsoleController',

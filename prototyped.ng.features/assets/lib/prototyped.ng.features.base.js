@@ -1,4 +1,4 @@
-﻿/// <reference path="../../../imports.d.ts" />
+﻿/// <reference path="../../../../imports.d.ts" />
 angular.module('prototyped.certs', [
     'ui.router'
 ]).config([
@@ -10,9 +10,9 @@ angular.module('prototyped.certs', [
         }).state('certs.info', {
             url: '',
             views: {
-                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'modules/features/appcmd.exe/certs.tpl.html',
+                    templateUrl: 'modules/cli/win/appcmd.exe/certs.tpl.html',
                     controller: 'appCmdViewController'
                 }
             }
@@ -226,9 +226,9 @@ angular.module('prototyped.certs', [
             return cssRes;
         };
     }]);
-/// <reference path="../../../imports.d.ts" />
+/// <reference path="../../../../imports.d.ts" />
 angular.module('prototyped.sqlcmd', [
-    'prototyped.ng.sql',
+    'prototyped.ng.features.scripts',
     'ui.router'
 ]).config([
     '$stateProvider', function ($stateProvider) {
@@ -239,18 +239,18 @@ angular.module('prototyped.sqlcmd', [
         }).state('sqlcmd.connect', {
             url: '/connect/:path/:file',
             views: {
-                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'modules/features/sqlcmd.exe/views/connect.tpl.html',
+                    templateUrl: 'modules/cli/win/sqlcmd.exe/views/connect.tpl.html',
                     controller: 'sqlCmdViewController'
                 }
             }
         }).state('sqlcmd.connect.db', {
             url: '/:dbname',
             views: {
-                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'modules/features/sqlcmd.exe/views/database.tpl.html',
+                    templateUrl: 'modules/cli/win/sqlcmd.exe/views/database.tpl.html',
                     controller: 'sqlCmdViewController'
                 }
             }
@@ -572,7 +572,7 @@ angular.module('prototyped.sqlcmd', [
                     var src = filePath;
                     var inp = '"' + path.join(process.cwd(), src) + '"';
                     if (opts.nocount !== false) {
-                        var noc = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/NoCounts.sql');
+                        var noc = $scope.sqlCmd.utils.resolveFilename('modules/cli/win/sqlcmd.exe/scripts/utils/NoCounts.sql');
                         inp = '"' + path.join(process.cwd(), noc) + '",' + inp;
                     }
                     var arg = ' -S lpc:localhost -E';
@@ -738,7 +738,7 @@ angular.module('prototyped.sqlcmd', [
             }
 
             // Get the file size and basic info for the database
-            var tplFileSizes = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/FileSizes.sql');
+            var tplFileSizes = $scope.sqlCmd.utils.resolveFilename('modules/cli/win/sqlcmd.exe/scripts/utils/FileSizes.sql');
             $scope.sqlCmd.utils.runFile(tplFileSizes, { database: db.DATABASE_NAME }, function (result) {
                 $rootScope.$applyAsync(function () {
                     var files = [];
@@ -773,7 +773,7 @@ angular.module('prototyped.sqlcmd', [
                     });
                 });
 
-                var tplTableSize = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/TableSizes.sql');
+                var tplTableSize = $scope.sqlCmd.utils.resolveFilename('modules/cli/win/sqlcmd.exe/scripts/utils/TableSizes.sql');
                 $scope.sqlCmd.utils.runFile(tplTableSize, { database: db.DATABASE_NAME }, function (result) {
                     $rootScope.$applyAsync(function () {
                         var tables = [];
@@ -808,7 +808,7 @@ angular.module('prototyped.sqlcmd', [
                     });
                 });
 
-                var tplViewSize = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/ListViews.sql');
+                var tplViewSize = $scope.sqlCmd.utils.resolveFilename('modules/cli/win/sqlcmd.exe/scripts/utils/ListViews.sql');
                 $scope.sqlCmd.utils.runFile(tplViewSize, { database: db.DATABASE_NAME }, function (result) {
                     $rootScope.$applyAsync(function () {
                         var views = [];
@@ -1084,7 +1084,7 @@ angular.module('prototyped.edge', [
         $stateProvider.state('proto.edge', {
             url: '^/edge',
             views: {
-                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/edge/views/index.tpl.html',
                     controller: 'edgeViewController'
@@ -1189,11 +1189,12 @@ angular.module('prototyped.ng.features', [
         if (appConfig) {
             // Define module routes
             appConfig.routers.push({
-                url: '/features',
+                url: '/proto/explore',
                 priority: 100,
                 menuitem: {
                     label: 'Features',
-                    icon: 'fa fa-flask'
+                    icon: 'fa fa-flask',
+                    state: 'proto.cmd'
                 },
                 cardview: {
                     style: typeof require !== 'undefined' ? 'img-advanced' : 'img-advanced-restricted',
@@ -1211,7 +1212,8 @@ angular.module('prototyped.ng.features', [
                 priority: 100,
                 menuitem: {
                     label: 'Imports',
-                    icon: 'fa fa-cloud-download'
+                    icon: 'fa fa-cloud-download',
+                    state: 'proto.edge'
                 },
                 cardview: {
                     style: 'img-editor',
@@ -1233,9 +1235,9 @@ angular.module('prototyped.ng.features', [
         }).state('features.info', {
             url: '',
             views: {
-                'left@': { templateUrl: 'features/left.tpl.html' },
+                'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'features/main.tpl.html',
+                    templateUrl: 'views/index.tpl.html',
                     controller: 'featuresViewController'
                 }
             }

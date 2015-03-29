@@ -11,7 +11,7 @@ angular.module('prototyped.edge', [
             .state('proto.edge', {
                 url: '^/edge',
                 views: {
-                    'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                    'left@': { templateUrl: 'views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/edge/views/index.tpl.html',
                         controller: 'edgeViewController'

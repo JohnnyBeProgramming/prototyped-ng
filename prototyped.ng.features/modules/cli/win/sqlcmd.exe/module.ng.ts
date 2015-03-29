@@ -1,7 +1,7 @@
-/// <reference path="../../../imports.d.ts" />
+/// <reference path="../../../../imports.d.ts" />
 
 angular.module('prototyped.sqlcmd', [
-    'prototyped.ng.sql',
+    'prototyped.ng.features.scripts',
     'ui.router',
 ])
 
@@ -15,9 +15,9 @@ angular.module('prototyped.sqlcmd', [
             .state('sqlcmd.connect', {
                 url: '/connect/:path/:file',
                 views: {
-                    'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                    'left@': { templateUrl: 'views/left.tpl.html' },
                     'main@': {
-                        templateUrl: 'modules/features/sqlcmd.exe/views/connect.tpl.html',
+                        templateUrl: 'modules/cli/win/sqlcmd.exe/views/connect.tpl.html',
                         controller: 'sqlCmdViewController'
                     },
                 }
@@ -25,9 +25,9 @@ angular.module('prototyped.sqlcmd', [
             .state('sqlcmd.connect.db', {
                 url: '/:dbname',
                 views: {
-                    'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                    'left@': { templateUrl: 'views/left.tpl.html' },
                     'main@': {
-                        templateUrl: 'modules/features/sqlcmd.exe/views/database.tpl.html',
+                        templateUrl: 'modules/cli/win/sqlcmd.exe/views/database.tpl.html',
                         controller: 'sqlCmdViewController'
                     },
                 }
@@ -354,7 +354,7 @@ angular.module('prototyped.sqlcmd', [
                     var src = filePath;
                     var inp = '"' + path.join(process.cwd(), src) + '"';
                     if (opts.nocount !== false) {
-                        var noc = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/NoCounts.sql');
+                        var noc = $scope.sqlCmd.utils.resolveFilename('modules/cli/win/sqlcmd.exe/scripts/utils/NoCounts.sql');
                         inp = '"' + path.join(process.cwd(), noc) + '",' + inp;
                     }
                     var arg = ' -S lpc:localhost -E';
@@ -516,7 +516,7 @@ angular.module('prototyped.sqlcmd', [
             }
 
             // Get the file size and basic info for the database
-            var tplFileSizes = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/FileSizes.sql');
+            var tplFileSizes = $scope.sqlCmd.utils.resolveFilename('modules/cli/win/sqlcmd.exe/scripts/utils/FileSizes.sql');
             $scope.sqlCmd.utils.runFile(tplFileSizes, { database: db.DATABASE_NAME }, function (result) {
 
                 $rootScope.$applyAsync(function () {
@@ -550,7 +550,7 @@ angular.module('prototyped.sqlcmd', [
                     });
                 });
 
-                var tplTableSize = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/TableSizes.sql');
+                var tplTableSize = $scope.sqlCmd.utils.resolveFilename('modules/cli/win/sqlcmd.exe/scripts/utils/TableSizes.sql');
                 $scope.sqlCmd.utils.runFile(tplTableSize, { database: db.DATABASE_NAME }, function (result) {
                     $rootScope.$applyAsync(function () {
                         var tables = [];
@@ -585,7 +585,7 @@ angular.module('prototyped.sqlcmd', [
                     });
                 });
 
-                var tplViewSize = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/ListViews.sql');
+                var tplViewSize = $scope.sqlCmd.utils.resolveFilename('modules/cli/win/sqlcmd.exe/scripts/utils/ListViews.sql');
                 $scope.sqlCmd.utils.runFile(tplViewSize, { database: db.DATABASE_NAME }, function (result) {
                     $rootScope.$applyAsync(function () {
                         var views = [];

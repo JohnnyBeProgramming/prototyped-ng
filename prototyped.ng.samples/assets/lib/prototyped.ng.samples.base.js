@@ -2328,7 +2328,7 @@ angular.module('myApp.samples.styles3d', []).config([
 
         return universe;
     }]).controller('styles3dController', [
-    '$rootScope', '$scope', 'style3dUniverse', function ($rootScope, $scope, style3dUniverse) {
+    '$rootScope', '$scope', '$http', 'style3dUniverse', function ($rootScope, $scope, $http, style3dUniverse) {
         function Ease(speed, val) {
             this.speed = speed;
             this.target = val;
@@ -2402,13 +2402,12 @@ angular.module('myApp.samples.styles3d', []).config([
         // Load required libraries if not defined
         if (typeof ge1doot !== 'undefined') {
             runStyle3D();
-        } else if (typeof $script !== 'undefined') {
+        } else {
             console.log(' - Loading Styles3D....');
-            $script(['assets/lib/screen.js'], function () {
+            $.getScript('assets/lib/screen.js', function (data, textStatus, jqxhr) {
                 runStyle3D();
             });
-        } else
-            throw new Error('Failed to initialise. $script missing....');
+        }
     }]).run([
     '$state', function ($state) {
     }]);

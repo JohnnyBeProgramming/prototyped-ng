@@ -1,3 +1,964 @@
+/// <reference path="../imports.d.ts" />
+// Constant object with default values
+angular.module('prototyped.ng.config', []).constant('appDefaultConfig', {
+    version: '0.0.1',
+    routers: [],
+    options: {
+        showAboutPage: true,
+        showDefaultItems: true
+    }
+}).provider('appConfig', [
+    'appDefaultConfig', function (appDefaultConfig) {
+        var config = appDefaultConfig;
+        return {
+            set: function (options) {
+                angular.extend(config, options);
+            },
+            clear: function () {
+                config = appDefaultConfig;
+            },
+            $get: function () {
+                return config;
+            }
+        };
+    }]).constant('appConfigLoader', {
+    init: function (opts) {
+        var configUrl = opts.path;
+        var ngTargetApp = opts.name;
+        var elem = opts.elem || document.body;
+        var cfgModule = angular.module('prototyped.ng.config');
+        var oldConfig = angular.injector(['prototyped.ng.config']).get('appConfig');
+        if (opts.opts) {
+            angular.extend(oldConfig.options, opts.opts);
+        }
+        if (configUrl) {
+            var $http = angular.injector(['ng']).get('$http');
+            $http({
+                method: 'GET',
+                url: configUrl
+            }).success(function (data, status, headers, config) {
+                console.debug('Configuring ' + ngTargetApp + '...');
+                angular.extend(oldConfig, {
+                    version: data.version || oldConfig.version
+                });
+                cfgModule.constant('appConfig', oldConfig);
+                angular.bootstrap(elem, [ngTargetApp]);
+            }).error(function (ex) {
+                console.debug('Starting ' + ngTargetApp + ' with default config.');
+                angular.bootstrap(elem, [ngTargetApp]);
+            });
+        } else {
+            console.debug('Starting app ' + ngTargetApp + '...');
+            angular.bootstrap(elem, [ngTargetApp]);
+        }
+    }
+});
+///<reference path="../../../imports.d.ts"/>
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (commands) {
+            var ConsoleController = (function () {
+                function ConsoleController($scope) {
+                    this.$scope = $scope;
+                    this._proxyList = [];
+                    try  {
+                        // Set the scope vars
+                        $scope.myConsole = this;
+                        $scope.lines = [];
+
+                        // Create the list proxies
+                        this._currentProxy = new BrowserConsole();
+                        this._proxyList.push(this._currentProxy);
+
+                        // Get the required libraries
+                        if (typeof require !== 'undefined') {
+                            var proc = require('child_process');
+                            if (!$.isEmptyObject(proc)) {
+                                this._currentProxy = new ProcessConsole(proc);
+                                this._proxyList.push(this._currentProxy);
+                            }
+                        }
+                    } catch (ex) {
+                        // Could not load required libraries
+                        console.error(' - Warning: Console app failed to load required libraries.');
+                    } finally {
+                        // Initialise the controller
+                        this.init();
+                    }
+                }
+                ConsoleController.prototype.init = function () {
+                    try  {
+                        // Check the command line status and give user some feedback
+                        if (this._currentProxy) {
+                            this.success('Command line ready and active.');
+                        } else {
+                            this.warning('Cannot access the command line from the browser.');
+                        }
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                };
+
+                ConsoleController.prototype.clear = function () {
+                    // Clear cache
+                    this.$scope.lines = [];
+
+                    // Clear via proxy
+                    if (this._currentProxy) {
+                        this._currentProxy.clear();
+                    }
+                };
+
+                ConsoleController.prototype.getProxyName = function () {
+                    return (this._currentProxy) ? this._currentProxy.ProxyName : '';
+                };
+                ConsoleController.prototype.getProxies = function () {
+                    return this._proxyList;
+                };
+                ConsoleController.prototype.setProxy = function (name) {
+                    console.info(' - Switching Proxy: ' + name);
+                    for (var i = 0; i < this._proxyList.length; i++) {
+                        var itm = this._proxyList[i];
+                        if (itm.ProxyName == name) {
+                            this._currentProxy = itm;
+                            break;
+                        }
+                    }
+
+                    // Refresh UI if needed
+                    if (!this.$scope.$$phase)
+                        this.$scope.$apply();
+
+                    return this._currentProxy;
+                };
+
+                ConsoleController.prototype.command = function (text) {
+                    var _this = this;
+                    // Try and run the command
+                    this.info('' + text);
+                    this.$scope.txtInput = '';
+
+                    // Check if proxy exists
+                    if (this._currentProxy) {
+                        // Check for 'clear screen' command
+                        if (text == 'cls')
+                            return this.clear();
+
+                        // Run the command via proxy
+                        this._currentProxy.command(text, function (msg, tp) {
+                            switch (tp) {
+                                case 'debug':
+                                    _this.debug(msg);
+                                    break;
+                                case 'info':
+                                    _this.info(msg);
+                                    break;
+                                case 'warn':
+                                    _this.warning(msg);
+                                    break;
+                                case 'succcess':
+                                    _this.success(msg);
+                                    break;
+                                case 'error':
+                                    _this.error(msg);
+                                    break;
+                                default:
+                                    _this.debug(msg);
+                                    break;
+                            }
+
+                            // Refresh UI if needed
+                            if (!_this.$scope.$$phase)
+                                _this.$scope.$apply();
+                        });
+                    } else {
+                        this.error('Command line is not available...');
+                    }
+                };
+
+                ConsoleController.prototype.debug = function (msg) {
+                    this.$scope.lines.push({
+                        time: Date.now(),
+                        text: msg,
+                        type: 'debug'
+                    });
+                };
+
+                ConsoleController.prototype.info = function (msg) {
+                    this.$scope.lines.push({
+                        time: Date.now(),
+                        text: msg,
+                        type: 'info'
+                    });
+                };
+
+                ConsoleController.prototype.warning = function (msg) {
+                    this.$scope.lines.push({
+                        time: Date.now(),
+                        text: msg,
+                        type: 'warning'
+                    });
+                };
+
+                ConsoleController.prototype.success = function (msg) {
+                    this.$scope.lines.push({
+                        time: Date.now(),
+                        text: msg,
+                        type: 'success'
+                    });
+                };
+
+                ConsoleController.prototype.error = function (msg) {
+                    this.$scope.lines.push({
+                        time: Date.now(),
+                        text: msg,
+                        type: 'error'
+                    });
+                };
+                return ConsoleController;
+            })();
+            commands.ConsoleController = ConsoleController;
+
+            var BrowserConsole = (function () {
+                function BrowserConsole() {
+                    this.ProxyName = 'Browser';
+                }
+                BrowserConsole.prototype.command = function (text, callback) {
+                    try  {
+                        var result = eval(text);
+                        if (callback && result) {
+                            callback(result, 'info');
+                        }
+                        console.info(result);
+                    } catch (ex) {
+                        callback(ex, 'error');
+                        console.error(ex);
+                    }
+                };
+
+                BrowserConsole.prototype.clear = function () {
+                    console.clear();
+                };
+                BrowserConsole.prototype.debug = function (msg) {
+                    console.debug(msg);
+                };
+                BrowserConsole.prototype.info = function (msg) {
+                    console.info(msg);
+                };
+                BrowserConsole.prototype.warning = function (msg) {
+                    console.warn(msg);
+                };
+                BrowserConsole.prototype.success = function (msg) {
+                    console.info(msg);
+                };
+                BrowserConsole.prototype.error = function (msg) {
+                    console.error(msg);
+                };
+                return BrowserConsole;
+            })();
+            commands.BrowserConsole = BrowserConsole;
+
+            var ProcessConsole = (function () {
+                function ProcessConsole(_proc) {
+                    this._proc = _proc;
+                    this.ProxyName = 'System';
+                }
+                ProcessConsole.prototype.clear = function () {
+                };
+
+                ProcessConsole.prototype.command = function (text, callback) {
+                    // Call the command line from a child process
+                    var proc = eval('process');
+                    var ls = this._proc.exec(text, function (error, stdout, stderr) {
+                        if (error) {
+                            console.groupCollapsed('Command Error: ' + text);
+                            console.error(error.stack);
+                            console.info(' - Signal received: ' + error.signal);
+                            console.info(' - Error code: ' + error.code);
+                            console.groupEnd();
+                        }
+                        if (stdout) {
+                            callback('' + stdout, 'info');
+                        }
+                        if (stderr) {
+                            callback('' + stderr, 'error');
+                        }
+                    }).on('exit', function (code) {
+                        //callback(' - Process returned: ' + code, 'debug');
+                    });
+                };
+                return ProcessConsole;
+            })();
+            commands.ProcessConsole = ProcessConsole;
+        })(ng.commands || (ng.commands = {}));
+        var commands = ng.commands;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="../../imports.d.ts" />
+/// <reference path="controllers/ConsoleController.ts"/>
+angular.module('prototyped.console', [
+    'ui.router'
+]).config([
+    '$stateProvider', function ($stateProvider) {
+        // Define the UI states
+        $stateProvider.state('proto.console', {
+            url: '/console',
+            views: {
+                'left@': { templateUrl: 'views/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'modules/console/views/main.tpl.html',
+                    controller: 'proto.ng.commands.ConsoleController'
+                }
+            }
+        });
+    }]).controller('proto.ng.commands.ConsoleController', [
+    '$scope',
+    proto.ng.commands.ConsoleController
+]);
+///<reference path="../../../imports.d.ts"/>
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (editor) {
+            var EditorController = (function () {
+                function EditorController($scope, $timeout) {
+                    this.$scope = $scope;
+                    this.$timeout = $timeout;
+                    this.isActive = false;
+                    this.FileLocation = '';
+                    this.LastChanged = null;
+                    this.LastOnSaved = null;
+                    this.$scope.myWriter = this;
+                    try  {
+                        // Load file system
+                        this._path = require('path');
+                        this._fs = require('fs');
+
+                        // Try  and load the node webkit
+                        var nwGui = 'nw.gui';
+                        this._gui = require(nwGui);
+                    } catch (ex) {
+                        console.warn(' - [ Editor ] Warning: Could not load all required modules');
+                    }
+                }
+                Object.defineProperty(EditorController.prototype, "FileContents", {
+                    get: function () {
+                        return this._buffer;
+                    },
+                    set: function (buffer) {
+                        this._buffer = buffer;
+                        this.LastChanged = Date.now();
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+
+                Object.defineProperty(EditorController.prototype, "HasChanges", {
+                    get: function () {
+                        return this.LastChanged != null && this.LastChanged > this.LastOnSaved;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(EditorController.prototype, "HasFileSys", {
+                    get: function () {
+                        return !$.isEmptyObject(this._gui);
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+
+                EditorController.prototype.init = function () {
+                    this.isActive = true;
+                };
+
+                EditorController.prototype.openFile = function () {
+                    var _this = this;
+                    if (this.checkUnsaved())
+                        return;
+
+                    if (!$.isEmptyObject(this._gui) && !$.isEmptyObject(this._fs)) {
+                        var chooser = $('#fileDialog');
+                        chooser.change(function (evt) {
+                            var filePath = chooser.val();
+                            if (filePath) {
+                                // Try and read the file
+                                _this._fs.readFile(filePath, 'UTF-8', function (err, data) {
+                                    if (err) {
+                                        throw new Error(err);
+                                    } else {
+                                        _this.setText(data);
+                                        _this.FileLocation = filePath;
+                                        _this.LastChanged = null;
+                                        _this.LastOnSaved = null;
+                                    }
+                                    _this.$scope.$apply();
+                                });
+                            }
+                        });
+                        chooser.trigger('click');
+                    } else {
+                        console.warn(' - [ Editor ] Warning: Shell not available.');
+                    }
+                };
+
+                EditorController.prototype.openFileLocation = function () {
+                    if (this._gui) {
+                        this._gui.Shell.openItem(this.FileLocation);
+                    } else {
+                        console.warn(' - [ Editor ] Warning: Shell not available.');
+                    }
+                };
+
+                EditorController.prototype.newFile = function () {
+                    if (this.checkUnsaved())
+                        return;
+
+                    // Clear prev. states
+                    this.FileLocation = null;
+                    this.LastChanged = null;
+                    this.LastOnSaved = null;
+
+                    // Set some intial text
+                    this.setText('Enter some text');
+                    this.LastChanged = Date.now();
+
+                    // Do post-new operations
+                    this.$timeout(function () {
+                        // Select file contents
+                        var elem = $('#FileContents');
+                        if (elem) {
+                            elem.select();
+                        }
+                    });
+                };
+
+                EditorController.prototype.saveFile = function (filePath) {
+                    var _this = this;
+                    if (!filePath)
+                        filePath = this.FileLocation;
+                    if (!filePath)
+                        return this.saveFileAs();
+                    if (!$.isEmptyObject(this._fs) && !$.isEmptyObject(this._path)) {
+                        var output = this._buffer;
+                        this._fs.writeFile(filePath, output, 'UTF-8', function (err) {
+                            if (err) {
+                                throw new Error(err);
+                            } else {
+                                // File has been saved
+                                _this.FileLocation = filePath;
+                                _this.LastOnSaved = Date.now();
+                            }
+                            _this.$scope.$apply();
+                        });
+                    } else {
+                        console.warn(' - [ Editor ] Warning: File system not available.');
+                    }
+                };
+
+                EditorController.prototype.saveFileAs = function () {
+                    var _this = this;
+                    if (!$.isEmptyObject(this._gui)) {
+                        // Get the file name
+                        var filePath = this.FileLocation || 'Untitled.txt';
+                        var chooser = $('#saveDialog');
+                        chooser.change(function (evt) {
+                            var filePath = chooser.val();
+                            if (filePath) {
+                                // Save file in specified location
+                                _this.saveFile(filePath);
+                            }
+                        });
+                        chooser.trigger('click');
+                    } else {
+                        console.warn(' - [ Editor ] Warning: Shell not available.');
+                    }
+                };
+
+                EditorController.prototype.setText = function (value) {
+                    this.FileContents = value;
+
+                    if (!this._textArea) {
+                        var myTextArea = $('#FileContents');
+                        if (myTextArea.length > 0) {
+                            this._textArea = CodeMirror.fromTextArea(myTextArea[0], {
+                                //mode: "javascript",
+                                autoClearEmptyLines: true,
+                                lineNumbers: true,
+                                indentUnit: 4
+                            });
+                        }
+                        this._textArea.setValue(value);
+                    } else {
+                        this._textArea.setValue(value);
+                    }
+                    /*
+                    var totalLines = this._textArea.lineCount();
+                    if (totalLines) {
+                    this._textArea.autoFormatRange({ line: 0, ch: 0 }, { line: totalLines });
+                    }
+                    */
+                };
+
+                EditorController.prototype.test = function () {
+                    throw new Error('Lala');
+                    try  {
+                        var dir = './';
+                        var log = "Test.log";
+                        if (!$.isEmptyObject(this._fs) && !$.isEmptyObject(this._path)) {
+                            var target = this._path.resolve(dir, log);
+                            this._fs.writeFile(log, "Hey there!", function (err) {
+                                if (err) {
+                                    throw new Error(err);
+                                } else {
+                                    var nwGui = 'nw.gui';
+                                    var myGui = require(nwGui);
+                                    if (!$.isEmptyObject(myGui)) {
+                                        myGui.Shell.openItem(target);
+                                    } else {
+                                        throw new Error('Cannot open the item: ' + target);
+                                    }
+                                }
+                            });
+                        } else {
+                            console.warn(' - Warning: File system not available...');
+                        }
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                };
+
+                EditorController.prototype.checkUnsaved = function (msg) {
+                    var msgCheck = msg || 'There are unsaved changes.\r\nAre you sure you want to continue?';
+                    var hasCheck = this.FileContents != null && this.HasChanges;
+                    return (hasCheck && confirm(msgCheck) == false);
+                };
+                return EditorController;
+            })();
+            editor.EditorController = EditorController;
+        })(ng.editor || (ng.editor = {}));
+        var editor = ng.editor;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="../../imports.d.ts" />
+/// <reference path="controllers/EditorController.ts"/>
+angular.module('prototyped.editor', [
+    'ui.router'
+]).config([
+    '$stateProvider', function ($stateProvider) {
+        // Define the UI states
+        $stateProvider.state('proto.editor', {
+            url: '/editor',
+            views: {
+                'left@': { templateUrl: 'views/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'modules/editor/views/main.tpl.html',
+                    controller: 'proto.ng.editor.EditorController'
+                }
+            }
+        });
+    }]).controller('proto.ng.editor.EditorController', [
+    '$scope',
+    '$timeout',
+    proto.ng.editor.EditorController
+]);
+///<reference path="../../../imports.d.ts"/>
+var proto;
+(function (proto) {
+    (function (explorer) {
+        var AddressBarController = (function () {
+            function AddressBarController($rootScope, $scope, $q) {
+                var _this = this;
+                this.$rootScope = $rootScope;
+                this.$scope = $scope;
+                this.$q = $q;
+                this.history = [];
+                $scope.busy = true;
+                try  {
+                    // Initialise the address bar
+                    var elem = $('#addressbar');
+                    if (elem) {
+                        this.init(elem);
+
+                        this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                            if (folder != _this.$scope.dir_path) {
+                                console.warn(' - Addressbar Navigate: ', folder);
+                                _this.$scope.dir_path = folder;
+                                _this.navigate(folder);
+                            }
+                        });
+                    } else {
+                        throw new Error('Element with id "addressbar" not found...');
+                    }
+                } catch (ex) {
+                    // Initialisation failed
+                    console.error(ex);
+                }
+                $scope.busy = false;
+            }
+            AddressBarController.prototype.init = function (element) {
+                // Set the target HTML element
+                this.element = element;
+
+                // Generate the current folder parts
+                this.generateOutput('./');
+            };
+
+            AddressBarController.prototype.openFolder = function (path) {
+                try  {
+                    var nwGui = 'nw.gui';
+                    var gui = require(nwGui);
+                    if (!$.isEmptyObject(gui)) {
+                        console.debug(' - Opening Folder: ' + path);
+                        gui.Shell.openItem(path + '/');
+                    }
+                } catch (ex) {
+                    console.error(ex);
+                }
+                this.generateOutput(path);
+            };
+
+            AddressBarController.prototype.navigate = function (path) {
+                this.generateOutput(path);
+            };
+
+            AddressBarController.prototype.select = function (file) {
+                console.info(' - select: ', file);
+                try  {
+                    var req = 'nw.gui';
+                    var gui = require(req);
+                    gui.Shell.openItem(file);
+                } catch (ex) {
+                    console.error(ex);
+                }
+            };
+
+            AddressBarController.prototype.back = function () {
+                var len = this.history ? this.history.length : -1;
+                if (len > 1) {
+                    var last = this.history[len - 2];
+                    this.history = this.history.splice(0, len - 2);
+                    this.generateOutput(last);
+                }
+            };
+
+            AddressBarController.prototype.hasHistory = function () {
+                var len = this.history ? this.history.length : -1;
+                return (len > 1);
+            };
+
+            AddressBarController.prototype.generateOutput = function (dir_path) {
+                // Set the current dir path
+                this.$scope.dir_path = dir_path;
+                this.$scope.dir_parts = this.generatePaths(dir_path);
+                this.history.push(dir_path);
+
+                // Breadcast event that path has changed
+                this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
+            };
+
+            AddressBarController.prototype.generatePaths = function (dir_path) {
+                try  {
+                    // Get dependecies
+                    var path = require('path');
+
+                    // Update current path
+                    this.$scope.dir_path = dir_path = path.resolve(dir_path);
+
+                    // Try and normalize the folder path
+                    var curr = path.normalize(dir_path);
+                    if (curr) {
+                        // Split path into separate elements
+                        var sequence = curr.split(path.sep);
+                        var result = [];
+
+                        var i = 0;
+                        for (; i < sequence.length; ++i) {
+                            result.push({
+                                name: sequence[i],
+                                path: sequence.slice(0, 1 + i).join(path.sep)
+                            });
+                        }
+
+                        // Add root for unix
+                        if (sequence[0] == '' && process.platform != 'win32') {
+                            result[0] = {
+                                name: 'root',
+                                path: '/'
+                            };
+                        }
+
+                        // Return thepath sequences
+                        return { sequence: result };
+                    }
+                } catch (ex) {
+                    console.error(ex);
+                }
+            };
+            return AddressBarController;
+        })();
+        explorer.AddressBarController = AddressBarController;
+    })(proto.explorer || (proto.explorer = {}));
+    var explorer = proto.explorer;
+})(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
+var proto;
+(function (proto) {
+    (function (explorer) {
+        var ExplorerController = (function () {
+            function ExplorerController($rootScope, $scope, $q) {
+                var _this = this;
+                this.$rootScope = $rootScope;
+                this.$scope = $scope;
+                this.$q = $q;
+                var dir = './';
+                try  {
+                    // Hook up to the current scope
+                    this.$scope.isBusy = true;
+
+                    // Initialize the cotroller
+                    this.init(dir);
+
+                    // Hook event for when folder path changes
+                    this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                        if (folder != _this.$scope.dir_path) {
+                            console.warn(' - Explorer Navigate: ', folder);
+                            _this.$scope.dir_path = folder;
+                            _this.navigate(folder);
+                        }
+                    });
+                } catch (ex) {
+                    console.error(ex);
+                }
+            }
+            ExplorerController.prototype.init = function (dir) {
+                // Resolve the initial folder path
+                this.navigate(dir);
+            };
+
+            ExplorerController.prototype.navigate = function (dir_path) {
+                var _this = this;
+                var deferred = this.$q.defer();
+                try  {
+                    // Set busy flag
+                    this.$scope.isBusy = true;
+                    this.$scope.error = null;
+
+                    // Resolve the full path
+                    var path = require('path');
+                    dir_path = path.resolve(dir_path);
+
+                    // Read the folder contents (async)
+                    var fs = require('fs');
+                    fs.readdir(dir_path, function (error, files) {
+                        if (error) {
+                            deferred.reject(error);
+                            return;
+                        }
+
+                        // Split and sort results
+                        var folders = [];
+                        var lsFiles = [];
+                        for (var i = 0; i < files.sort().length; ++i) {
+                            var targ = path.join(dir_path, files[i]);
+                            var stat = _this.mimeType(targ);
+                            if (stat.type == 'folder') {
+                                folders.push(stat);
+                            } else {
+                                lsFiles.push(stat);
+                            }
+                        }
+
+                        // Generate the contents
+                        var result = {
+                            path: dir_path,
+                            folders: folders,
+                            files: lsFiles
+                        };
+
+                        // Mark promise as resolved
+                        deferred.resolve(result);
+                    });
+                } catch (ex) {
+                    // Mark promise and rejected
+                    deferred.reject(ex);
+                }
+
+                // Handle the result and error conditions
+                deferred.promise.then(function (result) {
+                    // Clear busy flag
+                    _this.$scope.isBusy = false;
+                    _this.$scope.dir_path = result.path;
+                    _this.$scope.files = result.files;
+                    _this.$scope.folders = result.folders;
+
+                    // Breadcast event that path has changed
+                    _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
+                }, function (error) {
+                    // Clear busy flag
+                    _this.$scope.isBusy = false;
+                    _this.$scope.error = error;
+                });
+
+                return deferred.promise;
+            };
+
+            ExplorerController.prototype.select = function (filePath) {
+                this.$scope.selected = filePath;
+            };
+
+            ExplorerController.prototype.open = function (filePath) {
+                var req = 'nw.gui';
+                var gui = require(req);
+                if (gui)
+                    gui.Shell.openItem(filePath);
+            };
+
+            ExplorerController.prototype.mimeType = function (filepath) {
+                var map = {
+                    'compressed': ['zip', 'rar', 'gz', '7z'],
+                    'text': ['txt', 'md', ''],
+                    'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
+                    'pdf': ['pdf'],
+                    'css': ['css'],
+                    'excel': ['csv', 'xls', 'xlsx'],
+                    'html': ['html'],
+                    'word': ['doc', 'docx'],
+                    'powerpoint': ['ppt', 'pptx'],
+                    'movie': ['mkv', 'avi', 'rmvb']
+                };
+                var cached = {};
+
+                var fs = require('fs');
+                var path = require('path');
+                var result = {
+                    name: path.basename(filepath),
+                    path: filepath,
+                    type: null
+                };
+
+                try  {
+                    var stat = fs.statSync(filepath);
+                    if (stat.isDirectory()) {
+                        result.type = 'folder';
+                    } else {
+                        var ext = path.extname(filepath).substr(1);
+                        result.type = cached[ext];
+                        if (!result.type) {
+                            for (var key in map) {
+                                var arr = map[key];
+                                if (arr.length > 0 && arr.indexOf(ext) >= 0) {
+                                    cached[ext] = result.type = key;
+                                    break;
+                                }
+                            }
+
+                            if (!result.type)
+                                result.type = 'blank';
+                        }
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+
+                return result;
+            };
+            return ExplorerController;
+        })();
+        explorer.ExplorerController = ExplorerController;
+    })(proto.explorer || (proto.explorer = {}));
+    var explorer = proto.explorer;
+})(proto || (proto = {}));
+/// <reference path="../../imports.d.ts" />
+angular.module('prototyped.explorer', [
+    'ui.router'
+]).config([
+    '$stateProvider', function ($stateProvider) {
+        $stateProvider.state('proto.explore', {
+            url: '^/explore',
+            views: {
+                'left@': { templateUrl: 'views/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'modules/explore/views/index.tpl.html',
+                    controller: 'proto.explorer.ExplorerController',
+                    controllerAs: 'ctrlExplorer'
+                }
+            }
+        });
+    }]).directive('protoAddressBar', [
+    '$q', function ($q) {
+        return {
+            restrict: 'EA',
+            scope: {
+                target: '=protoAddressBar'
+            },
+            transclude: false,
+            templateUrl: 'modules/explore/views/addressbar.tpl.html',
+            controller: 'proto.explorer.AddressBarController',
+            controllerAs: 'addrBar'
+        };
+    }]).controller('proto.explorer.AddressBarController', [
+    '$rootScope',
+    '$scope',
+    '$q',
+    proto.explorer.AddressBarController
+]).controller('proto.explorer.ExplorerController', [
+    '$rootScope',
+    '$scope',
+    '$q',
+    proto.explorer.ExplorerController
+]);
+/// <reference path="../imports.d.ts" />
+angular.module('prototyped.default', [
+    'ui.router'
+]).config([
+    '$stateProvider', function ($stateProvider) {
+        // Now set up the states
+        $stateProvider.state('default', {
+            url: '/',
+            views: {
+                'main@': {
+                    templateUrl: 'views/default.tpl.html',
+                    controller: 'CardViewCtrl',
+                    controllerAs: 'sliderCtrl'
+                }
+            }
+        });
+    }]).controller('CardViewCtrl', [
+    '$scope', 'appConfig', function ($scope, appConfig) {
+        // Make sure 'mySiteMap' exists
+        $scope.pages = appConfig.routers || [];
+
+        // initial image index
+        $scope._Index = 0;
+
+        $scope.count = function () {
+            return $scope.pages.length;
+        };
+
+        // if a current image is the same as requested image
+        $scope.isActive = function (index) {
+            return $scope._Index === index;
+        };
+
+        // show prev image
+        $scope.showPrev = function () {
+            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
+        };
+
+        // show next image
+        $scope.showNext = function () {
+            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
+        };
+
+        // show a certain image
+        $scope.showPhoto = function (index) {
+            $scope._Index = index;
+        };
+    }]);
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.about', [
     'prototyped.ng.views',
@@ -470,967 +1431,6 @@ angular.module('prototyped.about', [
         };
     }]);
 /// <reference path="../imports.d.ts" />
-// Constant object with default values
-angular.module('prototyped.ng.config', []).constant('appDefaultConfig', {
-    version: '0.0.1',
-    routers: [],
-    options: {
-        showAboutPage: true,
-        showDefaultItems: true
-    }
-}).provider('appConfig', [
-    'appDefaultConfig', function (appDefaultConfig) {
-        var config = appDefaultConfig;
-        return {
-            set: function (options) {
-                angular.extend(config, options);
-            },
-            clear: function () {
-                config = appDefaultConfig;
-            },
-            $get: function () {
-                return config;
-            }
-        };
-    }]).constant('appLoader', {
-    init: function (opts) {
-        var configUrl = opts.path;
-        var ngTargetApp = opts.name;
-        var elem = opts.elem || document.body;
-        var cfgModule = angular.module('prototyped.ng.config');
-        var oldConfig = angular.injector(['prototyped.ng.config']).get('appConfig');
-        if (opts.opts) {
-            angular.extend(oldConfig.options, opts.opts);
-        }
-        if (configUrl) {
-            var $http = angular.injector(['ng']).get('$http');
-            $http({
-                method: 'GET',
-                url: configUrl
-            }).success(function (data, status, headers, config) {
-                console.debug('Configuring ' + ngTargetApp + '...');
-                angular.extend(oldConfig, {
-                    version: data.version || oldConfig.version
-                });
-                cfgModule.constant('appConfig', oldConfig);
-                angular.bootstrap(elem, [ngTargetApp]);
-            }).error(function (ex) {
-                console.debug('Starting ' + ngTargetApp + ' with default config.');
-                angular.bootstrap(elem, [ngTargetApp]);
-            });
-        } else {
-            console.debug('Starting app ' + ngTargetApp + '...');
-            angular.bootstrap(elem, [ngTargetApp]);
-        }
-    }
-});
-///<reference path="../../../imports.d.ts"/>
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (commands) {
-            var ConsoleController = (function () {
-                function ConsoleController($scope) {
-                    this.$scope = $scope;
-                    this._proxyList = [];
-                    try  {
-                        // Set the scope vars
-                        $scope.myConsole = this;
-                        $scope.lines = [];
-
-                        // Create the list proxies
-                        this._currentProxy = new BrowserConsole();
-                        this._proxyList.push(this._currentProxy);
-
-                        // Get the required libraries
-                        if (typeof require !== 'undefined') {
-                            var proc = require('child_process');
-                            if (!$.isEmptyObject(proc)) {
-                                this._currentProxy = new ProcessConsole(proc);
-                                this._proxyList.push(this._currentProxy);
-                            }
-                        }
-                    } catch (ex) {
-                        // Could not load required libraries
-                        console.error(' - Warning: Console app failed to load required libraries.');
-                    } finally {
-                        // Initialise the controller
-                        this.init();
-                    }
-                }
-                ConsoleController.prototype.init = function () {
-                    try  {
-                        // Check the command line status and give user some feedback
-                        if (this._currentProxy) {
-                            this.success('Command line ready and active.');
-                        } else {
-                            this.warning('Cannot access the command line from the browser.');
-                        }
-                    } catch (ex) {
-                        console.error(ex);
-                    }
-                };
-
-                ConsoleController.prototype.clear = function () {
-                    // Clear cache
-                    this.$scope.lines = [];
-
-                    // Clear via proxy
-                    if (this._currentProxy) {
-                        this._currentProxy.clear();
-                    }
-                };
-
-                ConsoleController.prototype.getProxyName = function () {
-                    return (this._currentProxy) ? this._currentProxy.ProxyName : '';
-                };
-                ConsoleController.prototype.getProxies = function () {
-                    return this._proxyList;
-                };
-                ConsoleController.prototype.setProxy = function (name) {
-                    console.info(' - Switching Proxy: ' + name);
-                    for (var i = 0; i < this._proxyList.length; i++) {
-                        var itm = this._proxyList[i];
-                        if (itm.ProxyName == name) {
-                            this._currentProxy = itm;
-                            break;
-                        }
-                    }
-
-                    // Refresh UI if needed
-                    if (!this.$scope.$$phase)
-                        this.$scope.$apply();
-
-                    return this._currentProxy;
-                };
-
-                ConsoleController.prototype.command = function (text) {
-                    var _this = this;
-                    // Try and run the command
-                    this.info('' + text);
-                    this.$scope.txtInput = '';
-
-                    // Check if proxy exists
-                    if (this._currentProxy) {
-                        // Check for 'clear screen' command
-                        if (text == 'cls')
-                            return this.clear();
-
-                        // Run the command via proxy
-                        this._currentProxy.command(text, function (msg, tp) {
-                            switch (tp) {
-                                case 'debug':
-                                    _this.debug(msg);
-                                    break;
-                                case 'info':
-                                    _this.info(msg);
-                                    break;
-                                case 'warn':
-                                    _this.warning(msg);
-                                    break;
-                                case 'succcess':
-                                    _this.success(msg);
-                                    break;
-                                case 'error':
-                                    _this.error(msg);
-                                    break;
-                                default:
-                                    _this.debug(msg);
-                                    break;
-                            }
-
-                            // Refresh UI if needed
-                            if (!_this.$scope.$$phase)
-                                _this.$scope.$apply();
-                        });
-                    } else {
-                        this.error('Command line is not available...');
-                    }
-                };
-
-                ConsoleController.prototype.debug = function (msg) {
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'debug'
-                    });
-                };
-
-                ConsoleController.prototype.info = function (msg) {
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'info'
-                    });
-                };
-
-                ConsoleController.prototype.warning = function (msg) {
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'warning'
-                    });
-                };
-
-                ConsoleController.prototype.success = function (msg) {
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'success'
-                    });
-                };
-
-                ConsoleController.prototype.error = function (msg) {
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'error'
-                    });
-                };
-                return ConsoleController;
-            })();
-            commands.ConsoleController = ConsoleController;
-
-            var BrowserConsole = (function () {
-                function BrowserConsole() {
-                    this.ProxyName = 'Browser';
-                }
-                BrowserConsole.prototype.command = function (text, callback) {
-                    try  {
-                        var result = eval(text);
-                        if (callback && result) {
-                            callback(result, 'info');
-                        }
-                        console.info(result);
-                    } catch (ex) {
-                        callback(ex, 'error');
-                        console.error(ex);
-                    }
-                };
-
-                BrowserConsole.prototype.clear = function () {
-                    console.clear();
-                };
-                BrowserConsole.prototype.debug = function (msg) {
-                    console.debug(msg);
-                };
-                BrowserConsole.prototype.info = function (msg) {
-                    console.info(msg);
-                };
-                BrowserConsole.prototype.warning = function (msg) {
-                    console.warn(msg);
-                };
-                BrowserConsole.prototype.success = function (msg) {
-                    console.info(msg);
-                };
-                BrowserConsole.prototype.error = function (msg) {
-                    console.error(msg);
-                };
-                return BrowserConsole;
-            })();
-            commands.BrowserConsole = BrowserConsole;
-
-            var ProcessConsole = (function () {
-                function ProcessConsole(_proc) {
-                    this._proc = _proc;
-                    this.ProxyName = 'System';
-                }
-                ProcessConsole.prototype.clear = function () {
-                };
-
-                ProcessConsole.prototype.command = function (text, callback) {
-                    // Call the command line from a child process
-                    var proc = eval('process');
-                    var ls = this._proc.exec(text, function (error, stdout, stderr) {
-                        if (error) {
-                            console.groupCollapsed('Command Error: ' + text);
-                            console.error(error.stack);
-                            console.info(' - Signal received: ' + error.signal);
-                            console.info(' - Error code: ' + error.code);
-                            console.groupEnd();
-                        }
-                        if (stdout) {
-                            callback('' + stdout, 'info');
-                        }
-                        if (stderr) {
-                            callback('' + stderr, 'error');
-                        }
-                    }).on('exit', function (code) {
-                        //callback(' - Process returned: ' + code, 'debug');
-                    });
-                };
-                return ProcessConsole;
-            })();
-            commands.ProcessConsole = ProcessConsole;
-        })(ng.commands || (ng.commands = {}));
-        var commands = ng.commands;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-/// <reference path="../../imports.d.ts" />
-/// <reference path="controllers/ConsoleController.ts"/>
-angular.module('prototyped.console', [
-    'ui.router'
-]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Define the UI states
-        $stateProvider.state('proto.console', {
-            url: '/console',
-            views: {
-                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'modules/console/views/main.tpl.html',
-                    controller: 'proto.ng.commands.ConsoleController'
-                }
-            }
-        });
-    }]).controller('proto.ng.commands.ConsoleController', [
-    '$scope',
-    proto.ng.commands.ConsoleController
-]);
-/// <reference path="../imports.d.ts" />
-angular.module('prototyped.default', [
-    'ui.router'
-]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Now set up the states
-        $stateProvider.state('default', {
-            url: '/',
-            views: {
-                'main@': {
-                    templateUrl: 'views/default.tpl.html',
-                    controller: 'CardViewCtrl',
-                    controllerAs: 'sliderCtrl'
-                }
-            }
-        });
-    }]).controller('CardViewCtrl', [
-    '$scope', 'appConfig', function ($scope, appConfig) {
-        // Make sure 'mySiteMap' exists
-        $scope.pages = appConfig.routers || [];
-
-        // initial image index
-        $scope._Index = 0;
-
-        $scope.count = function () {
-            return $scope.pages.length;
-        };
-
-        // if a current image is the same as requested image
-        $scope.isActive = function (index) {
-            return $scope._Index === index;
-        };
-
-        // show prev image
-        $scope.showPrev = function () {
-            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
-        };
-
-        // show next image
-        $scope.showNext = function () {
-            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
-        };
-
-        // show a certain image
-        $scope.showPhoto = function (index) {
-            $scope._Index = index;
-        };
-    }]);
-///<reference path="../../../imports.d.ts"/>
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (editor) {
-            var EditorController = (function () {
-                function EditorController($scope, $timeout) {
-                    this.$scope = $scope;
-                    this.$timeout = $timeout;
-                    this.isActive = false;
-                    this.FileLocation = '';
-                    this.LastChanged = null;
-                    this.LastOnSaved = null;
-                    this.$scope.myWriter = this;
-                    try  {
-                        // Load file system
-                        this._path = require('path');
-                        this._fs = require('fs');
-
-                        // Try  and load the node webkit
-                        var nwGui = 'nw.gui';
-                        this._gui = require(nwGui);
-                    } catch (ex) {
-                        console.warn(' - [ Editor ] Warning: Could not load all required modules');
-                    }
-                }
-                Object.defineProperty(EditorController.prototype, "FileContents", {
-                    get: function () {
-                        return this._buffer;
-                    },
-                    set: function (buffer) {
-                        this._buffer = buffer;
-                        this.LastChanged = Date.now();
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-
-                Object.defineProperty(EditorController.prototype, "HasChanges", {
-                    get: function () {
-                        return this.LastChanged != null && this.LastChanged > this.LastOnSaved;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(EditorController.prototype, "HasFileSys", {
-                    get: function () {
-                        return !$.isEmptyObject(this._gui);
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-
-                EditorController.prototype.init = function () {
-                    this.isActive = true;
-                };
-
-                EditorController.prototype.openFile = function () {
-                    var _this = this;
-                    if (this.checkUnsaved())
-                        return;
-
-                    if (!$.isEmptyObject(this._gui) && !$.isEmptyObject(this._fs)) {
-                        var chooser = $('#fileDialog');
-                        chooser.change(function (evt) {
-                            var filePath = chooser.val();
-                            if (filePath) {
-                                // Try and read the file
-                                _this._fs.readFile(filePath, 'UTF-8', function (err, data) {
-                                    if (err) {
-                                        throw new Error(err);
-                                    } else {
-                                        _this.setText(data);
-                                        _this.FileLocation = filePath;
-                                        _this.LastChanged = null;
-                                        _this.LastOnSaved = null;
-                                    }
-                                    _this.$scope.$apply();
-                                });
-                            }
-                        });
-                        chooser.trigger('click');
-                    } else {
-                        console.warn(' - [ Editor ] Warning: Shell not available.');
-                    }
-                };
-
-                EditorController.prototype.openFileLocation = function () {
-                    if (this._gui) {
-                        this._gui.Shell.openItem(this.FileLocation);
-                    } else {
-                        console.warn(' - [ Editor ] Warning: Shell not available.');
-                    }
-                };
-
-                EditorController.prototype.newFile = function () {
-                    if (this.checkUnsaved())
-                        return;
-
-                    // Clear prev. states
-                    this.FileLocation = null;
-                    this.LastChanged = null;
-                    this.LastOnSaved = null;
-
-                    // Set some intial text
-                    this.setText('Enter some text');
-                    this.LastChanged = Date.now();
-
-                    // Do post-new operations
-                    this.$timeout(function () {
-                        // Select file contents
-                        var elem = $('#FileContents');
-                        if (elem) {
-                            elem.select();
-                        }
-                    });
-                };
-
-                EditorController.prototype.saveFile = function (filePath) {
-                    var _this = this;
-                    if (!filePath)
-                        filePath = this.FileLocation;
-                    if (!filePath)
-                        return this.saveFileAs();
-                    if (!$.isEmptyObject(this._fs) && !$.isEmptyObject(this._path)) {
-                        var output = this._buffer;
-                        this._fs.writeFile(filePath, output, 'UTF-8', function (err) {
-                            if (err) {
-                                throw new Error(err);
-                            } else {
-                                // File has been saved
-                                _this.FileLocation = filePath;
-                                _this.LastOnSaved = Date.now();
-                            }
-                            _this.$scope.$apply();
-                        });
-                    } else {
-                        console.warn(' - [ Editor ] Warning: File system not available.');
-                    }
-                };
-
-                EditorController.prototype.saveFileAs = function () {
-                    var _this = this;
-                    if (!$.isEmptyObject(this._gui)) {
-                        // Get the file name
-                        var filePath = this.FileLocation || 'Untitled.txt';
-                        var chooser = $('#saveDialog');
-                        chooser.change(function (evt) {
-                            var filePath = chooser.val();
-                            if (filePath) {
-                                // Save file in specified location
-                                _this.saveFile(filePath);
-                            }
-                        });
-                        chooser.trigger('click');
-                    } else {
-                        console.warn(' - [ Editor ] Warning: Shell not available.');
-                    }
-                };
-
-                EditorController.prototype.setText = function (value) {
-                    this.FileContents = value;
-
-                    if (!this._textArea) {
-                        var myTextArea = $('#FileContents');
-                        if (myTextArea.length > 0) {
-                            this._textArea = CodeMirror.fromTextArea(myTextArea[0], {
-                                //mode: "javascript",
-                                autoClearEmptyLines: true,
-                                lineNumbers: true,
-                                indentUnit: 4
-                            });
-                        }
-                        this._textArea.setValue(value);
-                    } else {
-                        this._textArea.setValue(value);
-                    }
-                    /*
-                    var totalLines = this._textArea.lineCount();
-                    if (totalLines) {
-                    this._textArea.autoFormatRange({ line: 0, ch: 0 }, { line: totalLines });
-                    }
-                    */
-                };
-
-                EditorController.prototype.test = function () {
-                    throw new Error('Lala');
-                    try  {
-                        var dir = './';
-                        var log = "Test.log";
-                        if (!$.isEmptyObject(this._fs) && !$.isEmptyObject(this._path)) {
-                            var target = this._path.resolve(dir, log);
-                            this._fs.writeFile(log, "Hey there!", function (err) {
-                                if (err) {
-                                    throw new Error(err);
-                                } else {
-                                    var nwGui = 'nw.gui';
-                                    var myGui = require(nwGui);
-                                    if (!$.isEmptyObject(myGui)) {
-                                        myGui.Shell.openItem(target);
-                                    } else {
-                                        throw new Error('Cannot open the item: ' + target);
-                                    }
-                                }
-                            });
-                        } else {
-                            console.warn(' - Warning: File system not available...');
-                        }
-                    } catch (ex) {
-                        console.error(ex);
-                    }
-                };
-
-                EditorController.prototype.checkUnsaved = function (msg) {
-                    var msgCheck = msg || 'There are unsaved changes.\r\nAre you sure you want to continue?';
-                    var hasCheck = this.FileContents != null && this.HasChanges;
-                    return (hasCheck && confirm(msgCheck) == false);
-                };
-                return EditorController;
-            })();
-            editor.EditorController = EditorController;
-        })(ng.editor || (ng.editor = {}));
-        var editor = ng.editor;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-/// <reference path="../../imports.d.ts" />
-/// <reference path="controllers/EditorController.ts"/>
-angular.module('prototyped.editor', [
-    'ui.router'
-]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Define the UI states
-        $stateProvider.state('proto.editor', {
-            url: '/editor',
-            views: {
-                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'modules/editor/views/main.tpl.html',
-                    controller: 'proto.ng.editor.EditorController'
-                }
-            }
-        });
-    }]).controller('proto.ng.editor.EditorController', [
-    '$scope',
-    '$timeout',
-    proto.ng.editor.EditorController
-]);
-///<reference path="../../../imports.d.ts"/>
-var proto;
-(function (proto) {
-    (function (explorer) {
-        var AddressBarController = (function () {
-            function AddressBarController($rootScope, $scope, $q) {
-                var _this = this;
-                this.$rootScope = $rootScope;
-                this.$scope = $scope;
-                this.$q = $q;
-                this.history = [];
-                $scope.busy = true;
-                try  {
-                    // Initialise the address bar
-                    var elem = $('#addressbar');
-                    if (elem) {
-                        this.init(elem);
-
-                        this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
-                            if (folder != _this.$scope.dir_path) {
-                                console.warn(' - Addressbar Navigate: ', folder);
-                                _this.$scope.dir_path = folder;
-                                _this.navigate(folder);
-                            }
-                        });
-                    } else {
-                        throw new Error('Element with id "addressbar" not found...');
-                    }
-                } catch (ex) {
-                    // Initialisation failed
-                    console.error(ex);
-                }
-                $scope.busy = false;
-            }
-            AddressBarController.prototype.init = function (element) {
-                // Set the target HTML element
-                this.element = element;
-
-                // Generate the current folder parts
-                this.generateOutput('./');
-            };
-
-            AddressBarController.prototype.openFolder = function (path) {
-                try  {
-                    var nwGui = 'nw.gui';
-                    var gui = require(nwGui);
-                    if (!$.isEmptyObject(gui)) {
-                        console.debug(' - Opening Folder: ' + path);
-                        gui.Shell.openItem(path + '/');
-                    }
-                } catch (ex) {
-                    console.error(ex);
-                }
-                this.generateOutput(path);
-            };
-
-            AddressBarController.prototype.navigate = function (path) {
-                this.generateOutput(path);
-            };
-
-            AddressBarController.prototype.select = function (file) {
-                console.info(' - select: ', file);
-                try  {
-                    var req = 'nw.gui';
-                    var gui = require(req);
-                    gui.Shell.openItem(file);
-                } catch (ex) {
-                    console.error(ex);
-                }
-            };
-
-            AddressBarController.prototype.back = function () {
-                var len = this.history ? this.history.length : -1;
-                if (len > 1) {
-                    var last = this.history[len - 2];
-                    this.history = this.history.splice(0, len - 2);
-                    this.generateOutput(last);
-                }
-            };
-
-            AddressBarController.prototype.hasHistory = function () {
-                var len = this.history ? this.history.length : -1;
-                return (len > 1);
-            };
-
-            AddressBarController.prototype.generateOutput = function (dir_path) {
-                // Set the current dir path
-                this.$scope.dir_path = dir_path;
-                this.$scope.dir_parts = this.generatePaths(dir_path);
-                this.history.push(dir_path);
-
-                // Breadcast event that path has changed
-                this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
-            };
-
-            AddressBarController.prototype.generatePaths = function (dir_path) {
-                try  {
-                    // Get dependecies
-                    var path = require('path');
-
-                    // Update current path
-                    this.$scope.dir_path = dir_path = path.resolve(dir_path);
-
-                    // Try and normalize the folder path
-                    var curr = path.normalize(dir_path);
-                    if (curr) {
-                        // Split path into separate elements
-                        var sequence = curr.split(path.sep);
-                        var result = [];
-
-                        var i = 0;
-                        for (; i < sequence.length; ++i) {
-                            result.push({
-                                name: sequence[i],
-                                path: sequence.slice(0, 1 + i).join(path.sep)
-                            });
-                        }
-
-                        // Add root for unix
-                        if (sequence[0] == '' && process.platform != 'win32') {
-                            result[0] = {
-                                name: 'root',
-                                path: '/'
-                            };
-                        }
-
-                        // Return thepath sequences
-                        return { sequence: result };
-                    }
-                } catch (ex) {
-                    console.error(ex);
-                }
-            };
-            return AddressBarController;
-        })();
-        explorer.AddressBarController = AddressBarController;
-    })(proto.explorer || (proto.explorer = {}));
-    var explorer = proto.explorer;
-})(proto || (proto = {}));
-///<reference path="../../../imports.d.ts"/>
-var proto;
-(function (proto) {
-    (function (explorer) {
-        var ExplorerController = (function () {
-            function ExplorerController($rootScope, $scope, $q) {
-                var _this = this;
-                this.$rootScope = $rootScope;
-                this.$scope = $scope;
-                this.$q = $q;
-                var dir = './';
-                try  {
-                    // Hook up to the current scope
-                    this.$scope.isBusy = true;
-
-                    // Initialize the cotroller
-                    this.init(dir);
-
-                    // Hook event for when folder path changes
-                    this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
-                        if (folder != _this.$scope.dir_path) {
-                            console.warn(' - Explorer Navigate: ', folder);
-                            _this.$scope.dir_path = folder;
-                            _this.navigate(folder);
-                        }
-                    });
-                } catch (ex) {
-                    console.error(ex);
-                }
-            }
-            ExplorerController.prototype.init = function (dir) {
-                // Resolve the initial folder path
-                this.navigate(dir);
-            };
-
-            ExplorerController.prototype.navigate = function (dir_path) {
-                var _this = this;
-                var deferred = this.$q.defer();
-                try  {
-                    // Set busy flag
-                    this.$scope.isBusy = true;
-                    this.$scope.error = null;
-
-                    // Resolve the full path
-                    var path = require('path');
-                    dir_path = path.resolve(dir_path);
-
-                    // Read the folder contents (async)
-                    var fs = require('fs');
-                    fs.readdir(dir_path, function (error, files) {
-                        if (error) {
-                            deferred.reject(error);
-                            return;
-                        }
-
-                        // Split and sort results
-                        var folders = [];
-                        var lsFiles = [];
-                        for (var i = 0; i < files.sort().length; ++i) {
-                            var targ = path.join(dir_path, files[i]);
-                            var stat = _this.mimeType(targ);
-                            if (stat.type == 'folder') {
-                                folders.push(stat);
-                            } else {
-                                lsFiles.push(stat);
-                            }
-                        }
-
-                        // Generate the contents
-                        var result = {
-                            path: dir_path,
-                            folders: folders,
-                            files: lsFiles
-                        };
-
-                        // Mark promise as resolved
-                        deferred.resolve(result);
-                    });
-                } catch (ex) {
-                    // Mark promise and rejected
-                    deferred.reject(ex);
-                }
-
-                // Handle the result and error conditions
-                deferred.promise.then(function (result) {
-                    // Clear busy flag
-                    _this.$scope.isBusy = false;
-                    _this.$scope.dir_path = result.path;
-                    _this.$scope.files = result.files;
-                    _this.$scope.folders = result.folders;
-
-                    // Breadcast event that path has changed
-                    _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
-                }, function (error) {
-                    // Clear busy flag
-                    _this.$scope.isBusy = false;
-                    _this.$scope.error = error;
-                });
-
-                return deferred.promise;
-            };
-
-            ExplorerController.prototype.select = function (filePath) {
-                this.$scope.selected = filePath;
-            };
-
-            ExplorerController.prototype.open = function (filePath) {
-                var req = 'nw.gui';
-                var gui = require(req);
-                if (gui)
-                    gui.Shell.openItem(filePath);
-            };
-
-            ExplorerController.prototype.mimeType = function (filepath) {
-                var map = {
-                    'compressed': ['zip', 'rar', 'gz', '7z'],
-                    'text': ['txt', 'md', ''],
-                    'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
-                    'pdf': ['pdf'],
-                    'css': ['css'],
-                    'excel': ['csv', 'xls', 'xlsx'],
-                    'html': ['html'],
-                    'word': ['doc', 'docx'],
-                    'powerpoint': ['ppt', 'pptx'],
-                    'movie': ['mkv', 'avi', 'rmvb']
-                };
-                var cached = {};
-
-                var fs = require('fs');
-                var path = require('path');
-                var result = {
-                    name: path.basename(filepath),
-                    path: filepath,
-                    type: null
-                };
-
-                try  {
-                    var stat = fs.statSync(filepath);
-                    if (stat.isDirectory()) {
-                        result.type = 'folder';
-                    } else {
-                        var ext = path.extname(filepath).substr(1);
-                        result.type = cached[ext];
-                        if (!result.type) {
-                            for (var key in map) {
-                                var arr = map[key];
-                                if (arr.length > 0 && arr.indexOf(ext) >= 0) {
-                                    cached[ext] = result.type = key;
-                                    break;
-                                }
-                            }
-
-                            if (!result.type)
-                                result.type = 'blank';
-                        }
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
-
-                return result;
-            };
-            return ExplorerController;
-        })();
-        explorer.ExplorerController = ExplorerController;
-    })(proto.explorer || (proto.explorer = {}));
-    var explorer = proto.explorer;
-})(proto || (proto = {}));
-/// <reference path="../../imports.d.ts" />
-angular.module('prototyped.explorer', [
-    'ui.router'
-]).config([
-    '$stateProvider', function ($stateProvider) {
-        $stateProvider.state('proto.explore', {
-            url: '^/explore',
-            views: {
-                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'modules/explore/views/index.tpl.html',
-                    controller: 'proto.explorer.ExplorerController',
-                    controllerAs: 'ctrlExplorer'
-                }
-            }
-        });
-    }]).directive('protoAddressBar', [
-    '$q', function ($q) {
-        return {
-            restrict: 'EA',
-            scope: {
-                target: '=protoAddressBar'
-            },
-            transclude: false,
-            templateUrl: 'modules/explore/views/addressbar.tpl.html',
-            controller: 'proto.explorer.AddressBarController',
-            controllerAs: 'addrBar'
-        };
-    }]).controller('proto.explorer.AddressBarController', [
-    '$rootScope',
-    '$scope',
-    '$q',
-    proto.explorer.AddressBarController
-]).controller('proto.explorer.ExplorerController', [
-    '$rootScope',
-    '$scope',
-    '$q',
-    proto.explorer.ExplorerController
-]);
-/// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/default.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
@@ -1439,7 +1439,6 @@ angular.module('prototyped.ng', [
     'prototyped.ng.config',
     'prototyped.ng.views',
     'prototyped.ng.styles',
-    'prototyped.ng.scripts',
     'prototyped.default',
     'prototyped.about',
     'prototyped.editor',

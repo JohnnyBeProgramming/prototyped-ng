@@ -10,7 +10,7 @@ angular.module('prototyped.explorer', [
             .state('proto.explore', {
                 url: '^/explore',
                 views: {
-                    'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                    'left@': { templateUrl: 'views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/explore/views/index.tpl.html',
                         controller: 'proto.explorer.ExplorerController',

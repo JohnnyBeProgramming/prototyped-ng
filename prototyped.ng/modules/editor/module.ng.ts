@@ -12,7 +12,7 @@ angular.module('prototyped.editor', [
             .state('proto.editor', {
                 url: '/editor',
                 views: {
-                    'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                    'left@': { templateUrl: 'views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/editor/views/main.tpl.html',
                         controller: 'proto.ng.editor.EditorController',

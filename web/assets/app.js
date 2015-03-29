@@ -207,7 +207,7 @@ angular.module('myApp', [
         };
     }])
 
-    .run(['$rootScope', '$state', function ($rootScope, $state) {
+    .run(['$rootScope', '$state', '$window', '$filter', 'appStatus', 'appNode', function ($rootScope, $state, $window, $filter, appStatus, appNode) {
 
         angular.extend($rootScope, {
             state: $state,

@@ -28,11 +28,12 @@ angular.module('prototyped.ng.features', [
         if (appConfig) {
             // Define module routes
             appConfig.routers.push({
-                url: '/features',
+                url: '/proto/explore',
                 priority: 100,
                 menuitem: {
                     label: 'Features',
                     icon: 'fa fa-flask',
+                    state: 'proto.cmd',
                 },
                 cardview: {
                     style: typeof require !== 'undefined' ? 'img-advanced' : 'img-advanced-restricted',
@@ -53,6 +54,7 @@ angular.module('prototyped.ng.features', [
                 menuitem: {
                     label: 'Imports',
                     icon: 'fa fa-cloud-download',
+                    state: 'proto.edge',
                 },
                 cardview: {
                     style: 'img-editor',
@@ -78,9 +80,9 @@ angular.module('prototyped.ng.features', [
             .state('features.info', {
                 url: '',
                 views: {
-                    'left@': { templateUrl: 'features/left.tpl.html' },
+                    'left@': { templateUrl: 'views/left.tpl.html' },
                     'main@': {
-                        templateUrl: 'features/main.tpl.html',
+                        templateUrl: 'views/index.tpl.html',
                         controller: 'featuresViewController'
                     },
                 }

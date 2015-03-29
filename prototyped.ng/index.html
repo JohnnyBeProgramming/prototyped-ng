@@ -34,7 +34,6 @@
 
     <!-- Load this module's libraries -->
     <script src="assets/lib/prototyped.ng.base.js"></script>
-    <script src="assets/lib/prototyped.ng.sqlx.js"></script>
     <script src="assets/lib/prototyped.ng.views.js"></script>
     <script src="assets/lib/prototyped.ng.styles.js"></script>
     <script>
@@ -74,7 +73,7 @@
             // Bootstrap the application (async)
             angular
                 .injector(['prototyped.ng.config'])
-                .get('appLoader')
+                .get('appConfigLoader')
                 .init({
                     name: 'testApp',
                     path: 'builder/package.json',

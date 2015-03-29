@@ -23,6 +23,7 @@
       <DependentUpon>features.css</DependentUpon>
     </Content>
     <Content Include="assets\lib\prototyped.ng.features.base.js" />
+    <Content Include="assets\lib\prototyped.ng.features.scripts.js" />
     <Content Include="assets\lib\prototyped.ng.features.styles.js" />
     <Content Include="assets\lib\prototyped.ng.features.views.js" />
     <Content Include="builder\config\banner.js" />

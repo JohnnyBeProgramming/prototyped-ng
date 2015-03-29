@@ -1,4 +1,4 @@
-/// <reference path="../../../imports.d.ts" />
+/// <reference path="../../../../imports.d.ts" />
 angular.module('prototyped.certs', [
     'ui.router'
 ]).config([
@@ -10,9 +10,9 @@ angular.module('prototyped.certs', [
         }).state('certs.info', {
             url: '',
             views: {
-                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'modules/features/appcmd.exe/certs.tpl.html',
+                    templateUrl: 'modules/cli/win/appcmd.exe/certs.tpl.html',
                     controller: 'appCmdViewController'
                 }
             }
@@ -226,9 +226,9 @@ angular.module('prototyped.certs', [
             return cssRes;
         };
     }]);
-/// <reference path="../../../imports.d.ts" />
+/// <reference path="../../../../imports.d.ts" />
 angular.module('prototyped.sqlcmd', [
-    'prototyped.ng.sql',
+    'prototyped.ng.features.scripts',
     'ui.router'
 ]).config([
     '$stateProvider', function ($stateProvider) {
@@ -239,18 +239,18 @@ angular.module('prototyped.sqlcmd', [
         }).state('sqlcmd.connect', {
             url: '/connect/:path/:file',
             views: {
-                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'modules/features/sqlcmd.exe/views/connect.tpl.html',
+                    templateUrl: 'modules/cli/win/sqlcmd.exe/views/connect.tpl.html',
                     controller: 'sqlCmdViewController'
                 }
             }
         }).state('sqlcmd.connect.db', {
             url: '/:dbname',
             views: {
-                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'modules/features/sqlcmd.exe/views/database.tpl.html',
+                    templateUrl: 'modules/cli/win/sqlcmd.exe/views/database.tpl.html',
                     controller: 'sqlCmdViewController'
                 }
             }
@@ -572,7 +572,7 @@ angular.module('prototyped.sqlcmd', [
                     var src = filePath;
                     var inp = '"' + path.join(process.cwd(), src) + '"';
                     if (opts.nocount !== false) {
-                        var noc = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/NoCounts.sql');
+                        var noc = $scope.sqlCmd.utils.resolveFilename('modules/cli/win/sqlcmd.exe/scripts/utils/NoCounts.sql');
                         inp = '"' + path.join(process.cwd(), noc) + '",' + inp;
                     }
                     var arg = ' -S lpc:localhost -E';
@@ -738,7 +738,7 @@ angular.module('prototyped.sqlcmd', [
             }
 
             // Get the file size and basic info for the database
-            var tplFileSizes = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/FileSizes.sql');
+            var tplFileSizes = $scope.sqlCmd.utils.resolveFilename('modules/cli/win/sqlcmd.exe/scripts/utils/FileSizes.sql');
             $scope.sqlCmd.utils.runFile(tplFileSizes, { database: db.DATABASE_NAME }, function (result) {
                 $rootScope.$applyAsync(function () {
                     var files = [];
@@ -773,7 +773,7 @@ angular.module('prototyped.sqlcmd', [
                     });
                 });
 
-                var tplTableSize = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/TableSizes.sql');
+                var tplTableSize = $scope.sqlCmd.utils.resolveFilename('modules/cli/win/sqlcmd.exe/scripts/utils/TableSizes.sql');
                 $scope.sqlCmd.utils.runFile(tplTableSize, { database: db.DATABASE_NAME }, function (result) {
                     $rootScope.$applyAsync(function () {
                         var tables = [];
@@ -808,7 +808,7 @@ angular.module('prototyped.sqlcmd', [
                     });
                 });
 
-                var tplViewSize = $scope.sqlCmd.utils.resolveFilename('modules/features/sqlcmd.exe/scripts/utils/ListViews.sql');
+                var tplViewSize = $scope.sqlCmd.utils.resolveFilename('modules/cli/win/sqlcmd.exe/scripts/utils/ListViews.sql');
                 $scope.sqlCmd.utils.runFile(tplViewSize, { database: db.DATABASE_NAME }, function (result) {
                     $rootScope.$applyAsync(function () {
                         var views = [];
@@ -1084,7 +1084,7 @@ angular.module('prototyped.edge', [
         $stateProvider.state('proto.edge', {
             url: '^/edge',
             views: {
-                'left@': { templateUrl: 'modules/features/views/left.tpl.html' },
+                'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/edge/views/index.tpl.html',
                     controller: 'edgeViewController'
@@ -1189,11 +1189,12 @@ angular.module('prototyped.ng.features', [
         if (appConfig) {
             // Define module routes
             appConfig.routers.push({
-                url: '/features',
+                url: '/proto/explore',
                 priority: 100,
                 menuitem: {
                     label: 'Features',
-                    icon: 'fa fa-flask'
+                    icon: 'fa fa-flask',
+                    state: 'proto.cmd'
                 },
                 cardview: {
                     style: typeof require !== 'undefined' ? 'img-advanced' : 'img-advanced-restricted',
@@ -1211,7 +1212,8 @@ angular.module('prototyped.ng.features', [
                 priority: 100,
                 menuitem: {
                     label: 'Imports',
-                    icon: 'fa fa-cloud-download'
+                    icon: 'fa fa-cloud-download',
+                    state: 'proto.edge'
                 },
                 cardview: {
                     style: 'img-editor',
@@ -1233,9 +1235,9 @@ angular.module('prototyped.ng.features', [
         }).state('features.info', {
             url: '',
             views: {
-                'left@': { templateUrl: 'features/left.tpl.html' },
+                'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'features/main.tpl.html',
+                    templateUrl: 'views/index.tpl.html',
                     controller: 'featuresViewController'
                 }
             }
@@ -1378,7 +1380,7 @@ angular.module('prototyped.ng.features', [
   $templateCache.put('modules/cli/win/sqlcmd.exe/views/connect.tpl.html',
     '<div class=container><h4>Prototyping SQL Server <small ng:if=!sqlCmd.path>Exploring locally available Data Sources...</small> <small ng:if=sqlCmd.path>{{ sqlCmd.path }}</small></h4><div ng:if=!sqlCmd.path><div ng:if=!sqlCmd.error class="alert alert-warning"><i class="glyphicon glyphicon-warning-sign"></i> <b>Warning:</b> Path to SQLCMD.exe not specified. To continue, you will need to locate it manually.</div><div ng:if=sqlCmd.error class="alert alert-danger"><i class="fa fa-share-square"></i> <b>Error:</b> {{ sqlCmd.error.message }}</div><h5>Specify path to SQLCMD.exe</h5><p><input class=inpSqlCmd ng:click=sqlCmd.utils.find() type=file accept=.exe,.cmd nwdirectory></p></div><div ng:if=sqlCmd.path ng:cloak><p ng:if=sqlCmd.busy><em>Loading...</em></p><p ng:if=!sqlCmd.busy>...</p><div ng:if=!sqlCmd.busy><div ng:if=!appNode.active class="alert alert-warning"><i class="fa fa-warning"></i> <b>Not Available:</b> Application requires a NodeJS (or CommonJS) runtime. Web browsers do not have access to these advanced features...</div><div ng:if="sqlCmd.active && !sqlCmd.error" class="alert alert-success"><i class="fa fa-share-square"></i> <b>Connected!</b> You are now conncted to the local SQL Server Database Engine...</div><div ng:if=sqlCmd.error class="alert alert-danger"><i class="fa fa-share-square"></i> <b>Error:</b> {{ sqlCmd.error.message }}</div><div ng:if=false class="alert alert-info"><i class="fa fa-share-square"></i> <b>Info:</b></div></div><div ng:if=sqlCmd.result><h5>Local Data Sources <small ng:if="sqlCmd.result.list.length > 0">( {{sqlCmd.result.list.length}} databases )</small></h5><div class=row><a href="" ng:click=sqlCmd.utils.select(db) style="color: black; text-decoration:none" class="col-lg-3 col-md-4 col-sm-6" ng-repeat="db in sqlCmd.result.list"><div class="info-row thumbnail"><div class="info-col-secondary img-clipper" style="flex-basis: 50px; background-image: url(http://png.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)"></div><div class=info-col-primary><h5>{{ db.DATABASE_NAME }} <small>{{ db.size.files.total | toBytes }}</small></h5><div ng:if=db.size.files><div class=progress ng-class="{ \'progress-striped active\': db.busy }" style="height: 10px; margin-bottom:3px"><div ng:init="prog = sqlCmd.utils.getSizeLogs(db)" role=progressbar title="Database Logs - {{ prog.perct | number:2 }}% ( {{ prog.value | toBytes:1 }} / {{ prog.total | toBytes:1 }} )" class=progress-bar ng-style="{width: (prog.perct | number:2) + \'%\'}" ng-class="{ \'progress-bar-primary inactive-ctrl\':true }" aria-valuenow="{{ (prog.perct | number:2) }}" aria-valuetext="{{ (prog.perct | number:2) }}%" aria-valuemin=0 aria-valuemax=100></div><div ng:if=db.busy ng:init="progData = sqlCmd.utils.getSizeData(db)" role=progressbar title="Database Tables - {{ progData.perct | number:2 }}% ( {{ progData.value | toBytes:1 }} / {{ progData.total | toBytes:1 }} )" class=progress-bar ng-style="{width: (progData.perct | number:2) + \'%\'}" ng-class="{ \'progress-bar-warning inactive-ctrl\':true  }" aria-valuenow="{{ (progData.perct | number:2) }}" aria-valuetext="{{ (progData.perct | number:2) }}%" aria-valuemin=0 aria-valuemax=100></div><div ng:if=db.size.index ng:init="progIndex = sqlCmd.utils.getSizeIndex(db)" role=progressbar title="Table Indexes - {{ progIndex.perct | number:2 }}% ( {{ progIndex.value | toBytes:1 }} / {{ progIndex.total | toBytes:1 }} )" class=progress-bar ng-style="{width: (progIndex.perct | number:2) + \'%\'}" ng-class="{ \'progress-bar-info\':true }" aria-valuenow="{{ (progIndex.perct | number:2) }}" aria-valuetext="{{ (progIndex.perct | number:2) }}%" aria-valuemin=0 aria-valuemax=100></div><div ng:if=db.size.table ng:init="progTables = sqlCmd.utils.getSizeTables(db)" role=progressbar title="Table Data - {{ progTables.perct | number:2 }}% ( {{ progTables.value | toBytes:1 }} / {{ progTables.total | toBytes:1 }} )" class=progress-bar ng-style="{width: (progTables.perct | number:2) + \'%\'}" ng-class="{ \'progress-bar-primary\':true }" aria-valuenow="{{ (progTables.perct | number:2) }}" aria-valuetext="{{ (progTables.perct | number:2) }}%" aria-valuemin=0 aria-valuemax=100></div></div></div><div ng:if="!db.tables && !db.views"><em>Loading...</em></div><div ng:if=db><span ng:if=db.tables.length><b>{{ db.tables.length }}</b> Tables</span> <span ng:if=db.views.length>, <b>{{ db.views.length }}</b> Views</span></div><div ng:if="db.REMARKS != \'NULL\'"><em>Remarks: {{ db.REMARKS }}</em></div></div></div></a></div></div></div></div>');
   $templateCache.put('modules/cli/win/sqlcmd.exe/views/database.tpl.html',
-    '<div class=container><h4>Prototyping SQL Server <small ng:if=!sqlCmd.dbname>{{ sqlCmd.path }}</small> <small ng:if=sqlCmd.dbname>{{ sqlCmd.dbname }}</small></h4><div ng:if=!sqlCmd.path><div ng:if=!sqlCmd.error class="alert alert-warning"><i class="glyphicon glyphicon-warning-sign"></i> <b>Warning:</b> Path to SQLCMD.exe not specified. To continue, you will need to locate it manually.</div><div ng:if=sqlCmd.error class="alert alert-danger"><i class="fa fa-share-square"></i> <b>Error:</b> {{ sqlCmd.error.message }}</div><h5>Specify path to SQLCMD.exe</h5><p><input class=inpSqlCmd ng:click=sqlCmd.utils.find() type=file accept=.exe,.cmd nwdirectory></p></div><div ng:if=sqlCmd.path ng:cloak><p ng:if=sqlCmd.busy><em>Loading...</em></p><p ng:if=!sqlCmd.busy>...</p><div ng:if=!sqlCmd.busy><div ng:if=!appNode.active class="alert alert-warning"><i class="fa fa-warning"></i> <b>Not Available:</b> Application requires a NodeJS (or CommonJS) runtime. Web browsers do not have access to these advanced features...</div><div ng:if="sqlCmd.active && !sqlCmd.error" class="alert alert-success"><i class="fa fa-share-square"></i> <b>Connected!</b> You are now conncted to the local SQL Server Database Engine...</div><div ng:if=sqlCmd.error class="alert alert-danger"><i class="fa fa-share-square"></i> <b>Error:</b> {{ sqlCmd.error.message }}</div><div ng:if=false class="alert alert-info"><i class="fa fa-share-square"></i> <b>Info:</b></div></div><div ng:if=sqlCmd.dbname><h5><a ui:sref=sqlcmd.connect href="" style="text-decoration: none; color: #dedede"><i class="glyphicon glyphicon-backward"></i>&nbsp;</a> {{ sqlCmd.dbname }} <small>( {{ sqlCmd.target.size.files.total | toBytes }}<label ng:if=sqlCmd.target.tables.length>, {{ sqlCmd.target.tables.length }} Tables</label><label ng:if=sqlCmd.target.views.length>, {{ sqlCmd.target.views.length }} Views</label>)</small></h5><div class=row><div class=col-md-12><div ng:click=sqlCmd.utils.select(sqlCmd.target)><div class="info-row thumbnail"><div class="info-col-secondary img-clipper" style="flex-basis: 50px; background-image: url(http://png.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)"></div><div class=info-col-primary><h5 class=ellipsis>{{ sqlCmd.target.DATABASE_NAME }} <small>{{ sqlCmd.target.size.files.total | toBytes }}</small></h5><div ng:if=sqlCmd.target.size.files><div class=progress ng-class="{ \'progress-striped active\': sqlCmd.target.busy }" style="height: 10px; margin-bottom:3px"><div ng:init="prog = sqlCmd.utils.getSizeLogs(sqlCmd.target)" role=progressbar title="Database Logs - {{ prog.perct | number:2 }}% ( {{ prog.value | toBytes:1 }} / {{ prog.total | toBytes:1 }} )" class=progress-bar ng-style="{width: (prog.perct | number:2) + \'%\'}" ng-class="{ \'progress-bar-primary inactive-ctrl\':true }" aria-valuenow="{{ (prog.perct | number:2) }}" aria-valuetext="{{ (prog.perct | number:2) }}%" aria-valuemin=0 aria-valuemax=100></div><div ng:if="false && sqlCmd.target.busy" ng:init="progData = sqlCmd.utils.getSizeData(sqlCmd.target)" role=progressbar title="Database Tables - {{ progData.perct | number:2 }}% ( {{ progData.value | toBytes:1 }} / {{ progData.total | toBytes:1 }} )" class=progress-bar ng-style="{width: (progData.perct | number:2) + \'%\'}" ng-class="{ \'progress-bar-warning inactive-ctrl\':true  }" aria-valuenow="{{ (progData.perct | number:2) }}" aria-valuetext="{{ (progData.perct | number:2) }}%" aria-valuemin=0 aria-valuemax=100></div><div ng:if=sqlCmd.target.size.index ng:init="progIndex = sqlCmd.utils.getSizeIndex(sqlCmd.target)" role=progressbar title="Table Indexes - {{ progIndex.perct | number:2 }}% ( {{ progIndex.value | toBytes:1 }} / {{ progIndex.total | toBytes:1 }} )" class=progress-bar ng-style="{width: (progIndex.perct | number:2) + \'%\'}" ng-class="{ \'progress-bar-info\':true }" aria-valuenow="{{ (progIndex.perct | number:2) }}" aria-valuetext="{{ (progIndex.perct | number:2) }}%" aria-valuemin=0 aria-valuemax=100></div><div ng:if=sqlCmd.target.size.table ng:init="progTables = sqlCmd.utils.getSizeTables(sqlCmd.target)" role=progressbar title="Table Data - {{ progTables.perct | number:2 }}% ( {{ progTables.value | toBytes:1 }} / {{ progTables.total | toBytes:1 }} )" class=progress-bar ng-style="{width: (progTables.perct | number:2) + \'%\'}" ng-class="{ \'progress-bar-primary\':true }" aria-valuenow="{{ (progTables.perct | number:2) }}" aria-valuetext="{{ (progTables.perct | number:2) }}%" aria-valuemin=0 aria-valuemax=100></div></div></div><div><div ng:if="!sqlCmd.target.tables && !sqlCmd.target.views"><em>Loading...</em></div><div ng:if=sqlCmd.target class=ellipsis><span ng:if=!sqlCmd.busy class=dropdown style="position: relative"><a href="" style="color: #808080; text-decoration:none" ng-click="sqlCmd.utils.openModalWindow(\'modules/features/sqlcmd.exe/dialogs/dbActions.tpl.html\')">&nbsp; <i class="glyphicon glyphicon-expand"></i> Actions</a></span> <span ng:if=sqlCmd.target.tables.length>| <a href="" style="color: #808080; text-decoration:none">{{ sqlCmd.target.tables.length }} Tables</a></span> <span ng:if=sqlCmd.target.views.length>| <a href="" style="color: #808080; text-decoration:none">{{ sqlCmd.target.views.length }} Views</a></span></div><div ng:if="sqlCmd.target.REMARKS && (sqlCmd.target.REMARKS != \'NULL\')"><em>Remarks: {{ sqlCmd.target.REMARKS }}</em></div></div></div></div></div><div><tabset class=info-tabs><tab heading=Tables><div ng:if="sqlCmd.target.tables.length > 0" class="thumbnail trim-top"><h5 class=ellipsis>Database Tables <small>(<label>{{ sqlCmd.target.tables.length }} items in total</label>)</small></h5><ul ng:if=sqlCmd.target.tables style="padding: 12px; margin: 0"><li ng-repeat="tbl in sqlCmd.target.tables" class=ellipsis style="list-style: none; padding: 0; margin: 0"><i class="glyphicon glyphicon-list" ng-class="{\'glow-blue\': (sqlCmd.targetTable == tbl)}"></i>&nbsp; <a href="" ng-click="sqlCmd.targetTable = tbl" ng-class="{ \'glow-blue\': (sqlCmd.targetTable == tbl) }">{{ tbl.name }}</a><ul ng:if="sqlCmd.targetTable == tbl" style="padding: 0 0 0 8px; margin: 8px"><li ng:if="tbl.cols.length == 0" style="list-style: none; padding: 0; margin: 0"><em>Nothing to display...</em></li><li ng-repeat="col in tbl.cols" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="{ \'glyphicon-list\': true }"></i> <a href="" ng-click="sqlCmd.targetColumn == col">{{col}}</a></li></ul></li></ul></div></tab><tab heading=Views><div class="thumbnail trim-top" ng:if="sqlCmd.target.views.length > 0"><h5 class=ellipsis>Database Views <small>(<label>{{ sqlCmd.target.views.length }} items in total</label>)</small></h5><ul ng:if=sqlCmd.target.views style="padding: 12px; margin: 0"><li ng-repeat="view in sqlCmd.target.views" class=ellipsis style="list-style: none; padding: 0; margin: 0"><i class="glyphicon glyphicon-list" ng-class="{\'glow-blue\': (sqlCmd.targetView == view)}"></i>&nbsp; <a href="" ng-click="sqlCmd.targetView = view" ng-class="{ \'glow-blue\': (sqlCmd.targetView == view) }">{{ view.name }}</a><ul ng:if="sqlCmd.targetView == view" style="padding: 0 0 0 8px; margin: 8px"><li ng:if="view.cols.length == 0" style="list-style: none; padding: 0; margin: 0"><em>Nothing to display...</em></li><li ng-repeat="col in tbl.cols" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="{ \'glyphicon-list\': true }"></i> <a href="" ng-click="sqlCmd.targetColumn == col">{{col}}</a></li></ul></li></ul></div></tab><tab heading=More...><div class="thumbnail docked trim-top">ToDo: Triggers, stored procedures, FKeys and defaults</div></tab></tabset></div></div></div></div></div></div>');
+    '<div class=container><h4>Prototyping SQL Server <small ng:if=!sqlCmd.dbname>{{ sqlCmd.path }}</small> <small ng:if=sqlCmd.dbname>{{ sqlCmd.dbname }}</small></h4><div ng:if=!sqlCmd.path><div ng:if=!sqlCmd.error class="alert alert-warning"><i class="glyphicon glyphicon-warning-sign"></i> <b>Warning:</b> Path to SQLCMD.exe not specified. To continue, you will need to locate it manually.</div><div ng:if=sqlCmd.error class="alert alert-danger"><i class="fa fa-share-square"></i> <b>Error:</b> {{ sqlCmd.error.message }}</div><h5>Specify path to SQLCMD.exe</h5><p><input class=inpSqlCmd ng:click=sqlCmd.utils.find() type=file accept=.exe,.cmd nwdirectory></p></div><div ng:if=sqlCmd.path ng:cloak><p ng:if=sqlCmd.busy><em>Loading...</em></p><p ng:if=!sqlCmd.busy>...</p><div ng:if=!sqlCmd.busy><div ng:if=!appNode.active class="alert alert-warning"><i class="fa fa-warning"></i> <b>Not Available:</b> Application requires a NodeJS (or CommonJS) runtime. Web browsers do not have access to these advanced features...</div><div ng:if="sqlCmd.active && !sqlCmd.error" class="alert alert-success"><i class="fa fa-share-square"></i> <b>Connected!</b> You are now conncted to the local SQL Server Database Engine...</div><div ng:if=sqlCmd.error class="alert alert-danger"><i class="fa fa-share-square"></i> <b>Error:</b> {{ sqlCmd.error.message }}</div><div ng:if=false class="alert alert-info"><i class="fa fa-share-square"></i> <b>Info:</b></div></div><div ng:if=sqlCmd.dbname><h5><a ui:sref=sqlcmd.connect href="" style="text-decoration: none; color: #dedede"><i class="glyphicon glyphicon-backward"></i>&nbsp;</a> {{ sqlCmd.dbname }} <small>( {{ sqlCmd.target.size.files.total | toBytes }}<label ng:if=sqlCmd.target.tables.length>, {{ sqlCmd.target.tables.length }} Tables</label><label ng:if=sqlCmd.target.views.length>, {{ sqlCmd.target.views.length }} Views</label>)</small></h5><div class=row><div class=col-md-12><div ng:click=sqlCmd.utils.select(sqlCmd.target)><div class="info-row thumbnail"><div class="info-col-secondary img-clipper" style="flex-basis: 50px; background-image: url(http://png.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)"></div><div class=info-col-primary><h5 class=ellipsis>{{ sqlCmd.target.DATABASE_NAME }} <small>{{ sqlCmd.target.size.files.total | toBytes }}</small></h5><div ng:if=sqlCmd.target.size.files><div class=progress ng-class="{ \'progress-striped active\': sqlCmd.target.busy }" style="height: 10px; margin-bottom:3px"><div ng:init="prog = sqlCmd.utils.getSizeLogs(sqlCmd.target)" role=progressbar title="Database Logs - {{ prog.perct | number:2 }}% ( {{ prog.value | toBytes:1 }} / {{ prog.total | toBytes:1 }} )" class=progress-bar ng-style="{width: (prog.perct | number:2) + \'%\'}" ng-class="{ \'progress-bar-primary inactive-ctrl\':true }" aria-valuenow="{{ (prog.perct | number:2) }}" aria-valuetext="{{ (prog.perct | number:2) }}%" aria-valuemin=0 aria-valuemax=100></div><div ng:if="false && sqlCmd.target.busy" ng:init="progData = sqlCmd.utils.getSizeData(sqlCmd.target)" role=progressbar title="Database Tables - {{ progData.perct | number:2 }}% ( {{ progData.value | toBytes:1 }} / {{ progData.total | toBytes:1 }} )" class=progress-bar ng-style="{width: (progData.perct | number:2) + \'%\'}" ng-class="{ \'progress-bar-warning inactive-ctrl\':true  }" aria-valuenow="{{ (progData.perct | number:2) }}" aria-valuetext="{{ (progData.perct | number:2) }}%" aria-valuemin=0 aria-valuemax=100></div><div ng:if=sqlCmd.target.size.index ng:init="progIndex = sqlCmd.utils.getSizeIndex(sqlCmd.target)" role=progressbar title="Table Indexes - {{ progIndex.perct | number:2 }}% ( {{ progIndex.value | toBytes:1 }} / {{ progIndex.total | toBytes:1 }} )" class=progress-bar ng-style="{width: (progIndex.perct | number:2) + \'%\'}" ng-class="{ \'progress-bar-info\':true }" aria-valuenow="{{ (progIndex.perct | number:2) }}" aria-valuetext="{{ (progIndex.perct | number:2) }}%" aria-valuemin=0 aria-valuemax=100></div><div ng:if=sqlCmd.target.size.table ng:init="progTables = sqlCmd.utils.getSizeTables(sqlCmd.target)" role=progressbar title="Table Data - {{ progTables.perct | number:2 }}% ( {{ progTables.value | toBytes:1 }} / {{ progTables.total | toBytes:1 }} )" class=progress-bar ng-style="{width: (progTables.perct | number:2) + \'%\'}" ng-class="{ \'progress-bar-primary\':true }" aria-valuenow="{{ (progTables.perct | number:2) }}" aria-valuetext="{{ (progTables.perct | number:2) }}%" aria-valuemin=0 aria-valuemax=100></div></div></div><div><div ng:if="!sqlCmd.target.tables && !sqlCmd.target.views"><em>Loading...</em></div><div ng:if=sqlCmd.target class=ellipsis><span ng:if=!sqlCmd.busy class=dropdown style="position: relative"><a href="" style="color: #808080; text-decoration:none" ng-click="sqlCmd.utils.openModalWindow(\'modules/cli/win/sqlcmd.exe/dialogs/dbActions.tpl.html\')">&nbsp; <i class="glyphicon glyphicon-expand"></i> Actions</a></span> <span ng:if=sqlCmd.target.tables.length>| <a href="" style="color: #808080; text-decoration:none">{{ sqlCmd.target.tables.length }} Tables</a></span> <span ng:if=sqlCmd.target.views.length>| <a href="" style="color: #808080; text-decoration:none">{{ sqlCmd.target.views.length }} Views</a></span></div><div ng:if="sqlCmd.target.REMARKS && (sqlCmd.target.REMARKS != \'NULL\')"><em>Remarks: {{ sqlCmd.target.REMARKS }}</em></div></div></div></div></div><div><tabset class=info-tabs><tab heading=Tables><div ng:if="sqlCmd.target.tables.length > 0" class="thumbnail trim-top"><h5 class=ellipsis>Database Tables <small>(<label>{{ sqlCmd.target.tables.length }} items in total</label>)</small></h5><ul ng:if=sqlCmd.target.tables style="padding: 12px; margin: 0"><li ng-repeat="tbl in sqlCmd.target.tables" class=ellipsis style="list-style: none; padding: 0; margin: 0"><i class="glyphicon glyphicon-list" ng-class="{\'glow-blue\': (sqlCmd.targetTable == tbl)}"></i>&nbsp; <a href="" ng-click="sqlCmd.targetTable = tbl" ng-class="{ \'glow-blue\': (sqlCmd.targetTable == tbl) }">{{ tbl.name }}</a><ul ng:if="sqlCmd.targetTable == tbl" style="padding: 0 0 0 8px; margin: 8px"><li ng:if="tbl.cols.length == 0" style="list-style: none; padding: 0; margin: 0"><em>Nothing to display...</em></li><li ng-repeat="col in tbl.cols" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="{ \'glyphicon-list\': true }"></i> <a href="" ng-click="sqlCmd.targetColumn == col">{{col}}</a></li></ul></li></ul></div></tab><tab heading=Views><div class="thumbnail trim-top" ng:if="sqlCmd.target.views.length > 0"><h5 class=ellipsis>Database Views <small>(<label>{{ sqlCmd.target.views.length }} items in total</label>)</small></h5><ul ng:if=sqlCmd.target.views style="padding: 12px; margin: 0"><li ng-repeat="view in sqlCmd.target.views" class=ellipsis style="list-style: none; padding: 0; margin: 0"><i class="glyphicon glyphicon-list" ng-class="{\'glow-blue\': (sqlCmd.targetView == view)}"></i>&nbsp; <a href="" ng-click="sqlCmd.targetView = view" ng-class="{ \'glow-blue\': (sqlCmd.targetView == view) }">{{ view.name }}</a><ul ng:if="sqlCmd.targetView == view" style="padding: 0 0 0 8px; margin: 8px"><li ng:if="view.cols.length == 0" style="list-style: none; padding: 0; margin: 0"><em>Nothing to display...</em></li><li ng-repeat="col in tbl.cols" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="{ \'glyphicon-list\': true }"></i> <a href="" ng-click="sqlCmd.targetColumn == col">{{col}}</a></li></ul></li></ul></div></tab><tab heading=More...><div class="thumbnail docked trim-top">ToDo: Triggers, stored procedures, FKeys and defaults</div></tab></tabset></div></div></div></div></div></div>');
   $templateCache.put('modules/edge/views/index.tpl.html',
     '<div class=container><h4>Prototyping EdgeJS <small>Interoperability between JavaScript and C#.net, SQL and more</small></h4><div ng:cloak><div class=alert ng-class="{ \'alert-success\': edge.active, \'alert-warning\': !edge.active, \'alert-danger\': edge.error}"><div ng-if=!edge.error><i class=glyphicon ng-class="{ \'glyphicon-ok\':edge.active, \'glyphicon-warning-sign\': !edge.active }"></i> <b>EdgeJS:</b> The current status is <em>{{ edge.active ? \'Connected\' : \'Offline\' }}</em>.</div><div ng-if=edge.error><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Error:</b> {{ edge.error.message ? edge.error.message : edge.error }}.</div></div><div class="btn-group btn-group-sm"><a class="btn btn-primary" ng-if=!edge.active href="" ng-click="edge.active = edge.detect()">Connnect</a> <a class="btn btn-warning" ng-if=edge.active href="" ng-click="edge.active = false">Disconnect</a></div></div></div>');
   $templateCache.put('views/index.tpl.html',
@@ -1386,7 +1388,14 @@ angular.module('prototyped.ng.features', [
   $templateCache.put('views/left.tpl.html',
     '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=proto.cmd><i class=fa ng-class="{ \'fa-refresh glow-blue\': cmd.busy, \'fa-desktop glow-green\': !cmd.busy && appNode.active, \'fa-warning glow-orange\': !cmd.busy && !appNode.active }"></i>&nbsp; Explore All Features</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.explore data:eat-click-if=!appNode.active><i class="fa fa-folder"></i> Local Filesystem Viewer</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=sqlcmd.connect data:eat-click-if=!appNode.active><i class="fa fa-database"></i> Connect to Data Source</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=certs.info data:eat-click-if=!appNode.active><i class="fa fa-certificate"></i> Check Certificates</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.edge data:eat-click-if=!appNode.active><i class="fa fa-magic"></i> Interop with C#.net</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.editor><i class="fa fa-edit"></i>&nbsp; File &amp; Text Editor</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appNode.active }"><a app:nav-link ui:sref=proto.console><i class="fa fa-terminal"></i>&nbsp; Console Application</a></li></ul>');
 }]);
-;;angular.module('prototyped.ng.features.scripts', []).run(['$templateCache', function($templateCache) { 
+;angular.module('prototyped.ng.features.styles', []).run(['$templateCache', function($templateCache) { 
+  'use strict';
+
+  $templateCache.put('assets/css/features.min.css',
+    "body .card-view .img-advanced{filter:url(data:image/svg+xml;base64,PHN2ZyB4bWxucz1cJ2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnXCc+PGZpbHRlciBpZD1cJ2dyYXlzY2FsZVwnPjxmZUNvbG9yTWF0cml4IHR5cGU9XCdtYXRyaXhcJyB2YWx1ZXM9XCcwLjMzMzMgMC4zMzMzIDAuMzMzMyAwIDAgMC4zMzMzIDAuMzMzMyAwLjMzMzMgMCAwIDAuMzMzMyAwLjMzMzMgMC4zMzMzIDAgMCAwIDAgMCAxIDBcJy8+PC9maWx0ZXI+PC9zdmc+I2dyYXlzY2FsZQ==);filter:gray;-webkit-filter:grayscale(100%);background-size:715px auto;background-position:top right;background-image:url(http://cywee.com/wp-content/uploads/2013/04/Advanced-Technology-715x250.jpg)}body .card-view .img-advanced-restricted{filter:url(data:image/svg+xml;base64,PHN2ZyB4bWxucz1cJ2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnXCc+PGZpbHRlciBpZD1cJ2dyYXlzY2FsZVwnPjxmZUNvbG9yTWF0cml4IHR5cGU9XCdtYXRyaXhcJyB2YWx1ZXM9XCcwLjMzMzMgMC4zMzMzIDAuMzMzMyAwIDAgMC4zMzMzIDAuMzMzMyAwLjMzMzMgMCAwIDAuMzMzMyAwLjMzMzMgMC4zMzMzIDAgMCAwIDAgMCAxIDBcJy8+PC9maWx0ZXI+PC9zdmc+I2dyYXlzY2FsZQ==);filter:gray;-webkit-filter:grayscale(100%);background-color:#fff;background-size:320px auto;background-position:top left;background-image:url(http://betanews.com/wp-content/uploads/2013/07/Missing-Puzzle-Pieces-600x398.jpg)}"
+  );
+
+}]);;angular.module('prototyped.ng.features.scripts', []).run(['$templateCache', function($templateCache) { 
   'use strict';
 
   $templateCache.put('modules/cli/win/sqlcmd.exe/scripts/utils/FileSizes.sql',

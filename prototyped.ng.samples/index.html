@@ -75,7 +75,7 @@
             // Bootstrap the application (async)
             angular
                 .injector(['prototyped.ng.config'])
-                .get('appLoader')
+                .get('appConfigLoader')
                 .init({
                     name: 'testApp',
                     path: 'builder/package.json',

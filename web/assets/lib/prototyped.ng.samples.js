@@ -2328,7 +2328,7 @@ angular.module('myApp.samples.styles3d', []).config([
 
         return universe;
     }]).controller('styles3dController', [
-    '$rootScope', '$scope', 'style3dUniverse', function ($rootScope, $scope, style3dUniverse) {
+    '$rootScope', '$scope', '$http', 'style3dUniverse', function ($rootScope, $scope, $http, style3dUniverse) {
         function Ease(speed, val) {
             this.speed = speed;
             this.target = val;
@@ -2402,13 +2402,12 @@ angular.module('myApp.samples.styles3d', []).config([
         // Load required libraries if not defined
         if (typeof ge1doot !== 'undefined') {
             runStyle3D();
-        } else if (typeof $script !== 'undefined') {
+        } else {
             console.log(' - Loading Styles3D....');
-            $script(['assets/lib/screen.js'], function () {
+            $.getScript('assets/lib/screen.js', function (data, textStatus, jqxhr) {
                 runStyle3D();
             });
-        } else
-            throw new Error('Failed to initialise. $script missing....');
+        }
     }]).run([
     '$state', function ($state) {
     }]);
@@ -2447,7 +2446,8 @@ angular.module('prototyped.ng.samples', [
             appConfig.routers.push({
                 url: '/samples',
                 menuitem: {
-                    label: 'Samples'
+                    label: 'Samples',
+                    icon: 'fa fa-share-alt'
                 },
                 cardview: {
                     style: 'img-sandbox',
@@ -2516,32 +2516,6 @@ angular.module('prototyped.ng.samples', [
     }]);
 //# sourceMappingURL=prototyped.ng.samples.base.js.map
 ;angular.module('prototyped.ng.samples.views', []).run(['$templateCache', function($templateCache) {
-  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/jade_include.jade',
-    '<h1>I\'m an include!</h1>');
-  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/process_jade.jade',
-    '<p class=example>Hello World!</p><div id=greeting>Nice</div>');
-  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/process_jade_custom.jade',
-    '<a href=href>Great</a>');
-  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/process_jade_with_include.jade',
-    '<h1>I\'m an include!</h1>');
-  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/empty_attribute.tpl.html',
-    '<div ui-view></div>');
-  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/five.tpl.html',
-    '<div class="quotes should be escaped"><span><span><span>Lorem ipsum</span></span></span></div>');
-  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/four.tpl.html',
-    'This data is "in quotes" And this data is \'in single quotes\'');
-  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/one.tpl.html',
-    '1 2 3');
-  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/pattern.tpl.html',
-    '<form><span class=registration-error ng-show=regForm.password.$error.pattern>- Fail to match..</span> <input type=password ng-model=registerForm.password name=password ng-pattern="/^.*(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*[\\d\\W]).*$/" required></form>');
-  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/process_function.tpl.html',
-    '<h1>(ONE)</h1><h2>(TWO)</h2><h3>(THREE)</h3>');
-  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/process_template.tpl.html',
-    '<h1><%= html2js.process_template.testMessages.title %></h1><h2><%= html2js.process_template.testMessages.subtitle %></h2>');
-  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/three.tpl.html',
-    'Multiple Lines');
-  $templateCache.put('builder/node_modules/grunt-html2js/test/fixtures/two.tpl.html',
-    'Testing');
   $templateCache.put('samples/compression/main.tpl.html',
     '<div id=CompressionView style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a class="btn btn-default" href="" ng-click=compression.clearResult() ng-if=compression.ready>Cancel</a> <a class="btn btn-default" ng-class="{ \'btn-primary\': !compression.ready && compression.text.length }" href="" ng-click=compression.compressText(compression.text) ng-disabled=!compression.text.length>Compress Text</a> <a id=runAsScript ng-disabled=!compression.ready class="btn btn-default" ng-class="{ \'btn-primary\': compression.ready }">Run As Script</a></span><h4>Dynamic Compression <small>Encode strings and urls into more compact forms.</small></h4><hr><div class=row><div class=col-md-6><div class="btn-group pull-right"><button class="btn btn-default btn-xs dropdown-toggle" type=button data-toggle=dropdown aria-expanded=false>Samples <span class=caret></span></button><ul class=dropdown-menu role=menu><li><a href="" ng-click="compression.getSampleText(\'assets/lib/sp.js\')">JavaScript #1</a></li><li><a href="" ng-click="compression.getSampleText(\'assets/lib/test.js\')">JavaScript #2</a></li><li><a href="" ng-click="compression.getSampleText(\'assets/css/test.css\')">CSS Styles #1</a></li><li><a href="" ng-click="compression.getSampleText(\'assets/css/test.min.css\')">CSS Styles #2</a></li></ul></div><h5>Enter text to compress: <small ng-if=compression.text.length>{{ compression.text.length | toBytes }}, uncompressed</small></h5><textarea ng-model=compression.text ng-disabled=compression.result style="width: 100%; min-height: 480px" placeholder="Enter some text here..."></textarea></div><div class=col-md-6><span class=pull-right>Use Compression:<select ng-model=compression.target><option value="">default</option><option value=lzw>lzw</option><option value=scsu>scsu</option><option value=html>html</option><option value=base64>base64</option></select></span><h5>Compressed Text: <small ng-if=compression.result.length>{{ compression.result.length | toBytes }}, {{ compression.getPercentage() | number:2 }}% reduction</small></h5><textarea ng-model=compression.result ng-disabled=!compression.result style="width: 100%; min-height: 480px" readonly></textarea></div></div><hr><div ng:if=compression.error class="alert alert-danger"><b>Error:</b> {{ compression.error.message || \'Something went wrong.\' }}</div></div></div></div>');
   $templateCache.put('samples/decorators/dialogs/interceptor.tpl.html',
@@ -2594,7 +2568,7 @@ angular.module('prototyped.ng.samples', [
     '        width: 1000px;\n' +
     '        height: 600px;\n' +
     '        visibility: visible;\n' +
-    '        background-image: url(http://www.myownspace.co.za/pix/Backgrounds/3d-black-cubes-backgrounds-wallpapers1.jpg);\n' +
+    '        background-image: url(http://www.mergedmv.com/wp-content/uploads/2015/02/black-brick-wall-background.jpg);\n' +
     '        transform: perspective(499.99999496775px) rotateX(0deg) rotateY(0deg) translateX(-1.53080851434101e-14px) translateY(0px) translateZ(251.000002516125px) translateZ(-500px);\n' +
     '        -webkit-transform: perspective(499.99999496775px) rotateX(0deg) rotateY(0deg) translateX(-1.53080851434101e-14px) translateY(0px) translateZ(251.000002516125px) translateZ(-500px);        \n' +
     '    }\n' +

@@ -38,10 +38,12 @@
     <script src="assets/lib/prototyped.ng.features.base.js"></script>
     <script src="assets/lib/prototyped.ng.features.views.js"></script>
     <script src="assets/lib/prototyped.ng.features.styles.js"></script>
+    <script src="assets/lib/prototyped.ng.features.scripts.js"></script>
     <script>
         // Mock the template caches (clears pre-loaded templates and load rather from source)
         angular.module('prototyped.ng.features.views', []).run(['$templateCache', function ($templateCache) { }]);
         angular.module('prototyped.ng.features.styles', []).run(['$templateCache', function ($templateCache) { }]);
+        angular.module('prototyped.ng.features.scripts', []).run(['$templateCache', function ($templateCache) { }]);
     </script>
     <script>
         // Load the test app (async), with extended config (if available)
@@ -78,7 +80,7 @@
             // Bootstrap the application (async)
             angular
                 .injector(['prototyped.ng.config'])
-                .get('appLoader')
+                .get('appConfigLoader')
                 .init({
                     name: 'testApp',
                     path: 'builder/package.json',

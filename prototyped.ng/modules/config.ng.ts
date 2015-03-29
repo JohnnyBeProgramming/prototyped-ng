@@ -24,7 +24,7 @@ angular.module('prototyped.ng.config', [])
             }
         };
     }])
-    .constant('appLoader', {
+    .constant('appConfigLoader', {
         init: function (opts) {
             var configUrl = opts.path;
             var ngTargetApp = opts.name;
