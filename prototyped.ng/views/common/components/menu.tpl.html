@@ -8,7 +8,7 @@
                 <a ui:sref="default">Default</a>
             </li>
             <li ui:sref-active="open"
-                ng:repeat="route in appConfig.routers | filter:visible | orderBy:'(priority || 1)'"
+                ng:repeat="route in appConfig.routers | orderBy:'(priority || 1)'"
                 ng:if="route.menuitem && (!route.visible || route.visible())">
                 <a ng:if="route.menuitem.state" ui:sref="{{ route.menuitem.state }}">{{ route.menuitem.label }}</a>
                 <a ng:if="!route.menuitem.state" ng:href="{{ route.url }}">{{ route.menuitem.label }}</a>

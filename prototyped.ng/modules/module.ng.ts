@@ -13,11 +13,9 @@ angular.module('prototyped.ng', [
 // Define sub modules
     'prototyped.default',
     'prototyped.about',
-    'prototyped.edge',
     'prototyped.editor',
     'prototyped.explorer',
     'prototyped.console',
-    'prototyped.features',
 ])
 
     .config(['appConfigProvider', function (appConfigProvider) {
@@ -40,6 +38,7 @@ angular.module('prototyped.ng', [
                 menuitem: {
                     label: 'Explore',
                     state: 'proto.cmd',
+                    icon: 'fa fa-cubes',
                 },
                 cardview: {
                     style: 'img-explore',
@@ -47,8 +46,15 @@ angular.module('prototyped.ng', [
                     desc: 'You can explore locally installed features and find your way around the site by clicking on this card...'
                 },
                 visible: function () {
+
                     return appConfig.options.showDefaultItems;
                 },
+                children: [
+                    { label: 'Discovery', icon: 'fa fa-refresh', state: 'modules.discover', },
+                    { label: 'Connnect', icon: 'fa fa-gears', state: 'modules.connect', },
+                    { divider: true },
+                    { label: 'Clean & Exit', icon: 'fa fa-recycle', state: 'modules.clear', },
+                ],
             });
             appConfig.routers.push({
                 url: '/about',
@@ -57,6 +63,7 @@ angular.module('prototyped.ng', [
                 menuitem: {
                     label: 'About',
                     state: 'about.info',
+                    icon: 'fa fa-info-circle',
                 },
                 cardview: {
                     style: 'img-about',
@@ -65,22 +72,7 @@ angular.module('prototyped.ng', [
                 },
                 visible: function () {
                     return appConfig.options.showAboutPage;
-                },
-            });
-            appConfig.routers.push({
-                url: '/imports',
-                abstract: true,
-                menuitem: {
-                    label: 'Imports',
-                },
-                cardview: {
-                    style: 'img-editor',
-                    title: 'Import & Export Data',
-                    desc: 'Load from external sources, modify and/or export to an external resource.'
-                },
-                visible: function () {
-                    return appConfig.options.showDefaultItems;
-                },
+                },                
             });
         }
 

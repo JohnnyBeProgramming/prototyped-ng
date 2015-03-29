@@ -97,8 +97,8 @@ module.exports = {
     },
     prototyped_ng_styles: {
         options: {
-            module: '<%= cfg.mod %>.styles',
             base: '<%= cfg.base %>',
+            module: '<%= cfg.mod %>.styles',
             htmlmin: {
                 collapseWhitespace: false,
                 collapseBooleanAttributes: false,
@@ -110,21 +110,5 @@ module.exports = {
         ],
         dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.styles.js',
         module: '<%= cfg.mod %>.styles',
-    },
-    prototyped_ng_scripts: {
-        options: {
-            module: '<%= cfg.mod %>.sql',
-            base: '<%= cfg.base %>',
-            htmlmin: {
-                collapseWhitespace: false,
-                collapseBooleanAttributes: false,
-            },
-        },
-        src: [
-            '<%= cfg.base %>**/*.sql',
-            '!<%= cfg.base %>node_modules/**',
-        ],
-        dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.sqlx.js',
-        module: '<%= cfg.mod %>.sql',
     },
 };
