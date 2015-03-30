@@ -44,11 +44,11 @@ angular.module('prototyped.ng.extended', [
                 'left@': { templateUrl: 'views/extended/left.tpl.html' },
                 'main@': {
                     templateUrl: 'views/extended/index.tpl.html',
-                    controller: 'extendViewController'
+                    controller: 'extenderViewController'
                 }
             }
         });
-    }]).controller('extendedViewController', [
+    }]).controller('extenderViewController', [
     '$rootScope', '$scope', '$state', function ($rootScope, $scope, $state) {
         // Define the model
         var context = $scope.sample = {
@@ -88,6 +88,19 @@ angular.module('prototyped.ng.extended', [
         } finally {
             // Extend updates for scope
             angular.extend(context, updates);
+        }
+    }]).run([
+    '$templateCache', function ($templateCache) {
+        var element = document.head;
+        var cssPath = 'assets/css/extended.min.css';
+        if ($('[resx-src="' + cssPath + '"]').length <= 0) {
+            var html = '<link resx-src="' + cssPath + '" href="' + cssPath + '" rel="stylesheet" type="text/css" />';
+            var cache = $templateCache.get(cssPath);
+            if (cache != null) {
+                html = '<style resx-src="' + cssPath + '">' + cache + '</style>';
+            }
+            console.debug(' - Attaching: ' + cssPath);
+            $(element).append(html);
         }
     }]);
 //# sourceMappingURL=prototyped.ng.extended.base.js.map

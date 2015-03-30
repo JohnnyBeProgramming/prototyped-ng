@@ -13,15 +13,105 @@ angular.module('myApp', [
   'angular-loading-bar',
   'angularMoment',
 
-  // My modules
-  'myApp.views',
-  'myApp.modules',
-
   // Prototyped modules
   'prototyped.ng',
   'prototyped.ng.samples',
   'prototyped.ng.features',
+  //'prototyped.ng.extended',
+
+  // My modules
+  'myApp.views',
+  'myApp.modules',
 ])
+    .config(['$stateProvider', 'appConfigProvider', function ($stateProvider, appConfigProvider) {
+
+        var appConfig = appConfigProvider.$get();
+        if (appConfig) {
+            appConfig.routers.push({
+                url: '/extend-init',
+                priority: 99999999,
+                cardview: {
+                    ready: false,
+                    style: 'img-extended',
+                    title: 'Extend the Current App',
+                    desc: 'Dynamically load and extended features. Inject new modules into the current runtime.',
+                    visible: function () {
+                        return true; //appConfig.
+                    },
+                },
+            });
+
+            $stateProvider
+                .state('extend_init', {
+                    url: '/extend-init',
+                    views: {
+                        'main@': {
+                            controller: function ($http, $state, $injector) {
+                                var modExtend = 'prototyped.ng.extended';
+                                var urlExtend = '/assets/lib/' + modExtend + '.js';
+                                if (!$('head > script[src="' + urlExtend + '"]').length) {
+                                    var mod = angular.module('myApp');
+                                    var cfg = $injector.get('appConfig');
+                                    console.log(' - Module: ', mod);
+                                    console.log(' - Config: ', cfg);
+                                    console.log(' - Angular: ', angular);
+
+                                    mod.directive('protoExtended', [
+                                        '$templateCache',
+                                        '$document',
+                                        function ($templateCache, $document) {
+                                            console.debug(' - Directive Extensions...');
+                                            return {
+                                                priority: 100,
+                                                restrict: 'EAC',
+                                                compile: function ($element, attr) {
+                                                    console.debug(' - Extensions Compiled!');
+                                                    return {
+                                                        pre: function (scope, element) {},
+                                                        post: function (scope, element) {}
+                                                    };
+                                                }
+                                            };
+                                        }])
+
+                                    // Here's the cool part!!!
+                                    var oldMod = angular.module;
+                                    angular.module = function () { return mod; };
+                                    console.debug(' - Loading: ' + urlExtend + '...');
+                                    $.getScript(urlExtend, function (data, textStatus, jqxhr) {
+                                        console.debug(' - Loaded: ' + urlExtend + '...');
+                                        angular.module = oldMod;
+
+                                        //var ext = mod.register(modExtend);
+                                        //if (ext) {
+                                        //ext.config(ext._configBlocks);
+                                        //ext.run(ext._runBlocks);
+                                        //}
+
+                                        /*
+                                        $injector.loadNewModules = function (mods) {
+                                            forEach(loadModules(mods), function (fn) { instanceInjector.invoke(fn || noop); });
+                                        }
+                                        $injector.loadNewModules([modExtend]);
+                                        */
+                                        $state.go('default');
+                                    });
+                                }
+                                /*
+                                console.log(' - Loading extended module: ' + urlExtend);
+                                $.getScript(urlExtend, function (data, textStatus, jqxhr) {
+                                    console.debug(' - Loaded: ' + urlExtend + '...');
+
+                                    $state.go('default');
+                                });
+                                */
+                            },
+                        },
+                    },
+                })
+
+        }
+    }])
 
     .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
         // Set up default routes
@@ -52,6 +142,7 @@ angular.module('myApp', [
     }])
 
     .config(['$locationProvider', 'appNode', function ($locationProvider, appNode) {
+
         // Try and figure out router mode from the initial url
         var pageLocation = typeof window !== 'undefined' ? window.location.href : '';
         if (pageLocation.indexOf('#') >= 0) {
@@ -254,5 +345,69 @@ angular.module('myApp', [
             return '';
         }
 
-
     }]);
+
+// -------------------------------------------------- //
+// Credit: http://www.bennadel.com/blog/2553-loading-angularjs-components-after-your-application-has-been-bootstrapped.htm
+// -------------------------------------------------- //
+// After the AngularJS has been bootstrapped, you can no longer
+// use the normal module methods (ex, app.controller) to add
+// components to the dependency-injection container. Instead,
+// you have to use the relevant providers. Since those are only
+// available during the config() method at initialization time,
+// we have to keep a reference to them.
+// --
+// NOTE: This general idea is based on excellent article by
+// Ifeanyi Isitor: http://ify.io/lazy-loading-in-angularjs/
+var app = angular.module('myApp');
+//angular.element(document).injector().get('Lazy');
+app.config(['$controllerProvider', '$provide', '$compileProvider', function ($controllerProvider, $provide, $compileProvider) {
+
+    // Since the "shorthand" methods for component
+    // definitions are no longer valid, we can just
+    // override them to use the providers for post-
+    // bootstrap loading.
+    console.debug(" - Updating runtime for async calls");
+
+    // Let's keep the older references.
+    app._controller = app.controller;
+    app._service = app.service;
+    app._factory = app.factory;
+    app._value = app.value;
+    app._directive = app.directive;
+
+    // Provider-based controller.
+    app.controller = function (name, constructor) {
+        $controllerProvider.register(name, constructor);
+        return (this);
+    };
+
+    // Provider-based service.
+    app.service = function (name, constructor) {
+        $provide.service(name, constructor);
+        return (this);
+    };
+
+    // Provider-based factory.
+    app.factory = function (name, factory) {
+        $provide.factory(name, factory);
+        return (this);
+    };
+
+    // Provider-based value.
+    app.value = function (name, value) {
+        $provide.value(name, value);
+        return (this);
+    };
+
+    // Provider-based directive.
+    app.directive = function (name, factory) {
+        console.debug(' - Register Directive: ', name);
+        $compileProvider.directive(name, factory);
+        return (this);
+    };
+
+    // NOTE: You can do the same thing with the "filter"
+    // and the "$filterProvider"; but, I don't really use
+    // custom filters.
+}]);

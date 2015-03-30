@@ -44,11 +44,11 @@ angular.module('prototyped.ng.extended', [
                 'left@': { templateUrl: 'views/extended/left.tpl.html' },
                 'main@': {
                     templateUrl: 'views/extended/index.tpl.html',
-                    controller: 'extendViewController'
+                    controller: 'extenderViewController'
                 }
             }
         });
-    }]).controller('extendedViewController', [
+    }]).controller('extenderViewController', [
     '$rootScope', '$scope', '$state', function ($rootScope, $scope, $state) {
         // Define the model
         var context = $scope.sample = {
@@ -89,6 +89,19 @@ angular.module('prototyped.ng.extended', [
             // Extend updates for scope
             angular.extend(context, updates);
         }
+    }]).run([
+    '$templateCache', function ($templateCache) {
+        var element = document.head;
+        var cssPath = 'assets/css/extended.min.css';
+        if ($('[resx-src="' + cssPath + '"]').length <= 0) {
+            var html = '<link resx-src="' + cssPath + '" href="' + cssPath + '" rel="stylesheet" type="text/css" />';
+            var cache = $templateCache.get(cssPath);
+            if (cache != null) {
+                html = '<style resx-src="' + cssPath + '">' + cache + '</style>';
+            }
+            console.debug(' - Attaching: ' + cssPath);
+            $(element).append(html);
+        }
     }]);
 //# sourceMappingURL=prototyped.ng.extended.base.js.map
 ;angular.module('prototyped.ng.extended.views', []).run(['$templateCache', function($templateCache) {
@@ -101,7 +114,7 @@ angular.module('prototyped.ng.extended', [
   'use strict';
 
   $templateCache.put('assets/css/extended.min.css',
-    "body .card-view .img-extended{filter:url(data:image/svg+xml;base64,PHN2ZyB4bWxucz1cJ2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnXCc+PGZpbHRlciBpZD1cJ2dyYXlzY2FsZVwnPjxmZUNvbG9yTWF0cml4IHR5cGU9XCdtYXRyaXhcJyB2YWx1ZXM9XCcwLjMzMzMgMC4zMzMzIDAuMzMzMyAwIDAgMC4zMzMzIDAuMzMzMyAwLjMzMzMgMCAwIDAuMzMzMyAwLjMzMzMgMC4zMzMzIDAgMCAwIDAgMCAxIDBcJy8+PC9maWx0ZXI+PC9zdmc+I2dyYXlzY2FsZQ==);filter:gray;-webkit-filter:grayscale(100%);background-size:715px auto;background-position:top right;background-image:url(http://cywee.com/wp-content/uploads/2013/04/Advanced-Technology-715x250.jpg)}"
+    "body .card-view .img-extended{filter:url(data:image/svg+xml;base64,PHN2ZyB4bWxucz1cJ2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnXCc+PGZpbHRlciBpZD1cJ2dyYXlzY2FsZVwnPjxmZUNvbG9yTWF0cml4IHR5cGU9XCdtYXRyaXhcJyB2YWx1ZXM9XCcwLjMzMzMgMC4zMzMzIDAuMzMzMyAwIDAgMC4zMzMzIDAuMzMzMyAwLjMzMzMgMCAwIDAuMzMzMyAwLjMzMzMgMC4zMzMzIDAgMCAwIDAgMCAxIDBcJy8+PC9maWx0ZXI+PC9zdmc+I2dyYXlzY2FsZQ==);filter:gray;-webkit-filter:grayscale(100%);background-size:320px 220px;background-position:top right!important;background-image:url(https://partywirks.com/asset/asset/10355/CLIPART_OF_16339_SM.jpg)}"
   );
 
 }]);

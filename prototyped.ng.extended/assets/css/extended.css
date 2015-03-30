@@ -5,8 +5,8 @@
   /* IE6-9 */
   -webkit-filter: grayscale(100%);
   /* Chrome 19+, Safari 6+, Safari 6+ iOS */
-  background-size: 715px auto;
-  background-position: top right;
-  background-image: url('http://cywee.com/wp-content/uploads/2013/04/Advanced-Technology-715x250.jpg');
+  background-size: 320px 220px;
+  background-position: top right !important;
+  background-image: url('https://partywirks.com/asset/asset/10355/CLIPART_OF_16339_SM.jpg');
 }
 /*# sourceMappingURL=extended.css.map */

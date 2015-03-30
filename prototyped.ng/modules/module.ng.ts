@@ -71,7 +71,7 @@ angular.module('prototyped.ng', [
                 },
                 visible: function () {
                     return appConfig.options.showAboutPage;
-                },                
+                },
             });
         }
 
@@ -565,3 +565,4 @@ angular.module('prototyped.ng', [
     .run(['appConfig', function (appConfig) {
         console.debug(' - Current Config: ', appConfig);
     }])
+

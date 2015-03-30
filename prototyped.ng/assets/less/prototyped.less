@@ -1,4 +1,5 @@
 ﻿body {
+
     .docked {
         flex-grow: 1;
         flex-shrink: 1;
@@ -41,6 +42,51 @@
         -webkit-filter: grayscale(100%) opacity(0.50);
         -moz-filter: alpha(opacity=50);
         -o-filter: alpha(opacity=50);
+
+        &:hover {
+            opacity: 0.75 !important;
+            filter: alpha(opacity=75) !important;
+            filter: grayscale(100%) opacity(0.75) !important;
+            -webkit-filter: grayscale(100%) opacity(0.75);
+            -moz-filter: alpha(opacity=75) !important;
+            -o-filter: alpha(opacity=75) !important;
+        }
+    }
+
+    .inactive-gray-25 {
+        opacity: 0.25;
+        filter: alpha(opacity=25);
+        filter: grayscale(100%) opacity(0.25);
+        -webkit-filter: grayscale(100%) opacity(0.25);
+        -moz-filter: alpha(opacity=25);
+        -o-filter: alpha(opacity=25);
+
+        &:hover {
+            opacity: 0.75 !important;
+            filter: alpha(opacity=75) !important;
+            filter: grayscale(100%) opacity(0.75) !important;
+            -webkit-filter: grayscale(100%) opacity(0.75);
+            -moz-filter: alpha(opacity=75) !important;
+            -o-filter: alpha(opacity=75) !important;
+        }
+    }
+
+    .inactive-gray-10 {
+        opacity: 0.10;
+        filter: alpha(opacity=10);
+        filter: grayscale(100%) opacity(0.10);
+        -webkit-filter: grayscale(100%) opacity(0.10);
+        -moz-filter: alpha(opacity=10);
+        -o-filter: alpha(opacity=10);
+
+        &:hover {
+            opacity: 0.75 !important;
+            filter: alpha(opacity=75) !important;
+            filter: grayscale(100%) opacity(0.75) !important;
+            -webkit-filter: grayscale(100%) opacity(0.75);
+            -moz-filter: alpha(opacity=75) !important;
+            -o-filter: alpha(opacity=75) !important;
+        }
     }
 
     .inactive-ctrl {
