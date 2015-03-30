@@ -1,0 +1,8 @@
+﻿<ul class="list-group">
+    <li class="list-group-item" ui:sref-active="active">
+        <a app:nav-link ui:sref="proto.cmd">
+            <i class="fa" ng-class="{ 'fa-refresh glow-blue': cmd.busy, 'fa-desktop glow-green': !cmd.busy && appNode.active, 'fa-warning glow-orange': !cmd.busy && !appNode.active }"></i>&nbsp;
+            Find All Extenders
+        </a>        
+    </li>
+</ul>

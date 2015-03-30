@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <ProjectGuid>{A3C2D411-5306-4663-83BD-6EA808C98B9E}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <OutputPath>bin</OutputPath>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <TypeScriptToolsVersion>1.0</TypeScriptToolsVersion>
+    <UseIISExpress>true</UseIISExpress>
+    <IISExpressSSLPort />
+    <IISExpressAnonymousAuthentication />
+    <IISExpressWindowsAuthentication />
+    <IISExpressUseClassicPipelineMode />
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="assets\css\extended.css" />
+    <Content Include="assets\css\extended.min.css">
+      <DependentUpon>extended.css</DependentUpon>
+    </Content>
+    <Content Include="assets\lib\prototyped.ng.extended.styles.js" />
+    <Content Include="builder\config\banner.js" />
+    <Content Include="builder\config\concat.js" />
+    <Content Include="builder\config\copy.js" />
+    <Content Include="builder\config\cssmin.js" />
+    <Content Include="builder\config\html2js.js" />
+    <Content Include="builder\config\jqueryCheck.js" />
+    <Content Include="builder\config\jshint.js" />
+    <Content Include="builder\config\less.js" />
+    <Content Include="builder\config\ngtemplates.js" />
+    <Content Include="builder\config\notify_hooks.js" />
+    <Content Include="builder\config\uglify.js" />
+    <Content Include="builder\config\watch.js" />
+    <Content Include="builder\Gruntfile.js" />
+    <Content Include="assets\lib\prototyped.ng.extended.base.js" />
+    <Content Include="assets\lib\prototyped.ng.extended.views.js" />
+    <Content Include="assets\lib\screen.js" />
+    <Content Include="index.html" />
+    <Content Include="views\extended\index.tpl.html" />
+    <Content Include="views\extended\left.tpl.html" />
+    <Content Include="web.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <TypeScriptCompile Include="imports.d.ts" />
+    <TypeScriptCompile Include="modules\module.ng.ts" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\prototyped.ng\prototyped.ng.csproj">
+      <Project>{42656789-35a8-4bcf-b2b0-8454a32a1db5}</Project>
+      <Name>prototyped.ng</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="builder\package.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="builder\tasks\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\less\extended.less" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\css\extended.css.map">
+      <DependentUpon>extended.css</DependentUpon>
+    </Content>
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>prototyped.ng.extended</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\WebApplications\Microsoft.WebApplication.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\WebApplications\Microsoft.WebApplication.targets')" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>True</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>49943</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:49941/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <TypeScriptRemoveComments>false</TypeScriptRemoveComments>
+    <TypeScriptSourceMap>true</TypeScriptSourceMap>
+    <TypeScriptOutFile>assets\lib\prototyped.ng.extended.base.js</TypeScriptOutFile>
+    <TypeScriptModuleKind>commonjs</TypeScriptModuleKind>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <TypeScriptRemoveComments>true</TypeScriptRemoveComments>
+    <TypeScriptSourceMap>false</TypeScriptSourceMap>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
+  <PropertyGroup>
+    <PreBuildEvent>cd ../builder 
+if not exist "node_modules" npm update</PreBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>cd ../builder 
+npm start</PostBuildEvent>
+  </PropertyGroup>
+</Project>
