@@ -23,6 +23,7 @@ angular.module('myApp', [
   'myApp.views',
   'myApp.modules',
 ])
+
     .config(['$stateProvider', 'appConfigProvider', function ($stateProvider, appConfigProvider) {
 
         var appConfig = appConfigProvider.$get();
@@ -46,65 +47,21 @@ angular.module('myApp', [
                     url: '/extend-init',
                     views: {
                         'main@': {
-                            controller: function ($http, $state, $injector) {
+                            controller: function ($http, $state, $injector, appExtended) {
                                 var modExtend = 'prototyped.ng.extended';
-                                var urlExtend = '/assets/lib/' + modExtend + '.js';
+                                var urlExtend = 'assets/lib/' + modExtend + '.js';
                                 if (!$('head > script[src="' + urlExtend + '"]').length) {
-                                    var mod = angular.module('myApp');
-                                    var cfg = $injector.get('appConfig');
-                                    console.log(' - Module: ', mod);
-                                    console.log(' - Config: ', cfg);
-                                    console.log(' - Angular: ', angular);
 
-                                    mod.directive('protoExtended', [
-                                        '$templateCache',
-                                        '$document',
-                                        function ($templateCache, $document) {
-                                            console.debug(' - Directive Extensions...');
-                                            return {
-                                                priority: 100,
-                                                restrict: 'EAC',
-                                                compile: function ($element, attr) {
-                                                    console.debug(' - Extensions Compiled!');
-                                                    return {
-                                                        pre: function (scope, element) {},
-                                                        post: function (scope, element) {}
-                                                    };
-                                                }
-                                            };
-                                        }])
-
-                                    // Here's the cool part!!!
-                                    var oldMod = angular.module;
-                                    angular.module = function () { return mod; };
-                                    console.debug(' - Loading: ' + urlExtend + '...');
+                                    // Try to load the module (async, after bootstrap)
+                                    console.log(' - Loading: ' + urlExtend);
                                     $.getScript(urlExtend, function (data, textStatus, jqxhr) {
                                         console.debug(' - Loaded: ' + urlExtend + '...');
-                                        angular.module = oldMod;
 
-                                        //var ext = mod.register(modExtend);
-                                        //if (ext) {
-                                        //ext.config(ext._configBlocks);
-                                        //ext.run(ext._runBlocks);
-                                        //}
+                                        appExtended.injectModule($injector, modExtend);
 
-                                        /*
-                                        $injector.loadNewModules = function (mods) {
-                                            forEach(loadModules(mods), function (fn) { instanceInjector.invoke(fn || noop); });
-                                        }
-                                        $injector.loadNewModules([modExtend]);
-                                        */
                                         $state.go('default');
                                     });
                                 }
-                                /*
-                                console.log(' - Loading extended module: ' + urlExtend);
-                                $.getScript(urlExtend, function (data, textStatus, jqxhr) {
-                                    console.debug(' - Loaded: ' + urlExtend + '...');
-
-                                    $state.go('default');
-                                });
-                                */
                             },
                         },
                     },
@@ -410,4 +367,119 @@ app.config(['$controllerProvider', '$provide', '$compileProvider', function ($co
     // NOTE: You can do the same thing with the "filter"
     // and the "$filterProvider"; but, I don't really use
     // custom filters.
+
+    $provide.value('appExtended', app);
+
+    app.injectModule = function ($injector, moduleName) {
+        var cfg = $injector.get('appConfig');
+        var mod = angular.module(moduleName);
+        var provider = {};
+        provider['$provide'] = $provide;
+        provider['$compileProvider'] = $compileProvider;
+        provider['$controllerProvider'] = $controllerProvider;
+
+        console.log(' - Config: ', cfg);
+        console.log(' - Module: ', mod);
+
+        if (mod) {
+            app.requires.push(moduleName);
+
+            mod.directive('protoExtended', [function () {
+                console.debug(' - Extensions Directive...');
+                return {
+                    priority: 100,
+                    restrict: 'EAC',
+                    compile: function ($element, attr) {
+                        console.debug(' - Extensions Compiled!');
+                        return {
+                            pre: function (scope, element) { },
+                            post: function (scope, element) { },
+                        };
+                    }
+                };
+            }]);
+
+            // Manually try to load the module
+            mod._configBlocks.forEach(function (invokeArgs, i) {
+                try {
+                    console.groupCollapsed(' - Module Config ', invokeArgs);
+                    console.log(' - Inject[ ' + invokeArgs[0] + ' ]: ', provider);
+                    /*
+                    if (invokeArgs[0] in provider) {
+                        var invoker = provider[invokeArgs[0]];
+                        console.log(' - Invoke[ ' + invokeArgs[1] + ' ]: ', invoker);
+                        if (invokeArgs[1] in invoker) {
+                            var method = invoker[invokeArgs[1]];
+                            if (method) {
+                                method.apply(invoker, invokeArgs[2]);
+                            } else {
+                                throw new Error('Error: Method "' + invokeArgs[1] + '" not found on invoker "' + invokeArgs[0] + '".');
+                            }
+                        } else {
+                            throw new Error('Error: Invoker "' + invokeArgs[1] + '" not found.');
+                        }
+                    } else {
+                        throw new Error('Error: Provider "' + invokeArgs[0] + '" has not been linked.');
+                    }
+                    */
+                } finally {
+                    console.groupEnd();
+                }
+            });
+
+            mod._invokeQueue.forEach(function (invokeArgs, i) {
+                try {
+                    console.groupCollapsed(' - Module Inject ', invokeArgs);
+                    console.log(' - Inject[ ' + invokeArgs[0] + ' ]: ', provider);
+                    if (invokeArgs[0] in provider) {
+                        var invoker = provider[invokeArgs[0]];
+                        console.log(' - Invoke[ ' + invokeArgs[1] + ' ]: ', invoker);
+                        if (invokeArgs[1] in invoker) {
+                            var method = invoker[invokeArgs[1]];
+                            if (method) {
+                                method.apply(invoker, invokeArgs[2]);
+                            } else {
+                                throw new Error('Error: Method "' + invokeArgs[1] + '" not found on invoker "' + invokeArgs[0] + '".');
+                            }
+                        } else {
+                            throw new Error('Error: Invoker "' + invokeArgs[1] + '" not found.');
+                        }
+                    }
+                } finally {
+                    console.groupEnd();
+                }
+            });
+
+            mod._runBlocks.forEach(function (invokeArgs, i) {
+                try {
+                    console.groupCollapsed(' - Module Runner ', invokeArgs);
+                    console.log(' - Inject[ ' + invokeArgs[0] + ' ]: ', provider);
+                    if (invokeArgs[0] in provider) {
+                        var invoker = provider[invokeArgs[0]];
+                        console.log(' - Invoke[ ' + invokeArgs[1] + ' ]: ', invoker);
+                        if (invokeArgs[1] in invoker) {
+                            var method = invoker[invokeArgs[1]];
+                            if (method) {
+                                method.apply(invoker, invokeArgs[2]);
+                            } else {
+                                throw new Error('Error: Method "' + invokeArgs[1] + '" not found on invoker "' + invokeArgs[0] + '".');
+                            }
+                        } else {
+                            throw new Error('Error: Invoker "' + invokeArgs[1] + '" not found.');
+                        }
+                    }
+                } finally {
+                    console.groupEnd();
+                }
+            });
+
+            /*
+            angular.injector([function ($provide) {
+                console.log(' - Module: Provider ', $provide);
+                //$provide.value('anInterestingFact', 'An ant has two stomachs. One for its own food and another for food to share');
+            }]);
+            */
+            }
+
+    }
 }]);
