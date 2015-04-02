@@ -18,10 +18,13 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="assets\css\extended.css" />
-    <Content Include="assets\css\extended.min.css">
+    <EmbeddedResource Include="assets\css\extended.css" />
+    <EmbeddedResource Include="assets\css\extended.min.css">
       <DependentUpon>extended.css</DependentUpon>
-    </Content>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\web\assets\lib\prototyped.ng.extended.js">
+      <Link>assets\lib\prototyped.ng.extended.js</Link>
+    </EmbeddedResource>
     <Content Include="assets\lib\prototyped.ng.extended.styles.js" />
     <Content Include="builder\config\banner.js" />
     <Content Include="builder\config\concat.js" />
@@ -38,7 +41,6 @@
     <Content Include="builder\Gruntfile.js" />
     <Content Include="assets\lib\prototyped.ng.extended.base.js" />
     <Content Include="assets\lib\prototyped.ng.extended.views.js" />
-    <Content Include="assets\lib\screen.js" />
     <Content Include="index.html" />
     <Content Include="views\extended\index.tpl.html" />
     <Content Include="views\extended\left.tpl.html" />
@@ -67,6 +69,12 @@
     <Content Include="assets\css\extended.css.map">
       <DependentUpon>extended.css</DependentUpon>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="builder\Packager.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Web" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>

@@ -18,10 +18,13 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="assets\css\samples.css" />
-    <Content Include="assets\css\samples.min.css">
+    <EmbeddedResource Include="assets\css\samples.css" />
+    <EmbeddedResource Include="assets\css\samples.min.css">
       <DependentUpon>samples.css</DependentUpon>
-    </Content>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\web\assets\lib\prototyped.ng.samples.js">
+      <Link>assets\lib\prototyped.ng.samples.js</Link>
+    </EmbeddedResource>
     <Content Include="assets\lib\prototyped.ng.samples.styles.js" />
     <Content Include="builder\config\banner.js" />
     <Content Include="builder\config\concat.js" />
@@ -89,6 +92,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="builder\tasks\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="builder\Packager.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Web" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
