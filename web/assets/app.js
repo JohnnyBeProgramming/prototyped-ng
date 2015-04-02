@@ -429,7 +429,7 @@ app.config(['$controllerProvider', '$provide', '$compileProvider', function ($co
 
             mod._invokeQueue.forEach(function (invokeArgs, i) {
                 try {
-                    console.groupCollapsed(' - Module Inject ', invokeArgs);
+                    console.groupCollapsed(' - Module Invoke ', invokeArgs);
                     console.log(' - Inject[ ' + invokeArgs[0] + ' ]: ', provider);
                     if (invokeArgs[0] in provider) {
                         var invoker = provider[invokeArgs[0]];
@@ -444,6 +444,21 @@ app.config(['$controllerProvider', '$provide', '$compileProvider', function ($co
                         } else {
                             throw new Error('Error: Invoker "' + invokeArgs[1] + '" not found.');
                         }
+                    } else if (invokeArgs[0] == '$injector') {
+                        var invoker = $injector;
+                        console.log(' - Inject[ ' + invokeArgs[1] + ' ]: ', invoker);
+                        /*
+                        if (invokeArgs[1] in invoker) {
+                            var method = invoker[invokeArgs[1]];
+                            if (method) {
+                                method.apply(invoker, invokeArgs[2]);
+                            } else {
+                                throw new Error('Error: Method "' + invokeArgs[1] + '" not found on invoker "' + invokeArgs[0] + '".');
+                            }
+                        } else {
+                            throw new Error('Error: Invoker "' + invokeArgs[1] + '" not found.');
+                        }
+                        */
                     }
                 } finally {
                     console.groupEnd();
@@ -479,7 +494,7 @@ app.config(['$controllerProvider', '$provide', '$compileProvider', function ($co
                 //$provide.value('anInterestingFact', 'An ant has two stomachs. One for its own food and another for food to share');
             }]);
             */
-            }
+        }
 
     }
 }]);

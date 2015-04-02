@@ -1,11 +1,13 @@
 ﻿/// <reference path="../imports.d.ts" />
 
+
 // Constant object with default values
 angular.module('prototyped.ng.config', [])
     .constant('appDefaultConfig', {
         version: '0.0.1',
         routers: [],
         options: {
+            debug: false,
             showAboutPage: true,
             showDefaultItems: true,
         },
