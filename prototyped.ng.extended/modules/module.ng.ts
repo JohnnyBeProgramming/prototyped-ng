@@ -33,8 +33,8 @@ angular.module('prototyped.ng.extended', [
                 },
                 cardview: {
                     style: 'img-extended',
-                    title: 'Extend the Current App',
-                    desc: 'Dynamically load and extended features. Inject new modules into the current runtime.'
+                    title: 'Extended Functionality',
+                    desc: 'Dynamically load and extend features. Inject new modules into the current runtime.'
                 },
             });
 

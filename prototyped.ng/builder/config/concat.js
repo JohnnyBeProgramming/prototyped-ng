@@ -1,6 +1,7 @@
 module.exports = {
   options: {
-    separator: ';'
+      separator: ';',
+      sourceMap: false,
   },
   prototyped_ng: {
     files: [{

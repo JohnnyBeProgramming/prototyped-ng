@@ -2515,4 +2515,3 @@ angular.module('prototyped.ng.samples', [
             angular.extend(context, updates);
         }
     }]);
-//# sourceMappingURL=prototyped.ng.samples.base.js.map

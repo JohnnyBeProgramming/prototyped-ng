@@ -150,7 +150,7 @@ angular.module('prototyped.ng.views', []).run(['$templateCache', function($templ
   $templateCache.put('views/common/components/contents.tpl.html',
     '<div id=contents class=contents><div id=left ui:view=left xxx-ng:include=views/common/components/left.tpl.html ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div><div id=main ui:view=main xxx-ng:include=views/common/components/main.tpl.html><em>Main View</em></div></div>');
   $templateCache.put('views/common/components/footer.tpl.html',
-    'This is the footer...');
+    '<span class=pull-left><label ng:show="status.logs | typeCount:\'error\'" class=ng-cloak><i class="glyphicon glyphicon-exclamation-sign glow-red"></i> <a href="" class=ng-cloak>Errors ({{ status.logs | typeCount:\'error\' }})</a></label><label ng:show="status.logs | typeCount:\'warn\'" class=ng-cloak><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <a href="" class=ng-cloak>Warnings ({{ status.logs | typeCount:\'warn\' }})</a></label></span> <span ng:if=false><em><i class="fa fa-spinner fa-spin"></i> Loading...</em></span> <span ng:if=true class=ng-cloak>Client Version: <span app:version><em>Loading...</em></span> |</span> <span ui:view=foot>Powered by <a href="https://angularjs.org/">AngularJS</a> <span ng:if=appNode.active class=ng-cloak>&amp; <a href=https://github.com/rogerwang/node-webkit>Node Webkit</a></span></span> <span ng:if=startAt class=ng-cloak>| Started {{ startAt | fromNow }}</span>');
   $templateCache.put('views/common/components/left.tpl.html',
     '<div id=left ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div>');
   $templateCache.put('views/common/components/main.tpl.html',

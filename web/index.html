@@ -174,7 +174,7 @@
                     <i class="glyphicon glyphicon-exclamation-sign glow-red"></i>
                     <a href="" class="ng-cloak">Errors ({{ status.logs | typeCount:'error' }})</a>
                 </label>
-                <label ng:show="status.logs | typeCount:'warn'">
+                <label ng:show="status.logs | typeCount:'warn'" class="ng-cloak">
                     <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
                     <a href="" class="ng-cloak">Warnings ({{ status.logs | typeCount:'warn' }})</a>
                 </label>
@@ -186,7 +186,10 @@
                 Client Version: <span app:version><em>Loading...</em></span> |
             </span>
             <span ui:view="foot">
-                Powered by <a href="https://angularjs.org/">AngularJS</a> &amp; <a href="https://github.com/rogerwang/node-webkit">Node Webkit</a>
+                Powered by <a href="https://angularjs.org/">AngularJS</a>
+                <span ng:if="appNode.active" class="ng-cloak">
+                    &amp; <a href="https://github.com/rogerwang/node-webkit">Node Webkit</a>
+                </span>
             </span>
             <span ng:if="startAt" class="ng-cloak">| Started {{ startAt | fromNow }}</span>
         </div>
@@ -223,6 +226,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.js"></script>
     <script src="https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.js"></script>
     <!--<![endif]-->
+
     <!-- build:loader ../app/assets/lib/app.loader.dll.js -->
     <script src="assets/app.loader.js"></script>
     <script src="assets/app.settings.js"></script>

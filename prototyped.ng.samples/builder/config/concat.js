@@ -1,6 +1,7 @@
 module.exports = {
     options: {
-        separator: ';'
+        separator: ';',
+        sourceMap: false,
     },
     module_min_js: {
         files: [{

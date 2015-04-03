@@ -14,6 +14,7 @@ module.exports = {
     files: [{
       expand: true,
       src: [
+          '<%= cfg.base %><%= cfg.lib %>/prototyped.ng.js'
       ],
       cwd: '<%= cfg.mod %>/',
       dest: '<%= cfg.dest %>',

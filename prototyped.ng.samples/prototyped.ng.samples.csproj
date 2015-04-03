@@ -127,7 +127,7 @@
   </ProjectExtensions>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <TypeScriptRemoveComments>false</TypeScriptRemoveComments>
-    <TypeScriptSourceMap>true</TypeScriptSourceMap>
+    <TypeScriptSourceMap>False</TypeScriptSourceMap>
     <TypeScriptOutFile>assets\lib\prototyped.ng.samples.base.js</TypeScriptOutFile>
     <TypeScriptModuleKind>commonjs</TypeScriptModuleKind>
   </PropertyGroup>

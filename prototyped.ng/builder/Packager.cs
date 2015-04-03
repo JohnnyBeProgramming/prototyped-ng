@@ -28,7 +28,6 @@ namespace prototyped.ng
                     : GetFileResource(path);
                 if (contents != null)
                 {
-                    resp.Clear();
                     resp.ContentType = MimeMapping.GetMimeMapping(req.Path);
                     resp.Output.Write(contents);
                 }

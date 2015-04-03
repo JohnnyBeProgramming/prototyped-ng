@@ -18,14 +18,17 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="assets\css\features.css" />
-    <Content Include="assets\css\features.min.css">
+    <EmbeddedResource Include="..\web\assets\lib\prototyped.ng.features.js">
+      <Link>assets\lib\prototyped.ng.features.js</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="assets\css\features.css" />
+    <EmbeddedResource Include="assets\css\features.min.css">
       <DependentUpon>features.css</DependentUpon>
-    </Content>
-    <Content Include="assets\lib\prototyped.ng.features.base.js" />
-    <Content Include="assets\lib\prototyped.ng.features.scripts.js" />
-    <Content Include="assets\lib\prototyped.ng.features.styles.js" />
-    <Content Include="assets\lib\prototyped.ng.features.views.js" />
+    </EmbeddedResource>
+    <EmbeddedResource Include="assets\lib\prototyped.ng.features.base.js" />
+    <EmbeddedResource Include="assets\lib\prototyped.ng.features.scripts.js" />
+    <EmbeddedResource Include="assets\lib\prototyped.ng.features.styles.js" />
+    <EmbeddedResource Include="assets\lib\prototyped.ng.features.views.js" />
     <Content Include="builder\config\banner.js" />
     <Content Include="builder\config\concat.js" />
     <Content Include="builder\config\copy.js" />
@@ -119,7 +122,7 @@
   </ProjectExtensions>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <TypeScriptRemoveComments>false</TypeScriptRemoveComments>
-    <TypeScriptSourceMap>true</TypeScriptSourceMap>
+    <TypeScriptSourceMap>False</TypeScriptSourceMap>
     <TypeScriptOutFile>assets\lib\prototyped.ng.features.base.js</TypeScriptOutFile>
     <TypeScriptModuleKind>commonjs</TypeScriptModuleKind>
   </PropertyGroup>

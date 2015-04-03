@@ -1284,4 +1284,3 @@ angular.module('prototyped.ng.features', [
             angular.extend(context, updates);
         }
     }]);
-//# sourceMappingURL=prototyped.ng.features.base.js.map

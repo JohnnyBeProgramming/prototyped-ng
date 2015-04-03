@@ -1,7 +1,6 @@
 /// <reference path="../imports.d.ts" />
 
 angular.module('prototyped.default', [
-    //'views/default.tpl.html', // Requires template
     'ui.router',
 ])
 

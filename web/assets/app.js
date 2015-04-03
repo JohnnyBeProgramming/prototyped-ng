@@ -35,9 +35,15 @@ angular.module('myApp', [
                     ready: false,
                     style: 'img-extended',
                     title: 'Extend the Current App',
-                    desc: 'Dynamically load and extended features. Inject new modules into the current runtime.',
+                    desc: 'Dynamically load and extend features. Inject new modules into the current runtime.',
                     visible: function () {
-                        return true; //appConfig.
+                        try {
+                            var mod = angular.module('prototyped.ng.extended');
+                            console.log(mod);
+                            return mod == null;
+                        } catch (ex) {
+                            return true;
+                        }
                     },
                 },
             });

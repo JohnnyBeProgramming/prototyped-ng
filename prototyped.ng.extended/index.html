@@ -1,5 +1,4 @@
 ﻿<!DOCTYPE html>
-
 <html lang="en">
 <head>
     <base href="/">
@@ -53,13 +52,61 @@
                 'ui.bootstrap',
                 'angularMoment',
                 'angular-loading-bar',
-                'prototyped.ng.extended'
+                'prototyped.ng',
+                'prototyped.ng.extended',
             ])
                 .config(['$urlRouterProvider', function ($urlRouterProvider) {
                     $urlRouterProvider // Set up default routes
                         .when('', '/')
                         .when('/', '/default')
                         .when('/index.html', '/')
+                }])
+                .config(['$stateProvider', 'appConfigProvider', function ($stateProvider, appConfigProvider) {
+
+                    var appConfig = appConfigProvider.$get();
+                    if (appConfig) {
+                        appConfig.routers.push({
+                            url: '/extend-init',
+                            priority: 99999999,
+                            cardview: {
+                                ready: false,
+                                style: 'img-extended',
+                                title: 'Extend the Current App',
+                                desc: 'Dynamically load and extended features. Inject new modules into the current runtime.',                                
+                            },
+                            visible: function () {
+                                try {
+                                    var mod = angular.module('prototyped.ng.extended')
+                                    return !mod;
+                                } catch (err) {
+                                    return true;
+                                }
+                            },
+                        });
+
+                        $stateProvider
+                            .state('extend_init', {
+                                url: '/extend-init',
+                                views: {
+                                    'main@': {
+                                        controller: function ($http, $state, $injector) {
+                                            var modExtend = 'prototyped.ng.extended';
+                                            var urlExtend = 'assets/lib/' + modExtend + '.js';
+                                            if (!$('head > script[src="' + urlExtend + '"]').length) {
+
+                                                // Try to load the module (async, after bootstrap)
+                                                console.log(' - Loading: ' + urlExtend);
+                                                $.getScript(urlExtend, function (data, textStatus, jqxhr) {
+                                                    console.debug(' - Loaded: ' + urlExtend + '...');
+                                                    $state.go('default');
+                                                });
+                                            }
+                                        },
+                                    },
+                                },
+                            })
+
+                    }
                 }])
                 .config(['$locationProvider', function ($locationProvider) {
                     $locationProvider.html5Mode(true); // Configure HTML5 mode

@@ -18,6 +18,11 @@ namespace prototyped.ng.extended
 
         public override void ProcessRequest(HttpContext context)
         {
+            var req = context.Request;
+            if (req.AcceptTypes.Contains("text/javascript"))
+            {
+                context.Response.Output.WriteLine("console.warn('Note: Your browser is loading extended javascript.');");
+            }
             base.ProcessRequest(context);
         }
     }

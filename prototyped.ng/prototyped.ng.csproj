@@ -146,7 +146,7 @@
   </ProjectExtensions>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <TypeScriptRemoveComments>false</TypeScriptRemoveComments>
-    <TypeScriptSourceMap>true</TypeScriptSourceMap>
+    <TypeScriptSourceMap>False</TypeScriptSourceMap>
     <TypeScriptOutFile>assets\lib\prototyped.ng.base.js</TypeScriptOutFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -157,10 +157,10 @@
   <PropertyGroup>
     <PreBuildEvent>cd ../builder 
 if not exist "node_modules" npm update
-npm start</PreBuildEvent>
+</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>cd ../builder 
+npm start</PostBuildEvent>
   </PropertyGroup>
 </Project>
