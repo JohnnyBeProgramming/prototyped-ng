@@ -2163,5 +2163,4 @@ angular.module('prototyped.ng', [
   $templateCache.put('modules/editor/styles/css/editor.min.css',
     ".contents.docked{padding:0 !important;margin:0 !important}.text-editor{display:flex;flex-direction:column;width:100%}.text-area{width:100%;padding:6px;height:100%;min-height:640px}.CodeMirror{border:1px solid #eee;min-height:640px;height:100%}"
   );
-
 }]);

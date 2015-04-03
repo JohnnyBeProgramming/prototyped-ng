@@ -1,5 +1,5 @@
-module.exports = // Extend string with more functionality
-(function (document) {
+// Extend string with more functionality
+var StringPrototyped = (function (document) {
 
     // Define the encoders
     var encoders = {};
@@ -173,3 +173,5 @@ String.prototype[''] = function (callback) {
     }
     return ctx;
 };
+
+module.exports = StringPrototyped;

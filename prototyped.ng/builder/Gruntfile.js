@@ -12,7 +12,8 @@ module.exports = function (grunt) {
             dest: '../../web/',
             mod: 'prototyped.ng',
             css: 'assets/css',
-            lib: 'assets/lib'
+            lib: 'assets/lib',
+            zip: false,
         }
     };
 
