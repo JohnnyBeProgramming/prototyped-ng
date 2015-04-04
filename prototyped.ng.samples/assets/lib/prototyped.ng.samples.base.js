@@ -2011,164 +2011,102 @@ angular.module('myApp.samples.notifications', []).config([
                 }
             }
         });
-    }]).constant('notificationsConfig', {
-    debug: true,
-    enabled: false,
-    getPersisted: function (cname) {
-        var name = cname + '=';
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ')
-                c = c.substring(1);
-            if (c.indexOf(name) == 0)
-                return c.substring(name.length, c.length);
-        }
-        return '';
-    },
-    setPersisted: function (cname, cvalue, exdays) {
-        var d = new Date();
-        d.setTime(d.getTime() + ((exdays || 7) * 24 * 60 * 60 * 1000));
-        var expires = "expires=" + d.toUTCString();
-        document.cookie = cname + "=" + cvalue + "; " + expires;
-    },
-    notify: function (title, opts, eventHandlers) {
-        if ('Notification' in window) {
-            // Create a new notification messsage
-            var notification = new Notification(title, opts);
-
-            // Add event handlers
-            if (eventHandlers) {
-                angular.extend(notification, eventHandlers);
-            }
-
-            /*
-            {
-            onclick: function () {
-            console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
-            },
-            onclose: function () {
-            console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
-            },
-            onerror: function () {
-            console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
-            },
-            onshow: function () {
-            console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
-            },
-            }
-            */
-            return notification;
-        } else {
-            // Default to console window
-            console.info(title, opts);
-        }
-    },
-    hookNotifications: function (callback, notFound) {
-        if ('Notification' in window) {
-            // API supported, request permission and notify
-            window['Notification'].requestPermission(function (status) {
-                if (callback) {
-                    callback(status);
-                }
-            });
-        } else {
-            // API not supported
-            console.warn(' - Web notifications not supported by your browser...');
-            if (notFound) {
-                notFound();
-            }
-        }
-    }
-}).config([
-    '$httpProvider', 'notificationsConfig', function ($httpProvider, cfg) {
-        // Get the value from persisted store
-        cfg.enabled = cfg.getPersisted('notifications.enabled') == '1';
-    }]).controller('notificationsController', [
-    '$rootScope', '$scope', '$state', '$stateParams', '$q', '$timeout', '$window', 'notificationsConfig', function ($rootScope, $scope, $state, $stateParams, $q, $timeout, $window, cfg) {
-        // Define the model
-        var context = $scope.notifications = {
-            busy: true,
-            apply: function () {
-                // Set the persisted value
-                var opts;
-                var val = cfg.enabled ? '0' : '1';
-                if (val) {
-                    opts = {
-                        tag: 'notifications.enabled',
-                        icon: 'assets/favicon.png',
-                        body: 'Success! Web notifications are now enabled.'
-                    };
+    }]).service('notifyService', [
+    '$rootScope', function ($rootScope) {
+        var notify = {
+            enabled: false,
+            message: function (title, opts, eventHandlers) {
+                // Register the notification api
+                if (notify.enabled) {
+                    notify.hookNotifications(function () {
+                        // Notifications enabled by user
+                        if ('Notification' in window) {
+                            // Create a new notification messsage
+                            var notification = new Notification(title, opts);
+                            if (eventHandlers) {
+                                // Add event handlers
+                                angular.extend(notification, eventHandlers);
+                            }
+                        }
+                        console.debug(' - Notifications enabled.');
+                    }, function () {
+                        // User canceled or not available, default to console window
+                        console.info(title, opts);
+                        console.warn(' - Notifications not available.');
+                    });
                 } else {
-                    opts = {
-                        tag: 'notifications.disabled',
-                        icon: 'assets/favicon.png',
-                        body: 'Removed. Web notifications are now disabled.'
-                    };
+                    // Notifications disabled, default to console window
+                    console.info(title, opts);
                 }
-
-                cfg.hookNotifications(function () {
-                    $rootScope.$applyAsync(function () {
-                        // Set active flag and update UI
-                        var isActive = cfg.enabled = (status == 'granted');
+            },
+            hookNotifications: function (callback, notFound) {
+                if ('Notification' in window) {
+                    // API supported, request permission and notify
+                    window['Notification'].requestPermission(function (status) {
+                        var isActive = notify.enabled = (status == 'granted');
                         if (isActive) {
                             // Display a notification message too the user
-                            cfg.notify('Web Notifications', opts);
+                            if (callback) {
+                                callback(status);
+                            }
                         } else if (status == 'denied') {
-                            console.log(' - User declined...');
+                            if (notFound) {
+                                notFound();
+                            }
                         }
-                        $window.location.reload(true);
                     });
-                });
-                cfg.setPersisted('notifications.enabled', val);
+                } else {
+                    // API not supported
+                    console.warn(' - Web notifications not supported by your browser...');
+                    if (notFound) {
+                        notFound();
+                    }
+                }
             },
             isPatched: function () {
-                return cfg.enabled;
+                return notify.enabled;
             },
-            triggerNotification: function () {
-                // Display a notification message too the user
-                cfg.notify('Web Notifications', {
+            triggerNotification: function (message, opts) {
+                var msgOpts = {
                     tag: 'ctx_' + Date.now(),
                     icon: 'assets/favicon.png',
-                    body: 'Notifications are supported by your browser.'
-                });
+                    title: 'Web Notifications',
+                    body: message
+                };
+                angular.extend(msgOpts, opts || {});
+
+                // Display a notification message too the user
+                notify.message(msgOpts.title, msgOpts);
             }
         };
 
-        // Apply updates (including async)
-        var updates = {};
-        try  {
-            // Check for required libraries
-            if (typeof require !== 'undefined') {
-                // We are now in NodeJS!
-                updates = {
-                    busy: false,
-                    hasNode: true
-                };
-            } else {
-                // Not available
-                updates.hasNode = false;
-                updates.busy = false;
-            }
-        } catch (ex) {
-            updates.busy = false;
-            updates.error = ex;
-        } finally {
-            // Extend updates for scope
-            angular.extend(context, updates);
-        }
-    }]).run([
-    'notificationsConfig', function (cfg) {
-        // Register the notification api
-        if (cfg.enabled) {
-            cfg.hookNotifications(function () {
+        return notify;
+    }]).controller('notificationsController', [
+    '$rootScope', '$scope', 'notifyService', function ($rootScope, $scope, notify) {
+        $scope.ready = null;
+        if (notify) {
+            notify.hookNotifications(function () {
                 // Notifications enabled by user
-                console.debug(' - Notifications enabled.');
+                $rootScope.$applyAsync(function () {
+                    $scope.ready = true;
+                    notify.enabled = true;
+                    console.debug(' - Desktop notifications active.');
+                });
             }, function () {
                 // User canceled or not available
-                console.warn(' - Notifications not available.');
+                $rootScope.$applyAsync(function () {
+                    $scope.ready = false;
+                    notify.enabled = false;
+                    console.warn(' - Desktop notifications not available.');
+                });
             });
         }
+    }]).run([
+    '$rootScope', 'notifyService', function ($rootScope, notifyService) {
+        // Link the notification service globally
+        angular.extend($rootScope, {
+            notify: notifyService
+        });
     }]);
 /// <reference path="../../imports.d.ts" />
 angular.module('myApp.samples.sampleData', []).config([
@@ -2514,4 +2452,253 @@ angular.module('prototyped.ng.samples', [
             // Extend updates for scope
             angular.extend(context, updates);
         }
-    }]);
+    }]).directive('bsSwitch', function ($parse, $timeout) {
+    return {
+        restrict: 'A',
+        require: 'ngModel',
+        link: function link(scope, element, attrs, controller) {
+            var isInit = false;
+
+            /**
+            * Return the true value for this specific checkbox.
+            * @returns {Object} representing the true view value; if undefined, returns true.
+            */
+            var getTrueValue = function () {
+                if (attrs.type === 'radio') {
+                    return attrs.value || $parse(attrs.ngValue)(scope) || true;
+                }
+                var trueValue = ($parse(attrs.ngTrueValue)(scope));
+                if (!angular.isString(trueValue)) {
+                    trueValue = true;
+                }
+                return trueValue;
+            };
+
+            /**
+            * Get a boolean value from a boolean-like string, evaluating it on the current scope.
+            * @param value The input object
+            * @returns {boolean} A boolean value
+            */
+            var getBooleanFromString = function (value) {
+                return scope.$eval(value) === true;
+            };
+
+            /**
+            * Get a boolean value from a boolean-like string, defaulting to true if undefined.
+            * @param value The input object
+            * @returns {boolean} A boolean value
+            */
+            var getBooleanFromStringDefTrue = function (value) {
+                return (value === true || value === 'true' || !value);
+            };
+
+            /**
+            * Returns the value if it is truthy, or undefined.
+            *
+            * @param value The value to check.
+            * @returns the original value if it is truthy, {@link undefined} otherwise.
+            */
+            var getValueOrUndefined = function (value) {
+                return (value ? value : undefined);
+            };
+
+            /**
+            * Get the value of the angular-bound attribute, given its name.
+            * The returned value may or may not equal the attribute value, as it may be transformed by a function.
+            *
+            * @param attrName  The angular-bound attribute name to get the value for
+            * @returns {*}     The attribute value
+            */
+            var getSwitchAttrValue = function (attrName) {
+                var map = {
+                    'switchRadioOff': getBooleanFromStringDefTrue,
+                    'switchActive': function (value) {
+                        return !getBooleanFromStringDefTrue(value);
+                    },
+                    'switchAnimate': getBooleanFromStringDefTrue,
+                    'switchLabel': function (value) {
+                        return value ? value : '&nbsp;';
+                    },
+                    'switchIcon': function (value) {
+                        if (value) {
+                            return '<span class=\'' + value + '\'></span>';
+                        }
+                    },
+                    'switchWrapper': function (value) {
+                        return value || 'wrapper';
+                    },
+                    'switchInverse': getBooleanFromString,
+                    'switchReadonly': getBooleanFromString
+                };
+                var transFn = map[attrName] || getValueOrUndefined;
+                return transFn(attrs[attrName]);
+            };
+
+            /**
+            * Set a bootstrapSwitch parameter according to the angular-bound attribute.
+            * The parameter will be changed only if the switch has already been initialized
+            * (to avoid creating it before the model is ready).
+            *
+            * @param element   The switch to apply the parameter modification to
+            * @param attr      The name of the switch parameter
+            * @param modelAttr The name of the angular-bound parameter
+            */
+            var setSwitchParamMaybe = function (element, attr, modelAttr) {
+                if (!isInit) {
+                    return;
+                }
+                var newValue = getSwitchAttrValue(modelAttr);
+                element.bootstrapSwitch(attr, newValue);
+            };
+
+            var setActive = function (active) {
+                setSwitchParamMaybe(element, 'disabled', 'switchActive');
+            };
+
+            /**
+            * If the directive has not been initialized yet, do so.
+            */
+            var initMaybe = function () {
+                // if it's the first initialization
+                if (!isInit) {
+                    var viewValue = (controller.$modelValue === getTrueValue());
+                    isInit = !isInit;
+
+                    // Bootstrap the switch plugin
+                    if ('bootstrapSwitch' in element) {
+                        element.bootstrapSwitch({
+                            radioAllOff: getSwitchAttrValue('switchRadioOff'),
+                            disabled: getSwitchAttrValue('switchActive'),
+                            state: viewValue,
+                            onText: getSwitchAttrValue('switchOnText'),
+                            offText: getSwitchAttrValue('switchOffText'),
+                            onColor: getSwitchAttrValue('switchOnColor'),
+                            offColor: getSwitchAttrValue('switchOffColor'),
+                            animate: getSwitchAttrValue('switchAnimate'),
+                            size: getSwitchAttrValue('switchSize'),
+                            labelText: attrs.switchLabel ? getSwitchAttrValue('switchLabel') : getSwitchAttrValue('switchIcon'),
+                            wrapperClass: getSwitchAttrValue('switchWrapper'),
+                            handleWidth: getSwitchAttrValue('switchHandleWidth'),
+                            labelWidth: getSwitchAttrValue('switchLabelWidth'),
+                            inverse: getSwitchAttrValue('switchInverse'),
+                            readonly: getSwitchAttrValue('switchReadonly')
+                        });
+                    }
+                    if (attrs.type === 'radio') {
+                        controller.$setViewValue(controller.$modelValue);
+                    } else {
+                        controller.$setViewValue(viewValue);
+                    }
+                }
+            };
+
+            /**
+            * Listen to model changes.
+            */
+            var listenToModel = function () {
+                attrs.$observe('switchActive', function (newValue) {
+                    var active = getBooleanFromStringDefTrue(newValue);
+
+                    // if we are disabling the switch, delay the deactivation so that the toggle can be switched
+                    if (!active) {
+                        $timeout(function () {
+                            setActive(active);
+                        });
+                    } else {
+                        // if we are enabling the switch, set active right away
+                        setActive(active);
+                    }
+                });
+
+                function modelValue() {
+                    return controller.$modelValue;
+                }
+
+                // When the model changes
+                scope.$watch(modelValue, function (newValue) {
+                    initMaybe();
+                    if (newValue !== undefined) {
+                        element.bootstrapSwitch('state', newValue === getTrueValue(), false);
+                    }
+                }, true);
+
+                // angular attribute to switch property bindings
+                var bindings = {
+                    'switchRadioOff': 'radioAllOff',
+                    'switchOnText': 'onText',
+                    'switchOffText': 'offText',
+                    'switchOnColor': 'onColor',
+                    'switchOffColor': 'offColor',
+                    'switchAnimate': 'animate',
+                    'switchSize': 'size',
+                    'switchLabel': 'labelText',
+                    'switchIcon': 'labelText',
+                    'switchWrapper': 'wrapperClass',
+                    'switchHandleWidth': 'handleWidth',
+                    'switchLabelWidth': 'labelWidth',
+                    'switchInverse': 'inverse',
+                    'switchReadonly': 'readonly'
+                };
+
+                var observeProp = function (prop, bindings) {
+                    return function () {
+                        attrs.$observe(prop, function () {
+                            setSwitchParamMaybe(element, bindings[prop], prop);
+                        });
+                    };
+                };
+
+                for (var prop in bindings) {
+                    attrs.$observe(prop, observeProp(prop, bindings));
+                }
+            };
+
+            /**
+            * Listen to view changes.
+            */
+            var listenToView = function () {
+                if (attrs.type === 'radio') {
+                    // when the switch is clicked
+                    element.on('change.bootstrapSwitch', function (e) {
+                        // discard not real change events
+                        if ((controller.$modelValue === controller.$viewValue) && (e.target.checked !== $(e.target).bootstrapSwitch('state'))) {
+                            // $setViewValue --> $viewValue --> $parsers --> $modelValue
+                            // if the switch is indeed selected
+                            if (e.target.checked) {
+                                // set its value into the view
+                                controller.$setViewValue(getTrueValue());
+                            } else if (getTrueValue() === controller.$viewValue) {
+                                // otherwise if it's been deselected, delete the view value
+                                controller.$setViewValue(undefined);
+                            }
+                        }
+                    });
+                } else {
+                    // When the checkbox switch is clicked, set its value into the ngModel
+                    element.on('switchChange.bootstrapSwitch', function (e) {
+                        // $setViewValue --> $viewValue --> $parsers --> $modelValue
+                        controller.$setViewValue(e.target.checked);
+                    });
+                }
+            };
+
+            // Listen and respond to view changes
+            listenToView();
+
+            // Listen and respond to model changes
+            listenToModel();
+
+            // On destroy, collect ya garbage
+            scope.$on('$destroy', function () {
+                element.bootstrapSwitch('destroy');
+            });
+        }
+    };
+}).directive('bsSwitch', function () {
+    return {
+        restrict: 'E',
+        require: 'ngModel',
+        template: '<input bs-switch>',
+        replace: true
+    };
+});

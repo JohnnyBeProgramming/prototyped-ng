@@ -1,28 +1,51 @@
 ﻿<div id="NotificationView" style="width: 100%;">
+
+    <link rel="stylesheet" resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.core.css" />
+    <link rel="stylesheet" resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.default.min.css" />
+    <link rel="stylesheet" resx:import="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css"></style>
+    <script resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.min.js"></script>
+    <script resx:import="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js"></script>
+
+    <script>
+        function OpenDialog(message) {
+            console.debug(message, alertify);
+            alertify.alert(message);
+        }
+    </script>
     <div class="row">
         <div class="col-md-12">
-            <span class="pull-right">
-                <a href="" ng-disabled="notifications.busy" ng-click="notifications.apply()"
-                   class="btn" ng-class="{ 'btn-primary': !notifications.isPatched(), 'btn-success': notifications.isPatched() }">
-                    {{ notifications.isPatched() ? 'Notifications Active' : 'Enable Notifications' }}
-                </a>
+            <span class="pull-right ng-cloak" style="padding: 6px;">
+                <input type="checkbox"
+                       ng:model="notify.enabled"
+                       bs:switch
+                       switch:size="mini"
+                       switch:inverse="true"
+                       >
             </span>
             <h4>
                 Web Notifications
                 <small>Desktop notifications from the web with HTML5.</small>
             </h4>
             <hr />
-            <p>
-                ...
+            <p ng-show="ready === null">
+                <em>
+                    <i class="fa fa-spinner fa-spin"></i>
+                    <b>Requesting Access:</b> Desktop notifications...
+                </em>
+            </p>
+            <p ng-show="ready !== null">
+                <a class="btn btn-primary" onclick="OpenDialog('This is a test!')">Test Alertify</a>
+                <a class="btn btn-default" href=""
+                   ng-class="{ 'btn-primary': notify.isPatched() }"
+                   ng-disabled="!notify.isPatched()"
+                   ng-click="notify.triggerNotification('Notifications are supported by your browser.', { icon: 'http://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Information_icon.svg/200px-Information_icon.svg.png' })" ">
+                    Desktop Notification
+                </a>
             </p>
             <hr />
-            <p>
-                <a class="btn btn-default" ng-class="{ 'btn-primary': notifications.isPatched() }" href="" ng-click="notifications.triggerNotification()" ng-disabled="!notifications.isPatched()">Create new message</a>
-            </p>
-            <hr />
-            <div ng:if="notifications.error" class="alert alert-danger">
+            <div ng:if="notify.error" class="alert alert-danger">
                 <b>Error: </b>
-                {{ notifications.error.message || 'Something went wrong.' }}
+                {{ notify.error.message || 'Something went wrong.' }}
             </div>
         </div>
     </div>

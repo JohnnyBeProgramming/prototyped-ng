@@ -1999,6 +1999,14 @@ angular.module('myApp.samples.location', [
 /// <reference path="../../imports.d.ts" />
 
 angular.module('myApp.samples.notifications', []).config([
+    'appConfigProvider', function (appConfigProvider) {
+        // Define module configuration
+        var appConfig = appConfigProvider.$get();
+        if (appConfig) {
+            // Define module options
+            appConfig.options.notifications = {};
+        }
+    }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.notifications', {
@@ -2011,88 +2019,75 @@ angular.module('myApp.samples.notifications', []).config([
                 }
             }
         });
-    }]).constant('notificationsConfig', {
-    debug: true,
-    enabled: false,
-    getPersisted: function (cname) {
-        var name = cname + '=';
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ')
-                c = c.substring(1);
-            if (c.indexOf(name) == 0)
-                return c.substring(name.length, c.length);
-        }
-        return '';
-    },
-    setPersisted: function (cname, cvalue, exdays) {
-        var d = new Date();
-        d.setTime(d.getTime() + ((exdays || 7) * 24 * 60 * 60 * 1000));
-        var expires = "expires=" + d.toUTCString();
-        document.cookie = cname + "=" + cvalue + "; " + expires;
-    },
-    notify: function (title, opts, eventHandlers) {
-        if ('Notification' in window) {
-            // Create a new notification messsage
-            var notification = new Notification(title, opts);
+    }]).service('notifyService', [
+    'appConfig', function (appConfig) {
+        console.log(' - notifyService: ', appConfig);
+        return {
+            enabled: false,
+            notify: function (title, opts, eventHandlers) {
+                if ('Notification' in window) {
+                    // Create a new notification messsage
+                    var notification = new Notification(title, opts);
 
-            // Add event handlers
-            if (eventHandlers) {
-                angular.extend(notification, eventHandlers);
-            }
+                    // Add event handlers
+                    if (eventHandlers) {
+                        angular.extend(notification, eventHandlers);
+                    }
 
-            /*
-            {
-            onclick: function () {
-            console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
-            },
-            onclose: function () {
-            console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
-            },
-            onerror: function () {
-            console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
-            },
-            onshow: function () {
-            console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
-            },
-            }
-            */
-            return notification;
-        } else {
-            // Default to console window
-            console.info(title, opts);
-        }
-    },
-    hookNotifications: function (callback, notFound) {
-        if ('Notification' in window) {
-            // API supported, request permission and notify
-            window['Notification'].requestPermission(function (status) {
-                if (callback) {
-                    callback(status);
+                    /*
+                    {
+                    onclick: function () {
+                    console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
+                    },
+                    onclose: function () {
+                    console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
+                    },
+                    onerror: function () {
+                    console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
+                    },
+                    onshow: function () {
+                    console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
+                    },
+                    }
+                    */
+                    return notification;
+                } else {
+                    // Default to console window
+                    console.info(title, opts);
                 }
-            });
-        } else {
-            // API not supported
-            console.warn(' - Web notifications not supported by your browser...');
-            if (notFound) {
-                notFound();
+            },
+            hookNotifications: function (callback, notFound) {
+                if ('Notification' in window) {
+                    // API supported, request permission and notify
+                    window['Notification'].requestPermission(function (status) {
+                        if (callback) {
+                            callback(status);
+                        }
+                    });
+                } else {
+                    // API not supported
+                    console.warn(' - Web notifications not supported by your browser...');
+                    if (notFound) {
+                        notFound();
+                    }
+                }
             }
-        }
-    }
-}).config([
-    '$httpProvider', 'notificationsConfig', function ($httpProvider, cfg) {
-        // Get the value from persisted store
-        cfg.enabled = cfg.getPersisted('notifications.enabled') == '1';
+        };
     }]).controller('notificationsController', [
-    '$rootScope', '$scope', '$state', '$stateParams', '$q', '$timeout', '$window', 'notificationsConfig', function ($rootScope, $scope, $state, $stateParams, $q, $timeout, $window, cfg) {
+    '$rootScope',
+    '$scope',
+    '$state',
+    '$q',
+    '$window',
+    'notifyService',
+    function ($rootScope, $scope, $state, $q, $window, notify) {
         // Define the model
         var context = $scope.notifications = {
             busy: true,
             apply: function () {
                 // Set the persisted value
                 var opts;
-                var val = cfg.enabled ? '0' : '1';
+                var val = notify.enabled ? '0' : '1';
                 if (val) {
                     opts = {
                         tag: 'notifications.enabled',
@@ -2107,27 +2102,32 @@ angular.module('myApp.samples.notifications', []).config([
                     };
                 }
 
-                cfg.hookNotifications(function () {
+                notify.hookNotifications(function () {
                     $rootScope.$applyAsync(function () {
                         // Set active flag and update UI
-                        var isActive = cfg.enabled = (status == 'granted');
+                        var isActive = notify.enabled = (status == 'granted');
                         if (isActive) {
                             // Display a notification message too the user
-                            cfg.notify('Web Notifications', opts);
+                            notify.notify('Web Notifications', opts);
                         } else if (status == 'denied') {
                             console.log(' - User declined...');
                         }
-                        $window.location.reload(true);
+                        console.log(' - Hooked Notifications: ', val);
+                        //$window.location.reload(true);
                     });
                 });
-                cfg.setPersisted('notifications.enabled', val);
+
+                console.log(' - Setting Persisted Value: ', val);
+
+                //notify.setPersisted('notifications.enabled', val);
+                notify.enabled = val;
             },
             isPatched: function () {
-                return cfg.enabled;
+                return notify.enabled;
             },
             triggerNotification: function () {
                 // Display a notification message too the user
-                cfg.notify('Web Notifications', {
+                notify.notify('Web Notifications', {
                     tag: 'ctx_' + Date.now(),
                     icon: 'assets/favicon.png',
                     body: 'Notifications are supported by your browser.'
@@ -2158,10 +2158,10 @@ angular.module('myApp.samples.notifications', []).config([
             angular.extend(context, updates);
         }
     }]).run([
-    'notificationsConfig', function (cfg) {
+    'notifyService', function (notify) {
         // Register the notification api
-        if (cfg.enabled) {
-            cfg.hookNotifications(function () {
+        if (notify.enabled) {
+            notify.hookNotifications(function () {
                 // Notifications enabled by user
                 console.debug(' - Notifications enabled.');
             }, function () {
@@ -2514,7 +2514,257 @@ angular.module('prototyped.ng.samples', [
             // Extend updates for scope
             angular.extend(context, updates);
         }
-    }]);
+    }]).directive('bsSwitch', function ($parse, $timeout) {
+    console.log(' - bsSwitch...');
+    return {
+        restrict: 'A',
+        require: 'ngModel',
+        link: function link(scope, element, attrs, controller) {
+            var isInit = false;
+
+            /**
+            * Return the true value for this specific checkbox.
+            * @returns {Object} representing the true view value; if undefined, returns true.
+            */
+            var getTrueValue = function () {
+                if (attrs.type === 'radio') {
+                    return attrs.value || $parse(attrs.ngValue)(scope) || true;
+                }
+                var trueValue = ($parse(attrs.ngTrueValue)(scope));
+                if (!angular.isString(trueValue)) {
+                    trueValue = true;
+                }
+                return trueValue;
+            };
+
+            /**
+            * Get a boolean value from a boolean-like string, evaluating it on the current scope.
+            * @param value The input object
+            * @returns {boolean} A boolean value
+            */
+            var getBooleanFromString = function (value) {
+                return scope.$eval(value) === true;
+            };
+
+            /**
+            * Get a boolean value from a boolean-like string, defaulting to true if undefined.
+            * @param value The input object
+            * @returns {boolean} A boolean value
+            */
+            var getBooleanFromStringDefTrue = function (value) {
+                return (value === true || value === 'true' || !value);
+            };
+
+            /**
+            * Returns the value if it is truthy, or undefined.
+            *
+            * @param value The value to check.
+            * @returns the original value if it is truthy, {@link undefined} otherwise.
+            */
+            var getValueOrUndefined = function (value) {
+                return (value ? value : undefined);
+            };
+
+            /**
+            * Get the value of the angular-bound attribute, given its name.
+            * The returned value may or may not equal the attribute value, as it may be transformed by a function.
+            *
+            * @param attrName  The angular-bound attribute name to get the value for
+            * @returns {*}     The attribute value
+            */
+            var getSwitchAttrValue = function (attrName) {
+                var map = {
+                    'switchRadioOff': getBooleanFromStringDefTrue,
+                    'switchActive': function (value) {
+                        return !getBooleanFromStringDefTrue(value);
+                    },
+                    'switchAnimate': getBooleanFromStringDefTrue,
+                    'switchLabel': function (value) {
+                        return value ? value : '&nbsp;';
+                    },
+                    'switchIcon': function (value) {
+                        if (value) {
+                            return '<span class=\'' + value + '\'></span>';
+                        }
+                    },
+                    'switchWrapper': function (value) {
+                        return value || 'wrapper';
+                    },
+                    'switchInverse': getBooleanFromString,
+                    'switchReadonly': getBooleanFromString
+                };
+                var transFn = map[attrName] || getValueOrUndefined;
+                return transFn(attrs[attrName]);
+            };
+
+            /**
+            * Set a bootstrapSwitch parameter according to the angular-bound attribute.
+            * The parameter will be changed only if the switch has already been initialized
+            * (to avoid creating it before the model is ready).
+            *
+            * @param element   The switch to apply the parameter modification to
+            * @param attr      The name of the switch parameter
+            * @param modelAttr The name of the angular-bound parameter
+            */
+            var setSwitchParamMaybe = function (element, attr, modelAttr) {
+                if (!isInit) {
+                    return;
+                }
+                var newValue = getSwitchAttrValue(modelAttr);
+                element.bootstrapSwitch(attr, newValue);
+            };
+
+            var setActive = function (active) {
+                setSwitchParamMaybe(element, 'disabled', 'switchActive');
+            };
+
+            /**
+            * If the directive has not been initialized yet, do so.
+            */
+            var initMaybe = function () {
+                // if it's the first initialization
+                if (!isInit) {
+                    var viewValue = (controller.$modelValue === getTrueValue());
+                    isInit = !isInit;
+
+                    // Bootstrap the switch plugin
+                    if ('bootstrapSwitch' in element) {
+                        element.bootstrapSwitch({
+                            radioAllOff: getSwitchAttrValue('switchRadioOff'),
+                            disabled: getSwitchAttrValue('switchActive'),
+                            state: viewValue,
+                            onText: getSwitchAttrValue('switchOnText'),
+                            offText: getSwitchAttrValue('switchOffText'),
+                            onColor: getSwitchAttrValue('switchOnColor'),
+                            offColor: getSwitchAttrValue('switchOffColor'),
+                            animate: getSwitchAttrValue('switchAnimate'),
+                            size: getSwitchAttrValue('switchSize'),
+                            labelText: attrs.switchLabel ? getSwitchAttrValue('switchLabel') : getSwitchAttrValue('switchIcon'),
+                            wrapperClass: getSwitchAttrValue('switchWrapper'),
+                            handleWidth: getSwitchAttrValue('switchHandleWidth'),
+                            labelWidth: getSwitchAttrValue('switchLabelWidth'),
+                            inverse: getSwitchAttrValue('switchInverse'),
+                            readonly: getSwitchAttrValue('switchReadonly')
+                        });
+                    }
+                    if (attrs.type === 'radio') {
+                        controller.$setViewValue(controller.$modelValue);
+                    } else {
+                        controller.$setViewValue(viewValue);
+                    }
+                }
+            };
+
+            /**
+            * Listen to model changes.
+            */
+            var listenToModel = function () {
+                attrs.$observe('switchActive', function (newValue) {
+                    var active = getBooleanFromStringDefTrue(newValue);
+
+                    // if we are disabling the switch, delay the deactivation so that the toggle can be switched
+                    if (!active) {
+                        $timeout(function () {
+                            setActive(active);
+                        });
+                    } else {
+                        // if we are enabling the switch, set active right away
+                        setActive(active);
+                    }
+                });
+
+                function modelValue() {
+                    return controller.$modelValue;
+                }
+
+                // When the model changes
+                scope.$watch(modelValue, function (newValue) {
+                    initMaybe();
+                    if (newValue !== undefined) {
+                        element.bootstrapSwitch('state', newValue === getTrueValue(), false);
+                    }
+                }, true);
+
+                // angular attribute to switch property bindings
+                var bindings = {
+                    'switchRadioOff': 'radioAllOff',
+                    'switchOnText': 'onText',
+                    'switchOffText': 'offText',
+                    'switchOnColor': 'onColor',
+                    'switchOffColor': 'offColor',
+                    'switchAnimate': 'animate',
+                    'switchSize': 'size',
+                    'switchLabel': 'labelText',
+                    'switchIcon': 'labelText',
+                    'switchWrapper': 'wrapperClass',
+                    'switchHandleWidth': 'handleWidth',
+                    'switchLabelWidth': 'labelWidth',
+                    'switchInverse': 'inverse',
+                    'switchReadonly': 'readonly'
+                };
+
+                var observeProp = function (prop, bindings) {
+                    return function () {
+                        attrs.$observe(prop, function () {
+                            setSwitchParamMaybe(element, bindings[prop], prop);
+                        });
+                    };
+                };
+
+                for (var prop in bindings) {
+                    attrs.$observe(prop, observeProp(prop, bindings));
+                }
+            };
+
+            /**
+            * Listen to view changes.
+            */
+            var listenToView = function () {
+                if (attrs.type === 'radio') {
+                    // when the switch is clicked
+                    element.on('change.bootstrapSwitch', function (e) {
+                        // discard not real change events
+                        if ((controller.$modelValue === controller.$viewValue) && (e.target.checked !== $(e.target).bootstrapSwitch('state'))) {
+                            // $setViewValue --> $viewValue --> $parsers --> $modelValue
+                            // if the switch is indeed selected
+                            if (e.target.checked) {
+                                // set its value into the view
+                                controller.$setViewValue(getTrueValue());
+                            } else if (getTrueValue() === controller.$viewValue) {
+                                // otherwise if it's been deselected, delete the view value
+                                controller.$setViewValue(undefined);
+                            }
+                        }
+                    });
+                } else {
+                    // When the checkbox switch is clicked, set its value into the ngModel
+                    element.on('switchChange.bootstrapSwitch', function (e) {
+                        // $setViewValue --> $viewValue --> $parsers --> $modelValue
+                        controller.$setViewValue(e.target.checked);
+                    });
+                }
+            };
+
+            // Listen and respond to view changes
+            listenToView();
+
+            // Listen and respond to model changes
+            listenToModel();
+
+            // On destroy, collect ya garbage
+            scope.$on('$destroy', function () {
+                element.bootstrapSwitch('destroy');
+            });
+        }
+    };
+}).directive('bsSwitch', function () {
+    return {
+        restrict: 'E',
+        require: 'ngModel',
+        template: '<input bs-switch>',
+        replace: true
+    };
+});
 ;angular.module('prototyped.ng.samples.views', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('samples/compression/main.tpl.html',
     '<div id=CompressionView style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a class="btn btn-default" href="" ng-click=compression.clearResult() ng-if=compression.ready>Cancel</a> <a class="btn btn-default" ng-class="{ \'btn-primary\': !compression.ready && compression.text.length }" href="" ng-click=compression.compressText(compression.text) ng-disabled=!compression.text.length>Compress Text</a> <a id=runAsScript ng-disabled=!compression.ready class="btn btn-default" ng-class="{ \'btn-primary\': compression.ready }">Run As Script</a></span><h4>Dynamic Compression <small>Encode strings and urls into more compact forms.</small></h4><hr><div class=row><div class=col-md-6><div class="btn-group pull-right"><button class="btn btn-default btn-xs dropdown-toggle" type=button data-toggle=dropdown aria-expanded=false>Samples <span class=caret></span></button><ul class=dropdown-menu role=menu><li><a href="" ng-click="compression.getSampleText(\'assets/lib/sp.js\')">JavaScript #1</a></li><li><a href="" ng-click="compression.getSampleText(\'assets/lib/test.js\')">JavaScript #2</a></li><li><a href="" ng-click="compression.getSampleText(\'assets/css/test.css\')">CSS Styles #1</a></li><li><a href="" ng-click="compression.getSampleText(\'assets/css/test.min.css\')">CSS Styles #2</a></li></ul></div><h5>Enter text to compress: <small ng-if=compression.text.length>{{ compression.text.length | toBytes }}, uncompressed</small></h5><textarea ng-model=compression.text ng-disabled=compression.result style="width: 100%; min-height: 480px" placeholder="Enter some text here..."></textarea></div><div class=col-md-6><span class=pull-right>Use Compression:<select ng-model=compression.target><option value="">default</option><option value=lzw>lzw</option><option value=scsu>scsu</option><option value=html>html</option><option value=base64>base64</option></select></span><h5>Compressed Text: <small ng-if=compression.result.length>{{ compression.result.length | toBytes }}, {{ compression.getPercentage() | number:2 }}% reduction</small></h5><textarea ng-model=compression.result ng-disabled=!compression.result style="width: 100%; min-height: 480px" readonly></textarea></div></div><hr><div ng:if=compression.error class="alert alert-danger"><b>Error:</b> {{ compression.error.message || \'Something went wrong.\' }}</div></div></div></div>');
@@ -2537,7 +2787,10 @@ angular.module('prototyped.ng.samples', [
   $templateCache.put('samples/main.tpl.html',
     '<div class=container><div class=row><div class=col-md-12><h4>Prototyped Samples <small>Beware, code monkeys at play... ;)</small></h4><hr><p ui:view=body>.....</p><hr></div></div></div>');
   $templateCache.put('samples/notifications/main.tpl.html',
-    '<div id=NotificationView style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=notifications.busy ng-click=notifications.apply() class=btn ng-class="{ \'btn-primary\': !notifications.isPatched(), \'btn-success\': notifications.isPatched() }">{{ notifications.isPatched() ? \'Notifications Active\' : \'Enable Notifications\' }}</a></span><h4>Web Notifications <small>Desktop notifications from the web with HTML5.</small></h4><hr><p>...</p><hr><p><a class="btn btn-default" ng-class="{ \'btn-primary\': notifications.isPatched() }" href="" ng-click=notifications.triggerNotification() ng-disabled=!notifications.isPatched()>Create new message</a></p><hr><div ng:if=notifications.error class="alert alert-danger"><b>Error:</b> {{ notifications.error.message || \'Something went wrong.\' }}</div></div></div></div>');
+    '<div id=NotificationView style="width: 100%"><script>function OpenDialog(message) {\n' +
+    '            console.debug(message, alertify);\n' +
+    '            alertify.alert(message);\n' +
+    '        }</script><div class=row><div class=col-md-12><span class=pull-right style="padding: 6px"><input type=checkbox ng:model=notifications.enabled bs:switch switch-size=mini switch-inverse=false switch-readonly=false></span><h4>Web Notifications <small>Desktop notifications from the web with HTML5.</small></h4><hr><p><a class="btn btn-primary" onclick="OpenDialog(\'This is a test!\')">Test Alertify</a> <a href="" ng-disabled=notifications.busy ng-click=notifications.apply() class=btn ng-class="{ \'btn-primary\': !notifications.isPatched(), \'btn-success\': notifications.isPatched() }">{{ notifications.isPatched() ? \'Notifications Active\' : \'Enable Notifications\' }}</a> <a class="btn btn-default" ng-class="{ \'btn-primary\': notifications.isPatched() }" href="" ng-click=notifications.triggerNotification() ng-disabled=!notifications.isPatched()>Create new message</a></p><hr><div ng:if=notifications.error class="alert alert-danger"><b>Error:</b> {{ notifications.error.message || \'Something went wrong.\' }}</div></div></div></div>');
   $templateCache.put('samples/sampleData/main.tpl.html',
     '<div id=SampleDataView style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=sampleData.busy ng-click=sampleData.test() class="btn btn-primary">Fetch Sample Data</a></span><h4>Online Sample Data <small>Directly from the cloud! Supplied by this awesome API: <a href="http://www.filltext.com/" target=_blank>http://www.filltext.com/</a></small></h4><hr><div ng:if=sampleData.error class="alert alert-danger"><b>Error:</b> {{ sampleData.error.message || \'Something went wrong. :(\' }}</div><div class=row><div class=col-md-3><h5>Define Fields <small>( {{ sampleData.args.length }} defined )</small> <small class=pull-right><a href="" ng-click="sampleData.args.push({ id: \'myField\', val: \'\'})"><i class="fa fa-plus"></i></a></small></h5><div class=thumbnail><div style="display: flex; width: auto; padding: 3px" ng-repeat="arg in sampleData.args"><span style="flex-basis: 20px; flex-grow:0; flex-shrink:0"><input checked type=checkbox ng-click="sampleData.args.splice(sampleData.args.indexOf(arg), 1)" aria-label=...></span><div style="flex-basis: 64px; flex-grow:0; flex-shrink:0"><input style="width: 100%" aria-label=... ng-model=arg.id></div><div style="flex-grow:1; flex-shrink:1"><input style="width: 100%" aria-label=... ng-model=arg.val></div></div></div></div><div class=col-md-9><h5>Results View <small ng:if=sampleData.resp.length>( {{ sampleData.resp.length }} total )</small></h5><table class=table><thead><tr><th ng-repeat="arg in sampleData.args">{{ arg.id }}</th></tr></thead><tbody><tr ng-if=!sampleData.resp><td colspan="{{ sampleData.args.length }}"><em>Nothing to show yet. Fetch some data first...</em></td></tr><tr ng-repeat="row in sampleData.resp"><td ng-repeat="arg in sampleData.args">{{ row[arg.id] }}</td></tr></tbody></table></div></div></div></div></div>');
   $templateCache.put('samples/styles3d/main.tpl.html',

@@ -13,8 +13,6 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link href="assets/favicon.ico" rel="shortcut icon">
     <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
     <style type="text/css">
         /* Define cloak style (hides un-parsed content) */
         .ng-cloak, [ng-cloak], ng-cloak, [ng\3Acloak] {
@@ -97,8 +95,6 @@
                 .top-hint .tab a {
                     color: black;
                 }
-
-        }
     </style>
 </head>
 <body>
@@ -217,6 +213,8 @@
 
     <!-- Load AngularJS and all the required libraries (exclude IE < 10 from the party) -->
     <!--[if gt IE 9]><!-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/less.js/2.3.1/less.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.10/angular.js"></script>
@@ -226,7 +224,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.js"></script>
     <script src="https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.js"></script>
     <!--<![endif]-->
-
     <!-- build:loader ../app/assets/lib/app.loader.dll.js -->
     <script src="assets/app.loader.js"></script>
     <script src="assets/app.settings.js"></script>
