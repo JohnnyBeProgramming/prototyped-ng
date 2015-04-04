@@ -1999,14 +1999,6 @@ angular.module('myApp.samples.location', [
 /// <reference path="../../imports.d.ts" />
 
 angular.module('myApp.samples.notifications', []).config([
-    'appConfigProvider', function (appConfigProvider) {
-        // Define module configuration
-        var appConfig = appConfigProvider.$get();
-        if (appConfig) {
-            // Define module options
-            appConfig.options.notifications = {};
-        }
-    }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.notifications', {
@@ -2020,48 +2012,108 @@ angular.module('myApp.samples.notifications', []).config([
             }
         });
     }]).service('notifyService', [
-    'appConfig', function (appConfig) {
-        console.log(' - notifyService: ', appConfig);
-        return {
+    '$rootScope', function ($rootScope) {
+        var notify = {
             enabled: false,
-            notify: function (title, opts, eventHandlers) {
-                if ('Notification' in window) {
-                    // Create a new notification messsage
-                    var notification = new Notification(title, opts);
+            options: {},
+            message: function (title, opts, eventHandlers) {
+                // Register the notification api
+                if (notify.enabled) {
+                    notify.hookNotifications(function () {
+                        $rootScope.$applyAsync(function () {
+                            notify.ready = true;
+                            notify.enabled = true;
 
-                    // Add event handlers
-                    if (eventHandlers) {
-                        angular.extend(notification, eventHandlers);
-                    }
+                            // Notifications enabled by user
+                            if ('Notification' in window) {
+                                // Create a new notification messsage
+                                var notification = new Notification(title, opts);
+                                if (eventHandlers) {
+                                    // Add event handlers
+                                    angular.extend(notification, eventHandlers);
+                                }
+                            }
+                            console.debug(' - Notifications enabled.');
+                        });
+                    }, function () {
+                        notify.ready = false;
+                        notify.enabled = false;
 
-                    /*
-                    {
-                    onclick: function () {
-                    console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
-                    },
-                    onclose: function () {
-                    console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
-                    },
-                    onerror: function () {
-                    console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
-                    },
-                    onshow: function () {
-                    console.log(' - Event "' + event.type + '" triggered for notification "' + notification.tag + '"');
-                    },
-                    }
-                    */
-                    return notification;
+                        // User canceled or not available, default to console window
+                        console.warn(' - Desktop notifications not available.');
+                        $rootScope.$applyAsync(function () {
+                            notify.defaultNotify(title, opts);
+                        });
+                    });
+                } else {
+                    notify.ready = false;
+                    notify.enabled = false;
+
+                    // Notifications disabled, default to console window
+                    $rootScope.$applyAsync(function () {
+                        notify.defaultNotify(title, opts);
+                    });
+                }
+            },
+            defaultNotify: function (title, opts) {
+                if ('alertify' in window) {
+                    window['alertify'].log(opts.body, opts.type, 3000);
                 } else {
                     // Default to console window
-                    console.info(title, opts);
+                    console.info(opts.body, opts);
                 }
+            },
+            hookAlertify: function (callback, notFound) {
+                if (notify.options.alertify) {
+                    $rootScope.$applyAsync(function () {
+                        angular.extend(notify.options.alertify || {}, {
+                            enabled: !notify.options.alertify.enabled
+                        });
+                    });
+                    return false;
+                }
+
+                console.debug(' - Loading Alertify...');
+                notify.options.alertify = {
+                    busy: true
+                };
+                var url = 'https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.min.js';
+                $.getScript(url).done(function (script, textStatus) {
+                    $rootScope.$applyAsync(function () {
+                        console.debug(' - Alertify loaded.');
+                        notify.options.alertify = {
+                            enabled: true
+                        };
+                    });
+                    if (callback) {
+                        callback(script, textStatus);
+                    }
+                }).fail(function (jqxhr, settings, exception) {
+                    $rootScope.$applyAsync(function () {
+                        console.warn(' - Alertify failed to loaded.');
+                        notify.options.alertify = {
+                            enabled: false
+                        };
+                    });
+                    if (notFound) {
+                        notFound(exception, jqxhr, settings);
+                    }
+                });
             },
             hookNotifications: function (callback, notFound) {
                 if ('Notification' in window) {
                     // API supported, request permission and notify
                     window['Notification'].requestPermission(function (status) {
-                        if (callback) {
-                            callback(status);
+                        var isActive = notify.enabled = (status == 'granted');
+                        if (isActive) {
+                            // Display a notification message too the user
+                            if (callback) {
+                                callback(status);
+                            }
+                        } else if (status == 'denied') {
+                            if (notFound) {
+                                notFound();
+                            }
                         }
                     });
                 } else {
@@ -2071,104 +2123,175 @@ angular.module('myApp.samples.notifications', []).config([
                         notFound();
                     }
                 }
-            }
-        };
-    }]).controller('notificationsController', [
-    '$rootScope',
-    '$scope',
-    '$state',
-    '$q',
-    '$window',
-    'notifyService',
-    function ($rootScope, $scope, $state, $q, $window, notify) {
-        // Define the model
-        var context = $scope.notifications = {
-            busy: true,
-            apply: function () {
-                // Set the persisted value
-                var opts;
-                var val = notify.enabled ? '0' : '1';
-                if (val) {
-                    opts = {
-                        tag: 'notifications.enabled',
-                        icon: 'assets/favicon.png',
-                        body: 'Success! Web notifications are now enabled.'
-                    };
-                } else {
-                    opts = {
-                        tag: 'notifications.disabled',
-                        icon: 'assets/favicon.png',
-                        body: 'Removed. Web notifications are now disabled.'
-                    };
-                }
-
-                notify.hookNotifications(function () {
-                    $rootScope.$applyAsync(function () {
-                        // Set active flag and update UI
-                        var isActive = notify.enabled = (status == 'granted');
-                        if (isActive) {
-                            // Display a notification message too the user
-                            notify.notify('Web Notifications', opts);
-                        } else if (status == 'denied') {
-                            console.log(' - User declined...');
-                        }
-                        console.log(' - Hooked Notifications: ', val);
-                        //$window.location.reload(true);
-                    });
-                });
-
-                console.log(' - Setting Persisted Value: ', val);
-
-                //notify.setPersisted('notifications.enabled', val);
-                notify.enabled = val;
             },
             isPatched: function () {
                 return notify.enabled;
             },
-            triggerNotification: function () {
+            triggerNotification: function (message, opts) {
+                var msgOpts = {
+                    tag: notify.sameDialog ? 'notify' : 'ctx_' + Date.now(),
+                    icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Information_icon.svg/200px-Information_icon.svg.png',
+                    title: 'Web Notifications',
+                    body: message
+                };
+                angular.extend(msgOpts, opts || {});
+
                 // Display a notification message too the user
-                notify.notify('Web Notifications', {
-                    tag: 'ctx_' + Date.now(),
-                    icon: 'assets/favicon.png',
-                    body: 'Notifications are supported by your browser.'
-                });
+                notify.message(msgOpts.title, msgOpts);
             }
         };
 
-        // Apply updates (including async)
-        var updates = {};
-        try  {
-            // Check for required libraries
-            if (typeof require !== 'undefined') {
-                // We are now in NodeJS!
-                updates = {
-                    busy: false,
-                    hasNode: true
-                };
+        return notify;
+    }]).controller('notificationsController', [
+    '$rootScope', '$scope', 'notifyService', function ($rootScope, $scope, notify) {
+        $scope.notifySuccess = function (message, opts) {
+            opts = opts || {};
+            if ('alertify' in window) {
+                window['alertify'].success(message, 3000);
             } else {
-                // Not available
-                updates.hasNode = false;
-                updates.busy = false;
+                notify.triggerNotification('Action Succeeded', angular.extend(opts, {
+                    icon: 'https://upload.wikimedia.org/wikipedia/commons/d/d6/Crystal_Clear_action_apply.png',
+                    body: message
+                }));
             }
-        } catch (ex) {
-            updates.busy = false;
-            updates.error = ex;
-        } finally {
-            // Extend updates for scope
-            angular.extend(context, updates);
-        }
-    }]).run([
-    'notifyService', function (notify) {
-        // Register the notification api
-        if (notify.enabled) {
+        };
+        $scope.notifyFailure = function (message, opts) {
+            opts = opts || {};
+            if ('alertify' in window) {
+                window['alertify'].error(message, 3000);
+            } else {
+                notify.triggerNotification('Action Failed', angular.extend(opts, {
+                    icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Crystal_Clear_action_button_cancel.png/50px-Crystal_Clear_action_button_cancel.png',
+                    body: message
+                }));
+            }
+        };
+        $scope.methods = [
+            {
+                name: 'alert',
+                label: 'Alert Dialog',
+                action: function (title, message, opts) {
+                    var enabled = notify.options.alertify && notify.options.alertify.enabled;
+                    if (enabled) {
+                        window['alertify'].alert(message);
+                    } else {
+                        alert(message);
+                    }
+                },
+                enabled: function () {
+                    return true;
+                }
+            },
+            {
+                name: 'confirm',
+                label: 'Confirmation',
+                action: function (title, message, opts) {
+                    var enabled = notify.options.alertify && notify.options.alertify.enabled;
+                    if (enabled) {
+                        window['alertify'].confirm(message, function (val) {
+                            if (!notify.showResult)
+                                return;
+                            if (val) {
+                                $scope.notifySuccess('Confirm returned: ' + JSON.stringify(val));
+                            } else {
+                                $scope.notifyFailure('Confirm was canceled');
+                            }
+                        });
+                    } else {
+                        var val = confirm(message);
+                        if (!notify.showResult)
+                            return;
+                        if (val) {
+                            $scope.notifySuccess('Confirm returned: ' + JSON.stringify(val));
+                        } else {
+                            $scope.notifyFailure('Confirm was canceled');
+                        }
+                    }
+                },
+                enabled: function () {
+                    return true;
+                }
+            },
+            {
+                name: 'prompt',
+                label: 'User Prompt',
+                action: function (title, message, opts) {
+                    var enabled = notify.options.alertify && notify.options.alertify.enabled;
+                    var input = 'Test Input';
+                    if (enabled) {
+                        window['alertify'].prompt(message, function (e, val) {
+                            if (!notify.showResult)
+                                return;
+                            if (e) {
+                                $scope.notifySuccess('Prompt returned: ' + JSON.stringify(val));
+                            } else {
+                                $scope.notifyFailure('Prompt was canceled');
+                            }
+                        }, input);
+                    } else {
+                        var val = prompt(message, input);
+                        if (!notify.showResult)
+                            return;
+                        if (val) {
+                            $scope.notifySuccess('Prompt returned: ' + JSON.stringify(val));
+                        } else {
+                            $scope.notifyFailure('Prompt was canceled');
+                        }
+                    }
+                },
+                enabled: function () {
+                    return true;
+                }
+            },
+            {
+                name: 'notify',
+                label: 'Notification',
+                action: function (title, message, opts) {
+                    if (notify.enabled) {
+                        notify.triggerNotification(title, opts);
+                    } else if (notify.options.alertify && notify.options.alertify.enabled) {
+                        notify.triggerNotification(title, opts);
+                    } else {
+                        console.groupCollapsed('Notification: ' + message);
+                        console.debug(' - Title: ', title);
+                        console.debug(' - Options: ', opts);
+                        console.groupEnd();
+                    }
+                },
+                enabled: function () {
+                    return notify.enabled || notify.options.alertify && notify.options.alertify.enabled;
+                }
+            }
+        ];
+
+        if (notify) {
+            notify.ready = null;
+            notify.addAlertify = false;
+            notify.showResult = true;
+            notify.sameDialog = true;
+            notify.current = $scope.methods[0];
             notify.hookNotifications(function () {
                 // Notifications enabled by user
-                console.debug(' - Notifications enabled.');
+                $rootScope.$applyAsync(function () {
+                    notify.ready = true;
+                    notify.enabled = true;
+                    console.debug(' - Desktop notifications active.');
+                });
             }, function () {
                 // User canceled or not available
-                console.warn(' - Notifications not available.');
+                $rootScope.$applyAsync(function () {
+                    notify.ready = true;
+                    notify.enabled = false;
+                    console.warn(' - Desktop notifications not available.');
+                });
             });
         }
+    }]).run([
+    '$rootScope', 'notifyService', function ($rootScope, notifyService) {
+        // Link the notification service globally
+        angular.extend($rootScope, {
+            notify: notifyService
+        });
     }]);
 /// <reference path="../../imports.d.ts" />
 angular.module('myApp.samples.sampleData', []).config([
@@ -2515,7 +2638,6 @@ angular.module('prototyped.ng.samples', [
             angular.extend(context, updates);
         }
     }]).directive('bsSwitch', function ($parse, $timeout) {
-    console.log(' - bsSwitch...');
     return {
         restrict: 'A',
         require: 'ngModel',
@@ -2777,7 +2899,7 @@ angular.module('prototyped.ng.samples', [
   $templateCache.put('samples/interceptors/main.tpl.html',
     '<div id=InterceptorView style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=interceptors.busy ng-click=interceptors.apply() class=btn ng-class="{ \'btn-primary\': !interceptors.isPatched(), \'btn-success\': interceptors.isPatched() }">{{ interceptors.isPatched() ? \'Interceptors Active\' : \'Enable Interceptors\' }}</a></span><h4>HTTP Interceptors <small>Register and utilise Angular\'s interceptors.</small></h4><hr><p>...</p><hr><p><a class="btn btn-default" ng-class="{ \'btn-warning\': interceptors.isPatched(), \'btn-success\': interceptors.fcallState == \'Resolved\', \'btn-danger\': interceptors.fcallState == \'Rejected\' }" href="" ng-click=interceptors.triggerBadRequest() ng-disabled=!interceptors.isPatched()>Create Bad Request</a></p><hr><div ng:if=interceptors.error class="alert alert-danger"><b>Error:</b> {{ interceptors.error.message || \'Something went wrong.\' }}</div></div></div></div>');
   $templateCache.put('samples/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=samples.info><i class=fa ng-class="{ \'fa-refresh glow-blue animate-glow\': samples.busy, \'fa-cubes glow-green\': !samples.busy, \'fa-warning glow-red animate-glow\': samples.error }"></i>&nbsp; Samples Home Page</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.sampleData><i class="fa fa-gears"></i> Online Sample Data</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.notifications><i class="fa fa-comment"></i> Web Notifications</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.interceptors><i class="fa fa-crosshairs"></i> HTTP Interceptors</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.decorators><i class="fa fa-plug"></i> Service Decorators</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.compression><i class="fa fa-file-archive-o"></i> Dynamic Encoders</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.location><i class="fa fa-crosshairs"></i> Geo Location Tracking</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.styles3d><i class="fa fa-codepen"></i> Exploring Styles 3D</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.errors><i class="fa fa-life-ring"></i> Exception Handlers</a></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=samples.info><i class=fa ng-class="{ \'fa-refresh glow-blue animate-glow\': samples.busy, \'fa-cubes glow-green\': !samples.busy, \'fa-warning glow-red animate-glow\': samples.error }"></i>&nbsp; Samples Home Page</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.notifications><i class="fa fa-comment"></i> Web Notifications</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.errors><i class="fa fa-life-ring"></i> Exception Handlers</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.compression><i class="fa fa-file-archive-o"></i> Dynamic Encoders</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.sampleData><i class="fa fa-gears"></i> Online Sample Data</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.interceptors><i class="fa fa-crosshairs"></i> HTTP Interceptors</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.decorators><i class="fa fa-plug"></i> Service Decorators</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.location><i class="fa fa-crosshairs"></i> Geo Location Tracking</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.styles3d><i class="fa fa-codepen"></i> Exploring Styles 3D</a></li></ul>');
   $templateCache.put('samples/location/views/aside.tpl.html',
     '<ul class="nav nav-list ng-cloak"><li><h5>Current Location</h5><div class=thumbnail><div class="row nav-label"><span class=col-sm-3>Status</span> <b class=col-sm-9 ng-class="{\'text-success\' : position.coords, \'text-inactive\' : client || position.isBusy, \'text-error\':position.failed, \'text-danger\' : !client && !position.coords && !position.failed && !position.isBusy }"><i class=glyphicon ng-class="{\'glyphicon-ok\' : position.coords, \'glyphicon-refresh\' : position.isBusy, \'glyphicon-exclamation-sign\' : !position.coords && !position.isBusy }"></i> {{ geoCtrl.getStatus() }}</b></div><div class="row nav-label" ng-show=position.coords><span class=col-sm-3>Long</span> <b class=col-sm-9>{{ position.coords.longitude | longitude }}</b></div><div class="row nav-label" ng-show=position.coords><span class=col-sm-3>Latt</span> <b class=col-sm-9>{{ position.coords.latitude | latitude }}</b></div><div class="row nav-label" ng-show=position.coords.accuracy><span class=col-sm-3>Accuracy</span> <b class=col-sm-9>{{ position.coords.accuracy | formatted:\'{0} meters\' || \'n.a.\' }}</b></div></div></li><li ng-if=geoCtrl.hasSamples()><h5>Popular Locations</h5><div class=thumbnail><div ng-repeat="loc in geoCtrl.getSamples()"><a href="" ng-click=geoCtrl.setGeoPoint(loc)><i class="glyphicon glyphicon-screenshot"></i> <span class=nav-label>{{ loc.Label }}</span></a></div></div></li><li ng-show="(client || position)"><h5>Additional Info</h5><div class=thumbnail><div class="row nav-label" ng-show=client.country><div class=col-sm-3>Country</div><b class="col-sm-9 ellipse">{{ client.country }}</b></div><div class="row nav-label" ng-show=client.city><div class=col-sm-3>City</div><b class="col-sm-9 ellipse">{{ client.city }}</b></div><div class="row nav-label" ng-show=client.ip><div class=col-sm-3>TCP/IP</div><b class="col-sm-9 ellipse">{{ client.ip }}</b></div><div class="row nav-label" ng-show=position.timestamp><span class=col-sm-3>Updated</span> <b class="col-sm-9 ellipse">{{ position.timestamp | date:\'HH:mm a Z\' || \'n.a.\' }}</b></div><div class="row nav-label" ng-show=position.coords.speed><span class=col-sm-3>Speed</span> <b class="col-sm-9 ellipse">{{ position.coords.speed | formatted:\'{0} m/s\' }}</b></div><div class="row nav-label" ng-show=position.coords.altitude><span class=col-sm-3>Altitude</span> <b class="col-sm-9 ellipse">{{ position.coords.altitude | formatted:\'{0} meters\' }}</b></div><div class="row nav-label" ng-show=position.coords.heading><span class=col-sm-3>Heading</span> <b class="col-sm-9 ellipse">{{ position.coords.heading | formatted:\'{0}°\' }}</b></div></div></li></ul>');
   $templateCache.put('samples/location/views/main.tpl.html',
@@ -2787,10 +2909,7 @@ angular.module('prototyped.ng.samples', [
   $templateCache.put('samples/main.tpl.html',
     '<div class=container><div class=row><div class=col-md-12><h4>Prototyped Samples <small>Beware, code monkeys at play... ;)</small></h4><hr><p ui:view=body>.....</p><hr></div></div></div>');
   $templateCache.put('samples/notifications/main.tpl.html',
-    '<div id=NotificationView style="width: 100%"><script>function OpenDialog(message) {\n' +
-    '            console.debug(message, alertify);\n' +
-    '            alertify.alert(message);\n' +
-    '        }</script><div class=row><div class=col-md-12><span class=pull-right style="padding: 6px"><input type=checkbox ng:model=notifications.enabled bs:switch switch-size=mini switch-inverse=false switch-readonly=false></span><h4>Web Notifications <small>Desktop notifications from the web with HTML5.</small></h4><hr><p><a class="btn btn-primary" onclick="OpenDialog(\'This is a test!\')">Test Alertify</a> <a href="" ng-disabled=notifications.busy ng-click=notifications.apply() class=btn ng-class="{ \'btn-primary\': !notifications.isPatched(), \'btn-success\': notifications.isPatched() }">{{ notifications.isPatched() ? \'Notifications Active\' : \'Enable Notifications\' }}</a> <a class="btn btn-default" ng-class="{ \'btn-primary\': notifications.isPatched() }" href="" ng-click=notifications.triggerNotification() ng-disabled=!notifications.isPatched()>Create new message</a></p><hr><div ng:if=notifications.error class="alert alert-danger"><b>Error:</b> {{ notifications.error.message || \'Something went wrong.\' }}</div></div></div></div>');
+    '<div id=NotificationView style="width: 100%"><link rel=stylesheet resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.core.css"><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.default.min.css"><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input type=checkbox ng:show="notify.ready !== null" ng:model=notify.enabled bs:switch switch:size=mini switch:inverse=true></span><h4>{{ notify.isPatched() ? \'Desktop\' : \'Browser\' }} Notifications <small>Various mechanisms of user notification in HTML5.</small></h4><hr><p ng-show="notify.ready === null"><em><i class="fa fa-spinner fa-spin"></i> <b>Requesting Access:</b> Desktop notifications...</em> <span><a href="" ng-click="notify.ready = false">cancel</a></span></p><div ng-show="notify.ready !== null" class=row><div class=col-md-3><h5>Notification Types <small>( {{ 0 }} available )</small></h5><div class=thumbnail><div style="padding: 0 8px"><div class=radio ng-class="{ \'inactive-gray\': !method.enabled() }" ng-repeat="method in methods"><label><input type=radio name=optionsMethods id=option_method_{{method.name}} value="{{ method.name }}" ng-disabled=!method.enabled() ng-click="notify.current = method" ng-checked="notify.current.name == method.name"> <span ng-if="(notify.current.name != method.name)">{{ method.label }}</span> <strong ng-if="(notify.current.name == method.name)">{{ method.label }}</strong></label></div></div></div><h5>Notification Extenders</h5><form class=thumbnail><div style="padding: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.enabled }"><label><input type=checkbox ng-model=notify.enabled> Desktop Notifications</label></div><div class=checkbox ng-class="{ \'inactive-gray\': !notify.options.alertify.enabled }"><label><input type=checkbox ng-checked=notify.options.alertify.enabled ng-click=notify.hookAlertify()> <span ng-if=!notify.options.alertify.busy>Extend with <a target=_blank href="http://fabien-d.github.io/alertify.js/">AlertifyJS</a></span> <span ng-if=notify.options.alertify.busy><i class="fa fa-spinner fa-spin"></i> <em>Loading third-party scripts...</em></span></label></div></div></form></div><div ng-class="{ \'col-md-6\':notify.enabled, \'col-md-9\': !notify.enabled }"><h5>Create a new message</h5><form class=thumbnail ng-disabled=notify.ready ng-init="msgOpts = { title: \'Web Notification\', body: \'This is a test message.\'}"><div style="padding: 8px"><div class=form-group><label for=exampleTitle>Message Title</label><input class=form-control id=exampleTitle placeholder="Enter title" ng-model=msgOpts.title></div><div class=form-group><label for=exampleMessage>Message Body Text</label><textarea class=form-control rows=5 class=form-control id=exampleMessage ng-model=msgOpts.body placeholder="Enter body text"></textarea></div><span class=pull-right ng-show="notify.current.name != \'alert\'" style="margin: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.showResult }"><label><input type=checkbox ng-model=notify.showResult> Show Result</label></div></span> <span class=pull-right ng-show="notify.current.name != \'alert\'" style="margin: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.sameDialog }"><label><input type=checkbox ng-model=notify.sameDialog> Recycle Dialog</label></div></span> <button type=submit class="btn btn-default" ng-class="{ \'btn-success\': notify.isPatched(), \'btn-primary\': notify.ready !== null && !notify.isPatched() }" ng-click="notify.current.action(msgOpts.title, msgOpts.body, msgOpts)">Create Message</button></div></form></div><div ng-class="{ \'col-md-3\':notify.enabled, \'hide\': !notify.enabled }"><div ng-show=notify.enabled><h5>System Notifications Active</h5><div class="alert alert-success"><b>Note:</b> All notifications get redirected to your OS notification system.</div></div><div ng-show="notify.current.name == \'notify\'"><h5>Message Styling</h5><form class=thumbnail><div class=form-group><label for=exampleIcon>Icon File</label><input type=file id=exampleIcon><p class=help-block>Image to display with message.</p></div></form></div></div></div><div ng:if=notify.error class="alert alert-danger"><b>Error:</b> {{ notify.error.message || \'Something went wrong.\' }}</div></div></div></div>');
   $templateCache.put('samples/sampleData/main.tpl.html',
     '<div id=SampleDataView style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=sampleData.busy ng-click=sampleData.test() class="btn btn-primary">Fetch Sample Data</a></span><h4>Online Sample Data <small>Directly from the cloud! Supplied by this awesome API: <a href="http://www.filltext.com/" target=_blank>http://www.filltext.com/</a></small></h4><hr><div ng:if=sampleData.error class="alert alert-danger"><b>Error:</b> {{ sampleData.error.message || \'Something went wrong. :(\' }}</div><div class=row><div class=col-md-3><h5>Define Fields <small>( {{ sampleData.args.length }} defined )</small> <small class=pull-right><a href="" ng-click="sampleData.args.push({ id: \'myField\', val: \'\'})"><i class="fa fa-plus"></i></a></small></h5><div class=thumbnail><div style="display: flex; width: auto; padding: 3px" ng-repeat="arg in sampleData.args"><span style="flex-basis: 20px; flex-grow:0; flex-shrink:0"><input checked type=checkbox ng-click="sampleData.args.splice(sampleData.args.indexOf(arg), 1)" aria-label=...></span><div style="flex-basis: 64px; flex-grow:0; flex-shrink:0"><input style="width: 100%" aria-label=... ng-model=arg.id></div><div style="flex-grow:1; flex-shrink:1"><input style="width: 100%" aria-label=... ng-model=arg.val></div></div></div></div><div class=col-md-9><h5>Results View <small ng:if=sampleData.resp.length>( {{ sampleData.resp.length }} total )</small></h5><table class=table><thead><tr><th ng-repeat="arg in sampleData.args">{{ arg.id }}</th></tr></thead><tbody><tr ng-if=!sampleData.resp><td colspan="{{ sampleData.args.length }}"><em>Nothing to show yet. Fetch some data first...</em></td></tr><tr ng-repeat="row in sampleData.resp"><td ng-repeat="arg in sampleData.args">{{ row[arg.id] }}</td></tr></tbody></table></div></div></div></div></div>');
   $templateCache.put('samples/styles3d/main.tpl.html',

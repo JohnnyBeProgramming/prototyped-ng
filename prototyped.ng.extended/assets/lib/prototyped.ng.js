@@ -12,14 +12,32 @@ angular.module('prototyped.ng.config', []).constant('appDefaultConfig', {
     'appDefaultConfig', function (appDefaultConfig) {
         var config = appDefaultConfig;
         return {
+            $get: function () {
+                return config;
+            },
             set: function (options) {
                 angular.extend(config, options);
             },
             clear: function () {
                 config = appDefaultConfig;
             },
-            $get: function () {
-                return config;
+            getPersisted: function (cname) {
+                var name = cname + '=';
+                var ca = document.cookie.split(';');
+                for (var i = 0; i < ca.length; i++) {
+                    var c = ca[i];
+                    while (c.charAt(0) == ' ')
+                        c = c.substring(1);
+                    if (c.indexOf(name) == 0)
+                        return c.substring(name.length, c.length);
+                }
+                return '';
+            },
+            setPersisted: function (cname, cvalue, exdays) {
+                var d = new Date();
+                d.setTime(d.getTime() + ((exdays || 7) * 24 * 60 * 60 * 1000));
+                var expires = "expires=" + d.toUTCString();
+                document.cookie = cname + "=" + cvalue + "; " + expires;
             }
         };
     }]).constant('appConfigLoader', {
