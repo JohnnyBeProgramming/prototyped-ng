@@ -13,7 +13,7 @@ module.exports = {
             removeStyleLinkTypeAttributes: true
         }
     },
-    prototyped_ng: {
+    module_views: {
         options: {
             base: '<%= cfg.base %>',
             module: '<%= cfg.mod %>.views'
@@ -21,8 +21,8 @@ module.exports = {
         src: [
             '<%= cfg.base %>**/*.jade',
             '<%= cfg.base %>**/*.tpl.html',
+            '!<%= cfg.base %>**/builder/**',
             '!<%= cfg.base %>**/node_modules/**',
-            '!<%= cfg.base %>builder/**',
         ],
         dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.views.js'
     }

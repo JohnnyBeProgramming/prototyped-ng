@@ -158,7 +158,8 @@ angular.module('myApp.samples.notifications', [])
     .controller('notificationsController', ['$rootScope', '$scope', 'notifyService', function ($rootScope, $scope, notify) {
         $scope.notifySuccess = function (message, opts) {
             opts = opts || {};
-            if ('alertify' in window) {
+            var enabled = notify.options.alertify && notify.options.alertify.enabled;
+            if (enabled && 'alertify' in window) {
                 window['alertify'].success(message, 3000);
             } else {
                 notify.triggerNotification('Action Succeeded', angular.extend(opts, {
@@ -169,7 +170,8 @@ angular.module('myApp.samples.notifications', [])
         };
         $scope.notifyFailure = function (message, opts) {
             opts = opts || {};
-            if ('alertify' in window) {
+            var enabled = notify.options.alertify && notify.options.alertify.enabled;
+            if (enabled && 'alertify' in window) {
                 window['alertify'].error(message, 3000);
             } else {
                 notify.triggerNotification('Action Failed', angular.extend(opts, {

@@ -1,8 +1,7 @@
 module.exports = {
-    options: {
-        cleancss: true,
-        banner: '<%= banner %>',
-        paths: ["assets/css"],
+  options: {
+    cleancss: true,
+    banner: '<%= banner %>'
     },
     module_less: {
         files: {
