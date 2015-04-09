@@ -4,7 +4,7 @@
 ///<reference path="../../imports.d.ts"/>
 ///<reference path="controllers/GeoController.ts"/>
 
-angular.module('myApp.samples.location', [
+angular.module('prototyped.ng.samples.location', [
     'ui.router'
 ])
     .config(['$stateProvider', function ($stateProvider) {

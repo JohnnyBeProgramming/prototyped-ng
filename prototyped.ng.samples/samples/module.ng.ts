@@ -13,14 +13,14 @@ angular.module('prototyped.ng.samples', [
     'prototyped.ng.samples.views',
     'prototyped.ng.samples.styles',
 
-    'myApp.samples.errorHandlers',
-    'myApp.samples.sampleData',
-    'myApp.samples.location',
-    'myApp.samples.decorators',
-    'myApp.samples.interceptors',
-    'myApp.samples.notifications',
-    'myApp.samples.compression',
-    'myApp.samples.styles3d',
+    'prototyped.ng.samples.errorHandlers',
+    'prototyped.ng.samples.sampleData',
+    'prototyped.ng.samples.location',
+    'prototyped.ng.samples.decorators',
+    'prototyped.ng.samples.interceptors',
+    'prototyped.ng.samples.notifications',
+    'prototyped.ng.samples.compression',
+    'prototyped.ng.samples.styles3d',
 ])
 
 // Extend appConfig with module config
@@ -323,7 +323,7 @@ angular.module('prototyped.ng.samples', [
                         // when the switch is clicked
                         element.on('change.bootstrapSwitch', function (e) {
                             // discard not real change events
-                            if ((controller.$modelValue === controller.$viewValue) && (e.target.checked !== $(e.target).bootstrapSwitch('state'))) {
+                            if ((controller.$modelValue === controller.$viewValue) && (e.target.checked !== (<any>$(e.target)).bootstrapSwitch('state'))) {
                                 // $setViewValue --> $viewValue --> $parsers --> $modelValue
                                 // if the switch is indeed selected
                                 if (e.target.checked) {

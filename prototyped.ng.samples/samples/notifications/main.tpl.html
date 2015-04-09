@@ -37,53 +37,41 @@
             </p>
             <div ng-show="notify.ready !== null" class="row">
                 <div class="col-md-3">
-                    <h5>
-                        Notification Types
-                        <small>( {{ 0 }} available )</small>
-                    </h5>
-                    <div class="thumbnail">
-                        <div style="padding: 0 8px;">
-                            <div class="radio"
-                                 ng-class="{ 'inactive-gray': !method.enabled() }"
-                                 ng-repeat="method in methods">
-                                <label>
-                                    <input type="radio" name="optionsMethods"
-                                           id="option_method_{{method.name}}"
-                                           value="{{ method.name }}"
-                                           ng-disabled="!method.enabled()"
-                                           ng-click="notify.current = method"
-                                           ng-checked="notify.current.name == method.name">
-                                    <span ng-if="(notify.current.name != method.name)">{{ method.label }}</span>
-                                    <strong ng-if="(notify.current.name == method.name)">{{ method.label }}</strong>
-                                </label>
+                    <div>
+                        <h5>
+                            Notification Types
+                        </h5>
+                        <div class="thumbnail">
+                            <div style="padding: 0 8px;">
+                                <div class="radio"
+                                     ng-class="{ 'inactive-gray': !method.enabled() }"
+                                     ng-repeat="method in methods">
+                                    <label>
+                                        <input type="radio" name="optionsMethods"
+                                               id="option_method_{{method.name}}"
+                                               value="{{ method.name }}"
+                                               ng-disabled="!method.enabled()"
+                                               ng-click="notify.current = method"
+                                               ng-checked="notify.current.name == method.name">
+                                        <span ng-if="(notify.current.name != method.name)">{{ method.label }}</span>
+                                        <strong ng-if="(notify.current.name == method.name)">{{ method.label }}</strong>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <h5>
-                        Notification Extenders
-                    </h5>
-                    <form class="thumbnail">
-                        <div style="padding: 0 8px;">
-                            <div class="checkbox" ng-class="{ 'inactive-gray': !notify.enabled }">
-                                <label>
-                                    <input type="checkbox" ng-model="notify.enabled">
-                                    Desktop Notifications
-                                </label>
+                    <div ng-show="notify.current.name == 'notify'">
+                        <h5>
+                            Message Styling
+                        </h5>
+                        <form class="thumbnail">
+                            <div class="form-group">
+                                <label for="exampleIcon">Icon File</label>
+                                <input type="file" id="exampleIcon">
+                                <p class="help-block">Image to display with message.</p>
                             </div>
-                            <div class="checkbox" ng-class="{ 'inactive-gray': !notify.options.alertify.enabled }">
-                                <label>
-                                    <input type="checkbox" ng-checked="notify.options.alertify.enabled" ng-click="notify.hookAlertify()">
-                                    <span ng-if="!notify.options.alertify.busy">
-                                        Extend with <a target="_blank" href="http://fabien-d.github.io/alertify.js/">AlertifyJS</a>
-                                    </span>
-                                    <span ng-if="notify.options.alertify.busy">
-                                        <i class="fa fa-spinner fa-spin"></i>
-                                        <em>Loading third-party scripts...</em>
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
                 <div class="" ng-class="{ 'col-md-6':notify.enabled, 'col-md-9': !notify.enabled }">
                     <h5>Create a new message</h5>
@@ -126,6 +114,33 @@
                     </form>
                 </div>
                 <div class="" ng-class="{ 'col-md-3':notify.enabled, 'hide': !notify.enabled }">
+                    <div>
+                        <h5>
+                            Notification Extenders
+                        </h5>
+                        <form class="thumbnail">
+                            <div style="padding: 0 8px;">
+                                <div class="checkbox" ng-class="{ 'inactive-gray': !notify.enabled }">
+                                    <label>
+                                        <input type="checkbox" ng-model="notify.enabled">
+                                        Desktop Notifications
+                                    </label>
+                                </div>
+                                <div class="checkbox" ng-class="{ 'inactive-gray': !notify.options.alertify.enabled }">
+                                    <label>
+                                        <input type="checkbox" ng-checked="notify.options.alertify.enabled" ng-click="notify.hookAlertify()">
+                                        <span ng-if="!notify.options.alertify.busy">
+                                            Extend with <a target="_blank" href="http://fabien-d.github.io/alertify.js/">AlertifyJS</a>
+                                        </span>
+                                        <span ng-if="notify.options.alertify.busy">
+                                            <i class="fa fa-spinner fa-spin"></i>
+                                            <em>Loading third-party scripts...</em>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                     <div ng-show="notify.enabled">
                         <h5>
                             System Notifications Active
@@ -134,18 +149,7 @@
                             <b>Note:</b> All notifications get redirected to your OS notification system.
                         </div>
                     </div>
-                    <div ng-show="notify.current.name == 'notify'">
-                        <h5>
-                            Message Styling
-                        </h5>
-                        <form class="thumbnail">
-                            <div class="form-group">
-                                <label for="exampleIcon">Icon File</label>
-                                <input type="file" id="exampleIcon">
-                                <p class="help-block">Image to display with message.</p>
-                            </div>
-                        </form>
-                    </div>
+
                 </div>
             </div>
             <div ng:if="notify.error" class="alert alert-danger">

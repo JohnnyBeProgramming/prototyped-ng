@@ -42,6 +42,10 @@
     <EmbeddedResource Include="assets\css\prototyped.min.css">
       <DependentUpon>prototyped.css</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="assets\css\sandbox.css" />
+    <EmbeddedResource Include="assets\css\sandbox.min.css">
+      <DependentUpon>sandbox.css</DependentUpon>
+    </EmbeddedResource>
     <Content Include="assets\lib\prototyped.ng.base.js" />
     <Content Include="assets\lib\prototyped.ng.styles.js" />
     <Content Include="assets\lib\prototyped.ng.views.js" />
@@ -81,7 +85,6 @@
     <Content Include="views\common\components\contents.tpl.html" />
     <Content Include="views\common\components\footer.tpl.html" />
     <Content Include="views\common\components\left.tpl.html" />
-    <Content Include="views\common\components\main.tpl.html" />
     <Content Include="views\common\components\menu.tpl.html" />
     <Content Include="views\default.tpl.html" />
     <Content Include="web.config" />
@@ -118,7 +121,14 @@
   <ItemGroup>
     <Reference Include="System.Web" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="assets\less\sandbox.less" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\css\sandbox.css.map">
+      <DependentUpon>sandbox.css</DependentUpon>
+    </Content>
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>

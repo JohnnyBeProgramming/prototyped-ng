@@ -51,6 +51,15 @@
     <Content Include="samples\errorHandlers\main.tpl.html" />
     <TypeScriptCompile Include="samples\errorHandlers\module.ng.ts" />
     <Content Include="samples\interceptors\main.tpl.html" />
+    <TypeScriptCompile Include="samples\errorHandlers\typings\ErrorHttpInterceptor.ts" />
+    <TypeScriptCompile Include="samples\errorHandlers\typings\ExceptionHandlerFactory.ts" />
+    <TypeScriptCompile Include="samples\errorHandlers\typings\google\GoogleErrorHandler.ts" />
+    <TypeScriptCompile Include="samples\errorHandlers\typings\google\GoogleErrorService.ts" />
+    <TypeScriptCompile Include="samples\errorHandlers\typings\LogInterceptor.ts" />
+    <TypeScriptCompile Include="samples\errorHandlers\typings\raven\RavenErrorHandler.ts" />
+    <TypeScriptCompile Include="samples\errorHandlers\typings\raven\RavenService.ts" />
+    <TypeScriptCompile Include="samples\errorHandlers\typings\config.ts" />
+    <TypeScriptCompile Include="samples\errorHandlers\typings\SampleErrorService.ts" />
     <TypeScriptCompile Include="samples\interceptors\module.ng.ts" />
     <Content Include="samples\left.tpl.html" />
     <Content Include="samples\location\views\aside.tpl.html" />

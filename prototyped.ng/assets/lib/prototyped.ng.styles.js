@@ -16,6 +16,11 @@ angular.module('prototyped.ng.styles', []).run(['$templateCache', function($temp
   );
 
 
+  $templateCache.put('assets/css/sandbox.min.css',
+    "body .nav-compact a{padding:6px}body .top-spacer{width:100%;margin:32px auto 0;position:fixed}body .top-spacer .mask{overflow:hidden;height:20px}body .top-spacer .mask:after{content:'';display:block;margin:-25px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}body .top-spacer span{width:50px;height:50px;position:absolute;bottom:100%;margin-bottom:-25px;left:50%;margin-left:-25px;border-radius:100%;box-shadow:0 2px 4px #999;background:#fff}body .top-spacer span i{position:absolute;top:4px;bottom:4px;left:4px;right:4px;border-radius:100%;border:1px dashed #aaa;text-align:center;line-height:40px;font-style:normal;color:#999;z-index:1000}body .vertical-spacer{width:200px;left:0;top:50px;bottom:32px;position:absolute;display:block;overflow:auto}body .vertical-spacer .mask{overflow:hidden;width:20px;height:100%}body .vertical-spacer.left .mask:after{content:'';display:block;margin-left:-20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .vertical-spacer.right .mask{float:right}body .vertical-spacer.right .mask:before{content:'';display:block;margin-left:20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .main-contents{top:50px;left:200px;right:0;bottom:32px;position:absolute;z-index:999;overflow:auto}body .bottom-spacer{bottom:0;margin:0;width:100%;height:24px;position:fixed}body .bottom-spacer .mask{margin:0 auto;overflow:hidden;height:20px;width:100%;position:fixed}body .bottom-spacer .mask:after{content:'';display:block;margin:-25px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}"
+  );
+
+
   $templateCache.put('modules/editor/styles/css/editor.min.css',
     ".contents.docked{padding:0 !important;margin:0 !important}.text-editor{display:flex;flex-direction:column;width:100%}.text-area{width:100%;padding:6px;height:100%;min-height:640px}.CodeMirror{border:1px solid #eee;min-height:640px;height:100%}"
   );

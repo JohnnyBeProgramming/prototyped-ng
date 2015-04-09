@@ -2,7 +2,7 @@
 
 declare var Notification: new (title, opts) => any;
 
-angular.module('myApp.samples.notifications', [])
+angular.module('prototyped.ng.samples.notifications', [])
 
     .config(['$stateProvider', function ($stateProvider) {
         // Now set up the states

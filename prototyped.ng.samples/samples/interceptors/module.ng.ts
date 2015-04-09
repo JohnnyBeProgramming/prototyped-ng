@@ -1,6 +1,6 @@
 /// <reference path="../../imports.d.ts" />
 
-angular.module('myApp.samples.interceptors', [])
+angular.module('prototyped.ng.samples.interceptors', [])
     .config(['$stateProvider', function ($stateProvider) {
 
         // Now set up the states

@@ -2,7 +2,7 @@
 
 declare var SCSU: new () => any;
 
-angular.module('myApp.samples.compression', [])
+angular.module('prototyped.ng.samples.compression', [])
     .config(['$stateProvider', function ($stateProvider) {
 
         // Now set up the states

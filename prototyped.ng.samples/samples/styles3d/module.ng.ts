@@ -2,7 +2,7 @@
 declare var ge1doot: any;
 declare var $script: any;
 
-angular.module('myApp.samples.styles3d', [])
+angular.module('prototyped.ng.samples.styles3d', [])
     .config(['$stateProvider', function ($stateProvider) {
 
         // Now set up the states

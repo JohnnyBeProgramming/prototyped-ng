@@ -1,6 +1,6 @@
 /// <reference path="../../imports.d.ts" />
 
-angular.module('myApp.samples.decorators', [])
+angular.module('prototyped.ng.samples.decorators', [])
     .config(['$stateProvider', function ($stateProvider) {
 
         // Now set up the states

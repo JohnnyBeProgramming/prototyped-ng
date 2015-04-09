@@ -1,6 +1,6 @@
 /// <reference path="../../imports.d.ts" />
 
-angular.module('myApp.samples.compression', []).config([
+angular.module('prototyped.ng.samples.compression', []).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.compression', {
@@ -224,7 +224,7 @@ angular.module('myApp.samples.compression', []).config([
     '$state', '$templateCache', function ($state, $templateCache) {
     }]);
 /// <reference path="../../imports.d.ts" />
-angular.module('myApp.samples.decorators', []).config([
+angular.module('prototyped.ng.samples.decorators', []).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.decorators', {
@@ -741,11 +741,660 @@ angular.module('myApp.samples.decorators', []).config([
             };
         }
     }]);
-/// <reference path="../../imports.d.ts" />
+/// <reference path="RavenService.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                (function (raven) {
+                    var RavenErrorHandler = (function () {
+                        function RavenErrorHandler(service) {
+                            this.service = service;
+                            this.name = 'raven';
+                            this.label = 'Sentry via RavenJS';
+                        }
+                        Object.defineProperty(RavenErrorHandler.prototype, "enabled", {
+                            get: function () {
+                                return this.service.isEnabled;
+                            },
+                            set: function (state) {
+                                this.service.isEnabled = state;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
 
-angular.module('myApp.samples.errorHandlers', []).config([
+                        RavenErrorHandler.prototype.attach = function () {
+                            var isOnline = this.service.detect();
+                            this.service.isEnabled = true;
+                            this.service.handler.enabled = true;
+                        };
+
+                        RavenErrorHandler.prototype.dettach = function () {
+                            this.service.isEnabled = false;
+                            this.service.handler.enabled = false;
+                        };
+                        return RavenErrorHandler;
+                    })();
+                    raven.RavenErrorHandler = RavenErrorHandler;
+                })(errorHandlers.raven || (errorHandlers.raven = {}));
+                var raven = errorHandlers.raven;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="RavenErrorHandler.ts" />
+
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                (function (raven) {
+                    var RavenService = (function () {
+                        function RavenService($rootScope, $log, appConfig) {
+                            this.$rootScope = $rootScope;
+                            this.$log = $log;
+                            this.appConfig = appConfig;
+                            this.editMode = false;
+                            this.isOnline = false;
+                            this.isEnabled = false;
+                            this.lastError = null;
+                            this.config = appConfig.ravenConfig;
+                            this.handler = new raven.RavenErrorHandler(this);
+                            appConfig.errorHandlers.push(this.handler);
+                        }
+                        RavenService.prototype.detect = function () {
+                            var _this = this;
+                            try  {
+                                // Load required libraries if not defined
+                                console.info(' - Detecting RavenJS...');
+                                var url = 'https://cdn.ravenjs.com/1.1.18/raven.min.js';
+                                if (typeof Raven === 'undefined') {
+                                    this.$log.info('Loading: ' + url);
+                                    this.handler.busy = true;
+                                    $.getScript(url, function (data, textStatus, jqxhr) {
+                                        _this.$rootScope.$applyAsync(function () {
+                                            _this.handler.busy = false;
+                                            _this.init();
+                                        });
+                                    });
+                                } else {
+                                    this.init();
+                                }
+                            } catch (ex) {
+                                this.isOnline = false;
+                                this.lastError = ex;
+                            }
+                            return this.isOnline;
+                        };
+
+                        RavenService.prototype.init = function () {
+                            // Check for Raven.js and auto-load
+                            if (!this.isOnline && this.config.publicKey) {
+                                this.$log.log('Initialising RavenJS....');
+                                this.setupRaven();
+                            }
+                        };
+
+                        RavenService.prototype.connect = function (publicKey) {
+                            var _this = this;
+                            try  {
+                                this.lastError = null;
+                                Raven.config(publicKey, {
+                                    shouldSendCallback: function (data) {
+                                        // Only return true if data should be sent
+                                        var isActive = publicKey && _this.isEnabled;
+                                        if (isActive) {
+                                            _this.$rootScope.$applyAsync(function () {
+                                                _this.$log.info('Sending Raven: "' + data.message + '"...');
+                                            });
+                                        }
+                                        return isActive;
+                                    },
+                                    dataCallback: function (data) {
+                                        // Add something to data
+                                        return data;
+                                    }
+                                }).install();
+
+                                this.isOnline = true;
+                            } catch (ex) {
+                                this.isOnline = false;
+                                this.lastError = ex;
+                            }
+                        };
+
+                        RavenService.prototype.disconnect = function () {
+                            if (typeof Raven !== 'undefined') {
+                                Raven.uninstall();
+                            }
+                            this.isOnline = false;
+                        };
+
+                        RavenService.prototype.setupRaven = function () {
+                            if (typeof Raven === 'undefined')
+                                return;
+                            try  {
+                                // Disconnect for any prev sessions
+                                if (this.isOnline) {
+                                    this.disconnect();
+                                }
+
+                                // Try to connect with public key
+                                this.connect(this.config.publicKey);
+
+                                // Success
+                                console.info(' - Done.');
+                            } catch (ex) {
+                                // Something went wrong
+                                console.warn(' - RavenJS failed to initialise.');
+                                throw ex;
+                            }
+                        };
+                        return RavenService;
+                    })();
+                    raven.RavenService = RavenService;
+                })(errorHandlers.raven || (errorHandlers.raven = {}));
+                var raven = errorHandlers.raven;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="GoogleErrorService.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                (function (google) {
+                    var GoogleErrorHandler = (function () {
+                        function GoogleErrorHandler(service) {
+                            this.service = service;
+                            this.name = 'google';
+                            this.label = 'Google Analytics';
+                        }
+                        Object.defineProperty(GoogleErrorHandler.prototype, "enabled", {
+                            get: function () {
+                                return this.service.isEnabled;
+                            },
+                            set: function (state) {
+                                this.service.isEnabled = state;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
+
+                        GoogleErrorHandler.prototype.attach = function () {
+                            var isOnline = this.service.detect();
+                            this.service.isEnabled = true;
+                            this.service.handler.enabled = true;
+                        };
+
+                        GoogleErrorHandler.prototype.dettach = function () {
+                            this.service.isEnabled = false;
+                            this.service.handler.enabled = false;
+                        };
+                        return GoogleErrorHandler;
+                    })();
+                    google.GoogleErrorHandler = GoogleErrorHandler;
+                })(errorHandlers.google || (errorHandlers.google = {}));
+                var google = errorHandlers.google;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="GoogleErrorHandler.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                (function (google) {
+                    var GoogleErrorService = (function () {
+                        function GoogleErrorService($rootScope, $log, appConfig) {
+                            this.$rootScope = $rootScope;
+                            this.$log = $log;
+                            this.appConfig = appConfig;
+                            this.editMode = false;
+                            this.isOnline = false;
+                            this.isEnabled = false;
+                            this.lastError = null;
+                            this.config = appConfig.googleConfig;
+                            this.handler = new google.GoogleErrorHandler(this);
+                            appConfig.errorHandlers.push(this.handler);
+                        }
+                        GoogleErrorService.prototype.detect = function () {
+                            try  {
+                                // Load required libraries if not defined
+                            } catch (ex) {
+                                this.isOnline = false;
+                                this.lastError = ex;
+                            }
+                            return this.isOnline;
+                        };
+
+                        GoogleErrorService.prototype.init = function () {
+                            // Check for Raven.js and auto-load
+                            if (!this.isOnline && this.config.publicKey) {
+                                this.$log.log(' - Initialising Google Services....');
+                                this.setupGoogle();
+                            }
+                        };
+
+                        GoogleErrorService.prototype.connect = function (publicKey) {
+                            try  {
+                                //service.isOnline = true;
+                            } catch (ex) {
+                                this.isOnline = false;
+                                this.lastError = ex;
+                            }
+                        };
+
+                        GoogleErrorService.prototype.disconnect = function () {
+                            this.isOnline = false;
+                        };
+
+                        GoogleErrorService.prototype.setupGoogle = function () {
+                            if (typeof google === 'undefined')
+                                return;
+                            try  {
+                                // Disconnect for any prev sessions
+                                if (this.isOnline) {
+                                    this.disconnect();
+                                }
+
+                                // Try to connect with public key
+                                this.connect(this.config.publicKey);
+                            } catch (ex) {
+                                // Something went wrong
+                                this.$log.warn('Google services failed to initialise.');
+                                throw ex;
+                            }
+                        };
+                        return GoogleErrorService;
+                    })();
+                    google.GoogleErrorService = GoogleErrorService;
+                })(errorHandlers.google || (errorHandlers.google = {}));
+                var google = errorHandlers.google;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="raven/RavenService.ts" />
+/// <reference path="google/GoogleErrorService.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                var SampleErrorService = (function () {
+                    function SampleErrorService($rootScope, $log, appConfig, raven, googleErrorService) {
+                        this.$rootScope = $rootScope;
+                        this.$log = $log;
+                        this.appConfig = appConfig;
+                        this.raven = raven;
+                        this.googleErrorService = googleErrorService;
+                        this.enabled = true;
+                    }
+                    SampleErrorService.prototype.checkChanged = function (handler) {
+                        this.$rootScope.$applyAsync(function () {
+                            if (!handler)
+                                return;
+                            if (!handler.enabled) {
+                                if (handler.attach) {
+                                    handler.attach();
+                                } else {
+                                    handler.enabled = true;
+                                }
+                            } else if (handler.enabled) {
+                                if (handler.dettach) {
+                                    handler.dettach();
+                                } else {
+                                    handler.enabled = false;
+                                }
+                            }
+                        });
+                    };
+
+                    SampleErrorService.prototype.throwManagedException = function () {
+                        var _this = this;
+                        this.$rootScope.$applyAsync(function () {
+                            var ctx = { tags: { source: "Sample Managed Exception" } };
+                            try  {
+                                _this.$log.info('About to break something...');
+                                Raven.context(ctx, function () {
+                                    window['does not exist'].managedSampleError++;
+                                });
+                            } catch (ex) {
+                                // throw ex; // this will also be caught by the global Angular exception handler
+                                _this.$log.warn('Exception caught and swallowed.');
+                            }
+                        });
+                    };
+
+                    SampleErrorService.prototype.throwAjaxException = function () {
+                        var _this = this;
+                        this.$rootScope.$applyAsync(function () {
+                            _this.$log.info('Doing AJAX request...');
+
+                            // XXXXXXXXXXXXXXXXXXXX
+                            var ajaxCfg = {
+                                current: null,
+                                getDesc: function (itm) {
+                                    var cfg = ajaxCfg;
+                                    switch (cfg.current) {
+                                        case cfg.errHttp:
+                                            return 'Ajax Error (HTTP)';
+                                        case cfg.errSuccess:
+                                            return 'Ajax Error (Success)';
+                                        case cfg.errFailed:
+                                            return 'Ajax Error (Failed)';
+                                    }
+                                    return 'Ajax Error';
+                                },
+                                callError: function () {
+                                    var call = ajaxCfg.current;
+                                    if (!call) {
+                                        call = ajaxCfg.errHttp;
+                                    }
+                                    call();
+                                },
+                                select: function (itm) {
+                                    ajaxCfg.current = itm;
+                                },
+                                errHttp: function () {
+                                    $.ajax({
+                                        url: "/i.am.missing.html",
+                                        dataType: "text/html",
+                                        success: function (result) {
+                                        },
+                                        error: function (xhr) {
+                                        }
+                                    });
+                                },
+                                errSuccess: function () {
+                                    $.ajax({
+                                        url: "/index.html",
+                                        dataType: "text/html",
+                                        success: function (result) {
+                                            // Response recieved...
+                                            console.info(' - AJAX got response...');
+                                            window['does not exist'].ajaxOnSuccessSample++;
+                                        },
+                                        error: function (xhr) {
+                                        }
+                                    });
+                                },
+                                errFailed: function () {
+                                    $.ajax({
+                                        url: "/missing.index.html",
+                                        dataType: "text/html",
+                                        success: function (result) {
+                                        },
+                                        error: function (xhr) {
+                                            console.warn(" - Ajax Error [" + xhr.status + "] " + xhr.statusText);
+                                            window['does not exist'].ajaxOnErrorSample++;
+                                        }
+                                    });
+                                }
+                            };
+                        });
+                    };
+
+                    SampleErrorService.prototype.throwAngularException = function () {
+                        var _this = this;
+                        this.$rootScope.$applyAsync(function () {
+                            _this.$log.info('About to break Angular...');
+                            _this.$rootScope.missing.ngSampleError++;
+                        });
+                    };
+
+                    SampleErrorService.prototype.throwTimeoutException = function () {
+                        this.$log.info('Setting timeout...');
+                        setTimeout(function () {
+                            var _this = this;
+                            this.$rootScope.$applyAsync(function () {
+                                _this.$log.info('Entering timeout...');
+                                window['does not exist'].timeoutSampleError++;
+                                _this.$log.info('Exit timeout...');
+                            });
+                        }, 2 * 1000);
+                    };
+                    return SampleErrorService;
+                })();
+                errorHandlers.SampleErrorService = SampleErrorService;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                var LogInterceptor = (function () {
+                    function LogInterceptor($delegate, appStatus) {
+                        this.$delegate = $delegate;
+                        this.appStatus = appStatus;
+                        this.init();
+                    }
+                    LogInterceptor.prototype.init = function () {
+                        var _this = this;
+                        // Intercept messages
+                        var show = this.appStatus.config;
+                        var $delegate = this.$delegate;
+
+                        $delegate.debug = this.intercept($delegate.debug, function (msg) {
+                            if (show.all || show.debug)
+                                _this.attach('debug', msg);
+                        });
+                        $delegate.log = this.intercept($delegate.log, function (msg) {
+                            _this.attach('log', msg);
+                        });
+                        $delegate.info = this.intercept($delegate.info, function (msg) {
+                            _this.attach('info', msg);
+                        });
+                        $delegate.warn = this.intercept($delegate.warn, function (msg, ext) {
+                            _this.attach('warn', msg, ext);
+                        });
+                        $delegate.error = this.intercept($delegate.error, function (msg, ext) {
+                            _this.attach('error', msg.message ? msg.message : msg, ext);
+                        });
+
+                        return this;
+                    };
+
+                    LogInterceptor.prototype.intercept = function (func, callback) {
+                        var _this = this;
+                        return function () {
+                            var args = [].slice.call(arguments);
+                            callback.apply(null, args);
+                            func.apply(_this.$delegate, args);
+                        };
+                    };
+
+                    LogInterceptor.prototype.attach = function (msgType, msgDesc, msgExt) {
+                        var itm = {
+                            type: msgType,
+                            desc: msgDesc,
+                            time: Date.now()
+                        };
+                        if (msgExt) {
+                            itm.ext = msgExt;
+                        }
+                        this.appStatus.logs.push(itm);
+                    };
+                    return LogInterceptor;
+                })();
+                errorHandlers.LogInterceptor = LogInterceptor;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                var ErrorHttpInterceptor = (function () {
+                    function ErrorHttpInterceptor($log, $q) {
+                        this.$log = $log;
+                        this.$q = $q;
+                    }
+                    ErrorHttpInterceptor.prototype.responseError = function (rejection) {
+                        this.$log.error('HTTP response error: ' + rejection.config || rejection.status);
+                        if (typeof Raven !== 'undefined') {
+                            var ctx = {
+                                tags: { source: "Angular Http Interceptor" }
+                            };
+                            var err = new Error('HTTP response error');
+                            Raven.captureException(err, angular.extend(ctx, {
+                                extra: {
+                                    config: rejection.config,
+                                    status: rejection.status
+                                }
+                            }));
+                        }
+                        return this.$q.reject(rejection);
+                    };
+                    return ErrorHttpInterceptor;
+                })();
+                errorHandlers.ErrorHttpInterceptor = ErrorHttpInterceptor;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                var ExceptionHandlerFactory = (function () {
+                    function ExceptionHandlerFactory($log, appNode) {
+                        this.$log = $log;
+                        this.appNode = appNode;
+                    }
+                    ExceptionHandlerFactory.prototype.handleException = function (exception, cause) {
+                        if (typeof Raven !== 'undefined') {
+                            this.setUpdatedErrorMessage(arguments, 'Exception [ EX ]: ');
+                            var ctx = {
+                                tags: { source: "Angular Unhandled Exception" }
+                            };
+                            Raven.captureException(exception, ctx);
+                        } else if (this.appNode.active) {
+                            // ToDo: Hook in some routing or something...
+                            this.setUpdatedErrorMessage(arguments, 'Exception [ NW ]: ');
+                        } else {
+                            this.setUpdatedErrorMessage(arguments, 'Exception [ JS ]: ');
+                        }
+                    };
+
+                    ExceptionHandlerFactory.prototype.setUpdatedErrorMessage = function (args, prefix) {
+                        var ex = args.length > 0 ? args[0] : {};
+                        if (ex.message) {
+                            ex.message = prefix + ex.message;
+                        }
+                        this.$log.error.apply(this.$log, args);
+                    };
+                    return ExceptionHandlerFactory;
+                })();
+                errorHandlers.ExceptionHandlerFactory = ExceptionHandlerFactory;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="LogInterceptor.ts" />
+/// <reference path="raven/RavenService.ts" />
+/// <reference path="google/GoogleErrorService.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (_errorHandlers) {
+                function ConfigureErrorHandlers(appConfigProvider) {
+                    appConfigProvider.set({
+                        'errorHandlers': [
+                            {
+                                name: 'proto',
+                                locked: true,
+                                enabled: true,
+                                label: 'Prototyped Handlers'
+                            }
+                        ]
+                    });
+                }
+                _errorHandlers.ConfigureErrorHandlers = ConfigureErrorHandlers;
+
+                function ConfigureRaven(appConfigProvider) {
+                    appConfigProvider.set({
+                        'ravenConfig': {
+                            publicKey: 'https://e94eaeaab36f4d14a99e0472e85ba289@app.getsentry.com/36391'
+                        }
+                    });
+                }
+                _errorHandlers.ConfigureRaven = ConfigureRaven;
+
+                function ConfigureProviders($provide, $httpProvider) {
+                    // Register http error handler
+                    $httpProvider.interceptors.push('errorHttpInterceptor');
+
+                    // Intercept all log messages
+                    $provide.decorator('$log', [
+                        '$delegate', 'appStatus', function ($delegate, appStatus) {
+                            // Define the interceptor
+                            var interceptor = new proto.ng.samples.errorHandlers.LogInterceptor($delegate, appStatus);
+
+                            // Return the original delegate
+                            return $delegate;
+                        }]);
+                }
+                _errorHandlers.ConfigureProviders = ConfigureProviders;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="../../imports.d.ts" />
+/// <reference path="typings/raven/RavenService.ts" />
+/// <reference path="typings/google/GoogleErrorService.ts" />
+/// <reference path="typings/SampleErrorService.ts" />
+/// <reference path="typings/LogInterceptor.ts" />
+/// <reference path="typings/ErrorHttpInterceptor.ts" />
+/// <reference path="typings/ExceptionHandlerFactory.ts" />
+/// <reference path="typings/config.ts" />
+angular.module('prototyped.ng.samples.errorHandlers', [
+    'prototyped.ng.config'
+]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureErrorHandlers]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureRaven]).config(['$provide', '$httpProvider', proto.ng.samples.errorHandlers.ConfigureProviders]).config([
     '$stateProvider', function ($stateProvider) {
-        // Now set up the states
+        // Set up the states
         $stateProvider.state('samples.errors', {
             url: '/errors',
             views: {
@@ -757,316 +1406,56 @@ angular.module('myApp.samples.errorHandlers', []).config([
             }
         });
     }]).factory('$exceptionHandler', [
-    '$window', '$log', 'appNode', function ($window, $log, appNode) {
+    '$log', 'appNode', function ($log, appNode) {
+        var instance = new proto.ng.samples.errorHandlers.ExceptionHandlerFactory($log, appNode);
+        return function (exception, cause) {
+            instance.handleException(exception, cause);
+        };
+        /*
+        
         // Catch all angular errors to Sentry (via RavenJS, if defined)
         function setUpdatedErrorMessage(args, prefix) {
-            var ex = args.length > 0 ? args[0] : {};
-            if (ex.message) {
-                ex.message = prefix + ex.message;
-            }
-            $log.error.apply($log, args);
+        var ex = args.length > 0 ? args[0] : {};
+        if (ex.message) {
+        ex.message = prefix + ex.message;
         }
-        if ($window.Raven) {
-            console.debug(' - Using the RavenJS exception handler.');
-            var ctx = { tags: { source: "Angular Unhandled Exception" } };
-            return function (exception, cause) {
-                // Update the exception message
-                setUpdatedErrorMessage(arguments, 'Internal [ EX ]: ');
-                Raven.captureException(exception, ctx);
-            };
+        $log.error.apply($log, args);
+        }
+        if (typeof Raven !== 'undefined') {
+        console.log(' - Using the RavenJS exception handler.');
+        var ctx = { tags: { source: "Angular Unhandled Exception" } };
+        return function (exception, cause) {
+        // Update the exception message
+        setUpdatedErrorMessage(arguments, 'Internal [ EX ]: ');
+        Raven.captureException(exception, ctx);
+        };
         } else if (appNode.active) {
-            console.debug(' - Using node webkit specific exception handler.');
-            return function (exception, cause) {
-                setUpdatedErrorMessage(arguments, 'Internal [ NW ]: ');
-                // ToDo: Hook in some routing or something...
-            };
+        console.log(' - Using node webkit specific exception handler.');
+        return function (exception, cause) {
+        setUpdatedErrorMessage(arguments, 'Internal [ NW ]: ');
+        // ToDo: Hook in some routing or something...
+        };
         } else {
-            console.debug(' - Using the default logging exception handler.');
-            return function (exception, cause) {
-                setUpdatedErrorMessage(arguments, 'Internal [ JS ]: ');
-            };
+        console.log(' - Using the default logging exception handler.');
+        return function (exception, cause) {
+        setUpdatedErrorMessage(arguments, 'Internal [ JS ]: ');
+        };
         }
+        */
     }]).factory('errorHttpInterceptor', [
-    '$window', '$q', function ($window, $q) {
-        return {
-            responseError: function responseError(rejection) {
-                console.error('HTTP response error: ' + rejection.config || rejection.status);
-                if ($window.Raven) {
-                    var ctx = { tags: { source: "Angular Http Interceptor" } };
-                    Raven.captureException(new Error('HTTP response error'), angular.extend(ctx, {
-                        extra: {
-                            config: rejection.config,
-                            status: rejection.status
-                        }
-                    }));
-                }
-                return $q.reject(rejection);
-            }
-        };
-    }]).config([
-    '$provide', '$httpProvider', function ($provide, $httpProvider) {
-        // Register error handler
-        $httpProvider.interceptors.push('errorHttpInterceptor');
-
-        // Intercept all log messages
-        $provide.decorator('$log', [
-            '$delegate', 'appStatus', function ($delegate, appStatus) {
-                // Define interceptor method
-                function intercept(func, callback) {
-                    // Save the original function
-                    return function () {
-                        var args = [].slice.call(arguments);
-                        callback.apply(null, args);
-                        func.apply($delegate, args);
-                    };
-                }
-
-                function attach(msgType, msgDesc, msgExt) {
-                    var itm = {
-                        type: msgType,
-                        desc: msgDesc,
-                        time: Date.now()
-                    };
-                    if (msgExt) {
-                        itm.ext = msgExt;
-                    }
-                    appStatus.logs.push(itm);
-                }
-
-                // Intercept messages
-                var show = appStatus.config;
-                $delegate.debug = intercept($delegate.debug, function (msg) {
-                    if (show.all || show.debug)
-                        attach('debug', msg);
-                });
-                $delegate.log = intercept($delegate.log, function (msg) {
-                    attach('log', msg);
-                });
-                $delegate.info = intercept($delegate.info, function (msg) {
-                    attach('info', msg);
-                });
-                $delegate.warn = intercept($delegate.warn, function (msg, ext) {
-                    attach('warn', msg, ext);
-                });
-                $delegate.error = intercept($delegate.error, function (msg, ext) {
-                    attach('error', msg, ext);
-                });
-
-                // Return delegate
-                return $delegate;
-            }]);
-    }]).value('ravenConfig', {
-    isEnabled: true,
-    isOnline: false,
-    publicKey: ''
-}).controller('errorHandlersController', [
-    '$scope', '$log', '$window', '$location', '$timeout', 'ravenConfig', function ($scope, $log, $window, $location, $timeout, ravenConfig) {
-        $scope.state = {
-            editMode: false,
-            cfgRaven: ravenConfig,
-            ajaxCfg: {
-                current: null,
-                getDesc: function (itm) {
-                    var cfg = $scope.state.ajaxCfg;
-                    switch (cfg.current) {
-                        case cfg.errHttp:
-                            return 'Ajax Error (HTTP)';
-                        case cfg.errSuccess:
-                            return 'Ajax Error (Success)';
-                        case cfg.errFailed:
-                            return 'Ajax Error (Failed)';
-                    }
-                    return 'Ajax Error';
-                },
-                callError: function () {
-                    var call = $scope.state.ajaxCfg.current;
-                    if (!call) {
-                        call = $scope.state.ajaxCfg.errHttp;
-                    }
-                    call();
-                },
-                select: function (itm) {
-                    $scope.state.ajaxCfg.current = itm;
-                },
-                errHttp: function () {
-                    $.ajax({
-                        url: "/i.am.missing.html",
-                        dataType: "text/html",
-                        success: function (result) {
-                        },
-                        error: function (xhr) {
-                        }
-                    });
-                },
-                errSuccess: function () {
-                    $.ajax({
-                        url: "/index.html",
-                        dataType: "text/html",
-                        success: function (result) {
-                            // Response recieved...
-                            console.info(' - AJAX got response...');
-                            window['ajaxOnSuccessSample'].dont.exist++;
-                        },
-                        error: function (xhr) {
-                        }
-                    });
-                },
-                errFailed: function () {
-                    $.ajax({
-                        url: "/missing.index.html",
-                        dataType: "text/html",
-                        success: function (result) {
-                        },
-                        error: function (xhr) {
-                            console.warn(" - Ajax Error [" + xhr.status + "] " + xhr.statusText);
-                            window['ajaxOnErrorSample'].dont.exist++;
-                        }
-                    });
-                }
-            }
-        };
-        $scope.detect = function () {
-            var started = Date.now();
-            try  {
-                // Clear prev result
-                $scope.result = null;
-
-                // Check that Raven.js was loaded
-                if ($window.Raven && ravenConfig.publicKey) {
-                    $scope.setupRaven(ravenConfig);
-                }
-
-                // Set the result
-                $scope.state.editMode = !(ravenConfig.publicKey.length > 0);
-                $scope.result = {
-                    valid: true,
-                    start: started,
-                    ended: Date.now()
-                };
-            } catch (ex) {
-                $scope.result = {
-                    valid: false,
-                    error: ex.message
-                };
-            }
-        };
-        $scope.connect = function (publicKey) {
-            console.info(' - Installing Raven...');
-            Raven.config(publicKey, {
-                shouldSendCallback: function (data) {
-                    // Only return true if data should be sent
-                    var isActive = ravenConfig.isEnabled && ravenConfig.publicKey;
-                    if (isActive) {
-                        console.debug(' - Sending Raven: "' + data.message + '"...');
-                        //console.warn(data);
-                    }
-                    return isActive;
-                },
-                dataCallback: function (data) {
-                    // Add something to data
-                    return data;
-                }
-            }).install();
-            ravenConfig.isOnline = true;
-        };
-        $scope.disconnect = function () {
-            console.info(' - Clearing Raven...');
-            Raven.uninstall();
-            ravenConfig.isOnline = false;
-        };
-        $scope.setupRaven = function (ravenConfig) {
-            if (!$window.Raven)
-                return;
-            try  {
-                // Disconnect for any prev sessions
-                if (ravenConfig.isOnline) {
-                    $scope.disconnect();
-                }
-
-                // Try to connect with public key
-                $scope.connect(ravenConfig.publicKey);
-
-                // Success
-                console.info(' - Done.');
-            } catch (ex) {
-                // Something went wrong
-                console.warn(' - RavenJS failed to initialise.');
-                throw ex;
-            }
-        };
-        $scope.throwManagedException = function () {
-            var ctx = { tags: { source: "Sample Managed Exception" } };
-            try  {
-                $log.info(' - About to break something...');
-                Raven.context(ctx, function () {
-                    window['managedSampleError'].dont.exist++;
-                });
-            } catch (ex) {
-                // throw ex; // this will also be caught by the global Angular exception handler
-                $log.warn(' - Exception caught and swallowed.');
-            }
-        };
-        $scope.throwAjaxException = function () {
-            console.info(' - Doing AJAX request...');
-            // XXXXXXXXXXXXXXXXXXXX
-        };
-        $scope.throwAngularException = function () {
-            console.info(' - About to break Angular...');
-            $scope.missing.ngSampleError++;
-        };
-        $scope.throwTimeoutException = function () {
-            console.info(' - Setting timeout...');
-            setTimeout(function () {
-                console.info(' - Entering timeout...');
-                window['timeoutSampleError'].dont.exist++;
-                console.info(' - Exit timeout...');
-            }, 3 * 1000);
-        };
-        $scope.getStatusColor = function () {
-            var cssRes = ' ';
-            var active = $scope.state.cfgRaven.isOnline;
-            if (active) {
-                cssRes += $scope.state.cfgRaven.isEnabled ? 'text-success' : 'text-danger';
-            } else {
-                cssRes += 'text-danger';
-            }
-            return cssRes;
-        };
-        $scope.getStatusIcon = function (activeStyle) {
-            var cssRes = '';
-            var active = $scope.state.cfgRaven.isOnline;
-            if (activeStyle && active) {
-                cssRes += activeStyle;
-            } else if (active) {
-                cssRes += $scope.state.cfgRaven.isEnabled ? 'glyphicon-ok-sign' : 'glyphicon-minus-sign';
-            } else {
-                cssRes += '';
-            }
-            return cssRes + $scope.getStatusColor();
-        };
-        $scope.getButtonStyle = function (target) {
-            var css = 'btn-default';
-            var state = $scope.state;
-            var valid = state && state.cfgRaven && state.cfgRaven.isOnline;
-            if (valid) {
-                css = state.cfgRaven.isEnabled ? 'btn-primary' : 'btn-warning';
-            }
-            return css;
-        };
-        $scope.submitForm = function () {
-            if ($window.Raven) {
-                // Clear prev setup
-            }
-            if (ravenConfig.publicKey) {
-                $scope.setupRaven(ravenConfig);
-            } else {
-                ravenConfig.isEnabled = false;
-            }
-            $scope.state.editMode = false;
-        };
+    '$log', '$q', function ($log, $q) {
+        return new proto.ng.samples.errorHandlers.ErrorHttpInterceptor($log, $q);
+    }]).service('ravenService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.raven.RavenService]).service('googleErrorService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.google.GoogleErrorService]).service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService]).controller('errorHandlersController', [
+    '$scope', '$log', function ($scope, $log) {
+    }]).run([
+    '$rootScope', 'appStatus', 'sampleErrorService', function ($rootScope, appStatus, sampleErrorService) {
+        angular.extend($rootScope, {
+            appStatus: appStatus,
+            sampleErrors: sampleErrorService
+        });
     }]);
 /// <reference path="../../imports.d.ts" />
-angular.module('myApp.samples.interceptors', []).config([
+angular.module('prototyped.ng.samples.interceptors', []).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.interceptors', {
@@ -1948,7 +2337,7 @@ var proto;
 // ----------------------------------------------------------------------
 ///<reference path="../../imports.d.ts"/>
 ///<reference path="controllers/GeoController.ts"/>
-angular.module('myApp.samples.location', [
+angular.module('prototyped.ng.samples.location', [
     'ui.router'
 ]).config([
     '$stateProvider', function ($stateProvider) {
@@ -1998,7 +2387,7 @@ angular.module('myApp.samples.location', [
     }]);
 /// <reference path="../../imports.d.ts" />
 
-angular.module('myApp.samples.notifications', []).config([
+angular.module('prototyped.ng.samples.notifications', []).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.notifications', {
@@ -2146,7 +2535,8 @@ angular.module('myApp.samples.notifications', []).config([
     '$rootScope', '$scope', 'notifyService', function ($rootScope, $scope, notify) {
         $scope.notifySuccess = function (message, opts) {
             opts = opts || {};
-            if ('alertify' in window) {
+            var enabled = notify.options.alertify && notify.options.alertify.enabled;
+            if (enabled && 'alertify' in window) {
                 window['alertify'].success(message, 3000);
             } else {
                 notify.triggerNotification('Action Succeeded', angular.extend(opts, {
@@ -2157,7 +2547,8 @@ angular.module('myApp.samples.notifications', []).config([
         };
         $scope.notifyFailure = function (message, opts) {
             opts = opts || {};
-            if ('alertify' in window) {
+            var enabled = notify.options.alertify && notify.options.alertify.enabled;
+            if (enabled && 'alertify' in window) {
                 window['alertify'].error(message, 3000);
             } else {
                 notify.triggerNotification('Action Failed', angular.extend(opts, {
@@ -2294,7 +2685,7 @@ angular.module('myApp.samples.notifications', []).config([
         });
     }]);
 /// <reference path="../../imports.d.ts" />
-angular.module('myApp.samples.sampleData', []).config([
+angular.module('prototyped.ng.samples.sampleData', []).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.sampleData', {
@@ -2398,7 +2789,7 @@ angular.module('myApp.samples.sampleData', []).config([
     }]);
 /// <reference path="../../imports.d.ts" />
 
-angular.module('myApp.samples.styles3d', []).config([
+angular.module('prototyped.ng.samples.styles3d', []).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.styles3d', {
@@ -2547,14 +2938,14 @@ angular.module('prototyped.ng.samples', [
     'prototyped.ng.config',
     'prototyped.ng.samples.views',
     'prototyped.ng.samples.styles',
-    'myApp.samples.errorHandlers',
-    'myApp.samples.sampleData',
-    'myApp.samples.location',
-    'myApp.samples.decorators',
-    'myApp.samples.interceptors',
-    'myApp.samples.notifications',
-    'myApp.samples.compression',
-    'myApp.samples.styles3d'
+    'prototyped.ng.samples.errorHandlers',
+    'prototyped.ng.samples.sampleData',
+    'prototyped.ng.samples.location',
+    'prototyped.ng.samples.decorators',
+    'prototyped.ng.samples.interceptors',
+    'prototyped.ng.samples.notifications',
+    'prototyped.ng.samples.compression',
+    'prototyped.ng.samples.styles3d'
 ]).config([
     'appConfigProvider', function (appConfigProvider) {
         // Define module configuration
@@ -2895,7 +3286,7 @@ angular.module('prototyped.ng.samples', [
   $templateCache.put('samples/decorators/main.tpl.html',
     '<div id=DecoratorView style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=decorators.busy ng-click=decorators.apply() class=btn ng-class="{ \'btn-primary\': !decorators.isPatched(), \'btn-success\': decorators.isPatched() }">{{ decorators.isPatched() ? \'Application Patched!\' : \'Apply Monkey Patches\' }}</a></span><h4>Patching Services <small>Monkey patching the normal behaviour of your application.</small></h4><hr><p>By making use of angular\'s <a href=https://docs.angularjs.org/api/auto/service/$provide>$provide decorators</a>, we patch the <a href=https://docs.angularjs.org/api/ng/service/$q>$q service</a> to intercept any promised actions and take over the reply mechanism.</p><p>After the initial investigation, it quickly became clear there are just way too many promises to intercept and keep track of, many of them in the angular framework itself. A mechanism was required to identify (and filter out) the promises we were looking for.</p><p>With no <em>real</em> unique identifiers to work with, stack traces are used for tracking identity. In javascript, stack traces are ugly, and not always helpful, but with a little bit of regular expressions, enough sensible info can be extracted to get a picture of <em>where</em> the actions originate from. And this opens up a whole new world of oppertunities...</p><p>- This sample was inspired by <a target=_blank href=http://www.bennadel.com/blog/2775-monkey-patching-the-q-service-using-provide-decorator-in-angularjs.htm>this awesome blog post</a>. :)<br>- The idea to use stack traces was inspired from <a target=_blank href=http://www.codeovertones.com/2011/08/how-to-print-stack-trace-anywhere-in.html>this awesome blog post</a>.</p><hr><p><a class="btn btn-default" ng-class="{ \'btn-success\': (decorators.lastStatus && decorators.lastResult), \'btn-danger\': (!decorators.lastStatus && decorators.lastResult.message) }" href="" ng-click=decorators.runPromiseAction()>Run Promised Action</a> <a class="btn btn-default" ng-class="{ \'btn-warning\':decorators.isPatched(), \'btn-success\': decorators.fcallState == \'Resolved\', \'btn-danger\': decorators.fcallState == \'Rejected\' }" href="" ng-click=decorators.fcall() ng-disabled=!decorators.isPatched()>Call Marshalled Function</a></p><hr><div ng:if=decorators.error class="alert alert-danger"><b>Error:</b> {{ decorators.error.message || \'Something went wrong.\' }}</div><div ng:if=!decorators.error><div class="alert alert-success" ng-if="decorators.lastStatus === true"><b>Accepted:</b> {{ decorators.lastResult || \'No additional information specified.\' }}</div><div class="alert alert-danger" ng-if="decorators.lastStatus === false"><b>Rejected:</b> {{ (decorators.lastResult.message || decorators.lastResult) || \'No additional information specified.\' }}</div></div></div></div></div>');
   $templateCache.put('samples/errorHandlers/main.tpl.html',
-    '<div ng:cloak style="width: 100%"><div class=results ng-init=detect()><div class="icon pull-left left"><i class="glyphicon glyphicon-bell" ng-class="{\'text-muted\':!state.cfgRaven.isOnline}"></i> <i class="sub-icon glyphicon" ng-class=getStatusIcon()></i></div><div class="info pull-left"><div><div class=pull-right><a class=ctrl-sm ng-click="state.editMode = true" href=""><i class="glyphicon glyphicon-pencil"></i></a></div><h4><a target=_blank href="https://www.getsentry.com/welcome/">Sentry</a> and <a target=_blank href="http://raven-js.readthedocs.org/en/latest/">Raven-js</a> <small>Client Error and Exception Handling</small></h4></div><div class=input-group><span class=input-group-addon>Sentry Key:</span> <input class=form-control aria-label=... ng-disabled=state.cfgRaven.isOnline ng-model=state.cfgRaven.publicKey placeholder="https://&lt;- your-api-key-here -&gt;@app.getsentry.com/12345"><label class=input-group-addon><input type=checkbox aria-label=... ng-disabled=!state.cfgRaven.publicKey ng-model=state.cfgRaven.isEnabled> Enabled</label><div class=input-group-btn><a class=btn ng-class="{ \'btn-primary\': state.cfgRaven.publicKey, \'btn-default\': !state.cfgRaven.publicKey }" ng-show=!state.cfgRaven.isOnline ng-disabled=!state.cfgRaven.publicKey ng-click=submitForm()>Set Public Key</a> <a class="btn btn-success" target=_blank ng-show=state.cfgRaven.isOnline ng-href="{{ state.cfgRaven.publicKey }}" ng-disabled=!state.cfgRaven.publicKey>Open Dashboard</a> <a class="btn btn-default" title=Disconnect ng-disabled=!state.cfgRaven.isOnline ng-click=disconnect()><i class="glyphicon glyphicon-remove"></i></a></div></div><hr><div><div class=info-row><div class=btn-group role=group aria-label=...><input type=button class=btn value="Managed Error" ng-class="getButtonStyle(\'managed\')" ng-click="throwManagedException()"> <input type=button class=btn value="AngularJS Error" ng-class="getButtonStyle(\'angular\')" ng-click="throwAngularException()"><div class=btn-group><button type=button class=btn ng-class="getButtonStyle(\'ajax\')" ng-click=throwAjaxException()>Ajax Error (HTTP)</button> <button type=button class="btn dropdown-toggle" data-toggle=dropdown aria-expanded=false ng-class="getButtonStyle(\'ajax\')"><span class=caret></span></button><ul class=dropdown-menu role=menu><li><a href="" ng-click=state.ajaxCfg.select(state.ajaxCfg.errHttp)>{{ state.ajaxCfg.getDesc(state.ajaxCfg.errHttp) }}</a></li><li><a href="" ng-click=state.ajaxCfg.select(state.ajaxCfg.errSuccess)>{{ state.ajaxCfg.getDesc(state.ajaxCfg.errSuccess) }}</a></li><li><a href="" ng-click=state.ajaxCfg.select(state.ajaxCfg.errFailed)>{{ state.ajaxCfg.getDesc(state.ajaxCfg.errFailed) }}</a></li></ul></div><input type=button class=btn value="Timeout Error" ng-class="getButtonStyle(\'timeout\')" ng-click="throwTimeoutException()"> <input type=button class=btn value="Unhandled Exception" ng-class="getButtonStyle(\'unhandled\')" onclick="sampleError.dont.exist++"></div><br class="clearfix"></div><div ng-if="result != null"><p><div class="alert alert-danger" ng-if="!result.valid && result.error && result.error != \'error\'"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Failed:</b> {{ result.error }}</div></p></div></div><pre>{{ status.logs | listReverse }}</pre></div></div><div ng-if="state.activeTab == \'result\'" class=source><span class=pull-right><a class="btn btn-sm btn-primary" ng-click="state.activeTab = null">Close</a></span> <samp><pre>{{ result.info }}</pre></samp></div></div>');
+    '<div ng:cloak style="width: 100%"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link rel=stylesheet resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input type=checkbox ng:show="sampleErrors.result !== null" ng:model=sampleErrors.enabled bs:switch switch:size=mini switch:inverse=true></span><h4>Exception Handling <small>Error reporting and client-side exception handling</small></h4><hr><div class=row><div class=col-md-3><div><h5>Throw Exceptions</h5><div class="btn-group btn-group-vertical" role=group style="width: 100%" aria-label=...><input type=button class="btn btn-default" value="Catch Managed Error" ng-click="sampleErrors.throwManagedException()"> <input type=button class="btn btn-default" value="AngularJS Error" ng-click="sampleErrors.throwAngularException()"> <input type=button class="btn btn-default" value="Create Ajax Error" ng-click="sampleErrors.throwAjaxException()"> <input type=button class="btn btn-default" value="Timeout Error" ng-click="sampleErrors.throwTimeoutException()"> <input type=button class="btn btn-default" value="Unhandled Exception" onclick="sampleError.dontExist++"></div></div></div><div ng-class="{ \'col-md-6\':sampleErrors.enabled, \'col-md-9\': !sampleErrors.enabled }"><span class=pull-right><a href="" ng-click="appStatus.logs = []">Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appStatus.logs.length><td colspan=3><em>No event have been logged...</em></td></tr><tr ng-repeat="row in appStatus.logs | listReverse" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td><div class=ellipsis style="width: 100%">{{ row.desc }}</div></td></tr></tbody></table><div class="alert alert-info" ng-if=!appStatus.logs.length><h5>Inspired by these blogs:</h5><ul><li><a target=_blank href=http://www.davecap.com/post/46522098029/using-sentry-raven-js-with-angularjs-to-catch>http://www.davecap.com</a></li><li><a target=_blank href=http://bahmutov.calepin.co/catch-all-errors-in-angular-app.html>http://bahmutov.calepin.co</a></li></ul></div></div><div ng-class="{ \'col-md-3\':sampleErrors.enabled, \'hide\': !sampleErrors.enabled }"><div><h5>Exception Handlers</h5><form class=thumbnail><div style="padding: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !handler.enabled && handler.locked }" ng:repeat="handler in appConfig.errorHandlers"><label><input type=checkbox ng-disabled=handler.locked ng-checked=handler.enabled ng-click=sampleErrors.checkChanged(handler)> <span ng-if=!handler.busy><strong ng:if=handler.enabled>{{ handler.label }}</strong> <span ng:if=!handler.enabled>{{ handler.label }}</span></span> <span ng-if=handler.busy><i class="fa fa-spinner fa-spin"></i> <em>Loading third-party scripts...</em></span></label></div></div></form></div><div ng:if="sampleErrors.raven.isEnabled && !sampleErrors.raven.handler.busy"><span class=pull-right style="padding: 3px"><b ng:if=sampleErrors.raven.isOnline class=glow-green>Online</b> <b ng:if=!sampleErrors.raven.isOnline class=glow-red>Offline</b></span><h5>Sentry and RavenJS</h5><div style="padding: 0 8px"><div ng-show=sampleErrors.raven.isOnline><a href="" class=pull-right ng:click="sampleErrors.raven.isOnline = false;"><i class="glyphicon glyphicon-remove"></i></a><div class=ellipsis><b>Public Key:</b> <a ng-href="{{ sampleErrors.raven.config.publicKey }}" target=_blank class=inactive-text>{{ sampleErrors.raven.config.publicKey }}</a></div></div><form class=form-inline role=form ng-show=!sampleErrors.raven.isOnline><div class=form-group><label for=sentryKey>Sentry public key (required)</label><div class=input-group><input class="form-control input-sm" id=sentryKey ng:model=sampleErrors.raven.config.publicKey placeholder="https://<-key->@app.getsentry.com/12345"><div class=input-group-btn><a class="btn btn-sm btn-default" ng-class="{ \'btn-danger\': sampleErrors.raven.lastError, \'btn-primary\': sampleErrors.raven.config.publicKey, \'btn-default\': !sampleErrors.raven.config.publicKey }" ng-disabled=!sampleErrors.raven.config.publicKey ng-click=sampleErrors.raven.connect(sampleErrors.raven.config.publicKey)>Set</a></div></div></div></form><br><div class="alert alert-success" ng-if=sampleErrors.raven.isOnline>You are now ready to post ravens to your online sentry account.</div><div class="alert alert-danger" ng-if="!sampleErrors.raven.isOnline && sampleErrors.raven.lastError">{{ sampleErrors.raven.lastError.message }}</div><div class="alert alert-info" ng-if="!sampleErrors.raven.isOnline && !sampleErrors.raven.lastError"><a target=_blank href="https://www.getsentry.com/welcome/">Sentry</a> is a third party online service used to track errors. <a target=_blank href="http://raven-js.readthedocs.org/en/latest/">RavenJS</a> is used on the client-side to catch and send events on to Sentry.</div></div></div></div></div></div></div></div>');
   $templateCache.put('samples/interceptors/main.tpl.html',
     '<div id=InterceptorView style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=interceptors.busy ng-click=interceptors.apply() class=btn ng-class="{ \'btn-primary\': !interceptors.isPatched(), \'btn-success\': interceptors.isPatched() }">{{ interceptors.isPatched() ? \'Interceptors Active\' : \'Enable Interceptors\' }}</a></span><h4>HTTP Interceptors <small>Register and utilise Angular\'s interceptors.</small></h4><hr><p>...</p><hr><p><a class="btn btn-default" ng-class="{ \'btn-warning\': interceptors.isPatched(), \'btn-success\': interceptors.fcallState == \'Resolved\', \'btn-danger\': interceptors.fcallState == \'Rejected\' }" href="" ng-click=interceptors.triggerBadRequest() ng-disabled=!interceptors.isPatched()>Create Bad Request</a></p><hr><div ng:if=interceptors.error class="alert alert-danger"><b>Error:</b> {{ interceptors.error.message || \'Something went wrong.\' }}</div></div></div></div>');
   $templateCache.put('samples/left.tpl.html',
@@ -2909,7 +3300,7 @@ angular.module('prototyped.ng.samples', [
   $templateCache.put('samples/main.tpl.html',
     '<div class=container><div class=row><div class=col-md-12><h4>Prototyped Samples <small>Beware, code monkeys at play... ;)</small></h4><hr><p ui:view=body>.....</p><hr></div></div></div>');
   $templateCache.put('samples/notifications/main.tpl.html',
-    '<div id=NotificationView style="width: 100%"><link rel=stylesheet resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.core.css"><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.default.min.css"><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input type=checkbox ng:show="notify.ready !== null" ng:model=notify.enabled bs:switch switch:size=mini switch:inverse=true></span><h4>{{ notify.isPatched() ? \'Desktop\' : \'Browser\' }} Notifications <small>Various mechanisms of user notification in HTML5.</small></h4><hr><p ng-show="notify.ready === null"><em><i class="fa fa-spinner fa-spin"></i> <b>Requesting Access:</b> Desktop notifications...</em> <span><a href="" ng-click="notify.ready = false">cancel</a></span></p><div ng-show="notify.ready !== null" class=row><div class=col-md-3><h5>Notification Types <small>( {{ 0 }} available )</small></h5><div class=thumbnail><div style="padding: 0 8px"><div class=radio ng-class="{ \'inactive-gray\': !method.enabled() }" ng-repeat="method in methods"><label><input type=radio name=optionsMethods id=option_method_{{method.name}} value="{{ method.name }}" ng-disabled=!method.enabled() ng-click="notify.current = method" ng-checked="notify.current.name == method.name"> <span ng-if="(notify.current.name != method.name)">{{ method.label }}</span> <strong ng-if="(notify.current.name == method.name)">{{ method.label }}</strong></label></div></div></div><h5>Notification Extenders</h5><form class=thumbnail><div style="padding: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.enabled }"><label><input type=checkbox ng-model=notify.enabled> Desktop Notifications</label></div><div class=checkbox ng-class="{ \'inactive-gray\': !notify.options.alertify.enabled }"><label><input type=checkbox ng-checked=notify.options.alertify.enabled ng-click=notify.hookAlertify()> <span ng-if=!notify.options.alertify.busy>Extend with <a target=_blank href="http://fabien-d.github.io/alertify.js/">AlertifyJS</a></span> <span ng-if=notify.options.alertify.busy><i class="fa fa-spinner fa-spin"></i> <em>Loading third-party scripts...</em></span></label></div></div></form></div><div ng-class="{ \'col-md-6\':notify.enabled, \'col-md-9\': !notify.enabled }"><h5>Create a new message</h5><form class=thumbnail ng-disabled=notify.ready ng-init="msgOpts = { title: \'Web Notification\', body: \'This is a test message.\'}"><div style="padding: 8px"><div class=form-group><label for=exampleTitle>Message Title</label><input class=form-control id=exampleTitle placeholder="Enter title" ng-model=msgOpts.title></div><div class=form-group><label for=exampleMessage>Message Body Text</label><textarea class=form-control rows=5 class=form-control id=exampleMessage ng-model=msgOpts.body placeholder="Enter body text"></textarea></div><span class=pull-right ng-show="notify.current.name != \'alert\'" style="margin: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.showResult }"><label><input type=checkbox ng-model=notify.showResult> Show Result</label></div></span> <span class=pull-right ng-show="notify.current.name != \'alert\'" style="margin: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.sameDialog }"><label><input type=checkbox ng-model=notify.sameDialog> Recycle Dialog</label></div></span> <button type=submit class="btn btn-default" ng-class="{ \'btn-success\': notify.isPatched(), \'btn-primary\': notify.ready !== null && !notify.isPatched() }" ng-click="notify.current.action(msgOpts.title, msgOpts.body, msgOpts)">Create Message</button></div></form></div><div ng-class="{ \'col-md-3\':notify.enabled, \'hide\': !notify.enabled }"><div ng-show=notify.enabled><h5>System Notifications Active</h5><div class="alert alert-success"><b>Note:</b> All notifications get redirected to your OS notification system.</div></div><div ng-show="notify.current.name == \'notify\'"><h5>Message Styling</h5><form class=thumbnail><div class=form-group><label for=exampleIcon>Icon File</label><input type=file id=exampleIcon><p class=help-block>Image to display with message.</p></div></form></div></div></div><div ng:if=notify.error class="alert alert-danger"><b>Error:</b> {{ notify.error.message || \'Something went wrong.\' }}</div></div></div></div>');
+    '<div id=NotificationView style="width: 100%"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link rel=stylesheet resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.core.css"><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.default.min.css"><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input type=checkbox ng:show="notify.ready !== null" ng:model=notify.enabled bs:switch switch:size=mini switch:inverse=true></span><h4>{{ notify.isPatched() ? \'Desktop\' : \'Browser\' }} Notifications <small>Various mechanisms of user notification in HTML5.</small></h4><hr><p ng-show="notify.ready === null"><em><i class="fa fa-spinner fa-spin"></i> <b>Requesting Access:</b> Desktop notifications...</em> <span><a href="" ng-click="notify.ready = false">cancel</a></span></p><div ng-show="notify.ready !== null" class=row><div class=col-md-3><div><h5>Notification Types</h5><div class=thumbnail><div style="padding: 0 8px"><div class=radio ng-class="{ \'inactive-gray\': !method.enabled() }" ng-repeat="method in methods"><label><input type=radio name=optionsMethods id=option_method_{{method.name}} value="{{ method.name }}" ng-disabled=!method.enabled() ng-click="notify.current = method" ng-checked="notify.current.name == method.name"> <span ng-if="(notify.current.name != method.name)">{{ method.label }}</span> <strong ng-if="(notify.current.name == method.name)">{{ method.label }}</strong></label></div></div></div></div><div ng-show="notify.current.name == \'notify\'"><h5>Message Styling</h5><form class=thumbnail><div class=form-group><label for=exampleIcon>Icon File</label><input type=file id=exampleIcon><p class=help-block>Image to display with message.</p></div></form></div></div><div ng-class="{ \'col-md-6\':notify.enabled, \'col-md-9\': !notify.enabled }"><h5>Create a new message</h5><form class=thumbnail ng-disabled=notify.ready ng-init="msgOpts = { title: \'Web Notification\', body: \'This is a test message.\'}"><div style="padding: 8px"><div class=form-group><label for=exampleTitle>Message Title</label><input class=form-control id=exampleTitle placeholder="Enter title" ng-model=msgOpts.title></div><div class=form-group><label for=exampleMessage>Message Body Text</label><textarea class=form-control rows=5 class=form-control id=exampleMessage ng-model=msgOpts.body placeholder="Enter body text"></textarea></div><span class=pull-right ng-show="notify.current.name != \'alert\'" style="margin: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.showResult }"><label><input type=checkbox ng-model=notify.showResult> Show Result</label></div></span> <span class=pull-right ng-show="notify.current.name != \'alert\'" style="margin: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.sameDialog }"><label><input type=checkbox ng-model=notify.sameDialog> Recycle Dialog</label></div></span> <button type=submit class="btn btn-default" ng-class="{ \'btn-success\': notify.isPatched(), \'btn-primary\': notify.ready !== null && !notify.isPatched() }" ng-click="notify.current.action(msgOpts.title, msgOpts.body, msgOpts)">Create Message</button></div></form></div><div ng-class="{ \'col-md-3\':notify.enabled, \'hide\': !notify.enabled }"><div><h5>Notification Extenders</h5><form class=thumbnail><div style="padding: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.enabled }"><label><input type=checkbox ng-model=notify.enabled> Desktop Notifications</label></div><div class=checkbox ng-class="{ \'inactive-gray\': !notify.options.alertify.enabled }"><label><input type=checkbox ng-checked=notify.options.alertify.enabled ng-click=notify.hookAlertify()> <span ng-if=!notify.options.alertify.busy>Extend with <a target=_blank href="http://fabien-d.github.io/alertify.js/">AlertifyJS</a></span> <span ng-if=notify.options.alertify.busy><i class="fa fa-spinner fa-spin"></i> <em>Loading third-party scripts...</em></span></label></div></div></form></div><div ng-show=notify.enabled><h5>System Notifications Active</h5><div class="alert alert-success"><b>Note:</b> All notifications get redirected to your OS notification system.</div></div></div></div><div ng:if=notify.error class="alert alert-danger"><b>Error:</b> {{ notify.error.message || \'Something went wrong.\' }}</div></div></div></div>');
   $templateCache.put('samples/sampleData/main.tpl.html',
     '<div id=SampleDataView style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=sampleData.busy ng-click=sampleData.test() class="btn btn-primary">Fetch Sample Data</a></span><h4>Online Sample Data <small>Directly from the cloud! Supplied by this awesome API: <a href="http://www.filltext.com/" target=_blank>http://www.filltext.com/</a></small></h4><hr><div ng:if=sampleData.error class="alert alert-danger"><b>Error:</b> {{ sampleData.error.message || \'Something went wrong. :(\' }}</div><div class=row><div class=col-md-3><h5>Define Fields <small>( {{ sampleData.args.length }} defined )</small> <small class=pull-right><a href="" ng-click="sampleData.args.push({ id: \'myField\', val: \'\'})"><i class="fa fa-plus"></i></a></small></h5><div class=thumbnail><div style="display: flex; width: auto; padding: 3px" ng-repeat="arg in sampleData.args"><span style="flex-basis: 20px; flex-grow:0; flex-shrink:0"><input checked type=checkbox ng-click="sampleData.args.splice(sampleData.args.indexOf(arg), 1)" aria-label=...></span><div style="flex-basis: 64px; flex-grow:0; flex-shrink:0"><input style="width: 100%" aria-label=... ng-model=arg.id></div><div style="flex-grow:1; flex-shrink:1"><input style="width: 100%" aria-label=... ng-model=arg.val></div></div></div></div><div class=col-md-9><h5>Results View <small ng:if=sampleData.resp.length>( {{ sampleData.resp.length }} total )</small></h5><table class=table><thead><tr><th ng-repeat="arg in sampleData.args">{{ arg.id }}</th></tr></thead><tbody><tr ng-if=!sampleData.resp><td colspan="{{ sampleData.args.length }}"><em>Nothing to show yet. Fetch some data first...</em></td></tr><tr ng-repeat="row in sampleData.resp"><td ng-repeat="arg in sampleData.args">{{ row[arg.id] }}</td></tr></tbody></table></div></div></div></div></div>');
   $templateCache.put('samples/styles3d/main.tpl.html',

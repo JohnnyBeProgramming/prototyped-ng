@@ -1,6 +1,6 @@
 /// <reference path="../../imports.d.ts" />
 
-angular.module('myApp.samples.sampleData', [])
+angular.module('prototyped.ng.samples.sampleData', [])
 
     .config(['$stateProvider', function ($stateProvider) {
 

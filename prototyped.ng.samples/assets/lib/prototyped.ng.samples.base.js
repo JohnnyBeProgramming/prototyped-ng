@@ -1,6 +1,6 @@
 ﻿/// <reference path="../../imports.d.ts" />
 
-angular.module('myApp.samples.compression', []).config([
+angular.module('prototyped.ng.samples.compression', []).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.compression', {
@@ -224,7 +224,7 @@ angular.module('myApp.samples.compression', []).config([
     '$state', '$templateCache', function ($state, $templateCache) {
     }]);
 /// <reference path="../../imports.d.ts" />
-angular.module('myApp.samples.decorators', []).config([
+angular.module('prototyped.ng.samples.decorators', []).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.decorators', {
@@ -741,11 +741,660 @@ angular.module('myApp.samples.decorators', []).config([
             };
         }
     }]);
-/// <reference path="../../imports.d.ts" />
+/// <reference path="RavenService.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                (function (raven) {
+                    var RavenErrorHandler = (function () {
+                        function RavenErrorHandler(service) {
+                            this.service = service;
+                            this.name = 'raven';
+                            this.label = 'Sentry via RavenJS';
+                        }
+                        Object.defineProperty(RavenErrorHandler.prototype, "enabled", {
+                            get: function () {
+                                return this.service.isEnabled;
+                            },
+                            set: function (state) {
+                                this.service.isEnabled = state;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
 
-angular.module('myApp.samples.errorHandlers', []).config([
+                        RavenErrorHandler.prototype.attach = function () {
+                            var isOnline = this.service.detect();
+                            this.service.isEnabled = true;
+                            this.service.handler.enabled = true;
+                        };
+
+                        RavenErrorHandler.prototype.dettach = function () {
+                            this.service.isEnabled = false;
+                            this.service.handler.enabled = false;
+                        };
+                        return RavenErrorHandler;
+                    })();
+                    raven.RavenErrorHandler = RavenErrorHandler;
+                })(errorHandlers.raven || (errorHandlers.raven = {}));
+                var raven = errorHandlers.raven;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="RavenErrorHandler.ts" />
+
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                (function (raven) {
+                    var RavenService = (function () {
+                        function RavenService($rootScope, $log, appConfig) {
+                            this.$rootScope = $rootScope;
+                            this.$log = $log;
+                            this.appConfig = appConfig;
+                            this.editMode = false;
+                            this.isOnline = false;
+                            this.isEnabled = false;
+                            this.lastError = null;
+                            this.config = appConfig.ravenConfig;
+                            this.handler = new raven.RavenErrorHandler(this);
+                            appConfig.errorHandlers.push(this.handler);
+                        }
+                        RavenService.prototype.detect = function () {
+                            var _this = this;
+                            var urlRavenJS = 'https://cdn.ravenjs.com/1.1.18/raven.min.js';
+                            try  {
+                                // Load required libraries if not defined
+                                if (typeof Raven === 'undefined') {
+                                    this.$log.log('Loading: ' + urlRavenJS);
+                                    this.handler.busy = true;
+                                    $.getScript(urlRavenJS, function (data, textStatus, jqxhr) {
+                                        _this.$rootScope.$applyAsync(function () {
+                                            _this.handler.busy = false;
+                                            _this.init();
+                                        });
+                                    });
+                                } else {
+                                    this.init();
+                                }
+                            } catch (ex) {
+                                this.isOnline = false;
+                                this.lastError = ex;
+                            }
+                            return this.isOnline;
+                        };
+
+                        RavenService.prototype.init = function () {
+                            // Check for Raven.js and auto-load
+                            if (!this.isOnline && this.config.publicKey) {
+                                this.$log.log('Initialising RavenJS....');
+                                this.setupRaven();
+                            }
+                        };
+
+                        RavenService.prototype.connect = function (publicKey) {
+                            var _this = this;
+                            try  {
+                                this.lastError = null;
+                                Raven.config(publicKey, {
+                                    shouldSendCallback: function (data) {
+                                        // Only return true if data should be sent
+                                        var isActive = publicKey && _this.isEnabled;
+                                        if (isActive) {
+                                            _this.$rootScope.$applyAsync(function () {
+                                                _this.$log.log('Sending Raven: "' + data.message + '"...');
+                                            });
+                                        }
+                                        return isActive;
+                                    },
+                                    dataCallback: function (data) {
+                                        // Add something to data
+                                        return data;
+                                    }
+                                }).install();
+
+                                this.isOnline = true;
+                            } catch (ex) {
+                                this.isOnline = false;
+                                this.lastError = ex;
+                            }
+                        };
+
+                        RavenService.prototype.disconnect = function () {
+                            if (typeof Raven !== 'undefined') {
+                                Raven.uninstall();
+                            }
+                            this.isOnline = false;
+                        };
+
+                        RavenService.prototype.setupRaven = function () {
+                            if (typeof Raven === 'undefined')
+                                return;
+                            try  {
+                                // Disconnect for any prev sessions
+                                if (this.isOnline) {
+                                    this.disconnect();
+                                }
+
+                                // Try to connect with public key
+                                this.connect(this.config.publicKey);
+
+                                // Success
+                                console.info(' - Done.');
+                            } catch (ex) {
+                                // Something went wrong
+                                console.warn(' - RavenJS failed to initialise.');
+                                throw ex;
+                            }
+                        };
+                        return RavenService;
+                    })();
+                    raven.RavenService = RavenService;
+                })(errorHandlers.raven || (errorHandlers.raven = {}));
+                var raven = errorHandlers.raven;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="GoogleErrorService.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                (function (google) {
+                    var GoogleErrorHandler = (function () {
+                        function GoogleErrorHandler(service) {
+                            this.service = service;
+                            this.locked = true;
+                            this.name = 'google';
+                            this.label = 'Google Analytics';
+                        }
+                        Object.defineProperty(GoogleErrorHandler.prototype, "enabled", {
+                            get: function () {
+                                return this.service.isEnabled;
+                            },
+                            set: function (state) {
+                                this.service.isEnabled = state;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
+
+                        GoogleErrorHandler.prototype.attach = function () {
+                            var isOnline = this.service.detect();
+                            this.service.isEnabled = true;
+                            this.service.handler.enabled = true;
+                        };
+
+                        GoogleErrorHandler.prototype.dettach = function () {
+                            this.service.isEnabled = false;
+                            this.service.handler.enabled = false;
+                        };
+                        return GoogleErrorHandler;
+                    })();
+                    google.GoogleErrorHandler = GoogleErrorHandler;
+                })(errorHandlers.google || (errorHandlers.google = {}));
+                var google = errorHandlers.google;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="GoogleErrorHandler.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                (function (google) {
+                    var GoogleErrorService = (function () {
+                        function GoogleErrorService($rootScope, $log, appConfig) {
+                            this.$rootScope = $rootScope;
+                            this.$log = $log;
+                            this.appConfig = appConfig;
+                            this.editMode = false;
+                            this.isOnline = false;
+                            this.isEnabled = false;
+                            this.lastError = null;
+                            this.config = appConfig.googleConfig;
+                            this.handler = new google.GoogleErrorHandler(this);
+                            appConfig.errorHandlers.push(this.handler);
+                        }
+                        GoogleErrorService.prototype.detect = function () {
+                            try  {
+                                // Load required libraries if not defined
+                            } catch (ex) {
+                                this.isOnline = false;
+                                this.lastError = ex;
+                            }
+                            return this.isOnline;
+                        };
+
+                        GoogleErrorService.prototype.init = function () {
+                            // Check for Raven.js and auto-load
+                            if (!this.isOnline && this.config.publicKey) {
+                                this.$log.log(' - Initialising Google Services....');
+                                this.setupGoogle();
+                            }
+                        };
+
+                        GoogleErrorService.prototype.connect = function (publicKey) {
+                            try  {
+                                //service.isOnline = true;
+                            } catch (ex) {
+                                this.isOnline = false;
+                                this.lastError = ex;
+                            }
+                        };
+
+                        GoogleErrorService.prototype.disconnect = function () {
+                            this.isOnline = false;
+                        };
+
+                        GoogleErrorService.prototype.setupGoogle = function () {
+                            if (typeof google === 'undefined')
+                                return;
+                            try  {
+                                // Disconnect for any prev sessions
+                                if (this.isOnline) {
+                                    this.disconnect();
+                                }
+
+                                // Try to connect with public key
+                                this.connect(this.config.publicKey);
+                            } catch (ex) {
+                                // Something went wrong
+                                this.$log.warn('Google services failed to initialise.');
+                                throw ex;
+                            }
+                        };
+                        return GoogleErrorService;
+                    })();
+                    google.GoogleErrorService = GoogleErrorService;
+                })(errorHandlers.google || (errorHandlers.google = {}));
+                var google = errorHandlers.google;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="raven/RavenService.ts" />
+/// <reference path="google/GoogleErrorService.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                var SampleErrorService = (function () {
+                    function SampleErrorService($rootScope, $log, appConfig, raven, googleErrorService) {
+                        this.$rootScope = $rootScope;
+                        this.$log = $log;
+                        this.appConfig = appConfig;
+                        this.raven = raven;
+                        this.googleErrorService = googleErrorService;
+                        this.enabled = true;
+                    }
+                    SampleErrorService.prototype.checkChanged = function (handler) {
+                        this.$rootScope.$applyAsync(function () {
+                            if (!handler)
+                                return;
+                            if (!handler.enabled) {
+                                if (handler.attach) {
+                                    handler.attach();
+                                } else {
+                                    handler.enabled = true;
+                                }
+                            } else if (handler.enabled) {
+                                if (handler.dettach) {
+                                    handler.dettach();
+                                } else {
+                                    handler.enabled = false;
+                                }
+                            }
+                        });
+                    };
+
+                    SampleErrorService.prototype.throwManagedException = function () {
+                        var _this = this;
+                        this.$rootScope.$applyAsync(function () {
+                            var ctx = { tags: { source: "Sample Managed Exception" } };
+                            try  {
+                                _this.$log.info('About to break something...');
+                                Raven.context(ctx, function () {
+                                    window['does not exist'].managedSampleError++;
+                                });
+                            } catch (ex) {
+                                // throw ex; // this will also be caught by the global Angular exception handler
+                                _this.$log.warn('Exception caught and swallowed.');
+                            }
+                        });
+                    };
+
+                    SampleErrorService.prototype.throwAjaxException = function () {
+                        var _this = this;
+                        this.$rootScope.$applyAsync(function () {
+                            _this.$log.info('Doing AJAX request...');
+
+                            // XXXXXXXXXXXXXXXXXXXX
+                            var ajaxCfg = {
+                                current: null,
+                                getDesc: function (itm) {
+                                    var cfg = ajaxCfg;
+                                    switch (cfg.current) {
+                                        case cfg.errHttp:
+                                            return 'Ajax Error (HTTP)';
+                                        case cfg.errSuccess:
+                                            return 'Ajax Error (Success)';
+                                        case cfg.errFailed:
+                                            return 'Ajax Error (Failed)';
+                                    }
+                                    return 'Ajax Error';
+                                },
+                                callError: function () {
+                                    var call = ajaxCfg.current;
+                                    if (!call) {
+                                        call = ajaxCfg.errHttp;
+                                    }
+                                    call();
+                                },
+                                select: function (itm) {
+                                    ajaxCfg.current = itm;
+                                },
+                                errHttp: function () {
+                                    $.ajax({
+                                        url: "/i.am.missing.html",
+                                        dataType: "text/html",
+                                        success: function (result) {
+                                        },
+                                        error: function (xhr) {
+                                        }
+                                    });
+                                },
+                                errSuccess: function () {
+                                    $.ajax({
+                                        url: "/index.html",
+                                        dataType: "text/html",
+                                        success: function (result) {
+                                            // Response recieved...
+                                            console.info(' - AJAX got response...');
+                                            window['does not exist'].ajaxOnSuccessSample++;
+                                        },
+                                        error: function (xhr) {
+                                        }
+                                    });
+                                },
+                                errFailed: function () {
+                                    $.ajax({
+                                        url: "/missing.index.html",
+                                        dataType: "text/html",
+                                        success: function (result) {
+                                        },
+                                        error: function (xhr) {
+                                            console.warn(" - Ajax Error [" + xhr.status + "] " + xhr.statusText);
+                                            window['does not exist'].ajaxOnErrorSample++;
+                                        }
+                                    });
+                                }
+                            };
+                        });
+                    };
+
+                    SampleErrorService.prototype.throwAngularException = function () {
+                        var _this = this;
+                        this.$rootScope.$applyAsync(function () {
+                            _this.$log.info('About to break Angular...');
+                            _this.$rootScope.missing.ngSampleError++;
+                        });
+                    };
+
+                    SampleErrorService.prototype.throwTimeoutException = function () {
+                        var _this = this;
+                        this.$log.info('Setting timeout...');
+                        setTimeout(function () {
+                            _this.$rootScope.$applyAsync(function () {
+                                _this.$log.info('Entering timeout...');
+                                window['does not exist'].timeoutSampleError++;
+                                _this.$log.info('Exit timeout...');
+                            });
+                        }, 2 * 1000);
+                    };
+                    return SampleErrorService;
+                })();
+                errorHandlers.SampleErrorService = SampleErrorService;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                var LogInterceptor = (function () {
+                    function LogInterceptor($delegate, appStatus) {
+                        this.$delegate = $delegate;
+                        this.appStatus = appStatus;
+                        this.init();
+                    }
+                    LogInterceptor.prototype.init = function () {
+                        var _this = this;
+                        // Intercept messages
+                        var show = this.appStatus.config;
+                        var $delegate = this.$delegate;
+
+                        $delegate.debug = this.intercept($delegate.debug, function (msg) {
+                            if (show.all || show.debug)
+                                _this.attach('debug', msg);
+                        });
+                        $delegate.log = this.intercept($delegate.log, function (msg) {
+                            _this.attach('log', msg);
+                        });
+                        $delegate.info = this.intercept($delegate.info, function (msg) {
+                            _this.attach('info', msg);
+                        });
+                        $delegate.warn = this.intercept($delegate.warn, function (msg, ext) {
+                            _this.attach('warn', msg, ext);
+                        });
+                        $delegate.error = this.intercept($delegate.error, function (msg, ext) {
+                            _this.attach('error', msg.message ? msg.message : msg, ext);
+                        });
+
+                        return this;
+                    };
+
+                    LogInterceptor.prototype.intercept = function (func, callback) {
+                        var _this = this;
+                        return function () {
+                            var args = [].slice.call(arguments);
+                            callback.apply(null, args);
+                            func.apply(_this.$delegate, args);
+                        };
+                    };
+
+                    LogInterceptor.prototype.attach = function (msgType, msgDesc, msgExt) {
+                        var itm = {
+                            type: msgType,
+                            desc: msgDesc,
+                            time: Date.now()
+                        };
+                        if (msgExt) {
+                            itm.ext = msgExt;
+                        }
+                        this.appStatus.logs.push(itm);
+                    };
+                    return LogInterceptor;
+                })();
+                errorHandlers.LogInterceptor = LogInterceptor;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                var ErrorHttpInterceptor = (function () {
+                    function ErrorHttpInterceptor($log, $q) {
+                        this.$log = $log;
+                        this.$q = $q;
+                    }
+                    ErrorHttpInterceptor.prototype.responseError = function (rejection) {
+                        this.$log.error('HTTP response error: ' + rejection.config || rejection.status);
+                        if (typeof Raven !== 'undefined') {
+                            var ctx = {
+                                tags: { source: "Angular Http Interceptor" }
+                            };
+                            var err = new Error('HTTP response error');
+                            Raven.captureException(err, angular.extend(ctx, {
+                                extra: {
+                                    config: rejection.config,
+                                    status: rejection.status
+                                }
+                            }));
+                        }
+                        return this.$q.reject(rejection);
+                    };
+                    return ErrorHttpInterceptor;
+                })();
+                errorHandlers.ErrorHttpInterceptor = ErrorHttpInterceptor;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                var ExceptionHandlerFactory = (function () {
+                    function ExceptionHandlerFactory($log, appNode) {
+                        this.$log = $log;
+                        this.appNode = appNode;
+                    }
+                    ExceptionHandlerFactory.prototype.handleException = function (exception, cause) {
+                        if (typeof Raven !== 'undefined') {
+                            this.setUpdatedErrorMessage(arguments, 'Exception [ EX ]: ');
+                            var ctx = {
+                                tags: { source: "Angular Unhandled Exception" }
+                            };
+                            Raven.captureException(exception, ctx);
+                        } else if (this.appNode.active) {
+                            // ToDo: Hook in some routing or something...
+                            this.setUpdatedErrorMessage(arguments, 'Exception [ NW ]: ');
+                        } else {
+                            this.setUpdatedErrorMessage(arguments, 'Exception [ JS ]: ');
+                        }
+                    };
+
+                    ExceptionHandlerFactory.prototype.setUpdatedErrorMessage = function (args, prefix) {
+                        var ex = args.length > 0 ? args[0] : {};
+                        if (ex.message) {
+                            ex.message = prefix + ex.message;
+                        }
+                        this.$log.error.apply(this.$log, args);
+                    };
+                    return ExceptionHandlerFactory;
+                })();
+                errorHandlers.ExceptionHandlerFactory = ExceptionHandlerFactory;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="LogInterceptor.ts" />
+/// <reference path="raven/RavenService.ts" />
+/// <reference path="google/GoogleErrorService.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (_errorHandlers) {
+                function ConfigureErrorHandlers(appConfigProvider) {
+                    appConfigProvider.set({
+                        'errorHandlers': [
+                            {
+                                name: 'proto',
+                                locked: true,
+                                enabled: true,
+                                label: 'Prototyped Handlers'
+                            }
+                        ]
+                    });
+                }
+                _errorHandlers.ConfigureErrorHandlers = ConfigureErrorHandlers;
+
+                function ConfigureRaven(appConfigProvider) {
+                    appConfigProvider.set({
+                        'ravenConfig': {
+                            publicKey: 'https://e94eaeaab36f4d14a99e0472e85ba289@app.getsentry.com/36391'
+                        }
+                    });
+                }
+                _errorHandlers.ConfigureRaven = ConfigureRaven;
+
+                function ConfigureProviders($provide, $httpProvider) {
+                    // Register http error handler
+                    $httpProvider.interceptors.push('errorHttpInterceptor');
+
+                    // Intercept all log messages
+                    $provide.decorator('$log', [
+                        '$delegate', 'appStatus', function ($delegate, appStatus) {
+                            // Define the interceptor
+                            var interceptor = new proto.ng.samples.errorHandlers.LogInterceptor($delegate, appStatus);
+
+                            // Return the original delegate
+                            return $delegate;
+                        }]);
+                }
+                _errorHandlers.ConfigureProviders = ConfigureProviders;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="../../imports.d.ts" />
+/// <reference path="typings/raven/RavenService.ts" />
+/// <reference path="typings/google/GoogleErrorService.ts" />
+/// <reference path="typings/SampleErrorService.ts" />
+/// <reference path="typings/LogInterceptor.ts" />
+/// <reference path="typings/ErrorHttpInterceptor.ts" />
+/// <reference path="typings/ExceptionHandlerFactory.ts" />
+/// <reference path="typings/config.ts" />
+angular.module('prototyped.ng.samples.errorHandlers', [
+    'prototyped.ng.config'
+]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureErrorHandlers]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureRaven]).config(['$provide', '$httpProvider', proto.ng.samples.errorHandlers.ConfigureProviders]).config([
     '$stateProvider', function ($stateProvider) {
-        // Now set up the states
+        // Set up the states
         $stateProvider.state('samples.errors', {
             url: '/errors',
             views: {
@@ -757,316 +1406,25 @@ angular.module('myApp.samples.errorHandlers', []).config([
             }
         });
     }]).factory('$exceptionHandler', [
-    '$window', '$log', 'appNode', function ($window, $log, appNode) {
-        // Catch all angular errors to Sentry (via RavenJS, if defined)
-        function setUpdatedErrorMessage(args, prefix) {
-            var ex = args.length > 0 ? args[0] : {};
-            if (ex.message) {
-                ex.message = prefix + ex.message;
-            }
-            $log.error.apply($log, args);
-        }
-        if ($window.Raven) {
-            console.debug(' - Using the RavenJS exception handler.');
-            var ctx = { tags: { source: "Angular Unhandled Exception" } };
-            return function (exception, cause) {
-                // Update the exception message
-                setUpdatedErrorMessage(arguments, 'Internal [ EX ]: ');
-                Raven.captureException(exception, ctx);
-            };
-        } else if (appNode.active) {
-            console.debug(' - Using node webkit specific exception handler.');
-            return function (exception, cause) {
-                setUpdatedErrorMessage(arguments, 'Internal [ NW ]: ');
-                // ToDo: Hook in some routing or something...
-            };
-        } else {
-            console.debug(' - Using the default logging exception handler.');
-            return function (exception, cause) {
-                setUpdatedErrorMessage(arguments, 'Internal [ JS ]: ');
-            };
-        }
+    '$log', 'appNode', function ($log, appNode) {
+        var instance = new proto.ng.samples.errorHandlers.ExceptionHandlerFactory($log, appNode);
+        return function (exception, cause) {
+            instance.handleException(exception, cause);
+        };
     }]).factory('errorHttpInterceptor', [
-    '$window', '$q', function ($window, $q) {
-        return {
-            responseError: function responseError(rejection) {
-                console.error('HTTP response error: ' + rejection.config || rejection.status);
-                if ($window.Raven) {
-                    var ctx = { tags: { source: "Angular Http Interceptor" } };
-                    Raven.captureException(new Error('HTTP response error'), angular.extend(ctx, {
-                        extra: {
-                            config: rejection.config,
-                            status: rejection.status
-                        }
-                    }));
-                }
-                return $q.reject(rejection);
-            }
-        };
-    }]).config([
-    '$provide', '$httpProvider', function ($provide, $httpProvider) {
-        // Register error handler
-        $httpProvider.interceptors.push('errorHttpInterceptor');
-
-        // Intercept all log messages
-        $provide.decorator('$log', [
-            '$delegate', 'appStatus', function ($delegate, appStatus) {
-                // Define interceptor method
-                function intercept(func, callback) {
-                    // Save the original function
-                    return function () {
-                        var args = [].slice.call(arguments);
-                        callback.apply(null, args);
-                        func.apply($delegate, args);
-                    };
-                }
-
-                function attach(msgType, msgDesc, msgExt) {
-                    var itm = {
-                        type: msgType,
-                        desc: msgDesc,
-                        time: Date.now()
-                    };
-                    if (msgExt) {
-                        itm.ext = msgExt;
-                    }
-                    appStatus.logs.push(itm);
-                }
-
-                // Intercept messages
-                var show = appStatus.config;
-                $delegate.debug = intercept($delegate.debug, function (msg) {
-                    if (show.all || show.debug)
-                        attach('debug', msg);
-                });
-                $delegate.log = intercept($delegate.log, function (msg) {
-                    attach('log', msg);
-                });
-                $delegate.info = intercept($delegate.info, function (msg) {
-                    attach('info', msg);
-                });
-                $delegate.warn = intercept($delegate.warn, function (msg, ext) {
-                    attach('warn', msg, ext);
-                });
-                $delegate.error = intercept($delegate.error, function (msg, ext) {
-                    attach('error', msg, ext);
-                });
-
-                // Return delegate
-                return $delegate;
-            }]);
-    }]).value('ravenConfig', {
-    isEnabled: true,
-    isOnline: false,
-    publicKey: ''
-}).controller('errorHandlersController', [
-    '$scope', '$log', '$window', '$location', '$timeout', 'ravenConfig', function ($scope, $log, $window, $location, $timeout, ravenConfig) {
-        $scope.state = {
-            editMode: false,
-            cfgRaven: ravenConfig,
-            ajaxCfg: {
-                current: null,
-                getDesc: function (itm) {
-                    var cfg = $scope.state.ajaxCfg;
-                    switch (cfg.current) {
-                        case cfg.errHttp:
-                            return 'Ajax Error (HTTP)';
-                        case cfg.errSuccess:
-                            return 'Ajax Error (Success)';
-                        case cfg.errFailed:
-                            return 'Ajax Error (Failed)';
-                    }
-                    return 'Ajax Error';
-                },
-                callError: function () {
-                    var call = $scope.state.ajaxCfg.current;
-                    if (!call) {
-                        call = $scope.state.ajaxCfg.errHttp;
-                    }
-                    call();
-                },
-                select: function (itm) {
-                    $scope.state.ajaxCfg.current = itm;
-                },
-                errHttp: function () {
-                    $.ajax({
-                        url: "/i.am.missing.html",
-                        dataType: "text/html",
-                        success: function (result) {
-                        },
-                        error: function (xhr) {
-                        }
-                    });
-                },
-                errSuccess: function () {
-                    $.ajax({
-                        url: "/index.html",
-                        dataType: "text/html",
-                        success: function (result) {
-                            // Response recieved...
-                            console.info(' - AJAX got response...');
-                            window['ajaxOnSuccessSample'].dont.exist++;
-                        },
-                        error: function (xhr) {
-                        }
-                    });
-                },
-                errFailed: function () {
-                    $.ajax({
-                        url: "/missing.index.html",
-                        dataType: "text/html",
-                        success: function (result) {
-                        },
-                        error: function (xhr) {
-                            console.warn(" - Ajax Error [" + xhr.status + "] " + xhr.statusText);
-                            window['ajaxOnErrorSample'].dont.exist++;
-                        }
-                    });
-                }
-            }
-        };
-        $scope.detect = function () {
-            var started = Date.now();
-            try  {
-                // Clear prev result
-                $scope.result = null;
-
-                // Check that Raven.js was loaded
-                if ($window.Raven && ravenConfig.publicKey) {
-                    $scope.setupRaven(ravenConfig);
-                }
-
-                // Set the result
-                $scope.state.editMode = !(ravenConfig.publicKey.length > 0);
-                $scope.result = {
-                    valid: true,
-                    start: started,
-                    ended: Date.now()
-                };
-            } catch (ex) {
-                $scope.result = {
-                    valid: false,
-                    error: ex.message
-                };
-            }
-        };
-        $scope.connect = function (publicKey) {
-            console.info(' - Installing Raven...');
-            Raven.config(publicKey, {
-                shouldSendCallback: function (data) {
-                    // Only return true if data should be sent
-                    var isActive = ravenConfig.isEnabled && ravenConfig.publicKey;
-                    if (isActive) {
-                        console.debug(' - Sending Raven: "' + data.message + '"...');
-                        //console.warn(data);
-                    }
-                    return isActive;
-                },
-                dataCallback: function (data) {
-                    // Add something to data
-                    return data;
-                }
-            }).install();
-            ravenConfig.isOnline = true;
-        };
-        $scope.disconnect = function () {
-            console.info(' - Clearing Raven...');
-            Raven.uninstall();
-            ravenConfig.isOnline = false;
-        };
-        $scope.setupRaven = function (ravenConfig) {
-            if (!$window.Raven)
-                return;
-            try  {
-                // Disconnect for any prev sessions
-                if (ravenConfig.isOnline) {
-                    $scope.disconnect();
-                }
-
-                // Try to connect with public key
-                $scope.connect(ravenConfig.publicKey);
-
-                // Success
-                console.info(' - Done.');
-            } catch (ex) {
-                // Something went wrong
-                console.warn(' - RavenJS failed to initialise.');
-                throw ex;
-            }
-        };
-        $scope.throwManagedException = function () {
-            var ctx = { tags: { source: "Sample Managed Exception" } };
-            try  {
-                $log.info(' - About to break something...');
-                Raven.context(ctx, function () {
-                    window['managedSampleError'].dont.exist++;
-                });
-            } catch (ex) {
-                // throw ex; // this will also be caught by the global Angular exception handler
-                $log.warn(' - Exception caught and swallowed.');
-            }
-        };
-        $scope.throwAjaxException = function () {
-            console.info(' - Doing AJAX request...');
-            // XXXXXXXXXXXXXXXXXXXX
-        };
-        $scope.throwAngularException = function () {
-            console.info(' - About to break Angular...');
-            $scope.missing.ngSampleError++;
-        };
-        $scope.throwTimeoutException = function () {
-            console.info(' - Setting timeout...');
-            setTimeout(function () {
-                console.info(' - Entering timeout...');
-                window['timeoutSampleError'].dont.exist++;
-                console.info(' - Exit timeout...');
-            }, 3 * 1000);
-        };
-        $scope.getStatusColor = function () {
-            var cssRes = ' ';
-            var active = $scope.state.cfgRaven.isOnline;
-            if (active) {
-                cssRes += $scope.state.cfgRaven.isEnabled ? 'text-success' : 'text-danger';
-            } else {
-                cssRes += 'text-danger';
-            }
-            return cssRes;
-        };
-        $scope.getStatusIcon = function (activeStyle) {
-            var cssRes = '';
-            var active = $scope.state.cfgRaven.isOnline;
-            if (activeStyle && active) {
-                cssRes += activeStyle;
-            } else if (active) {
-                cssRes += $scope.state.cfgRaven.isEnabled ? 'glyphicon-ok-sign' : 'glyphicon-minus-sign';
-            } else {
-                cssRes += '';
-            }
-            return cssRes + $scope.getStatusColor();
-        };
-        $scope.getButtonStyle = function (target) {
-            var css = 'btn-default';
-            var state = $scope.state;
-            var valid = state && state.cfgRaven && state.cfgRaven.isOnline;
-            if (valid) {
-                css = state.cfgRaven.isEnabled ? 'btn-primary' : 'btn-warning';
-            }
-            return css;
-        };
-        $scope.submitForm = function () {
-            if ($window.Raven) {
-                // Clear prev setup
-            }
-            if (ravenConfig.publicKey) {
-                $scope.setupRaven(ravenConfig);
-            } else {
-                ravenConfig.isEnabled = false;
-            }
-            $scope.state.editMode = false;
-        };
+    '$log', '$q', function ($log, $q) {
+        return new proto.ng.samples.errorHandlers.ErrorHttpInterceptor($log, $q);
+    }]).service('ravenService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.raven.RavenService]).service('googleErrorService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.google.GoogleErrorService]).service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService]).controller('errorHandlersController', [
+    '$scope', '$log', function ($scope, $log) {
+    }]).run([
+    '$rootScope', 'appStatus', 'sampleErrorService', function ($rootScope, appStatus, sampleErrorService) {
+        angular.extend($rootScope, {
+            appStatus: appStatus,
+            sampleErrors: sampleErrorService
+        });
     }]);
 /// <reference path="../../imports.d.ts" />
-angular.module('myApp.samples.interceptors', []).config([
+angular.module('prototyped.ng.samples.interceptors', []).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.interceptors', {
@@ -1948,7 +2306,7 @@ var proto;
 // ----------------------------------------------------------------------
 ///<reference path="../../imports.d.ts"/>
 ///<reference path="controllers/GeoController.ts"/>
-angular.module('myApp.samples.location', [
+angular.module('prototyped.ng.samples.location', [
     'ui.router'
 ]).config([
     '$stateProvider', function ($stateProvider) {
@@ -1998,7 +2356,7 @@ angular.module('myApp.samples.location', [
     }]);
 /// <reference path="../../imports.d.ts" />
 
-angular.module('myApp.samples.notifications', []).config([
+angular.module('prototyped.ng.samples.notifications', []).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.notifications', {
@@ -2296,7 +2654,7 @@ angular.module('myApp.samples.notifications', []).config([
         });
     }]);
 /// <reference path="../../imports.d.ts" />
-angular.module('myApp.samples.sampleData', []).config([
+angular.module('prototyped.ng.samples.sampleData', []).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.sampleData', {
@@ -2400,7 +2758,7 @@ angular.module('myApp.samples.sampleData', []).config([
     }]);
 /// <reference path="../../imports.d.ts" />
 
-angular.module('myApp.samples.styles3d', []).config([
+angular.module('prototyped.ng.samples.styles3d', []).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.styles3d', {
@@ -2549,14 +2907,14 @@ angular.module('prototyped.ng.samples', [
     'prototyped.ng.config',
     'prototyped.ng.samples.views',
     'prototyped.ng.samples.styles',
-    'myApp.samples.errorHandlers',
-    'myApp.samples.sampleData',
-    'myApp.samples.location',
-    'myApp.samples.decorators',
-    'myApp.samples.interceptors',
-    'myApp.samples.notifications',
-    'myApp.samples.compression',
-    'myApp.samples.styles3d'
+    'prototyped.ng.samples.errorHandlers',
+    'prototyped.ng.samples.sampleData',
+    'prototyped.ng.samples.location',
+    'prototyped.ng.samples.decorators',
+    'prototyped.ng.samples.interceptors',
+    'prototyped.ng.samples.notifications',
+    'prototyped.ng.samples.compression',
+    'prototyped.ng.samples.styles3d'
 ]).config([
     'appConfigProvider', function (appConfigProvider) {
         // Define module configuration

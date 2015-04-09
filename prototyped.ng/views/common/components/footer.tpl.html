@@ -1,23 +1,25 @@
-﻿<span class="pull-left">
-    <label ng:show="status.logs | typeCount:'error'" class="ng-cloak">
-        <i class="glyphicon glyphicon-exclamation-sign glow-red"></i>
-        <a href="" class="ng-cloak">Errors ({{ status.logs | typeCount:'error' }})</a>
-    </label>
-    <label ng:show="status.logs | typeCount:'warn'" class="ng-cloak">
-        <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
-        <a href="" class="ng-cloak">Warnings ({{ status.logs | typeCount:'warn' }})</a>
-    </label>
-</span>
-<span ng:if="false">
-    <em><i class="fa fa-spinner fa-spin"></i> Loading...</em>
-</span>
-<span ng:if="true" class="ng-cloak">
-    Client Version: <span app:version><em>Loading...</em></span> |
-</span>
-<span ui:view="foot">
-    Powered by <a href="https://angularjs.org/">AngularJS</a>
-    <span ng:if="appNode.active" class="ng-cloak">
-        &amp; <a href="https://github.com/rogerwang/node-webkit">Node Webkit</a>
+﻿<div class="footer">
+    <span class="pull-left">
+        <label ng:show="status.logs | typeCount:'error'" class="ng-cloak">
+            <i class="glyphicon glyphicon-exclamation-sign glow-red"></i>
+            <a href="" class="ng-cloak">Errors ({{ status.logs | typeCount:'error' }})</a>
+        </label>
+        <label ng:show="status.logs | typeCount:'warn'" class="ng-cloak">
+            <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
+            <a href="" class="ng-cloak">Warnings ({{ status.logs | typeCount:'warn' }})</a>
+        </label>
     </span>
-</span>
-<span ng:if="startAt" class="ng-cloak">| Started {{ startAt | fromNow }}</span>
+    <span ng:if="false">
+        <em><i class="fa fa-spinner fa-spin"></i> Loading...</em>
+    </span>
+    <span ng:if="true" class="ng-cloak">
+        Client Version: <span app:version><em>Loading...</em></span> |
+    </span>
+    <span ui:view="foot">
+        Powered by <a href="https://angularjs.org/">AngularJS</a>
+        <span ng:if="appNode.active" class="ng-cloak">
+            &amp; <a href="https://github.com/rogerwang/node-webkit">Node Webkit</a>
+        </span>
+    </span>
+    <span ng:if="startAt" class="ng-cloak">| Started {{ startAt | fromNow }}</span>
+</div>
