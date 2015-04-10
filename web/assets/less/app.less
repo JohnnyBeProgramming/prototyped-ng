@@ -352,12 +352,94 @@ body {
         }
     }
 
-    .img-extended {
-        filter: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz1cJ2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnXCc+PGZpbHRlciBpZD1cJ2dyYXlzY2FsZVwnPjxmZUNvbG9yTWF0cml4IHR5cGU9XCdtYXRyaXhcJyB2YWx1ZXM9XCcwLjMzMzMgMC4zMzMzIDAuMzMzMyAwIDAgMC4zMzMzIDAuMzMzMyAwLjMzMzMgMCAwIDAuMzMzMyAwLjMzMzMgMC4zMzMzIDAgMCAwIDAgMCAxIDBcJy8+PC9maWx0ZXI+PC9zdmc+I2dyYXlzY2FsZQ=="); /* Firefox 10+, Firefox on Android */
-        filter: gray; /* IE6-9 */
-        -webkit-filter: grayscale(100%); /* Chrome 19+, Safari 6+, Safari 6+ iOS */
-        background-size: 320px 220px;
-        background-position: top right !important;
-        background-image: url('https://partywirks.com/asset/asset/10355/CLIPART_OF_16339_SM.jpg');
+    /* Define cloak style (hides un-parsed content) */
+    .ng-cloak, [ng-cloak], ng-cloak, [ng\3Acloak] {
+        display: none;
     }
+    
+    /* Lets define some basic styling for our IE friends */
+    &.lt-ie-10 {
+        margin: 0;
+        padding: 16px;
+        font-size: 14px;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+        background-color: white;
+    }
+
+    .lt-ie-10 .footer, .lt-ie-10 #myLoader {
+        display: none;
+    }
+
+    .lt-ie-10 #preLoader.app-error {
+        color: #ff0000;
+        padding-left: 16px;
+        margin: 0;
+    }
+
+    .browsehappy {
+        margin: 0;
+        padding: 16px;
+        color: #808080;
+        border: solid 1px silver;
+        background-color: rgb(240, 240, 240);
+        z-index: 4000;
+    }
+
+    /* Just to be safe, define basic styling (helps when css is still loading) */
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    #myApp .navbar-fixed-top ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    #myApp .navbar-fixed-top ul li {
+        padding: 0;
+        list-style: none;
+    }
+
+    .sidebar ul {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        list-style: none;
+        display: inline-block;
+    }
+
+    .top-hint {
+        text-align: center;
+    }
+
+    .top-hint .tab {
+        top: 0;
+        width: 320px;
+        height: 24px;
+        padding: 2px 6px;
+        margin-left: -160px;
+        z-index: 4000;
+        text-wrap: avoid;
+        border-top: none;
+        position: absolute;
+        border-radius: 0 0 10px 10px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .top-hint .tab a {
+        color: black;
+    }
+}
+
+.img-extended {
+    filter: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz1cJ2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnXCc+PGZpbHRlciBpZD1cJ2dyYXlzY2FsZVwnPjxmZUNvbG9yTWF0cml4IHR5cGU9XCdtYXRyaXhcJyB2YWx1ZXM9XCcwLjMzMzMgMC4zMzMzIDAuMzMzMyAwIDAgMC4zMzMzIDAuMzMzMyAwLjMzMzMgMCAwIDAuMzMzMyAwLjMzMzMgMC4zMzMzIDAgMCAwIDAgMCAxIDBcJy8+PC9maWx0ZXI+PC9zdmc+I2dyYXlzY2FsZQ=="); /* Firefox 10+, Firefox on Android */
+    filter: gray; /* IE6-9 */
+    -webkit-filter: grayscale(100%); /* Chrome 19+, Safari 6+, Safari 6+ iOS */
+    background-size: 320px 220px;
+    background-position: top right !important;
+    background-image: url('https://partywirks.com/asset/asset/10355/CLIPART_OF_16339_SM.jpg');
 }

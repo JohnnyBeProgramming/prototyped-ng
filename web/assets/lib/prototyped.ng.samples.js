@@ -810,14 +810,13 @@ var proto;
                         }
                         RavenService.prototype.detect = function () {
                             var _this = this;
+                            var urlRavenJS = 'https://cdn.ravenjs.com/1.1.18/raven.min.js';
                             try  {
                                 // Load required libraries if not defined
-                                console.info(' - Detecting RavenJS...');
-                                var url = 'https://cdn.ravenjs.com/1.1.18/raven.min.js';
                                 if (typeof Raven === 'undefined') {
-                                    this.$log.info('Loading: ' + url);
+                                    this.$log.log('Loading: ' + urlRavenJS);
                                     this.handler.busy = true;
-                                    $.getScript(url, function (data, textStatus, jqxhr) {
+                                    $.getScript(urlRavenJS, function (data, textStatus, jqxhr) {
                                         _this.$rootScope.$applyAsync(function () {
                                             _this.handler.busy = false;
                                             _this.init();
@@ -851,7 +850,7 @@ var proto;
                                         var isActive = publicKey && _this.isEnabled;
                                         if (isActive) {
                                             _this.$rootScope.$applyAsync(function () {
-                                                _this.$log.info('Sending Raven: "' + data.message + '"...');
+                                                _this.$log.log('Sending Raven: "' + data.message + '"...');
                                             });
                                         }
                                         return isActive;
@@ -918,6 +917,7 @@ var proto;
                     var GoogleErrorHandler = (function () {
                         function GoogleErrorHandler(service) {
                             this.service = service;
+                            this.locked = true;
                             this.name = 'google';
                             this.label = 'Google Analytics';
                         }
@@ -1164,10 +1164,10 @@ var proto;
                     };
 
                     SampleErrorService.prototype.throwTimeoutException = function () {
+                        var _this = this;
                         this.$log.info('Setting timeout...');
                         setTimeout(function () {
-                            var _this = this;
-                            this.$rootScope.$applyAsync(function () {
+                            _this.$rootScope.$applyAsync(function () {
                                 _this.$log.info('Entering timeout...');
                                 window['does not exist'].timeoutSampleError++;
                                 _this.$log.info('Exit timeout...');
@@ -1411,37 +1411,6 @@ angular.module('prototyped.ng.samples.errorHandlers', [
         return function (exception, cause) {
             instance.handleException(exception, cause);
         };
-        /*
-        
-        // Catch all angular errors to Sentry (via RavenJS, if defined)
-        function setUpdatedErrorMessage(args, prefix) {
-        var ex = args.length > 0 ? args[0] : {};
-        if (ex.message) {
-        ex.message = prefix + ex.message;
-        }
-        $log.error.apply($log, args);
-        }
-        if (typeof Raven !== 'undefined') {
-        console.log(' - Using the RavenJS exception handler.');
-        var ctx = { tags: { source: "Angular Unhandled Exception" } };
-        return function (exception, cause) {
-        // Update the exception message
-        setUpdatedErrorMessage(arguments, 'Internal [ EX ]: ');
-        Raven.captureException(exception, ctx);
-        };
-        } else if (appNode.active) {
-        console.log(' - Using node webkit specific exception handler.');
-        return function (exception, cause) {
-        setUpdatedErrorMessage(arguments, 'Internal [ NW ]: ');
-        // ToDo: Hook in some routing or something...
-        };
-        } else {
-        console.log(' - Using the default logging exception handler.');
-        return function (exception, cause) {
-        setUpdatedErrorMessage(arguments, 'Internal [ JS ]: ');
-        };
-        }
-        */
     }]).factory('errorHttpInterceptor', [
     '$log', '$q', function ($log, $q) {
         return new proto.ng.samples.errorHandlers.ErrorHttpInterceptor($log, $q);

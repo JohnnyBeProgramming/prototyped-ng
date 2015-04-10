@@ -13,97 +13,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link href="assets/favicon.ico" rel="shortcut icon">
     <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" />
-    <style type="text/css">
-        /* Define cloak style (hides un-parsed content) */
-        .ng-cloak, [ng-cloak], ng-cloak, [ng\3Acloak] {
-            display: none;
-        }
-
-        /* Lets define some basic styling for our IE friends */
-        body.lt-ie-10 {
-            margin: 0;
-            padding: 16px;
-            font-size: 14px;
-            font-family: Verdana, Geneva, Tahoma, sans-serif;
-            background-color: white;
-        }
-
-        .lt-ie-10 .footer, .lt-ie-10 #myLoader {
-            display: none;
-        }
-
-        .lt-ie-10 #preLoader.app-error {
-            color: #ff0000;
-            padding-left: 16px;
-            margin: 0;
-        }
-
-        .browsehappy {
-            margin: 0;
-            padding: 16px;
-            color: #808080;
-            border: solid 1px silver;
-            background-color: rgb(240, 240, 240);
-            z-index: 4000;
-        }
-
-        /* Just to be safe, define basic styling (helps when css is still loading) */
-        body {
-            margin: 0;
-            padding: 0;
-        }
-
-        #myApp .navbar-fixed-top ul {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-
-            #myApp .navbar-fixed-top ul li {
-                padding: 0;
-                list-style: none;
-            }
-
-        .sidebar ul {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            list-style: none;
-            display: inline-block;
-        }
-
-        .top-hint {
-            text-align: center;
-        }
-
-            .top-hint .tab {
-                top: 0;
-                width: 320px;
-                height: 24px;
-                padding: 2px 6px;
-                margin-left: -160px;
-                z-index: 4000;
-                text-wrap: avoid;
-                border-top: none;
-                position: absolute;
-                border-radius: 0 0 10px 10px;
-                overflow: hidden;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-            }
-
-                .top-hint .tab a {
-                    color: black;
-                }
-    </style>
 </head>
 <body>
     <!--[if lt IE 9]><p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a target="_self" href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p><![endif]-->
     <div id="myApp" class="docked">
-        <style proto:extended></style>
+        <!-- Load the style sheets dynamically -->
         <style resx:import="assets/css/prototyped.min.css"></style>
         <style resx:import="assets/css/samples.min.css"></style>
         <style resx:import="assets/css/features.min.css"></style>
+
         <div class="dragable navbar navbar-default navbar-fixed-top">
             <div class="navbar-inner">
                 <ul class="non-dragable nav navbar-nav navheading ng-cloak">
@@ -189,26 +107,7 @@
             </span>
             <span ng:if="startAt" class="ng-cloak">| Started {{ startAt | fromNow }}</span>
         </div>
-    </div>
-
-    <div id="myLoader" class="ng-cloak" ng:show="false">
-        <div class="active progress progress-striped">
-            <div ng:init="progC = 0.15" role="progressbar" aria-valuenow="{{ progC }}" aria-valuemin="0" aria-valuemax="100"
-                 class="progress-bar" ng-class="'progress-bar-warning'"
-                 ng-style="{width: (100 * progC) + '%'}" aria-valuetext="{{ (100.0 * progC) + ' %' }}%">
-                <span ng:show="cgf.progress">Requests ( {{ cgf.progress.timerSteps }} / {{ cgf.progress.timerCount }} ) </span>
-            </div>
-            <div ng:init="progA = 0.25" role="progressbar" aria-valuenow="{{ progA }}" aria-valuemin="0" aria-valuemax="100"
-                 class="progress-bar" ng-class="'progress-bar-info'"
-                 ng-style="{width: (100 * progA) + '%'}" aria-valuetext="{{ (100.0 * progA) + ' %' }}%">
-                <span ng:show="cgf.progress">Libraries ( {{ cgf.progress.timerSteps }} / {{ cgf.progress.timerCount }} ) </span>
-            </div>
-            <div ng:init="progB = 0.4" role="progressbar" aria-valuenow="{{ progB }}" aria-valuemin="0" aria-valuemax="100"
-                 class="progress-bar" ng-class="'progress-bar-primary'"
-                 ng-style="{width: (100 * progB) + '%'}" aria-valuetext="{{ (100.0 * progB) + ' %' }}%">
-                <span ng:show="cgf.progress">Application ( {{ cgf.progress.timerSteps }} / {{ cgf.progress.timerCount }} ) </span>
-            </div>
-        </div>
+        <style proto:extended></style>
     </div>
 
     <!-- Load AngularJS and all the required libraries (exclude IE < 10 from the party) -->
@@ -226,13 +125,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css" />
     <!--<![endif]-->
-
-
-    <!-- build:loader ../app/assets/lib/app.loader.dll.js -->
-    <script src="assets/app.loader.js"></script>
-    <script src="assets/app.settings.js"></script>
-    <script src="assets/lib/mousetrap.js"></script>
+    <!-- build:loader ../app/assets/lib/app.loader.js -->
+    <script src="assets/lib/bin/app.loader.js"></script>
+    <script src="assets/lib/bin/app.settings.js"></script>
+    <script src="assets/lib/vend/mousetrap.js"></script>
     <!-- endbuild -->
+
     <script>
         // Define the modules to load
         var modules = [
