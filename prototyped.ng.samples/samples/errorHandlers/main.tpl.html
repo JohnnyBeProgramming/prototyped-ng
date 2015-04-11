@@ -96,7 +96,7 @@
                                     <em>No event have been logged...</em>
                                 </td>
                             </tr>
-                            <tr ng-repeat="row in appStatus.logs | listReverse"
+                            <tr ng-repeat="row in appStatus.logs"
                                 ng-class="{ 'text-info inactive-gray':row.type=='debug', 'text-info':row.type=='info', 'text-warning glow-orange':row.type=='warn', 'text-danger glow-red':row.type=='error' }">
                                 <td>{{ row.time | date:'hh:mm:ss' }}</td>
                                 <td>{{ row.type }}</td>
@@ -108,17 +108,23 @@
                             </tr>
                         </tbody>
                     </table>
-                    <div class="alert alert-info" ng-if="!appStatus.logs.length">
+                    <div ng-if="!appStatus.logs.length">
                         <h5>Inspired by these blogs:</h5>
-                        <ul>
+                        <ul class="alert alert-info" style="list-style: none">
                             <li>
-                                <a target="_blank" href="http://www.davecap.com/post/46522098029/using-sentry-raven-js-with-angularjs-to-catch">http://www.davecap.com</a>
+                                <a target="_blank" href="http://www.davecap.com/post/46522098029/using-sentry-raven-js-with-angularjs-to-catch">
+                                    <i class="fa fa-external-link-square"></i> http://www.davecap.com
+                                </a>
                             </li>
                             <li>
-                                <a target="_blank" href="http://bahmutov.calepin.co/catch-all-errors-in-angular-app.html">http://bahmutov.calepin.co</a>
+                                <a target="_blank" href="http://bahmutov.calepin.co/catch-all-errors-in-angular-app.html">
+                                    <i class="fa fa-external-link-square"></i> http://bahmutov.calepin.co
+                                </a>
                             </li>
                             <li>
-                                <a target="_blank" href="http://davidwalsh.name/track-errors-google-analytics">http://davidwalsh.name</a>
+                                <a target="_blank" href="http://davidwalsh.name/track-errors-google-analytics">
+                                    <i class="fa fa-external-link-square"></i> http://davidwalsh.name
+                                </a>
                             </li>
                         </ul>
                     </div>

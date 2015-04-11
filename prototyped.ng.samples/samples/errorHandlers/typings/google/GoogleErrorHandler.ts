@@ -23,21 +23,6 @@ module proto.ng.samples.errorHandlers.google {
         public dettach() {
             this.service.isEnabled = false;
         }
-
-        public handleException(source: string, ex: any, tags: any) {
-            if (!this.enabled) return;
-            if ('_gaq' in window) {
-                var ctx = [
-                    '_trackEvent',
-                    source,
-                    ex.message,
-                    ex.filename + ':  ' + ex.lineno,
-                    true
-                ];
-                console.log(' - google.hangdleException: ', _gaq, ctx);
-                _gaq.push(ctx);
-            }
-        }
     }
 
 } 

@@ -826,19 +826,6 @@ var proto;
                             this.service.isEnabled = false;
                             this.service.handler.enabled = false;
                         };
-
-                        RavenErrorHandler.prototype.handleException = function (source, ex, tags) {
-                            if (!this.enabled)
-                                return;
-                            if (typeof Raven !== 'undefined') {
-                                angular.extend(tags, {
-                                    source: source
-                                });
-                                Raven.captureException(ex, {
-                                    tags: tags
-                                });
-                            }
-                        };
                         return RavenErrorHandler;
                     })();
                     raven.RavenErrorHandler = RavenErrorHandler;
@@ -872,6 +859,18 @@ var proto;
                             this.handler = new raven.RavenErrorHandler(this);
                             appConfig.errorHandlers.push(this.handler);
                         }
+                        RavenService.prototype.handleException = function (source, ex, tags) {
+                            if (!this.isOnline)
+                                return;
+                            if (typeof Raven !== 'undefined') {
+                                this.$log.log(' - Sending Raven: "' + ex.message + '"...');
+                                Raven.captureException(ex, {
+                                    source: source,
+                                    tags: tags
+                                });
+                            }
+                        };
+
                         RavenService.prototype.detect = function () {
                             var _this = this;
                             var urlRavenJS = 'https://cdn.ravenjs.com/1.1.18/raven.min.js';
@@ -912,11 +911,6 @@ var proto;
                                     shouldSendCallback: function (data) {
                                         // Only return true if data should be sent
                                         var isActive = publicKey && _this.isEnabled;
-                                        if (isActive) {
-                                            _this.$rootScope.$applyAsync(function () {
-                                                _this.$log.log('Sending Raven: "' + data.message + '"...');
-                                            });
-                                        }
                                         return isActive;
                                     },
                                     dataCallback: function (data) {
@@ -1005,22 +999,6 @@ var proto;
                         GoogleErrorHandler.prototype.dettach = function () {
                             this.service.isEnabled = false;
                         };
-
-                        GoogleErrorHandler.prototype.handleException = function (source, ex, tags) {
-                            if (!this.enabled)
-                                return;
-                            if ('_gaq' in window) {
-                                var ctx = [
-                                    '_trackEvent',
-                                    source,
-                                    ex.message,
-                                    ex.filename + ':  ' + ex.lineno,
-                                    true
-                                ];
-                                console.log(' - google.hangdleException: ', _gaq, ctx);
-                                _gaq.push(ctx);
-                            }
-                        };
                         return GoogleErrorHandler;
                     })();
                     google.GoogleErrorHandler = GoogleErrorHandler;
@@ -1054,31 +1032,47 @@ var proto;
                             this.handler = new google.GoogleErrorHandler(this);
                             appConfig.errorHandlers.push(this.handler);
                         }
+                        GoogleErrorService.prototype.handleException = function (source, ex, tags) {
+                            if (!this.isOnline)
+                                return;
+                            if ('_gaq' in window) {
+                                this.$log.log(' - Sending Analytics: "' + ex.message + '"...');
+                                var ctx = [
+                                    '_trackEvent',
+                                    source,
+                                    ex.message,
+                                    ex.filename + ':  ' + ex.lineno,
+                                    true
+                                ];
+                                _gaq.push(ctx);
+                            }
+                        };
+
                         GoogleErrorService.prototype.detect = function () {
                             var _this = this;
                             try  {
                                 // Load required libraries if not defined
                                 this.$log.log('Detecting: Google Analytics...', this.config);
-                                if ('ga' in window) {
+                                if ('_gaq' in window) {
                                     this.init();
                                 } else {
-                                    this.$log.log('Loading: Google Analytics...');
+                                    var urlGa = 'https://ssl.google-analytics.com/ga.js';
+                                    this.$log.log('Loading: ' + urlGa);
                                     this.handler.busy = true;
-
-                                    var urlAnalytics = 'data:text/javascript;charset=base64,PHNjcmlwdD4oZnVuY3Rpb24oaSxzLG8sZyxyLGEsbSl7aVsnR29vZ2xlQW5hbHl0aWNzT2JqZWN0J109cjtpW3JdPWlbcl18fGZ1bmN0aW9uKCl7KGlbcl0ucT1pW3JdLnF8fFtdKS5wdXNoKGFyZ3VtZW50cyl9LGlbcl0ubD0xKm5ld0RhdGUoKTthPXMuY3JlYXRlRWxlbWVudChvKSxtPXMuZ2V0RWxlbWVudHNCeVRhZ05hbWUobylbMF07YS5hc3luYz0xO2Euc3JjPWc7bS5wYXJlbnROb2RlLmluc2VydEJlZm9yZShhLG0pfSkod2luZG93LGRvY3VtZW50LCdzY3JpcHQnLCcvL3d3dy5nb29nbGUtYW5hbHl0aWNzLmNvbS9hbmFseXRpY3MuanMnLCdnYScpOzwvc2NyaXB0Pg==';
-                                    $.getScript(urlAnalytics, function (data, textStatus, jqxhr) {
+                                    $.getScript(urlGa, function (data, textStatus, jqxhr) {
                                         _this.$rootScope.$applyAsync(function () {
                                             _this.handler.busy = false;
+                                            _this.isEnabled = true;
                                             _this.init();
                                         });
                                     });
                                 }
-                                this.isOnline = true;
                             } catch (ex) {
                                 this.isOnline = false;
                                 this.lastError = ex;
                             }
-                            return this.isOnline;
+
+                            return false;
                         };
 
                         GoogleErrorService.prototype.init = function () {
@@ -1095,8 +1089,10 @@ var proto;
                                 this.$rootScope.$applyAsync(function () {
                                     _this.$log.log('Connecting Google Services....', publicKey);
 
-                                    ga('create', publicKey, 'auto');
+                                    var _gaq = window['_gaq'] = window['_gaq'] || [];
+                                    _gaq.push(['_setAccount', publicKey]);
 
+                                    //ga('create', publicKey, 'auto');
                                     _this.isOnline = true;
                                 });
                             } catch (ex) {
@@ -1153,7 +1149,7 @@ var proto;
                     ErrorHandlers.ListAll = function () {
                         return this.list;
                     };
-                    ErrorHandlers.enabled = false;
+                    ErrorHandlers.enabled = true;
                     ErrorHandlers.logs = null;
                     ErrorHandlers.list = [];
                     return ErrorHandlers;
@@ -1165,14 +1161,14 @@ var proto;
                     if (enabled) {
                         try  {
                             // Notify all handlers that are enabled
-                            ErrorHandlers.ListAll().forEach(function (handler) {
-                                if (handler.isEnabled) {
-                                    //handler.handleError(source, error, tags || {});
+                            ErrorHandlers.ListAll().forEach(function (service) {
+                                if (service.isEnabled && service.handleException) {
+                                    service.handleException(source, error, tags || {});
                                 }
                             });
                         } catch (ex) {
                             // Something went wrong :(
-                            console.error('Critical fault in error reporting services...', error);
+                            console.error('Critical fault in error reporting services...', ex);
                         }
                     }
 
@@ -1197,118 +1193,121 @@ var proto;
                         ErrorHandlers.Register(google);
                         ErrorHandlers.Register(raven);
                     }
+                    Object.defineProperty(SampleErrorService.prototype, "enabled", {
+                        get: function () {
+                            return ErrorHandlers.enabled;
+                        },
+                        set: function (state) {
+                            ErrorHandlers.enabled = state;
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
+
                     SampleErrorService.prototype.checkChanged = function (handler) {
-                        this.$rootScope.$applyAsync(function () {
-                            if (!handler)
-                                return;
-                            if (!handler.enabled) {
-                                if (handler.attach) {
-                                    handler.attach();
-                                } else {
-                                    handler.enabled = true;
-                                }
-                            } else if (handler.enabled) {
-                                if (handler.dettach) {
-                                    handler.dettach();
-                                } else {
-                                    handler.enabled = false;
-                                }
+                        if (!handler)
+                            return;
+                        if (!handler.enabled) {
+                            if (handler.attach) {
+                                handler.attach();
+                            } else {
+                                handler.enabled = true;
                             }
-                        });
+                        } else if (handler.enabled) {
+                            if (handler.dettach) {
+                                handler.dettach();
+                            } else {
+                                handler.enabled = false;
+                            }
+                        }
                     };
 
                     SampleErrorService.prototype.throwManagedException = function () {
-                        var _this = this;
-                        this.$rootScope.$applyAsync(function () {
-                            var tags = {
-                                startedAt: Date.now()
-                            };
-                            try  {
-                                _this.$log.info('About to break something...');
-                                window['does not exist'].managedSampleError++;
-                            } catch (ex) {
-                                HandleException('Managed Sample', ex, tags);
-                                _this.$log.warn('Exception caught and swallowed.');
-                                // throw ex; // this will be caught by the global exception handler
-                            }
-                        });
+                        var tags = {
+                            startedAt: Date.now()
+                        };
+                        try  {
+                            this.$log.info('About to break something...');
+                            window['does not exist'].managedSampleError++;
+                        } catch (ex) {
+                            HandleException('Managed Sample', ex, tags);
+                            this.$log.warn('Exception caught and swallowed.');
+                            // throw ex; // this will be caught by the global exception handler
+                        }
                     };
 
                     SampleErrorService.prototype.throwAjaxException = function () {
-                        var _this = this;
-                        this.$rootScope.$applyAsync(function () {
-                            // XXXXXXXXXXXXXXXXXXXX
-                            var ajaxCfg = {
-                                current: null,
-                                getDesc: function (itm) {
-                                    var cfg = ajaxCfg;
-                                    switch (cfg.current) {
-                                        case cfg.errHttp:
-                                            return 'Ajax Error (HTTP)';
-                                        case cfg.errSuccess:
-                                            return 'Ajax Error (Success)';
-                                        case cfg.errFailed:
-                                            return 'Ajax Error (Failed)';
-                                    }
-                                    return 'Ajax Error';
-                                },
-                                callError: function () {
-                                    var call = ajaxCfg.current;
-                                    if (!call) {
-                                        call = ajaxCfg.errHttp;
-                                    }
-                                    call();
-                                },
-                                select: function (itm) {
-                                    ajaxCfg.current = itm;
-                                },
-                                errHttp: function () {
-                                    $.ajax({
-                                        url: "https://wwwx.i.am/missing.html",
-                                        dataType: "text/html",
-                                        success: function (result) {
-                                        },
-                                        error: function (xhr) {
-                                        }
-                                    });
-                                },
-                                errSuccess: function () {
-                                    $.ajax({
-                                        url: "/index.html",
-                                        dataType: "text/html",
-                                        success: function (result) {
-                                            // Response recieved...
-                                            console.info(' - AJAX got response...');
-                                            window['does not exist'].ajaxOnSuccessSample++;
-                                        },
-                                        error: function (xhr) {
-                                        }
-                                    });
-                                },
-                                errFailed: function () {
-                                    $.ajax({
-                                        url: "/missing.index.html",
-                                        dataType: "text/html",
-                                        success: function (result) {
-                                        },
-                                        error: function (xhr) {
-                                            console.warn(" - Ajax Error [" + xhr.status + "] " + xhr.statusText);
-                                            window['does not exist'].ajaxOnErrorSample++;
-                                        }
-                                    });
+                        // XXXXXXXXXXXXXXXXXXXX
+                        var ajaxCfg = {
+                            current: null,
+                            getDesc: function (itm) {
+                                var cfg = ajaxCfg;
+                                switch (cfg.current) {
+                                    case cfg.errHttp:
+                                        return 'Ajax Error (HTTP)';
+                                    case cfg.errSuccess:
+                                        return 'Ajax Error (Success)';
+                                    case cfg.errFailed:
+                                        return 'Ajax Error (Failed)';
                                 }
-                            };
+                                return 'Ajax Error';
+                            },
+                            callError: function () {
+                                var call = ajaxCfg.current;
+                                if (!call) {
+                                    call = ajaxCfg.errHttp;
+                                }
+                                call();
+                            },
+                            select: function (itm) {
+                                ajaxCfg.current = itm;
+                            },
+                            errHttp: function () {
+                                $.ajax({
+                                    url: "https://wwwx.i.am/missing.html",
+                                    dataType: "text/html",
+                                    success: function (result) {
+                                    },
+                                    error: function (xhr) {
+                                    }
+                                });
+                            },
+                            errSuccess: function () {
+                                $.ajax({
+                                    url: "/index.html",
+                                    dataType: "text/html",
+                                    success: function (result) {
+                                        // Response recieved...
+                                        console.info(' - AJAX got response...');
+                                        window['does not exist'].ajaxOnSuccessSample++;
+                                    },
+                                    error: function (xhr) {
+                                    }
+                                });
+                            },
+                            errFailed: function () {
+                                $.ajax({
+                                    url: "/missing.index.html",
+                                    dataType: "text/html",
+                                    success: function (result) {
+                                    },
+                                    error: function (xhr) {
+                                        console.warn(" - Ajax Error [" + xhr.status + "] " + xhr.statusText);
+                                        window['does not exist'].ajaxOnErrorSample++;
+                                    }
+                                });
+                            }
+                        };
 
-                            _this.$log.info('Throwing AJAX request...');
-                            ajaxCfg.current = ajaxCfg.errHttp;
-                            ajaxCfg.callError();
-                        });
+                        this.$log.info('Throwing AJAX request...');
+                        ajaxCfg.current = ajaxCfg.errHttp;
+                        ajaxCfg.callError();
                     };
 
                     SampleErrorService.prototype.throwAngularException = function () {
                         var _this = this;
+                        this.$log.info('About to break Angular...');
                         this.$rootScope.$applyAsync(function () {
-                            _this.$log.info('About to break Angular...');
                             _this.$rootScope.missing.ngSampleError++;
                         });
                     };
@@ -1317,11 +1316,9 @@ var proto;
                         var _this = this;
                         this.$log.info('Setting timeout...');
                         setTimeout(function () {
-                            _this.$rootScope.$applyAsync(function () {
-                                _this.$log.info('Entering timeout...');
-                                window['does not exist'].timeoutSampleError++;
-                                _this.$log.info('Exit timeout...');
-                            });
+                            _this.$log.info('Entering timeout...');
+                            window['does not exist'].timeoutSampleError++;
+                            _this.$log.info('Exit timeout...');
                         }, 2 * 1000);
                     };
                     return SampleErrorService;
@@ -1451,8 +1448,7 @@ var proto;
                         try  {
                             var source = this.appNode.active ? 'Angular[ NW ]' : 'Angular[ JS ]';
                             proto.ng.samples.errorHandlers.HandleException(source, exception, {
-                                cause: cause,
-                                error: exception
+                                cause: cause
                             });
                         } catch (ex) {
                             this.$log.error.apply(this.$log, ['Critical fault in angular error reporting...', ex]);
@@ -1566,25 +1562,33 @@ angular.module('prototyped.ng.samples.errorHandlers', [
     '$log', '$q', function ($log, $q) {
         return new proto.ng.samples.errorHandlers.ErrorHttpInterceptor($log, $q);
     }]).service('ravenService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.raven.RavenService]).service('googleErrorService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.google.GoogleErrorService]).service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService]).controller('errorHandlersController', [
-    '$scope', '$log', function ($scope, $log) {
+    '$rootScope', '$scope', 'appStatus', function ($rootScope, $scope, appStatus) {
+        $scope.appStatus = appStatus;
+        $scope.$watch('appStatus.logs.length', function () {
+            $rootScope.$applyAsync(function () {
+            });
+        });
     }]).run([
-    'sampleErrorService', function (sampleErrorService) {
+    '$rootScope', function ($rootScope) {
         // Track basic JavaScript errors
         window.addEventListener('error', function (ex) {
-            proto.ng.samples.errorHandlers.HandleException('Javascript Error', ex, {
-                cause: 'Unhandled exception',
-                location: ex.filename + ':  ' + ex.lineno
+            $rootScope.$applyAsync(function () {
+                proto.ng.samples.errorHandlers.HandleException('Javascript Error', ex, {
+                    cause: 'Unhandled exception',
+                    location: ex.filename + ':  ' + ex.lineno
+                });
             });
         });
 
         // Track AJAX errors (jQuery API)
         $(document).ajaxError(function (e, request, settings) {
-            var ex = new Error('Problem loading: ' + settings.url);
-            proto.ng.samples.errorHandlers.HandleException('Ajax Error', ex, {
-                cause: 'Response Error',
-                location: settings.url,
-                result: e.result,
-                event: e
+            $rootScope.$applyAsync(function () {
+                var ex = new Error('Problem loading: ' + settings.url);
+                proto.ng.samples.errorHandlers.HandleException('Ajax Error', ex, {
+                    cause: 'Response Error',
+                    location: settings.url,
+                    result: e.result
+                });
             });
         });
     }]).run([

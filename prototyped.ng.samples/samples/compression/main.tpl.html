@@ -67,11 +67,7 @@
                 <div class="row" ng-if="!compression.busy && !compression.text.length">
                     <div class="col-md-12">
                         <div class="progress">
-                            <div ng:init="progA = 1.0" role="progressbar" aria-valuenow="{{ progA }}" aria-valuemin="0" aria-valuemax="100"
-                                 class="progress-bar" ng-class="'progress-bar-primary'"
-                                 ng-style="{width: (100 * progA) + '%'}" aria-valuetext="{{ (100.0 * progA) + ' %' }}%">
-                                <div style="text-align: center"><b>Enter some text to start...</b></div>
-                            </div>
+                            <div style="text-align: center"><em>Enter some text to start...</em></div>
                         </div>
                     </div>
                 </div>

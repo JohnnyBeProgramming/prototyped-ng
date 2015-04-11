@@ -19,30 +19,45 @@ module proto.ng.samples.errorHandlers.google {
             appConfig.errorHandlers.push(this.handler);
         }
 
+        public handleException(source: string, ex: any, tags: any) {
+            if (!this.isOnline) return;
+            if ('_gaq' in window) {
+                this.$log.log(' - Sending Analytics: "' + ex.message + '"...');
+                var ctx = [
+                    '_trackEvent',
+                    source,
+                    ex.message,
+                    ex.filename + ':  ' + ex.lineno,
+                    true
+                ];
+                _gaq.push(ctx);
+            }
+        }
+
         public detect() {
             try {
                 // Load required libraries if not defined
                 this.$log.log('Detecting: Google Analytics...', this.config);
-                if ('ga' in window) {
+                if ('_gaq' in window) {
                     this.init();
                 } else {
-                    this.$log.log('Loading: Google Analytics...');
+                    var urlGa = 'https://ssl.google-analytics.com/ga.js';
+                    this.$log.log('Loading: ' + urlGa);
                     this.handler.busy = true;
-
-                    var urlAnalytics = 'data:text/javascript;charset=base64,PHNjcmlwdD4oZnVuY3Rpb24oaSxzLG8sZyxyLGEsbSl7aVsnR29vZ2xlQW5hbHl0aWNzT2JqZWN0J109cjtpW3JdPWlbcl18fGZ1bmN0aW9uKCl7KGlbcl0ucT1pW3JdLnF8fFtdKS5wdXNoKGFyZ3VtZW50cyl9LGlbcl0ubD0xKm5ld0RhdGUoKTthPXMuY3JlYXRlRWxlbWVudChvKSxtPXMuZ2V0RWxlbWVudHNCeVRhZ05hbWUobylbMF07YS5hc3luYz0xO2Euc3JjPWc7bS5wYXJlbnROb2RlLmluc2VydEJlZm9yZShhLG0pfSkod2luZG93LGRvY3VtZW50LCdzY3JpcHQnLCcvL3d3dy5nb29nbGUtYW5hbHl0aWNzLmNvbS9hbmFseXRpY3MuanMnLCdnYScpOzwvc2NyaXB0Pg==';
-                    $.getScript(urlAnalytics, (data, textStatus, jqxhr) => {
+                    $.getScript(urlGa, (data, textStatus, jqxhr) => {
                         this.$rootScope.$applyAsync(() => {
                             this.handler.busy = false;
+                            this.isEnabled = true;
                             this.init();
                         });
                     });
                 }
-                this.isOnline = true;
             } catch (ex) {
                 this.isOnline = false;
                 this.lastError = ex;
             }
-            return this.isOnline;
+
+            return false;
         }
 
         public init() {
@@ -58,7 +73,10 @@ module proto.ng.samples.errorHandlers.google {
                 this.$rootScope.$applyAsync(() => {
                     this.$log.log('Connecting Google Services....', publicKey);
 
-                    ga('create', publicKey, 'auto');
+                    var _gaq = window['_gaq'] = window['_gaq'] || [];
+                    _gaq.push(['_setAccount', publicKey]);
+
+                    //ga('create', publicKey, 'auto');
 
                     this.isOnline = true;
                 });

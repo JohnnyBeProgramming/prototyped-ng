@@ -289,4 +289,3 @@ angular.module('prototyped.ng.samples.compression', [])
     .run(['$state', '$templateCache', function ($state, $templateCache) {
 
     }])
-;

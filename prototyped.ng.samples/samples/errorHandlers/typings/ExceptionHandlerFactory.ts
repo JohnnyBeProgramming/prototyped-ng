@@ -10,7 +10,6 @@
                 var source = this.appNode.active ? 'Angular[ NW ]' : 'Angular[ JS ]';
                 proto.ng.samples.errorHandlers.HandleException(source, exception, {
                     cause: cause,
-                    error: exception,
                 });
             } catch (ex) {
                 this.$log.error.apply(this.$log, ['Critical fault in angular error reporting...', ex]);

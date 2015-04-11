@@ -19,6 +19,17 @@ module proto.ng.samples.errorHandlers.raven {
             appConfig.errorHandlers.push(this.handler);
         }
 
+        public handleException(source: string, ex: any, tags: any) {
+            if (!this.isOnline) return;
+            if (typeof Raven !== 'undefined') {
+                this.$log.log(' - Sending Raven: "' + ex.message + '"...');
+                Raven.captureException(ex, {
+                    source: source,
+                    tags: tags
+                });
+            }
+        }
+
         public detect() {
             var urlRavenJS = 'https://cdn.ravenjs.com/1.1.18/raven.min.js';
             try {
@@ -58,11 +69,6 @@ module proto.ng.samples.errorHandlers.raven {
                     shouldSendCallback: (data) => {
                         // Only return true if data should be sent
                         var isActive = publicKey && this.isEnabled;
-                        if (isActive) {
-                            this.$rootScope.$applyAsync(() => {
-                                this.$log.log('Sending Raven: "' + data.message + '"...');
-                            });
-                        }
                         return isActive;
                     },
                     dataCallback: (data) => {

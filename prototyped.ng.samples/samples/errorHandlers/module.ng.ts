@@ -43,33 +43,40 @@ angular.module('prototyped.ng.samples.errorHandlers', [
     .service('googleErrorService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.google.GoogleErrorService])
     .service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService])
 
-    .controller('errorHandlersController', ['$scope', '$log', function ($scope, $log) {
+    .controller('errorHandlersController', ['$rootScope', '$scope', 'appStatus', function ($rootScope, $scope, appStatus) {
+        $scope.appStatus = appStatus;
+        $scope.$watch('appStatus.logs.length', function () {
+            $rootScope.$applyAsync(() => {});
+        });
     }])
 
-    .run(['sampleErrorService', function (sampleErrorService) {
+    .run(['$rootScope', function ($rootScope) {
 
         // Track basic JavaScript errors
         window.addEventListener('error', function (ex: any) {
-            proto.ng.samples.errorHandlers.HandleException('Javascript Error', ex, {
-                cause: 'Unhandled exception',
-                location: ex.filename + ':  ' + ex.lineno,
+            $rootScope.$applyAsync(() => {
+                proto.ng.samples.errorHandlers.HandleException('Javascript Error', ex, {
+                    cause: 'Unhandled exception',
+                    location: ex.filename + ':  ' + ex.lineno,
+                });
             });
         });
 
         // Track AJAX errors (jQuery API)
         $(document).ajaxError(function (e, request, settings) {
-            var ex = new Error('Problem loading: ' + settings.url);
-            proto.ng.samples.errorHandlers.HandleException('Ajax Error', ex, {
-                cause: 'Response Error',
-                location: settings.url,
-                result: e.result,
-                event: e,
+            $rootScope.$applyAsync(() => {
+                var ex = new Error('Problem loading: ' + settings.url);
+                proto.ng.samples.errorHandlers.HandleException('Ajax Error', ex, {
+                    cause: 'Response Error',
+                    location: settings.url,
+                    result: e.result,
+                });
             });
         });
 
     }])
 
-    .run(['$rootScope', 'appStatus', 'sampleErrorService', function ($rootScope, appStatus, sampleErrorService) {        
+    .run(['$rootScope', 'appStatus', 'sampleErrorService', function ($rootScope, appStatus, sampleErrorService) {
         angular.extend($rootScope, {
             appStatus: appStatus,
             sampleErrors: sampleErrorService,

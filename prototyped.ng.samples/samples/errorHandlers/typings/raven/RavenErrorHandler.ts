@@ -22,18 +22,6 @@ module proto.ng.samples.errorHandlers.raven {
             this.service.isEnabled = false;
             this.service.handler.enabled = false;
         }
-
-        public handleException(source: string, ex: any, tags: any) {
-            if (!this.enabled) return;
-            if (typeof Raven !== 'undefined') {
-                angular.extend(tags, {
-                    source: source
-                })
-                Raven.captureException(ex, {
-                    tags: tags
-                });
-            }
-        }
     }
 
 } 

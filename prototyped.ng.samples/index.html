@@ -77,6 +77,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css" />
     <!--<![endif]-->
     <!-- Google Analytics -->
+    <!-- End Google Analytics -->
+    <!--
     <script>
         (function (i, s, o, g, r, a, m) {
             i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
@@ -85,8 +87,6 @@
             m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
         })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
     </script>
-    <!-- End Google Analytics -->
-    <!--
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.core.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.default.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.min.js"></script>
@@ -102,9 +102,6 @@
         angular.module(appContext.name + '.styles', []).run(['$templateCache', function ($templateCache) { }]);
     </script>
     <script>
-
-        // Setup google analytics
-        ga('create', 'UA-61791366-1', 'auto');
 
         // Load the test app (async), with extended config (if available)
         !(function (document, angular, $, ctx) {
