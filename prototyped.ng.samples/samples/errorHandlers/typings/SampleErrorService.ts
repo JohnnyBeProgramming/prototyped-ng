@@ -3,11 +3,50 @@
 
 module proto.ng.samples.errorHandlers {
 
+    export class ErrorHandlers {
+        public static enabled: boolean = false;
+        public static logs: any = null;
+        private static list: any[] = [];
+
+        public static Register(handler: any) {
+            this.list.push(handler);
+        }
+
+        public static ListAll(): any[] {
+            return this.list;
+        }
+    }
+
+    export function HandleException(source: string, error: any, tags: any) {
+        var enabled = ErrorHandlers.enabled;
+        if (enabled) {
+            try {
+                // Notify all handlers that are enabled
+                ErrorHandlers.ListAll().forEach((handler: any) => {
+                    if (handler.isEnabled) {
+                        //handler.handleError(source, error, tags || {});
+                    }
+                });
+            } catch (ex) {
+                // Something went wrong :(
+                console.error('Critical fault in error reporting services...', error);
+            }
+        }
+
+        // Display error in the console...
+        var $log: any = ErrorHandlers.logs || angular.injector(['ng']).get('$log');
+        if ($log) $log.error.apply($log, [source + ': ' + error.message || error, tags]);
+
+        return enabled;
+    }
+
     export class SampleErrorService {
 
-        public enabled: boolean = true;
-
-        constructor(private $rootScope, private $log, private appConfig, private raven: raven.RavenService, private googleErrorService: google.GoogleErrorService) {
+        constructor(private $rootScope, private $log, private appConfig, private raven: raven.RavenService, private google: google.GoogleErrorService) {
+            // Hook the global handlers
+            ErrorHandlers.logs = $log;
+            ErrorHandlers.Register(google);
+            ErrorHandlers.Register(raven);
         }
 
         public checkChanged(handler) {
@@ -29,25 +68,24 @@ module proto.ng.samples.errorHandlers {
             });
         }
 
-        throwManagedException() {
+        public throwManagedException() {
             this.$rootScope.$applyAsync(() => {
-                var ctx = { tags: { source: "Sample Managed Exception" } };
+                var tags = {
+                    startedAt: Date.now()
+                };
                 try {
                     this.$log.info('About to break something...');
-                    Raven.context(ctx, () => {
-                        window['does not exist'].managedSampleError++;
-                    });
+                    window['does not exist'].managedSampleError++;
                 } catch (ex) {
-                    // throw ex; // this will also be caught by the global Angular exception handler
+                    HandleException('Managed Sample', ex, tags);
                     this.$log.warn('Exception caught and swallowed.');
+                    // throw ex; // this will be caught by the global exception handler
                 }
             });
         }
 
-        throwAjaxException() {
+        public throwAjaxException() {
             this.$rootScope.$applyAsync(() => {
-                this.$log.info('Doing AJAX request...');
-
                 // XXXXXXXXXXXXXXXXXXXX
 
                 var ajaxCfg = {
@@ -73,7 +111,7 @@ module proto.ng.samples.errorHandlers {
                     },
                     errHttp: function () {
                         $.ajax({
-                            url: "/i.am.missing.html",
+                            url: "https://wwwx.i.am/missing.html",
                             dataType: "text/html",
                             success: function (result) { },
                             error: function (xhr) { }
@@ -103,17 +141,21 @@ module proto.ng.samples.errorHandlers {
                         });
                     },
                 };
+
+                this.$log.info('Throwing AJAX request...');
+                ajaxCfg.current = ajaxCfg.errHttp;
+                ajaxCfg.callError();
             });
         }
 
-        throwAngularException() {
+        public throwAngularException() {
             this.$rootScope.$applyAsync(() => {
                 this.$log.info('About to break Angular...');
                 this.$rootScope.missing.ngSampleError++;
             });
         }
 
-        throwTimeoutException() {
+        public throwTimeoutException() {
             this.$log.info('Setting timeout...');
             setTimeout(() => {
                 this.$rootScope.$applyAsync(() => {
@@ -123,6 +165,7 @@ module proto.ng.samples.errorHandlers {
                 });
             }, 2 * 1000);
         }
+
     }
 
 }  

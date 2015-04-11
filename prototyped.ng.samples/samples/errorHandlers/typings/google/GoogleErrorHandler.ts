@@ -1,10 +1,12 @@
 ﻿/// <reference path="GoogleErrorService.ts" />
 
+declare var _gaq: any;
+
 module proto.ng.samples.errorHandlers.google {
 
     export class GoogleErrorHandler {
 
-        public locked: boolean = true;
+        public locked: boolean = false;
         public name: string = 'google';
         public label: string = 'Google Analytics';
 
@@ -15,15 +17,27 @@ module proto.ng.samples.errorHandlers.google {
 
         public attach() {
             var isOnline = this.service.detect();
-            this.service.isEnabled = true;
-            this.service.handler.enabled = true;
+            this.service.isEnabled = isOnline;
         }
 
         public dettach() {
             this.service.isEnabled = false;
-            this.service.handler.enabled = false;
         }
 
+        public handleException(source: string, ex: any, tags: any) {
+            if (!this.enabled) return;
+            if ('_gaq' in window) {
+                var ctx = [
+                    '_trackEvent',
+                    source,
+                    ex.message,
+                    ex.filename + ':  ' + ex.lineno,
+                    true
+                ];
+                console.log(' - google.hangdleException: ', _gaq, ctx);
+                _gaq.push(ctx);
+            }
+        }
     }
 
 } 

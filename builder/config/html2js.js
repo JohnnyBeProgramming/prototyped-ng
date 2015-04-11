@@ -22,6 +22,6 @@ module.exports = {
           '<%= cfg.base %><%= cfg.web %>/views/**/*.jade',
           '<%= cfg.base %><%= cfg.web %>/views/**/*.tpl.html'
       ],
-      dest: '<%= cfg.base %><%= cfg.web %>/assets/app.templates.js'
+      dest: '<%= cfg.base %><%= cfg.web %>/<%= cfg.lib %>/app/app.templates.js'
   },
 };

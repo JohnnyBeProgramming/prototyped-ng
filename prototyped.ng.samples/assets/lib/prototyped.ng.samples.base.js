@@ -64,7 +64,7 @@ angular.module('prototyped.ng.samples.compression', []).config([
         }
     });
 }).controller('compressionController', [
-    '$rootScope', '$scope', '$state', '$stateParams', '$q', '$timeout', '$window', 'lzwCompressor', function ($rootScope, $scope, $state, $stateParams, $q, $timeout, $window, lzwCompressor) {
+    '$rootScope', '$scope', '$state', '$stateParams', '$q', '$timeout', '$window', '$templateCache', 'lzwCompressor', function ($rootScope, $scope, $state, $stateParams, $q, $timeout, $window, $templateCache, lzwCompressor) {
         // Define the compressor
         var compressor = {
             lzw: lzwCompressor,
@@ -112,7 +112,9 @@ angular.module('prototyped.ng.samples.compression', []).config([
             busy: true,
             target: 'lzw',
             compressText: function (text) {
-                $rootScope.$applyAsync(function () {
+                context.busy = true;
+                context.result = 'Compressing text...';
+                try  {
                     console.groupCollapsed(' - Compressing text: ' + text.length + ' bytes...');
 
                     // Get the raw text payload
@@ -125,41 +127,47 @@ angular.module('prototyped.ng.samples.compression', []).config([
                         // Compress payload
                         payload = worker.encode(payload);
                     }
-
-                    var enc = (ident == 'lzw') ? '' : ',"' + ident + '"';
-
-                    // Set the result
-                    context.resType = context.target;
-                    context.result = payload;
-                    context.ready = true;
+                    console.info(' - Compressed size: ' + payload.length + ' bytes.');
 
                     // Build a url of the script
-                    var url = 'javascript:try { ' + JSON.stringify(payload) + "['']().decompress(alert" + enc + ")" + ' } catch (ex) { alert(ex.message) }';
-                    context.scriptUrl = url;
+                    var enc = (ident == 'lzw') ? '' : ',"' + ident + '"';
+                    var arg = "alert" + enc;
+                    var url = 'javascript:try { ' + JSON.stringify(payload) + "['']().decompress(" + arg + ")" + ' } catch (ex) { alert(ex.message) }';
+
+                    // Set the result
+                    $rootScope.$applyAsync(function () {
+                        context.scriptUrl = url;
+                        context.resType = context.target;
+                        context.result = payload;
+                        context.ready = true;
+                        context.busy = false;
+                    });
 
                     var btnTrigger = $('#runAsScript');
                     if (btnTrigger) {
                         btnTrigger.attr('href', url);
                     }
-
-                    console.info(' - Compressed size: ' + text.length + ' bytes.');
+                } catch (ex) {
+                    throw ex;
+                } finally {
+                    $rootScope.$applyAsync(function () {
+                        context.busy = false;
+                    });
                     console.groupEnd();
-                });
+                }
             },
             clearResult: function () {
-                // Compress text...
-                context.result = null;
-                context.ready = false;
+                $rootScope.$applyAsync(function () {
+                    context.result = '';
+                    context.ready = false;
+                });
             },
             runAsScript: function () {
                 try  {
-                    console.groupCollapsed(' - Executing as script...');
-
                     context.runSuccess = null;
                     $rootScope.$applyAsync(function () {
                         console.debug(' - Running payload...', context.scriptUrl);
                         $window.location.url = context.scriptUrl;
-
                         context.runSuccess = true;
                     });
                 } catch (ex) {
@@ -170,21 +178,45 @@ angular.module('prototyped.ng.samples.compression', []).config([
                 }
             },
             getPercentage: function () {
-                return 100 - (100.0 * context.result.length / context.text.length);
+                return 100 - (100.0 * (context.result.length || 0) / context.text.length);
             },
             getSampleText: function (url) {
+                context.busy = true;
+
                 // Get some sample text
-                var request = $.ajax({
-                    url: url,
-                    type: 'GET',
-                    dataType: 'text',
-                    success: function (data) {
-                        // Update text box with text
-                        $rootScope.$applyAsync(function () {
-                            context.text = data;
-                        });
-                    }
-                });
+                var contents = $templateCache.get(url);
+                if (contents) {
+                    // Update text box with text
+                    context.text = 'Updating...';
+                    $rootScope.$applyAsync(function () {
+                        context.text = contents;
+                        context.busy = false;
+                    });
+                } else {
+                    context.text = 'Fetcing: ' + url;
+                    var request = $.ajax({
+                        url: url,
+                        type: 'GET',
+                        dataType: 'text',
+                        success: function (data) {
+                            // Save in the local template cache
+                            $templateCache.put(url, data);
+
+                            // Update text box with text
+                            $rootScope.$applyAsync(function () {
+                                context.text = data;
+                                context.busy = false;
+                            });
+                        },
+                        error: function (error) {
+                            // Update text box with text
+                            $rootScope.$applyAsync(function () {
+                                context.text = error.message || 'Something went wrong.';
+                                context.busy = false;
+                            });
+                        }
+                    });
+                }
             }
         };
 
@@ -194,13 +226,32 @@ angular.module('prototyped.ng.samples.compression', []).config([
                 context.compressText(context.text);
             }
         });
+        $scope.$watch('compression.text', function () {
+            if (context.text && context.result) {
+                // Update compressed result with new compression type
+                context.compressText(context.text);
+            } else {
+                $rootScope.$applyAsync(function () {
+                    context.result = '';
+                });
+            }
+        });
+        $scope.$watch('compression.sampleUrl', function () {
+            if (context.sampleUrl) {
+                // Update compressed result with new compression type
+                context.getSampleText(context.sampleUrl);
+            } else {
+                $rootScope.$applyAsync(function () {
+                    context.text = '';
+                });
+            }
+        });
 
         // Apply updates (including async)
         var updates = {};
         try  {
             // Get some sample text
-            context.getSampleText('assets/lib/test.js');
-
+            //context.getSampleText('assets/lib/test.js');
             // Check for required libraries
             if (typeof require !== 'undefined') {
                 // We are now in NodeJS!
@@ -775,6 +826,19 @@ var proto;
                             this.service.isEnabled = false;
                             this.service.handler.enabled = false;
                         };
+
+                        RavenErrorHandler.prototype.handleException = function (source, ex, tags) {
+                            if (!this.enabled)
+                                return;
+                            if (typeof Raven !== 'undefined') {
+                                angular.extend(tags, {
+                                    source: source
+                                });
+                                Raven.captureException(ex, {
+                                    tags: tags
+                                });
+                            }
+                        };
                         return RavenErrorHandler;
                     })();
                     raven.RavenErrorHandler = RavenErrorHandler;
@@ -908,6 +972,7 @@ var proto;
     var ng = proto.ng;
 })(proto || (proto = {}));
 /// <reference path="GoogleErrorService.ts" />
+
 var proto;
 (function (proto) {
     (function (ng) {
@@ -917,7 +982,7 @@ var proto;
                     var GoogleErrorHandler = (function () {
                         function GoogleErrorHandler(service) {
                             this.service = service;
-                            this.locked = true;
+                            this.locked = false;
                             this.name = 'google';
                             this.label = 'Google Analytics';
                         }
@@ -934,13 +999,27 @@ var proto;
 
                         GoogleErrorHandler.prototype.attach = function () {
                             var isOnline = this.service.detect();
-                            this.service.isEnabled = true;
-                            this.service.handler.enabled = true;
+                            this.service.isEnabled = isOnline;
                         };
 
                         GoogleErrorHandler.prototype.dettach = function () {
                             this.service.isEnabled = false;
-                            this.service.handler.enabled = false;
+                        };
+
+                        GoogleErrorHandler.prototype.handleException = function (source, ex, tags) {
+                            if (!this.enabled)
+                                return;
+                            if ('_gaq' in window) {
+                                var ctx = [
+                                    '_trackEvent',
+                                    source,
+                                    ex.message,
+                                    ex.filename + ':  ' + ex.lineno,
+                                    true
+                                ];
+                                console.log(' - google.hangdleException: ', _gaq, ctx);
+                                _gaq.push(ctx);
+                            }
                         };
                         return GoogleErrorHandler;
                     })();
@@ -955,6 +1034,7 @@ var proto;
     var ng = proto.ng;
 })(proto || (proto = {}));
 /// <reference path="GoogleErrorHandler.ts" />
+
 var proto;
 (function (proto) {
     (function (ng) {
@@ -975,8 +1055,25 @@ var proto;
                             appConfig.errorHandlers.push(this.handler);
                         }
                         GoogleErrorService.prototype.detect = function () {
+                            var _this = this;
                             try  {
                                 // Load required libraries if not defined
+                                this.$log.log('Detecting: Google Analytics...', this.config);
+                                if ('ga' in window) {
+                                    this.init();
+                                } else {
+                                    this.$log.log('Loading: Google Analytics...');
+                                    this.handler.busy = true;
+
+                                    var urlAnalytics = 'data:text/javascript;charset=base64,PHNjcmlwdD4oZnVuY3Rpb24oaSxzLG8sZyxyLGEsbSl7aVsnR29vZ2xlQW5hbHl0aWNzT2JqZWN0J109cjtpW3JdPWlbcl18fGZ1bmN0aW9uKCl7KGlbcl0ucT1pW3JdLnF8fFtdKS5wdXNoKGFyZ3VtZW50cyl9LGlbcl0ubD0xKm5ld0RhdGUoKTthPXMuY3JlYXRlRWxlbWVudChvKSxtPXMuZ2V0RWxlbWVudHNCeVRhZ05hbWUobylbMF07YS5hc3luYz0xO2Euc3JjPWc7bS5wYXJlbnROb2RlLmluc2VydEJlZm9yZShhLG0pfSkod2luZG93LGRvY3VtZW50LCdzY3JpcHQnLCcvL3d3dy5nb29nbGUtYW5hbHl0aWNzLmNvbS9hbmFseXRpY3MuanMnLCdnYScpOzwvc2NyaXB0Pg==';
+                                    $.getScript(urlAnalytics, function (data, textStatus, jqxhr) {
+                                        _this.$rootScope.$applyAsync(function () {
+                                            _this.handler.busy = false;
+                                            _this.init();
+                                        });
+                                    });
+                                }
+                                this.isOnline = true;
                             } catch (ex) {
                                 this.isOnline = false;
                                 this.lastError = ex;
@@ -985,16 +1082,23 @@ var proto;
                         };
 
                         GoogleErrorService.prototype.init = function () {
-                            // Check for Raven.js and auto-load
+                            // Check for scripts and auto-load
                             if (!this.isOnline && this.config.publicKey) {
-                                this.$log.log(' - Initialising Google Services....');
                                 this.setupGoogle();
                             }
                         };
 
                         GoogleErrorService.prototype.connect = function (publicKey) {
+                            var _this = this;
                             try  {
-                                //service.isOnline = true;
+                                // Setup google analytics
+                                this.$rootScope.$applyAsync(function () {
+                                    _this.$log.log('Connecting Google Services....', publicKey);
+
+                                    ga('create', publicKey, 'auto');
+
+                                    _this.isOnline = true;
+                                });
                             } catch (ex) {
                                 this.isOnline = false;
                                 this.lastError = ex;
@@ -1006,8 +1110,6 @@ var proto;
                         };
 
                         GoogleErrorService.prototype.setupGoogle = function () {
-                            if (typeof google === 'undefined')
-                                return;
                             try  {
                                 // Disconnect for any prev sessions
                                 if (this.isOnline) {
@@ -1041,14 +1143,59 @@ var proto;
     (function (ng) {
         (function (samples) {
             (function (errorHandlers) {
+                var ErrorHandlers = (function () {
+                    function ErrorHandlers() {
+                    }
+                    ErrorHandlers.Register = function (handler) {
+                        this.list.push(handler);
+                    };
+
+                    ErrorHandlers.ListAll = function () {
+                        return this.list;
+                    };
+                    ErrorHandlers.enabled = false;
+                    ErrorHandlers.logs = null;
+                    ErrorHandlers.list = [];
+                    return ErrorHandlers;
+                })();
+                errorHandlers.ErrorHandlers = ErrorHandlers;
+
+                function HandleException(source, error, tags) {
+                    var enabled = ErrorHandlers.enabled;
+                    if (enabled) {
+                        try  {
+                            // Notify all handlers that are enabled
+                            ErrorHandlers.ListAll().forEach(function (handler) {
+                                if (handler.isEnabled) {
+                                    //handler.handleError(source, error, tags || {});
+                                }
+                            });
+                        } catch (ex) {
+                            // Something went wrong :(
+                            console.error('Critical fault in error reporting services...', error);
+                        }
+                    }
+
+                    // Display error in the console...
+                    var $log = ErrorHandlers.logs || angular.injector(['ng']).get('$log');
+                    if ($log)
+                        $log.error.apply($log, [source + ': ' + error.message || error, tags]);
+
+                    return enabled;
+                }
+                errorHandlers.HandleException = HandleException;
+
                 var SampleErrorService = (function () {
-                    function SampleErrorService($rootScope, $log, appConfig, raven, googleErrorService) {
+                    function SampleErrorService($rootScope, $log, appConfig, raven, google) {
                         this.$rootScope = $rootScope;
                         this.$log = $log;
                         this.appConfig = appConfig;
                         this.raven = raven;
-                        this.googleErrorService = googleErrorService;
-                        this.enabled = true;
+                        this.google = google;
+                        // Hook the global handlers
+                        ErrorHandlers.logs = $log;
+                        ErrorHandlers.Register(google);
+                        ErrorHandlers.Register(raven);
                     }
                     SampleErrorService.prototype.checkChanged = function (handler) {
                         this.$rootScope.$applyAsync(function () {
@@ -1073,15 +1220,16 @@ var proto;
                     SampleErrorService.prototype.throwManagedException = function () {
                         var _this = this;
                         this.$rootScope.$applyAsync(function () {
-                            var ctx = { tags: { source: "Sample Managed Exception" } };
+                            var tags = {
+                                startedAt: Date.now()
+                            };
                             try  {
                                 _this.$log.info('About to break something...');
-                                Raven.context(ctx, function () {
-                                    window['does not exist'].managedSampleError++;
-                                });
+                                window['does not exist'].managedSampleError++;
                             } catch (ex) {
-                                // throw ex; // this will also be caught by the global Angular exception handler
+                                HandleException('Managed Sample', ex, tags);
                                 _this.$log.warn('Exception caught and swallowed.');
+                                // throw ex; // this will be caught by the global exception handler
                             }
                         });
                     };
@@ -1089,8 +1237,6 @@ var proto;
                     SampleErrorService.prototype.throwAjaxException = function () {
                         var _this = this;
                         this.$rootScope.$applyAsync(function () {
-                            _this.$log.info('Doing AJAX request...');
-
                             // XXXXXXXXXXXXXXXXXXXX
                             var ajaxCfg = {
                                 current: null,
@@ -1118,7 +1264,7 @@ var proto;
                                 },
                                 errHttp: function () {
                                     $.ajax({
-                                        url: "/i.am.missing.html",
+                                        url: "https://wwwx.i.am/missing.html",
                                         dataType: "text/html",
                                         success: function (result) {
                                         },
@@ -1152,6 +1298,10 @@ var proto;
                                     });
                                 }
                             };
+
+                            _this.$log.info('Throwing AJAX request...');
+                            ajaxCfg.current = ajaxCfg.errHttp;
+                            ajaxCfg.callError();
                         });
                     };
 
@@ -1298,26 +1448,18 @@ var proto;
                         this.appNode = appNode;
                     }
                     ExceptionHandlerFactory.prototype.handleException = function (exception, cause) {
-                        if (typeof Raven !== 'undefined') {
-                            this.setUpdatedErrorMessage(arguments, 'Exception [ EX ]: ');
-                            var ctx = {
-                                tags: { source: "Angular Unhandled Exception" }
-                            };
-                            Raven.captureException(exception, ctx);
-                        } else if (this.appNode.active) {
+                        try  {
+                            var source = this.appNode.active ? 'Angular[ NW ]' : 'Angular[ JS ]';
+                            proto.ng.samples.errorHandlers.HandleException(source, exception, {
+                                cause: cause,
+                                error: exception
+                            });
+                        } catch (ex) {
+                            this.$log.error.apply(this.$log, ['Critical fault in angular error reporting...', ex]);
+                        }
+                        if (this.appNode.active) {
                             // ToDo: Hook in some routing or something...
-                            this.setUpdatedErrorMessage(arguments, 'Exception [ NW ]: ');
-                        } else {
-                            this.setUpdatedErrorMessage(arguments, 'Exception [ JS ]: ');
                         }
-                    };
-
-                    ExceptionHandlerFactory.prototype.setUpdatedErrorMessage = function (args, prefix) {
-                        var ex = args.length > 0 ? args[0] : {};
-                        if (ex.message) {
-                            ex.message = prefix + ex.message;
-                        }
-                        this.$log.error.apply(this.$log, args);
                     };
                     return ExceptionHandlerFactory;
                 })();
@@ -1350,6 +1492,15 @@ var proto;
                     });
                 }
                 _errorHandlers.ConfigureErrorHandlers = ConfigureErrorHandlers;
+
+                function ConfigureGoogle(appConfigProvider) {
+                    appConfigProvider.set({
+                        'googleConfig': {
+                            publicKey: 'UA-61791366-1'
+                        }
+                    });
+                }
+                _errorHandlers.ConfigureGoogle = ConfigureGoogle;
 
                 function ConfigureRaven(appConfigProvider) {
                     appConfigProvider.set({
@@ -1392,7 +1543,7 @@ var proto;
 /// <reference path="typings/config.ts" />
 angular.module('prototyped.ng.samples.errorHandlers', [
     'prototyped.ng.config'
-]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureErrorHandlers]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureRaven]).config(['$provide', '$httpProvider', proto.ng.samples.errorHandlers.ConfigureProviders]).config([
+]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureErrorHandlers]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureGoogle]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureRaven]).config(['$provide', '$httpProvider', proto.ng.samples.errorHandlers.ConfigureProviders]).config([
     '$stateProvider', function ($stateProvider) {
         // Set up the states
         $stateProvider.state('samples.errors', {
@@ -1416,6 +1567,26 @@ angular.module('prototyped.ng.samples.errorHandlers', [
         return new proto.ng.samples.errorHandlers.ErrorHttpInterceptor($log, $q);
     }]).service('ravenService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.raven.RavenService]).service('googleErrorService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.google.GoogleErrorService]).service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService]).controller('errorHandlersController', [
     '$scope', '$log', function ($scope, $log) {
+    }]).run([
+    'sampleErrorService', function (sampleErrorService) {
+        // Track basic JavaScript errors
+        window.addEventListener('error', function (ex) {
+            proto.ng.samples.errorHandlers.HandleException('Javascript Error', ex, {
+                cause: 'Unhandled exception',
+                location: ex.filename + ':  ' + ex.lineno
+            });
+        });
+
+        // Track AJAX errors (jQuery API)
+        $(document).ajaxError(function (e, request, settings) {
+            var ex = new Error('Problem loading: ' + settings.url);
+            proto.ng.samples.errorHandlers.HandleException('Ajax Error', ex, {
+                cause: 'Response Error',
+                location: settings.url,
+                result: e.result,
+                event: e
+            });
+        });
     }]).run([
     '$rootScope', 'appStatus', 'sampleErrorService', function ($rootScope, appStatus, sampleErrorService) {
         angular.extend($rootScope, {

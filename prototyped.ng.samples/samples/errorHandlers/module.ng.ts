@@ -11,6 +11,7 @@ angular.module('prototyped.ng.samples.errorHandlers', [
     'prototyped.ng.config'
 ])
     .config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureErrorHandlers])
+    .config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureGoogle])
     .config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureRaven])
     .config(['$provide', '$httpProvider', proto.ng.samples.errorHandlers.ConfigureProviders])
     .config(['$stateProvider', function ($stateProvider) {
@@ -43,10 +44,32 @@ angular.module('prototyped.ng.samples.errorHandlers', [
     .service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService])
 
     .controller('errorHandlersController', ['$scope', '$log', function ($scope, $log) {
+    }])
+
+    .run(['sampleErrorService', function (sampleErrorService) {
+
+        // Track basic JavaScript errors
+        window.addEventListener('error', function (ex: any) {
+            proto.ng.samples.errorHandlers.HandleException('Javascript Error', ex, {
+                cause: 'Unhandled exception',
+                location: ex.filename + ':  ' + ex.lineno,
+            });
+        });
+
+        // Track AJAX errors (jQuery API)
+        $(document).ajaxError(function (e, request, settings) {
+            var ex = new Error('Problem loading: ' + settings.url);
+            proto.ng.samples.errorHandlers.HandleException('Ajax Error', ex, {
+                cause: 'Response Error',
+                location: settings.url,
+                result: e.result,
+                event: e,
+            });
+        });
 
     }])
 
-    .run(['$rootScope', 'appStatus', 'sampleErrorService', function ($rootScope, appStatus, sampleErrorService) {
+    .run(['$rootScope', 'appStatus', 'sampleErrorService', function ($rootScope, appStatus, sampleErrorService) {        
         angular.extend($rootScope, {
             appStatus: appStatus,
             sampleErrors: sampleErrorService,

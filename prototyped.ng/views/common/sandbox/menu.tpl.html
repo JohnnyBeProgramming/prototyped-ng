@@ -1,0 +1,32 @@
+﻿<div class="top-menu dragable">
+    <div class="top-div pull-left">
+        <div>
+            <div ui:view="menu">
+                <ul class="nav navbar-nav pull-right">
+                    <li ui:sref-active="open">
+                        <a ui:sref="default">Default</a>
+                    </li>
+                    <li ui:sref-active="open"
+                        ng:repeat="route in appConfig.routers | orderBy:'(priority || 1)'"
+                        ng:if="route.menuitem && (!route.visible || route.visible())">
+                        <a ng:if="route.menuitem.state" ui:sref="{{ route.menuitem.state }}">{{ route.menuitem.label }}</a>
+                        <a ng:if="!route.menuitem.state" ng:href="{{ route.url }}">{{ route.menuitem.label }}</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="top-div pull-right">
+        <ul class="nav navbar-nav pull-left">
+            <li ui:sref-active="open" class="disabled">
+                <a ui:sref="settings" ng:disabled>Settings</a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div class="top-spacer">
+    <div class="mask"></div>
+    <a class="top-spacer-icon" href="">
+        <i class="fa fa-cube fa-2x"></i>
+    </a>
+</div>

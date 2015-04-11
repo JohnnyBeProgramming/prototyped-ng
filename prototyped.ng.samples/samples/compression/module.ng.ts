@@ -74,7 +74,7 @@ angular.module('prototyped.ng.samples.compression', [])
         });
     })
 
-    .controller('compressionController', ['$rootScope', '$scope', '$state', '$stateParams', '$q', '$timeout', '$window', 'lzwCompressor', function ($rootScope, $scope, $state, $stateParams, $q, $timeout, $window, lzwCompressor) {
+    .controller('compressionController', ['$rootScope', '$scope', '$state', '$stateParams', '$q', '$timeout', '$window', '$templateCache', 'lzwCompressor', function ($rootScope, $scope, $state, $stateParams, $q, $timeout, $window, $templateCache, lzwCompressor) {
         // Define the compressor
         var compressor = {
             lzw: lzwCompressor,
@@ -121,7 +121,9 @@ angular.module('prototyped.ng.samples.compression', [])
             busy: true,
             target: 'lzw',
             compressText: function (text) {
-                $rootScope.$applyAsync(function () {
+                context.busy = true;
+                context.result = 'Compressing text...';
+                try {
                     console.groupCollapsed(' - Compressing text: ' + text.length + ' bytes...');
 
                     // Get the raw text payload
@@ -134,43 +136,47 @@ angular.module('prototyped.ng.samples.compression', [])
                         // Compress payload
                         payload = worker.encode(payload);
                     }
-
-                    var enc = (ident == 'lzw') ? '' : ',"' + ident + '"';
-
-                    // Set the result
-                    context.resType = context.target;
-                    context.result = payload;
-                    context.ready = true;
+                    console.info(' - Compressed size: ' + payload.length + ' bytes.');
 
                     // Build a url of the script
-                    var url = 'javascript:try { ' + JSON.stringify(payload) + "['']().decompress(alert" + enc + ")" + ' } catch (ex) { alert(ex.message) }';
-                    context.scriptUrl = url;
+                    var enc = (ident == 'lzw') ? '' : ',"' + ident + '"';
+                    var arg = "alert" + enc;
+                    var url = 'javascript:try { ' + JSON.stringify(payload) + "['']().decompress(" + arg + ")" + ' } catch (ex) { alert(ex.message) }';
+
+                    // Set the result
+                    $rootScope.$applyAsync(function () {
+                        context.scriptUrl = url;
+                        context.resType = context.target;
+                        context.result = payload;
+                        context.ready = true;
+                        context.busy = false;
+                    });
 
                     var btnTrigger = $('#runAsScript');
                     if (btnTrigger) {
                         btnTrigger.attr('href', url);
                     }
-
-                    console.info(' - Compressed size: ' + text.length + ' bytes.');
+                } catch (ex) {
+                    throw ex;
+                } finally {
+                    $rootScope.$applyAsync(function () {
+                        context.busy = false;
+                    });
                     console.groupEnd();
-                });
+                }
             },
             clearResult: function () {
-                // Compress text...
-                context.result = null;
-                context.ready = false;
+                $rootScope.$applyAsync(function () {
+                    context.result = '';
+                    context.ready = false;
+                });
             },
             runAsScript: function () {
-                // Compress text...
                 try {
-                    console.groupCollapsed(' - Executing as script...');
-
                     context.runSuccess = null;
                     $rootScope.$applyAsync(function () {
-
                         console.debug(' - Running payload...', context.scriptUrl);
                         $window.location.url = context.scriptUrl;
-
                         context.runSuccess = true;
                     });
 
@@ -182,21 +188,46 @@ angular.module('prototyped.ng.samples.compression', [])
                 }
             },
             getPercentage: function () {
-                return 100 - (100.0 * context.result.length / context.text.length);
+                return 100 - (100.0 * (context.result.length || 0) / context.text.length);
             },
             getSampleText: function (url) {
+                context.busy = true;
+
                 // Get some sample text
-                var request = $.ajax({
-                    url: url,
-                    type: 'GET',
-                    dataType: 'text',
-                    success: function (data) {
-                        // Update text box with text
-                        $rootScope.$applyAsync(function () {
-                            context.text = data;
-                        });
-                    }
-                });
+                var contents = $templateCache.get(url);
+                if (contents) {
+                    // Update text box with text
+                    context.text = 'Updating...';
+                    $rootScope.$applyAsync(() => {
+                        context.text = contents;
+                        context.busy = false;
+                    });
+                } else {
+                    context.text = 'Fetcing: ' + url;
+                    var request = $.ajax({
+                        url: url,
+                        type: 'GET',
+                        dataType: 'text',
+                        success: (data) => {
+
+                            // Save in the local template cache
+                            $templateCache.put(url, data)
+
+                            // Update text box with text
+                            $rootScope.$applyAsync(() => {
+                                context.text = data;
+                                context.busy = false;
+                            });
+                        },
+                        error: (error: any) => {
+                            // Update text box with text
+                            $rootScope.$applyAsync(() => {
+                                context.text = error.message || 'Something went wrong.';
+                                context.busy = false;
+                            });
+                        }
+                    });
+                }
             },
         };
 
@@ -206,12 +237,32 @@ angular.module('prototyped.ng.samples.compression', [])
                 context.compressText(context.text);
             }
         });
+        $scope.$watch('compression.text', function () {
+            if (context.text && context.result) {
+                // Update compressed result with new compression type
+                context.compressText(context.text);
+            } else {
+                $rootScope.$applyAsync(() => {
+                    context.result = '';
+                });
+            }
+        });
+        $scope.$watch('compression.sampleUrl', function () {
+            if (context.sampleUrl) {
+                // Update compressed result with new compression type
+                context.getSampleText(context.sampleUrl);
+            } else {
+                $rootScope.$applyAsync(() => {
+                    context.text = '';
+                });
+            }
+        });
 
         // Apply updates (including async)
         var updates = <any>{};
         try {
             // Get some sample text
-            context.getSampleText('assets/lib/test.js');
+            //context.getSampleText('assets/lib/test.js');
 
             // Check for required libraries
             if (typeof require !== 'undefined') {

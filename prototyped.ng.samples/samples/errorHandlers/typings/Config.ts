@@ -17,6 +17,14 @@ module proto.ng.samples.errorHandlers {
         });
     }
 
+    export function ConfigureGoogle(appConfigProvider) {
+        appConfigProvider.set({
+            'googleConfig': {
+                publicKey: 'UA-61791366-1',
+            },
+        });
+    }
+
     export function ConfigureRaven(appConfigProvider) {
         appConfigProvider.set({
             'ravenConfig': {

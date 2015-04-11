@@ -1,4 +1,4 @@
-<div ng:cloak style="width: 100%;">
+<div ng:cloak class="container" style="width: 100%;">
 
     <!-- Define required scripts & styling for bootstrap switch -->
     <script resx:import="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js"></script>
@@ -25,44 +25,60 @@
                         <h5>
                             Throw Exceptions
                         </h5>
-                        <div class="btn-group btn-group-vertical" role="group" style="width: 100%;" aria-label="...">
-                            <input type="button" class="btn btn-default"
-                                   value="Catch Managed Error"
-                                   ng-click="sampleErrors.throwManagedException()" />
-                            <input type="button" class="btn btn-default"
-                                   value="AngularJS Error"
-                                   ng-click="sampleErrors.throwAngularException()" />
-                            <input type="button" class="btn btn-default"
-                                   value="Create Ajax Error"
-                                   ng-click="sampleErrors.throwAjaxException()" />
-                            <!-- ul class="dropdown-menu" role="menu">
-                                <li>
-                                    <a href="" ng-click="state.ajaxCfg.select(state.ajaxCfg.errHttp)">
-                                        {{ state.ajaxCfg.getDesc(state.ajaxCfg.errHttp) }}
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="" ng-click="state.ajaxCfg.select(state.ajaxCfg.errSuccess)">
-                                        {{ state.ajaxCfg.getDesc(state.ajaxCfg.errSuccess) }}
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="" ng-click="state.ajaxCfg.select(state.ajaxCfg.errFailed)">
-                                        {{ state.ajaxCfg.getDesc(state.ajaxCfg.errFailed) }}
-                                    </a>
-                                </li>
-                            </ul -->
-                            <input type="button" class="btn btn-default"
-                                   value="Timeout Error"
-                                   ng-click="sampleErrors.throwTimeoutException()" />
-                            <input type="button" class="btn btn-default"
-                                   value="Unhandled Exception"
-                                   onclick="sampleError.dontExist++;" />
-                        </div>
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <a href="" ng-click="sampleErrors.throwManagedException()">
+                                    <i class="fa fa-cubes" ng-class="{ 'glow-blue animate-glow': samples.busy, 'glow-green': !samples.busy, 'glow-red animate-glow': samples.error }"></i>&nbsp;
+                                    Catch Managed Error
+                                </a>
+                            </li>
+                            <li class="list-group-item">
+                                <a href="" ng-click="sampleErrors.throwAjaxException()">
+                                    <i class="fa fa-cubes" ng-class="{ 'glow-blue animate-glow': samples.busy, 'glow-green': !samples.busy, 'glow-red animate-glow': samples.error }"></i>&nbsp;
+                                    Create Ajax Error
+                                </a>
+                            </li>
+                            <li class="list-group-item">
+                                <a href="" ng-click="sampleErrors.throwAngularException()">
+                                    <i class="fa fa-cubes" ng-class="{ 'glow-blue animate-glow': samples.busy, 'glow-green': !samples.busy, 'glow-red animate-glow': samples.error }"></i>&nbsp;
+                                    AngularJS Error
+                                </a>
+                                <!-- ul class="dropdown-menu" role="menu">
+                                    <li>
+                                        <a href="" ng-click="state.ajaxCfg.select(state.ajaxCfg.errHttp)">
+                                            {{ state.ajaxCfg.getDesc(state.ajaxCfg.errHttp) }}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="" ng-click="state.ajaxCfg.select(state.ajaxCfg.errSuccess)">
+                                            {{ state.ajaxCfg.getDesc(state.ajaxCfg.errSuccess) }}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="" ng-click="state.ajaxCfg.select(state.ajaxCfg.errFailed)">
+                                            {{ state.ajaxCfg.getDesc(state.ajaxCfg.errFailed) }}
+                                        </a>
+                                    </li>
+                                </ul -->
+                            </li>
+                            <li class="list-group-item">
+                                <a href="" ng-click="sampleErrors.throwTimeoutException()">
+                                    <i class="fa fa-cubes" ng-class="{ 'glow-blue animate-glow': samples.busy, 'glow-green': !samples.busy, 'glow-red animate-glow': samples.error }"></i>&nbsp;
+                                    Timeout Error
+                                </a>
+                            </li>
+                            <li class="list-group-item">
+                                <a href="" onclick="sampleError.dontExist++;">
+                                    <i class="fa fa-cogs" ng-class="{ 'glow-blue animate-glow': samples.busy, 'glow-green': !samples.busy, 'glow-red animate-glow': samples.error }"></i>&nbsp;
+                                    Unhandled Exception
+                                </a>
+                            </li>
+                        </ul>                        
                     </div>
                 </div>
                 <div class="" ng-class="{ 'col-md-6':sampleErrors.enabled, 'col-md-9': !sampleErrors.enabled }">
                     <span class="pull-right">
+                        <a href="" ng-click="">Refresh</a> | 
                         <a href="" ng-click="appStatus.logs = []">Clear</a>
                     </span>
                     <h5>Event Logs</h5>
@@ -101,6 +117,9 @@
                             <li>
                                 <a target="_blank" href="http://bahmutov.calepin.co/catch-all-errors-in-angular-app.html">http://bahmutov.calepin.co</a>
                             </li>
+                            <li>
+                                <a target="_blank" href="http://davidwalsh.name/track-errors-google-analytics">http://davidwalsh.name</a>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -129,6 +148,46 @@
                                 </div>
                             </div>
                         </form>
+                    </div>
+                    <div ng:if="sampleErrors.google.isEnabled && !sampleErrors.google.handler.busy">
+                        <span class="pull-right" style="padding: 3px">
+                            <b ng:if="sampleErrors.google.isOnline" class="glow-green">Online</b>
+                            <b ng:if="!sampleErrors.google.isOnline" class="glow-red">Offline</b>
+                        </span>
+                        <h5>
+                            Google Analytics
+                        </h5>
+                        <div style="padding: 0 8px;">
+                            <div ng-show="sampleErrors.google.isOnline">
+                                <a href="" class="pull-right" ng:click="sampleErrors.google.isOnline = false;">
+                                    <i class="glyphicon glyphicon-remove"></i>
+                                </a>
+                                <div class="ellipsis">
+                                    <b>Public Key:</b>
+                                    <a class="inactive-text">{{ sampleErrors.google.config.publicKey }}</a>
+                                </div>
+                            </div>
+                            <form class="form-inline" role="form" ng-show="!sampleErrors.google.isOnline">
+                                <div class="form-group">
+                                    <label for="sentryKey">Google API key (required)</label>
+                                    <div class="input-group">
+                                        <input class="form-control input-sm" id="googleKey" type="text"
+                                               ng:model="sampleErrors.google.config.publicKey"
+                                               placeholder="UA-XXXX-Y">
+                                        <div class="input-group-btn">
+                                            <a class="btn btn-sm btn-default"
+                                               ng-class="{ 'btn-danger': sampleErrors.google.lastError, 'btn-primary': sampleErrors.google.config.publicKey, 'btn-default': !sampleErrors.google.config.publicKey }"
+                                               ng-disabled="!sampleErrors.google.config.publicKey"
+                                               ng-click="sampleErrors.google.connect(sampleErrors.google.config.publicKey)">Set</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                            <br />
+                            <div class="alert alert-danger" ng-if="!sampleErrors.google.isOnline && sampleErrors.google.lastError">
+                                {{ sampleErrors.google.lastError.message }}
+                            </div>
+                        </div>
                     </div>
                     <div ng:if="sampleErrors.raven.isEnabled && !sampleErrors.raven.handler.busy">
                         <span class="pull-right" style="padding: 3px">
@@ -165,9 +224,6 @@
                                 </div>
                             </form>
                             <br />
-                            <div class="alert alert-success" ng-if="sampleErrors.raven.isOnline">
-                                You are now ready to post ravens to your online sentry account.
-                            </div>
                             <div class="alert alert-danger" ng-if="!sampleErrors.raven.isOnline && sampleErrors.raven.lastError">
                                 {{ sampleErrors.raven.lastError.message }}
                             </div>

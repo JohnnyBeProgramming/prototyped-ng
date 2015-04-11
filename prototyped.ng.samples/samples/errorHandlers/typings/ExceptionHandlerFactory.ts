@@ -5,27 +5,19 @@
         constructor(private $log, private appNode) {
         }
 
-        public handleException(exception, cause): any {
-            if (typeof Raven !== 'undefined') {
-                this.setUpdatedErrorMessage(arguments, 'Exception [ EX ]: ');
-                var ctx = {
-                    tags: { source: "Angular Unhandled Exception" }
-                };
-                Raven.captureException(exception, ctx);
-            } else if (this.appNode.active) {
+        public handleException(exception, cause) {
+            try {
+                var source = this.appNode.active ? 'Angular[ NW ]' : 'Angular[ JS ]';
+                proto.ng.samples.errorHandlers.HandleException(source, exception, {
+                    cause: cause,
+                    error: exception,
+                });
+            } catch (ex) {
+                this.$log.error.apply(this.$log, ['Critical fault in angular error reporting...', ex]);
+            }
+            if (this.appNode.active) {
                 // ToDo: Hook in some routing or something...
-                this.setUpdatedErrorMessage(arguments, 'Exception [ NW ]: ');
-            } else {
-                this.setUpdatedErrorMessage(arguments, 'Exception [ JS ]: ');
             }
-        }
-
-        public setUpdatedErrorMessage(args, prefix) {
-            var ex = args.length > 0 ? args[0] : {};
-            if (ex.message) {
-                ex.message = prefix + ex.message;
-            }
-            this.$log.error.apply(this.$log, args);
         }
 
     }

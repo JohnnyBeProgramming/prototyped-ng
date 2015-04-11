@@ -86,6 +86,9 @@
     <Content Include="views\common\components\footer.tpl.html" />
     <Content Include="views\common\components\left.tpl.html" />
     <Content Include="views\common\components\menu.tpl.html" />
+    <Content Include="views\common\sandbox\contents.tpl.html" />
+    <Content Include="views\common\sandbox\footer.tpl.html" />
+    <Content Include="views\common\sandbox\menu.tpl.html" />
     <Content Include="views\default.tpl.html" />
     <Content Include="web.config" />
   </ItemGroup>

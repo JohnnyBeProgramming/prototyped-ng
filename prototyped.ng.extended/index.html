@@ -1,9 +1,97 @@
 ﻿<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <base href="/">
     <meta charset="utf-8" />
     <title>Module Sandbox</title>
+    <link rel="stylesheet" href="assets/css/sandbox.min.css" />
+    <link rel="stylesheet" href="assets/css/prototyped.min.css" />
+    <link rel="stylesheet" href="assets/css/extended.min.css" />
+    <script>
+        var appContext = {
+            name: 'prototyped.ng.extended',
+            vend: [
+                'ui.utils',
+                'ui.router',
+                'ui.bootstrap',
+                'angular-loading-bar',
+                'angularMoment',
+            ],
+            module: {
+                name: 'testApp',
+                path: 'builder/package.json',
+                elem: document.body,
+                opts: {
+                    showDefaultItems: false,
+                },
+            },
+            onStart: ['$rootScope', '$state', function ($rootScope, $state) {
+                angular.extend($rootScope, {
+                    state: $state,
+                    startAt: Date.now(),
+                });
+            }],
+            setRoutes: ['$locationProvider', '$urlRouterProvider', '$stateProvider', 'appConfigProvider', function ($locationProvider, $urlRouterProvider, $stateProvider, appConfigProvider) {
+                var appConfig = appConfigProvider.$get();
+                if (appConfig) {
+                    appConfig.routers.push({
+                        url: '/extend-init',
+                        priority: 99999999,
+                        cardview: {
+                            ready: false,
+                            style: 'img-extended',
+                            title: 'Extend the Current App',
+                            desc: 'Dynamically load and extended features. Inject new modules into the current runtime.',                                
+                        },
+                        visible: function () {
+                            try {
+                                var mod = angular.module('prototyped.ng.extended')
+                                return !mod;
+                            } catch (err) {
+                                return true;
+                            }
+                        },
+                    });
+
+                    $stateProvider
+                        .state('extend_init', {
+                            url: '/extend-init',
+                            views: {
+                                'main@': {
+                                    controller: function ($http, $state, $injector) {
+                                        var modExtend = 'prototyped.ng.extended';
+                                        var urlExtend = 'assets/lib/' + modExtend + '.js';
+                                        if (!$('head > script[src="' + urlExtend + '"]').length) {
+
+                                            // Try to load the module (async, after bootstrap)
+                                            console.log(' - Loading: ' + urlExtend);
+                                            $.getScript(urlExtend, function (data, textStatus, jqxhr) {
+                                                console.debug(' - Loaded: ' + urlExtend + '...');
+                                                $state.go('default');
+                                            });
+                                        }
+                                    },
+                                },
+                            },
+                        })
+
+                }			
+                $locationProvider.html5Mode(true); // Configure HTML5 mode
+                $urlRouterProvider // Set up default routes
+                    .when('', '/')
+                    .when('/', '/default')
+                    .when('/index.html', '/')
+            }],
+        };
+    </script>
+</head>
+<body id="testApp">
+
+    <!-- Define the assets and components to be loaded (async) -->
+    <div dom:replace ng:include="'views/common/sandbox/menu.tpl.html'"></div>
+    <div dom:replace ng:include="'views/common/sandbox/contents.tpl.html'"></div>
+    <div dom:replace ng:include="'views/common/sandbox/footer.tpl.html'"></div>
 
     <!-- Load AngularJS and all the required libraries (exclude IE < 10 from the party) -->
     <!--[if gt IE 9]><!-->
@@ -24,16 +112,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css" />
     <!--<![endif]-->
 
-    <link rel="stylesheet" href="assets/css/app.min.css" />
-    <link rel="stylesheet" href="assets/css/prototyped.min.css" />
-    <link rel="stylesheet" href="assets/css/extended.min.css" />
-</head>
-<body id="testApp">
-    <!-- Define the assets and components to be loaded (async) -->
-    <div dom:replace ng:include="'views/common/components/menu.tpl.html'"></div>
-    <div dom:replace ng:include="'views/common/components/contents.tpl.html'"></div>
-    <div dom:replace ng:include="'views/common/components/footer.tpl.html'"></div>
-
     <!-- Load this module's libraries -->
     <script src="assets/lib/prototyped.ng.js"></script>
     <script src="assets/lib/prototyped.ng.extended.base.js"></script>
@@ -41,100 +119,26 @@
     <script src="assets/lib/prototyped.ng.extended.styles.js"></script>
     <script>
         // Mock the template caches (clears pre-loaded templates and load rather from source)
-        angular.module('prototyped.ng.extended.views', []).run(['$templateCache', function ($templateCache) { }]);
-        angular.module('prototyped.ng.extended.styles', []).run(['$templateCache', function ($templateCache) { }]);
+        angular.module(appContext.name + '.views', []).run(['$templateCache', function ($templateCache) { }]);
+        angular.module(appContext.name + '.styles', []).run(['$templateCache', function ($templateCache) { }]);
     </script>
     <script>
         // Load the test app (async), with extended config (if available)
-        !(function (document, angular, $) {
+        !(function (document, angular, $, ctx) {
 
-            // Declare test page application
-            angular.module('testApp', [
-                'ui.utils',
-                'ui.router',
-                'ui.bootstrap',
-                'angularMoment',
-                'angular-loading-bar',
-                'prototyped.ng',
-                'prototyped.ng.extended',
-            ])
-                .config(['$urlRouterProvider', function ($urlRouterProvider) {
-                    $urlRouterProvider // Set up default routes
-                        .when('', '/')
-                        .when('/', '/default')
-                        .when('/index.html', '/')
-                }])
-                .config(['$stateProvider', 'appConfigProvider', function ($stateProvider, appConfigProvider) {
+            // Register test application
+            angular
+                .module(ctx.module.name, ctx.vend.concat([ctx.name]))
+                .config(ctx.setRoutes)
+                .run(ctx.onStart)
 
-                    var appConfig = appConfigProvider.$get();
-                    if (appConfig) {
-                        appConfig.routers.push({
-                            url: '/extend-init',
-                            priority: 99999999,
-                            cardview: {
-                                ready: false,
-                                style: 'img-extended',
-                                title: 'Extend the Current App',
-                                desc: 'Dynamically load and extended features. Inject new modules into the current runtime.',                                
-                            },
-                            visible: function () {
-                                try {
-                                    var mod = angular.module('prototyped.ng.extended')
-                                    return !mod;
-                                } catch (err) {
-                                    return true;
-                                }
-                            },
-                        });
-
-                        $stateProvider
-                            .state('extend_init', {
-                                url: '/extend-init',
-                                views: {
-                                    'main@': {
-                                        controller: function ($http, $state, $injector) {
-                                            var modExtend = 'prototyped.ng.extended';
-                                            var urlExtend = 'assets/lib/' + modExtend + '.js';
-                                            if (!$('head > script[src="' + urlExtend + '"]').length) {
-
-                                                // Try to load the module (async, after bootstrap)
-                                                console.log(' - Loading: ' + urlExtend);
-                                                $.getScript(urlExtend, function (data, textStatus, jqxhr) {
-                                                    console.debug(' - Loaded: ' + urlExtend + '...');
-                                                    $state.go('default');
-                                                });
-                                            }
-                                        },
-                                    },
-                                },
-                            })
-
-                    }
-                }])
-                .config(['$locationProvider', function ($locationProvider) {
-                    $locationProvider.html5Mode(true); // Configure HTML5 mode
-                }])
-                .run(['$rootScope', '$state', function ($rootScope, $state) {
-                    angular.extend($rootScope, {
-                        state: $state,
-                        startAt: Date.now(),
-                    });
-                }])
-
-            // Bootstrap the application (async)
+            // Bootstrap the application (async, after loading config)
             angular
                 .injector(['prototyped.ng.config'])
                 .get('appConfigLoader')
-                .init({
-                    name: 'testApp',
-                    path: 'builder/package.json',
-                    elem: $('#testApp') || document.body,
-                    opts: {
-                        showDefaultItems: false,
-                    },
-                });
+                .init(ctx.module);
 
-        }(document, angular, $));
+        }(document, angular, $, appContext));
     </script>
 </body>
 </html>

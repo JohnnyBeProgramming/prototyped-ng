@@ -5,6 +5,56 @@
     <base href="/">
     <meta charset="utf-8" />
     <title>Module Sandbox</title>
+    <link rel="stylesheet" href="assets/css/sandbox.min.css" />
+    <link rel="stylesheet" href="assets/css/prototyped.min.css" />
+    <link rel="stylesheet" href="assets/css/samples.min.css" />
+    <script>
+        var appContext = {
+            name: 'prototyped.ng.samples',
+            vend: [
+                'ui.utils',
+                'ui.router',
+                'ui.bootstrap',
+                'angulartics',
+                'angulartics.google.analytics',
+                'angular-loading-bar',
+                'angularMoment',
+            ],
+            module: {
+                name: 'testApp',
+                path: 'builder/package.json',
+                elem: document.body,
+                opts: {
+                    showDefaultItems: false,
+                },
+            },
+            onConfig: ['$locationProvider', '$urlRouterProvider', '$stateProvider', 'appConfigProvider', function ($locationProvider, $urlRouterProvider) {
+                $locationProvider.html5Mode(true); // Configure HTML5 mode
+                $urlRouterProvider // Set up default routes
+                    .when('', '/')
+                    .when('/', '/default')
+                    .when('/index.html', '/')
+            }],
+            onStart: ['$rootScope', '$state', 'appConfig', function ($rootScope, $state, appConfig) {
+                var moduleOptions = appConfig['prototyped.ng.features'];
+                if (moduleOptions) {
+                    // Display the menu items just for testing
+                    moduleOptions.hideInBrowserMode = false;
+                }
+                angular.extend($rootScope, {
+                    state: $state,
+                    startAt: Date.now(),
+                });
+            }],
+        };
+    </script>
+</head>
+<body id="testApp">
+
+    <!-- Define the assets and components to be loaded (async) -->
+    <div dom:replace ng:include="'views/common/sandbox/menu.tpl.html'"></div>
+    <div dom:replace ng:include="'views/common/sandbox/contents.tpl.html'"></div>
+    <div dom:replace ng:include="'views/common/sandbox/footer.tpl.html'"></div>
 
     <!-- Load AngularJS and all the required libraries (exclude IE < 10 from the party) -->
     <!--[if gt IE 9]><!-->
@@ -19,28 +69,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-utils/0.1.1/angular-ui-utils.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.13/angular-ui-router.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.0/ui-bootstrap-tpls.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angulartics/0.17.2/angulartics.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angulartics/0.17.2/angulartics-ga.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.js"></script>
     <script src="https://cdn.jsdelivr.net/angular.moment/0.9.0/angular-moment.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css" />
     <!--<![endif]-->
-
+    <!-- Google Analytics -->
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date(); a = s.createElement(o),
+            m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+    </script>
+    <!-- End Google Analytics -->
     <!--
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.core.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.default.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.min.js"></script>
     -->
-
-    <link rel="stylesheet" href="assets/css/app.min.css" />
-    <link rel="stylesheet" href="assets/css/prototyped.min.css" />
-    <link rel="stylesheet" href="assets/css/samples.min.css" />
-</head>
-<body id="testApp">
-    <!-- Define the assets and components to be loaded (async) -->
-    <div dom:replace ng:include="'views/common/components/menu.tpl.html'"></div>
-    <div dom:replace ng:include="'views/common/components/contents.tpl.html'"></div>
-    <div dom:replace ng:include="'views/common/components/footer.tpl.html'"></div>
-
     <!-- Load this module's libraries -->
     <script src="assets/lib/prototyped.ng.js"></script>
     <script src="assets/lib/prototyped.ng.samples.base.js"></script>
@@ -48,52 +98,30 @@
     <script src="assets/lib/prototyped.ng.samples.styles.js"></script>
     <script>
         // Mock the template caches (clears pre-loaded templates and load rather from source)
-        angular.module('prototyped.ng.samples.views', []).run(['$templateCache', function ($templateCache) { }]);
-        angular.module('prototyped.ng.samples.styles', []).run(['$templateCache', function ($templateCache) { }]);
+        angular.module(appContext.name + '.views', []).run(['$templateCache', function ($templateCache) { }]);
+        angular.module(appContext.name + '.styles', []).run(['$templateCache', function ($templateCache) { }]);
     </script>
     <script>
+
+        // Setup google analytics
+        ga('create', 'UA-61791366-1', 'auto');
+
         // Load the test app (async), with extended config (if available)
-        !(function (document, angular, $) {
+        !(function (document, angular, $, ctx) {
 
-            // Declare test page application
-            angular.module('testApp', [
-                'ui.utils',
-                'ui.router',
-                'ui.bootstrap',
-                'angularMoment',
-                'angular-loading-bar',
-                'prototyped.ng.samples'
-            ])
-                .config(['$urlRouterProvider', function ($urlRouterProvider) {
-                    $urlRouterProvider // Set up default routes
-                        .when('', '/')
-                        .when('/', '/default')
-                        .when('/index.html', '/')
-                }])
-                .config(['$locationProvider', function ($locationProvider) {
-                    $locationProvider.html5Mode(true); // Configure HTML5 mode
-                }])
-                .run(['$rootScope', '$state', function ($rootScope, $state) {
-                    angular.extend($rootScope, {
-                        state: $state,
-                        startAt: Date.now(),
-                    });
-                }])
+            // Register test application
+            angular
+                .module(ctx.module.name, ctx.vend.concat([ctx.name]))
+                .config(ctx.onConfig)
+                .run(ctx.onStart)
 
-            // Bootstrap the application (async)
+            // Bootstrap the application (async, after loading config)
             angular
                 .injector(['prototyped.ng.config'])
                 .get('appConfigLoader')
-                .init({
-                    name: 'testApp',
-                    path: 'builder/package.json',
-                    elem: $('#testApp') || document.body,
-                    opts: {
-                        showDefaultItems: false,
-                    },
-                });
+                .init(ctx.module);
 
-        }(document, angular, $));
+        }(document, angular, $, appContext));
     </script>
 </body>
 </html>

@@ -1,0 +1,29 @@
+﻿<div class="dragable navbar navbar-default navbar-fixed-top">
+    <div class="navbar-inner">
+        <ul class="non-dragable nav navbar-nav navheading ng-cloak">
+            <li class="dock-fill">
+                <a app:clean href="" class="navbar-brand" role="button">
+                    <i class="fa" ng:class="status.getIcon() + ' ' + status.getColor()"></i> <span>Prototyped</span>
+                </a>
+            </li>
+            <li class="dock-tight ng-cloak" ng:show="state.current.name != 'default'">
+                <a app:nav-link ui:sref="home" class="pull-right">
+                    <i class="glyphicon glyphicon-chevron-left"></i>
+                </a>
+            </li>
+        </ul>
+        <div class="non-dragable ng-cloak hidden-xs" style="display: inline-block" ui:view="menu">
+            <!-- Begin: Default menu toolbar -->
+            <ul class="nav navbar-nav" app:menu="appConfig.routers"></ul>
+            <!-- End: Default menu toolbar -->
+        </div>
+        <ul class="non-dragable nav navbar-nav pull-right toolbar-ctrls hidden-xs">
+            <li class="ng-cloak"><a app:clean href=""><i class="glyphicon glyphicon-refresh"></i></a></li>
+            <li class="ng-cloak"><a app:debug href=""><i class="glyphicon glyphicon-wrench"></i></a></li>
+            <li class="ng-cloak"><a app:kiosk href=""><i class="glyphicon glyphicon-fullscreen"></i></a></li>
+            <li class="ng-cloak" id="btnCloseWindow">
+                <a app:close href=""><i class="glyphicon glyphicon-remove"></i></a>
+            </li>
+        </ul>
+    </div>
+</div>

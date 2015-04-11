@@ -1,4 +1,4 @@
-﻿<div id="CompressionView" style="width: 100%;">
+﻿<div id="CompressionView" class="container" style="width: 100%">
     <div class="row">
         <div class="col-md-12">
             <span class="pull-right">
@@ -18,44 +18,100 @@
                 <small>Encode strings and urls into more compact forms.</small>
             </h4>
             <hr />
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="btn-group pull-right">
-                        <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
-                            Samples <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu" role="menu">
-                            <li><a href="" ng-click="compression.getSampleText('assets/lib/sp.js')">JavaScript #1</a></li>
-                            <li><a href="" ng-click="compression.getSampleText('assets/lib/test.js')">JavaScript #2</a></li>
-                            <li><a href="" ng-click="compression.getSampleText('assets/css/test.css')">CSS Styles #1</a></li>
-                            <li><a href="" ng-click="compression.getSampleText('assets/css/test.min.css')">CSS Styles #2</a></li>
-                        </ul>
+            <div class="">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="btn-group pull-right">
+                            <select ng-model="compression.sampleUrl" ng-disabled="compression.busy">
+                                <option value=""> - Custom Text - </option>
+                                <option value="assets/lib/screen.js">JavaScript #1</option>
+                                <option value="assets/lib/prototyped.ng.js">JavaScript #2</option>
+                                <option value="assets/css/app.min.css">CSS Styles #1</option>
+                                <option value="assets/css/prototyped.min.css">CSS Styles #2</option>
+                            </select>
+                        </div>
+                        <h5>
+                            Enter text to compress:
+                            <small ng-if="compression.text.length">{{ compression.text.length | toBytes }}, uncompressed</small>
+                        </h5>
                     </div>
-
-                    <h5>
-                        Enter text to compress:
-                        <small ng-if="compression.text.length">{{ compression.text.length | toBytes }}, uncompressed</small>
-                    </h5>
-                    <textarea ng-model="compression.text" ng-disabled="compression.result"
-                              style="width: 100%; min-height: 480px;" placeholder="Enter some text here..."></textarea>
+                    <div class="col-md-6">
+                        <span class="pull-right">
+                            Use Compression:
+                            <select ng-model="compression.target" ng-disabled="compression.busy">
+                                <option value="">default</option>
+                                <option value="lzw">lzw</option>
+                                <option value="scsu">scsu</option>
+                                <option value="html">html</option>
+                                <option value="base64">base64</option>
+                            </select>
+                        </span>
+                        <h5>
+                            Compressed Text:
+                            <small ng-if="compression.result.length">{{ compression.result.length | toBytes }}</small>
+                            <small ng-if="!compression.busy && compression.result.length">, {{ compression.getPercentage() | number:2 }}% reduction</small>
+                        </h5>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <span class="pull-right">
-                        Use Compression: 
-                        <select ng-model="compression.target">
-                            <option value="">default</option>
-                            <option value="lzw">lzw</option>
-                            <option value="scsu">scsu</option>
-                            <option value="html">html</option>
-                            <option value="base64">base64</option>
-                        </select>
-                    </span>
-                    <h5>
-                        Compressed Text:
-                        <small ng-if="compression.result.length">{{ compression.result.length | toBytes }}, {{ compression.getPercentage() | number:2 }}% reduction</small>
-                    </h5>
-                    <textarea ng-model="compression.result" ng-disabled="!compression.result"
-                              style="width: 100%; min-height: 480px;" readonly></textarea>
+                <div class="row" ng-if="compression.busy">
+                    <div class="col-md-12">
+                        <div class="active progress progress-striped">
+                            <div ng:init="progA = 1.0" role="progressbar" aria-valuenow="{{ progA }}" aria-valuemin="0" aria-valuemax="100"
+                                 class="progress-bar" ng-class="'progress-bar-info'"
+                                 ng-style="{width: (100 * progA) + '%'}" aria-valuetext="{{ (100.0 * progA) + ' %' }}%">
+                                <span>Busy... </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" ng-if="!compression.busy && !compression.text.length">
+                    <div class="col-md-12">
+                        <div class="progress">
+                            <div ng:init="progA = 1.0" role="progressbar" aria-valuenow="{{ progA }}" aria-valuemin="0" aria-valuemax="100"
+                                 class="progress-bar" ng-class="'progress-bar-primary'"
+                                 ng-style="{width: (100 * progA) + '%'}" aria-valuetext="{{ (100.0 * progA) + ' %' }}%">
+                                <div style="text-align: center"><b>Enter some text to start...</b></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" ng-if="!compression.busy && compression.text.length && (compression.result.length < compression.text.length)">
+                    <div class="col-md-12">
+                        <div class="progress progress-striped">
+                            <div class="progress-bar" ng-class="'progress-bar-primary'"
+                                 ng:init="progA = (compression.result.length / compression.text.length)"
+                                 role="progressbar" aria-valuenow="{{ progA }}" aria-valuemin="0" aria-valuemax="100"
+                                 ng-style="{width: (100 * progA) + '%'}" aria-valuetext="{{ (100.0 * progA) + ' %' }}%">
+                                <span ng-if="progA > 0">{{ (100 * progA) | number:2 }}% </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" ng-if="!compression.busy && compression.text.length && compression.result.length > compression.text.length">
+                    <div class="col-md-12">
+                        <div class="progress progress-striped">
+                            <div class="progress-bar" ng-class="'progress-bar-warning'"
+                                 ng:init="progA = 1.0 * compression.text.length / compression.result.length"
+                                 role="progressbar" aria-valuenow="{{ progA }}" aria-valuemin="0" aria-valuemax="100"
+                                 ng-style="{width: (100 * progA) + '%'}" aria-valuetext="{{ (100.0 * progA) + ' %' }}%">
+                                <span ng-if="progA > 0">{{ (compression.text.length) | toBytes }}, 100% </span>
+                            </div>
+                            <div class="progress-bar" ng-class="'progress-bar-danger'"
+                                 ng:init="progB = 1.0 - compression.text.length / compression.result.length"
+                                 role="progressbar" aria-valuenow="{{ progB }}" aria-valuemin="0" aria-valuemax="100"
+                                 ng-style="{width: (100 * progB) + '%'}" aria-valuetext="{{ (100.0 * progB) + ' %' }}%">
+                                <span ng-if="progB > 0">{{ (compression.result.length - compression.text.length) | toBytes }}, {{ 100.0 * (compression.result.length - compression.text.length) / (1.0 * compression.text.length) | number:2 }}% </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <textarea ng-model="compression.text" ng-disabled="compression.busy || compression.result" style="width: 100%; min-height: 480px;" placeholder="Enter some text here..."></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <textarea ng-model="compression.result" ng-disabled="compression.busy || !compression.result" style="width: 100%; min-height: 480px;" readonly></textarea>
+                    </div>
                 </div>
             </div>
             <hr />
