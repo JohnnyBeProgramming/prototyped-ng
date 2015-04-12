@@ -117,6 +117,6 @@ module.exports = {
             '<%= cfg.base %><%= cfg.web %>/assets/css/!app*.css',
             '<%= cfg.base %><%= cfg.web %>/**/**.min.css'
         ],
-        dest: '<%= cfg.base %><%= cfg.web %>/<%= cfg.lib %>app/app.styles.js',
+        dest: '<%= cfg.base %><%= cfg.web %>/<%= cfg.lib %>/app/app.styles.js',
     },
 };
