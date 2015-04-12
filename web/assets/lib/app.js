@@ -330,7 +330,7 @@ app.config(['$controllerProvider', '$provide', '$compileProvider', function ($co
     // definitions are no longer valid, we can just
     // override them to use the providers for post-
     // bootstrap loading.
-    console.debug(" - Updating runtime for async calls");
+    console.debug(" - Updating angular runtime...");
 
     // Let's keep the older references.
     app._controller = app.controller;

@@ -7,15 +7,13 @@
     <div class="row">
         <div class="col-md-12">
             <span class="pull-right ng-cloak" style="padding: 6px;">
-                <input type="checkbox"
+                <input bs:switch type="checkbox"
                        ng:model="appConfig.decorators.enabled"
-                       bs:switch
                        switch:size="mini"
                        switch:label="Decorators"
                        switch:inverse="false" />
-                <input type="checkbox"
+                <input bs:switch type="checkbox"
                        ng:model="appConfig.interceptors.enabled"
-                       bs:switch
                        switch:size="mini"
                        switch:label="Interceptors"
                        switch:inverse="false" />
@@ -48,7 +46,9 @@
             </p>
             <hr />
             <p>
-                <a class="btn btn-default" ng-class="{ 'btn-success': (decorators.lastStatus && decorators.lastResult), 'btn-danger': (!decorators.lastStatus && decorators.lastResult.message) }" href="" ng-click="decorators.runPromiseAction()">Run Promised Action</a>
+                <a href="" class="btn btn-primary"
+                   ng-class="{ 'btn-success': (decorators.lastStatus && decorators.lastResult), 'btn-danger': (!decorators.lastStatus && decorators.lastResult) }"
+                   ng-click="decorators.runPromiseAction()">Run Promised Action</a>
                 <a class="btn btn-default"
                    ng-click="decorators.fcall()"
                    ng-disabled="!appConfig.decorators.enabled"

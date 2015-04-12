@@ -282,44 +282,44 @@ angular.module('prototyped.ng.samples.decorators', []).config([
                 debug: true,
                 enabled: appConfigProvider.getPersisted('interceptors.enabled') == '1',
                 extendXMLHttpRequest: function () {
+                    var appConfig = appConfigProvider.$get();
+                    var cfg = appConfig['interceptors'];
+
                     // Do some magic with the ajax request handler
                     var callback = XMLHttpRequest.prototype.open;
                     XMLHttpRequest.prototype.open = function (method, url, async, user, pass) {
-                        var ctx = {};
-
-                        // Check for auth info
-                        if (user || pass) {
-                            // Extended with auth info
-                            angular.extend(ctx, {
-                                username: user,
-                                password: pass
-                            });
+                        var ctx = { async: async };
+                        if (cfg.enabled) {
+                            // Check for auth info
+                            if (user || pass) {
+                                // Extended with auth info
+                                angular.extend(ctx, {
+                                    username: user,
+                                    password: pass
+                                });
+                            }
+                            console.log(' - [ Ajax ] ( ' + (async ? 'Async' : 'Sync') + ' ) => ', url, ctx);
                         }
-                        console.log(' - [ Ajax ] ( ' + (async ? 'Async' : 'Sync') + ' ) => ' + url + ' => ', ctx);
 
                         // Call the original function
                         if (callback) {
                             callback.apply(this, arguments);
                         }
                     };
-
-                    console.log(' - Extended the "XMLHttpRequest" object.');
                 }
             }
         });
     }]).config([
     '$httpProvider', 'appConfigProvider', function ($httpProvider, appConfigProvider) {
+        // Extend the base ajax request handler
         var appConfig = appConfigProvider.$get();
         var cfg = appConfig['interceptors'];
-
-        if (cfg.enabled) {
-            // Attach Angular's interceptor
-            $httpProvider.interceptors.push('httpInterceptor');
-
-            // Extend the base ajax request handler
-            console.log(' - Attaching interceptors...');
+        if (cfg) {
             cfg.extendXMLHttpRequest();
         }
+
+        // Attach Angular's interceptor
+        $httpProvider.interceptors.push('httpInterceptor');
     }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
@@ -391,7 +391,26 @@ angular.module('prototyped.ng.samples.decorators', []).config([
     'appConfigProvider', function (appConfigProvider) {
         appConfigProvider.set({
             'decorators': {
-                enabled: appConfigProvider.getPersisted('decorators.enabled') == '1'
+                debug: true,
+                enabled: appConfigProvider.getPersisted('decorators.enabled') == '1',
+                promptme: null,
+                filters: [
+                    function (include, item) {
+                        // Exclude loading bar delegates
+                        if (/(loading-bar)/i.test(item.filename))
+                            return false;
+                        return include;
+                    },
+                    function (include, item) {
+                        // Ignore routing...?
+                        if (/(angular-ui-router)/i.test(item.filename))
+                            return false;
+                        return include;
+                    },
+                    function (include, item) {
+                        return include || /(scope\.decorators\.runPromiseAction)/i.test(item.source);
+                    }
+                ]
             }
         });
     }]).config([
@@ -407,7 +426,10 @@ angular.module('prototyped.ng.samples.decorators', []).config([
             }
         });
     }]).config([
-    '$provide', 'decoratorConfig', function ($provide, cfg) {
+    '$provide', 'appConfigProvider', function ($provide, appConfigProvider) {
+        var appConfig = appConfigProvider.$get();
+        var cfg = appConfig['decorators'];
+
         // Our decorator will get called when / if the $q service needs to be
         // instantiated in the application. It is made available as the
         // "$delegate" reference (made available as an override in the "locals"
@@ -425,17 +447,22 @@ angular.module('prototyped.ng.samples.decorators', []).config([
             var proxy;
             proxy = $q.defer;
             $q.defer = function () {
+                // Use default call-through if not enabled...
+                if (!cfg.enabled)
+                    return proxy.apply(this, arguments);
                 var result, value;
                 var info = {
                     startAt: Date.now()
                 };
                 try  {
+                    // Try and get the original result
+                    result = proxy.apply(this, arguments);
+
+                    // Execute extended functionality....
                     var timeString = new Date(info.startAt).toLocaleTimeString();
                     if (cfg.debug)
                         console.groupCollapsed('[ ' + timeString + ' ] Promised action intercepted...');
 
-                    // Try and get the original result
-                    result = proxy.apply(this, arguments);
                     info.resultAt = Date.now();
                     info.stack = [];
 
@@ -453,50 +480,51 @@ angular.module('prototyped.ng.samples.decorators', []).config([
                     var failCount = 0;
                     if (cfg.debug)
                         console.debug('-------------------------------------------------------------------------------');
-                    stack.forEach(function (line, i) {
-                        // Extrack the function name and url location from the string
-                        var match = /(.+)(\s+)(\()(.+)(\))(\s*)/i.exec(line);
-                        if (match) {
-                            var item = {
-                                source: match[1].trim(),
-                                rawUrl: match[4].trim()
-                            };
+                    if (stack.length)
+                        stack.forEach(function (line, i) {
+                            // Extrack the function name and url location from the string
+                            var match = /(.+)(\s+)(\()(.+)(\))(\s*)/i.exec(line);
+                            if (match) {
+                                var item = {
+                                    source: match[1].trim(),
+                                    rawUrl: match[4].trim()
+                                };
 
-                            var parts = /(\w+:\/\/)([^\/]+)(\/)(.+\/)(.+.js)(:)?(\d+)?(:)?(\d+)?/i.exec(item.rawUrl);
-                            if (parts) {
-                                item.protocol = parts[1];
-                                item.hostname = parts[2];
-                                item.basepath = parts[4];
-                                item.filename = parts[5];
-                                item.fullname = item.basepath + '/' + item.filename;
-                                item.line = parts.length > 7 ? parts[7] : null;
-                                item.char = parts.length > 9 ? parts[9] : null;
+                                var parts = /(\w+:\/\/)([^\/]+)(\/)(.+\/)(.+.js)(:)?(\d+)?(:)?(\d+)?/i.exec(item.rawUrl);
+                                if (parts) {
+                                    item.protocol = parts[1];
+                                    item.hostname = parts[2];
+                                    item.basepath = parts[4];
+                                    item.filename = parts[5];
+                                    item.fullname = item.basepath + '/' + item.filename;
+                                    item.line = parts.length > 7 ? parts[7] : null;
+                                    item.char = parts.length > 9 ? parts[9] : null;
+                                }
+
+                                var filterResult = undefined;
+                                cfg.filters.forEach(function (filter) {
+                                    filterResult = filter(filterResult, item);
+                                });
+
+                                if (filterResult === true) {
+                                    // Includes takes pref.
+                                    if (cfg.debug)
+                                        console.info(' @ [ ' + item.hostname + ' ] \t' + item.filename + ' => ' + item.source);
+                                    passCount++;
+                                } else if (filterResult === false) {
+                                    // Some excludes found...
+                                    if (cfg.debug)
+                                        console.warn(' @ [ ' + item.hostname + ' ] \t' + item.filename + ' => ' + item.source);
+                                    failCount++;
+                                } else {
+                                    // No filters matched...
+                                    if (cfg.debug)
+                                        console.debug(' @ [ ' + item.hostname + ' ] \t' + item.filename + ' => ' + item.source);
+                                }
+
+                                info.stack.push(item);
                             }
-
-                            var filterResult = undefined;
-                            cfg.filters.forEach(function (filter) {
-                                filterResult = filter(filterResult, item);
-                            });
-
-                            if (filterResult === true) {
-                                // Includes takes pref.
-                                if (cfg.debug)
-                                    console.info(' @ [ ' + item.hostname + ' ] \t' + item.filename + ' => ' + item.source);
-                                passCount++;
-                            } else if (filterResult === false) {
-                                // Some excludes found...
-                                if (cfg.debug)
-                                    console.warn(' @ [ ' + item.hostname + ' ] \t' + item.filename + ' => ' + item.source);
-                                failCount++;
-                            } else {
-                                // No filters matched...
-                                if (cfg.debug)
-                                    console.debug(' @ [ ' + item.hostname + ' ] \t' + item.filename + ' => ' + item.source);
-                            }
-
-                            info.stack.push(item);
-                        }
-                    });
+                        });
                     if (cfg.debug)
                         console.debug('-------------------------------------------------------------------------------');
                     if (cfg.debug)
@@ -564,6 +592,7 @@ angular.module('prototyped.ng.samples.decorators', []).config([
                 } catch (ex) {
                     // Something went wrong!
                     info.error = ex;
+                    console.error(ex);
                 } finally {
                     // Record end time
                     info.endedAt = Date.now();
@@ -688,93 +717,11 @@ angular.module('prototyped.ng.samples.decorators', []).config([
             }
         }
 
-        // Register a decorator for the $q service.
-        cfg.enabled = cfg.getPersisted('monkeyPatching.enabled') == '1';
-        if (cfg.enabled) {
-            $provide.decorator("$q", decorateQService);
-        }
-    }]).constant('decoratorConfig', {
-    debug: false,
-    enabled: false,
-    filters: [
-        function (include, item) {
-            // Exclude loading bar delegates
-            if (/(loading-bar)/i.test(item.filename))
-                return false;
-            return include;
-        },
-        function (include, item) {
-            // Ignore routing...?
-            if (/(angular-ui-router)/i.test(item.filename))
-                return false;
-            return include;
-        },
-        function (include, item) {
-            return include || /(scope\.decorators\.runPromiseAction)/i.test(item.source);
-        }
-    ],
-    promptme: undefined,
-    template: 'samples/decorators/dialogs/interceptor.tpl.html',
-    modalController: function ($scope, $modalInstance) {
-        // Define modal scope
-        var _scope = $scope;
-        var status = $scope.status;
-        var result = $scope.result;
-        _scope.allowEmpty = typeof result === 'undefined';
-        _scope.action = status ? 'Accept' : 'Reject';
-        _scope.modalAction = (typeof status !== 'undefined') ? 'resp' : 'req';
-        _scope.promisedValue = status ? result : undefined;
-        _scope.rejectValue = !status ? result : new Error("Interceptor rejected the action.");
-        _scope.getStatus = function () {
-            return _scope.action == 'Accept';
-        };
-        _scope.getResult = function () {
-            return _scope.getStatus() ? _scope.promisedValue : _scope.rejectValue;
-        };
-        _scope.getType = function () {
-            var result = _scope.getResult();
-            return (typeof result);
-        };
-        _scope.getBody = function () {
-            return JSON.stringify(_scope.getResult());
-        };
-        _scope.setToggle = function (val) {
-            _scope.allowEmpty = val;
-        };
-        _scope.ok = function () {
-            if (!_scope.allowEmpty && !_scope.promisedValue) {
-                alert(_scope.allowEmpty);
-                return;
-            }
-            $modalInstance.close(_scope.promisedValue);
-        };
-        _scope.cancel = function () {
-            if (!_scope.allowEmpty && !_scope.rejectValue) {
-                return;
-            }
-            $modalInstance.dismiss(_scope.rejectValue);
-        };
-    },
-    getPersisted: function (cname) {
-        var name = cname + '=';
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ')
-                c = c.substring(1);
-            if (c.indexOf(name) == 0)
-                return c.substring(name.length, c.length);
-        }
-        return '';
-    },
-    setPersisted: function (cname, cvalue, exdays) {
-        var d = new Date();
-        d.setTime(d.getTime() + ((exdays || 7) * 24 * 60 * 60 * 1000));
-        var expires = "expires=" + d.toUTCString();
-        document.cookie = cname + "=" + cvalue + "; " + expires;
-    }
-}).controller('decoratorsController', [
-    '$rootScope', '$scope', '$state', '$stateParams', '$modal', '$q', '$timeout', '$window', 'decoratorConfig', function ($rootScope, $scope, $state, $stateParams, $modal, $q, $timeout, $window, cfg) {
+        $provide.decorator("$q", decorateQService);
+    }]).controller('decoratorsController', [
+    '$rootScope', '$scope', '$state', '$stateParams', '$modal', '$q', '$timeout', '$window', 'appConfig', function ($rootScope, $scope, $state, $stateParams, $modal, $q, $timeout, $window, appConfig) {
+        var cfg = appConfig['decorators'];
+
         $scope.interceptors = {
             triggerBadRequest: function () {
                 $state.go('samples.interceptors.badRequest');
@@ -862,21 +809,63 @@ angular.module('prototyped.ng.samples.decorators', []).config([
                 return modalInstance;
             }
         };
+    }]).controller('interceptModalController', [
+    '$scope', '$modalInstance', 'status', 'result', function ($scope, $modalInstance, status, result) {
+        $scope.status = status;
+        $scope.result = result;
+
+        // Define modal scope
+        $scope.allowEmpty = typeof result === 'undefined';
+        $scope.action = status ? 'Accept' : 'Reject';
+        $scope.modalAction = (typeof status !== 'undefined') ? 'resp' : 'req';
+        $scope.promisedValue = status ? result : undefined;
+        $scope.rejectValue = !status ? result : new Error("Interceptor rejected the action.");
+        $scope.getStatus = function () {
+            return $scope.action == 'Accept';
+        };
+        $scope.getResult = function () {
+            return $scope.getStatus() ? $scope.promisedValue : $scope.rejectValue;
+        };
+        $scope.getType = function () {
+            var result = $scope.getResult();
+            return (typeof result);
+        };
+        $scope.getBody = function () {
+            return JSON.stringify($scope.getResult());
+        };
+        $scope.setToggle = function (val) {
+            $scope.allowEmpty = val;
+        };
+        $scope.ok = function () {
+            if (!$scope.allowEmpty && !$scope.promisedValue) {
+                alert($scope.allowEmpty);
+                return;
+            }
+            $modalInstance.close($scope.promisedValue);
+        };
+        $scope.cancel = function () {
+            if (!$scope.allowEmpty && !$scope.rejectValue) {
+                return;
+            }
+            $modalInstance.dismiss($scope.rejectValue);
+        };
     }]).run([
-    '$modal', 'decoratorConfig', function ($modal, cfg) {
+    '$modal', 'appConfig', function ($modal, appConfig) {
         // Hook the interceptor function
+        var cfg = appConfig['decorators'];
         cfg.promptme = function (status, result) {
             return $modal.open({
-                templateUrl: cfg.template,
-                controller: function ($scope, $modalInstance) {
-                    $scope.status = status;
-                    $scope.result = result;
-
-                    // Delegate the controller logic
-                    cfg.modalController($scope, $modalInstance);
-                },
+                templateUrl: 'samples/decorators/dialogs/interceptor.tpl.html',
+                controller: 'interceptModalController',
                 size: 'sm',
-                resolve: {}
+                resolve: {
+                    status: function () {
+                        return status;
+                    },
+                    result: function () {
+                        return result;
+                    }
+                }
             }).result;
         };
     }]);
@@ -1075,7 +1064,7 @@ var proto;
                                     ex.filename + ':  ' + ex.lineno,
                                     true
                                 ];
-                                _gaq.push(ctx);
+                                window['_gaq'].push(ctx);
                             }
                         };
 
@@ -1190,6 +1179,7 @@ var proto;
                         this.name = 'notify';
                         this.label = 'User Notifications';
                         this.locked = false;
+                        this.lastError = null;
                         this.isOnline = false;
                         this.isEnabled = false;
                         // Hook the global handlers
@@ -1727,130 +1717,6 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
-/// <reference path="../../imports.d.ts" />
-angular.module('prototyped.ng.samples.interceptors', []).config([
-    'appConfigProvider', function (appConfigProvider) {
-        appConfigProvider.set({
-            'interceptors': {
-                debug: true,
-                enabled: appConfigProvider.getPersisted('interceptors.enabled') == '1',
-                extendXMLHttpRequest: function () {
-                    // Do some magic with the ajax request handler
-                    var callback = XMLHttpRequest.prototype.open;
-                    XMLHttpRequest.prototype.open = function (method, url, async, user, pass) {
-                        var ctx = {};
-
-                        // Check for auth info
-                        if (user || pass) {
-                            // Extended with auth info
-                            angular.extend(ctx, {
-                                username: user,
-                                password: pass
-                            });
-                        }
-                        console.log(' - [ Ajax ] ( ' + (async ? 'Async' : 'Sync') + ' ) => ' + url + ' => ', ctx);
-
-                        // Call the original function
-                        if (callback) {
-                            callback.apply(this, arguments);
-                        }
-                    };
-
-                    console.log(' - Extended the "XMLHttpRequest" object.');
-                }
-            }
-        });
-    }]).config([
-    '$httpProvider', 'appConfigProvider', function ($httpProvider, appConfigProvider) {
-        var appConfig = appConfigProvider.$get();
-        var cfg = appConfig['interceptors'];
-
-        if (cfg.enabled) {
-            // Attach Angular's interceptor
-            $httpProvider.interceptors.push('httpInterceptor');
-
-            // Extend the base ajax request handler
-            console.log(' - Attaching interceptors...');
-            cfg.extendXMLHttpRequest();
-        }
-    }]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Now set up the states
-        $stateProvider.state('samples.interceptors', {
-            url: '/interceptors',
-            views: {
-                'left@': { templateUrl: 'samples/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'samples/interceptors/main.tpl.html',
-                    controller: 'interceptorsController'
-                }
-            }
-        }).state('samples.interceptors.badRequest', {
-            url: '/badRequest',
-            views: {
-                'left@': { templateUrl: 'samples/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'samples/interceptors/bad.filename'
-                }
-            }
-        });
-    }]).service('httpInterceptor', [
-    '$rootScope', '$q', 'appConfig', function ($rootScope, $q, appConfig) {
-        var cfg = appConfig['interceptors'];
-        var service = this;
-
-        // Request interceptor (pre-fetch)
-        service.request = function (config) {
-            if (cfg.enabled) {
-                console.groupCollapsed(' -> Requesting: ' + config.url);
-                console.log(config);
-                console.groupEnd();
-            }
-            return config;
-        };
-
-        service.requestError = function (rejection) {
-            if (cfg.enabled) {
-                console.groupCollapsed(' -> Bad Request!');
-                console.error(rejection);
-                console.groupEnd();
-            }
-            return $q.reject(rejection);
-        };
-
-        service.response = function (response) {
-            if (cfg.enabled) {
-                console.groupCollapsed(' <- Responding: ' + response.config.url);
-                console.log(response);
-                console.groupEnd();
-            }
-
-            if (response.status === 401) {
-                $rootScope.$broadcast('unauthorized');
-            }
-
-            return response;
-        };
-
-        service.responseError = function (rejection) {
-            if (cfg.enabled) {
-                console.groupCollapsed(' <- Bad Response!');
-                console.error(rejection);
-                console.groupEnd();
-            }
-            return $q.reject(rejection);
-        };
-    }]).controller('interceptorsController', [
-    '$scope', '$state', function ($scope, $state) {
-        // Define the model controller
-        var context = $scope.interceptors = {
-            triggerBadRequest: function () {
-                $state.go('samples.interceptors.badRequest');
-            }
-        };
-    }]).run([
-    '$state', 'appConfig', function ($state, appConfig) {
-    }]);
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
@@ -3154,7 +3020,6 @@ angular.module('prototyped.ng.samples.styles3d', []).config([
 /// <reference path="compression/module.ng.ts" />
 /// <reference path="decorators/module.ng.ts" />
 /// <reference path="errorHandlers/module.ng.ts" />
-/// <reference path="interceptors/module.ng.ts" />
 /// <reference path="notifications/module.ng.ts" />
 /// <reference path="sampleData/module.ng.ts" />
 /// <reference path="styles3d/module.ng.ts" />

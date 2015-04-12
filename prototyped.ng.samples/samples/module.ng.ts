@@ -2,7 +2,6 @@
 /// <reference path="compression/module.ng.ts" />
 /// <reference path="decorators/module.ng.ts" />
 /// <reference path="errorHandlers/module.ng.ts" />
-/// <reference path="interceptors/module.ng.ts" />
 /// <reference path="notifications/module.ng.ts" />
 /// <reference path="sampleData/module.ng.ts" />
 /// <reference path="styles3d/module.ng.ts" />
@@ -17,7 +16,6 @@ angular.module('prototyped.ng.samples', [
     'prototyped.ng.samples.sampleData',
     'prototyped.ng.samples.location',
     'prototyped.ng.samples.decorators',
-    //'prototyped.ng.samples.interceptors',
     'prototyped.ng.samples.notifications',
     'prototyped.ng.samples.compression',
     'prototyped.ng.samples.styles3d',

@@ -33,7 +33,7 @@ module proto.ng.samples.errorHandlers.google {
                     ex.filename + ':  ' + ex.lineno,
                     true
                 ];
-                _gaq.push(ctx);
+                window['_gaq'].push(ctx);
             }
         }
 

@@ -8,6 +8,7 @@ module proto.ng.samples.errorHandlers {
         public name: string = 'notify';
         public label: string = 'User Notifications';
         public locked: boolean = false;
+        public lastError: any = null;
 
         public isOnline: boolean = false;
         public isEnabled: boolean = false;

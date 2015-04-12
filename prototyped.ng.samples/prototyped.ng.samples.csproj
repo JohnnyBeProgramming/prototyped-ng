@@ -50,7 +50,6 @@
     <TypeScriptCompile Include="samples\decorators\module.ng.ts" />
     <Content Include="samples\errorHandlers\main.tpl.html" />
     <TypeScriptCompile Include="samples\errorHandlers\module.ng.ts" />
-    <Content Include="samples\interceptors\main.tpl.html" />
     <TypeScriptCompile Include="samples\errorHandlers\typings\ErrorHandlers.ts" />
     <TypeScriptCompile Include="samples\errorHandlers\typings\ErrorHttpInterceptor.ts" />
     <TypeScriptCompile Include="samples\errorHandlers\typings\ExceptionHandlerFactory.ts" />
@@ -59,7 +58,6 @@
     <TypeScriptCompile Include="samples\errorHandlers\typings\raven\RavenService.ts" />
     <TypeScriptCompile Include="samples\errorHandlers\typings\config.ts" />
     <TypeScriptCompile Include="samples\errorHandlers\typings\SampleErrorService.ts" />
-    <TypeScriptCompile Include="samples\interceptors\module.ng.ts" />
     <Content Include="samples\left.tpl.html" />
     <Content Include="samples\location\views\aside.tpl.html" />
     <Content Include="samples\location\views\main.tpl.html" />
@@ -100,7 +98,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="builder\tasks\" />
-    <Folder Include="samples\interceptors\typings\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="builder\Packager.cs" />
