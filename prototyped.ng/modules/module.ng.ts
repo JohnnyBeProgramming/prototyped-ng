@@ -550,7 +550,7 @@ angular.module('prototyped.ng', [
         }
     }])
 
-    .run(['$rootScope', '$state', 'appConfig', 'appNode', 'appStatus', function ($rootScope, $state, appConfig, appNode, appStatus) {
+    .run(['$rootScope', '$state', '$filter', 'appConfig', 'appNode', 'appStatus', function ($rootScope, $state, $filter, appConfig, appNode, appStatus) {
 
         // Extend root scope with (global) vars
         angular.extend($rootScope, {
@@ -560,6 +560,34 @@ angular.module('prototyped.ng', [
             startAt: Date.now(),
             state: $state,
         });
+
+        // Hook extended function(s)
+        appStatus.getIcon = function () {
+            var match = /\/!(\w+)!/i.exec(appNode.proxy || '');
+            if (match && match.length > 1) {
+                switch (match[1]) {
+                    case 'test': return 'fa fa-puzzle-piece glow-blue animate-glow';
+                    case 'debug': return 'fa fa-bug glow-orange animate-glow';
+                }
+            }
+            return (appNode.active) ? 'fa-desktop' : 'fa-cube';
+        }
+        appStatus.getColor = function () {
+            var logs = appStatus.logs;
+            if ($filter('typeCount')(logs, 'error')) {
+                return 'glow-red';
+            }
+            if ($filter('typeCount')(logs, 'warn')) {
+                return 'glow-orange';
+            }
+            if ($filter('typeCount')(logs, 'info')) {
+                return 'glow-blue';
+            }
+            if (appNode.active > 0) {
+                return 'glow-green';
+            }
+            return '';
+        }
 
     }])
     .run(['appConfig', function (appConfig) {

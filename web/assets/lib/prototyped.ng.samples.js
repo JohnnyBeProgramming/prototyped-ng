@@ -792,53 +792,7 @@ angular.module('prototyped.ng.samples.decorators', []).config([
             };
         }
     }]);
-/// <reference path="RavenService.ts" />
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (samples) {
-            (function (errorHandlers) {
-                (function (raven) {
-                    var RavenErrorHandler = (function () {
-                        function RavenErrorHandler(service) {
-                            this.service = service;
-                            this.name = 'raven';
-                            this.label = 'Sentry via RavenJS';
-                        }
-                        Object.defineProperty(RavenErrorHandler.prototype, "enabled", {
-                            get: function () {
-                                return this.service.isEnabled;
-                            },
-                            set: function (state) {
-                                this.service.isEnabled = state;
-                            },
-                            enumerable: true,
-                            configurable: true
-                        });
-
-                        RavenErrorHandler.prototype.attach = function () {
-                            var isOnline = this.service.detect();
-                            this.service.isEnabled = true;
-                            this.service.handler.enabled = true;
-                        };
-
-                        RavenErrorHandler.prototype.dettach = function () {
-                            this.service.isEnabled = false;
-                            this.service.handler.enabled = false;
-                        };
-                        return RavenErrorHandler;
-                    })();
-                    raven.RavenErrorHandler = RavenErrorHandler;
-                })(errorHandlers.raven || (errorHandlers.raven = {}));
-                var raven = errorHandlers.raven;
-            })(samples.errorHandlers || (samples.errorHandlers = {}));
-            var errorHandlers = samples.errorHandlers;
-        })(ng.samples || (ng.samples = {}));
-        var samples = ng.samples;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-/// <reference path="RavenErrorHandler.ts" />
+/// <reference path="../../../../imports.d.ts" />
 
 var proto;
 (function (proto) {
@@ -851,14 +805,27 @@ var proto;
                             this.$rootScope = $rootScope;
                             this.$log = $log;
                             this.appConfig = appConfig;
+                            this.busy = false;
+                            this.name = 'raven';
+                            this.label = 'Sentry via RavenJS';
+                            this.locked = false;
                             this.editMode = false;
                             this.isOnline = false;
                             this.isEnabled = false;
                             this.lastError = null;
                             this.config = appConfig.ravenConfig;
-                            this.handler = new raven.RavenErrorHandler(this);
-                            appConfig.errorHandlers.push(this.handler);
                         }
+                        Object.defineProperty(RavenService.prototype, "enabled", {
+                            get: function () {
+                                return this.isEnabled;
+                            },
+                            set: function (state) {
+                                this.isEnabled = state;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
+
                         RavenService.prototype.handleException = function (source, ex, tags) {
                             if (!this.isOnline)
                                 return;
@@ -878,10 +845,10 @@ var proto;
                                 // Load required libraries if not defined
                                 if (typeof Raven === 'undefined') {
                                     this.$log.log('Loading: ' + urlRavenJS);
-                                    this.handler.busy = true;
+                                    this.busy = true;
                                     $.getScript(urlRavenJS, function (data, textStatus, jqxhr) {
                                         _this.$rootScope.$applyAsync(function () {
-                                            _this.handler.busy = false;
+                                            _this.busy = false;
                                             _this.init();
                                         });
                                     });
@@ -953,6 +920,15 @@ var proto;
                                 throw ex;
                             }
                         };
+
+                        RavenService.prototype.attach = function () {
+                            var isOnline = this.detect();
+                            this.isEnabled = true;
+                        };
+
+                        RavenService.prototype.dettach = function () {
+                            this.isEnabled = false;
+                        };
                         return RavenService;
                     })();
                     raven.RavenService = RavenService;
@@ -965,53 +941,7 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
-/// <reference path="GoogleErrorService.ts" />
-
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (samples) {
-            (function (errorHandlers) {
-                (function (google) {
-                    var GoogleErrorHandler = (function () {
-                        function GoogleErrorHandler(service) {
-                            this.service = service;
-                            this.locked = false;
-                            this.name = 'google';
-                            this.label = 'Google Analytics';
-                        }
-                        Object.defineProperty(GoogleErrorHandler.prototype, "enabled", {
-                            get: function () {
-                                return this.service.isEnabled;
-                            },
-                            set: function (state) {
-                                this.service.isEnabled = state;
-                            },
-                            enumerable: true,
-                            configurable: true
-                        });
-
-                        GoogleErrorHandler.prototype.attach = function () {
-                            var isOnline = this.service.detect();
-                            this.service.isEnabled = isOnline;
-                        };
-
-                        GoogleErrorHandler.prototype.dettach = function () {
-                            this.service.isEnabled = false;
-                        };
-                        return GoogleErrorHandler;
-                    })();
-                    google.GoogleErrorHandler = GoogleErrorHandler;
-                })(errorHandlers.google || (errorHandlers.google = {}));
-                var google = errorHandlers.google;
-            })(samples.errorHandlers || (samples.errorHandlers = {}));
-            var errorHandlers = samples.errorHandlers;
-        })(ng.samples || (ng.samples = {}));
-        var samples = ng.samples;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-/// <reference path="GoogleErrorHandler.ts" />
+/// <reference path="../../../../imports.d.ts" />
 
 var proto;
 (function (proto) {
@@ -1024,14 +954,27 @@ var proto;
                             this.$rootScope = $rootScope;
                             this.$log = $log;
                             this.appConfig = appConfig;
+                            this.busy = false;
+                            this.name = 'google';
+                            this.label = 'Google Analytics';
+                            this.locked = false;
                             this.editMode = false;
                             this.isOnline = false;
                             this.isEnabled = false;
                             this.lastError = null;
                             this.config = appConfig.googleConfig;
-                            this.handler = new google.GoogleErrorHandler(this);
-                            appConfig.errorHandlers.push(this.handler);
                         }
+                        Object.defineProperty(GoogleErrorService.prototype, "enabled", {
+                            get: function () {
+                                return this.isEnabled;
+                            },
+                            set: function (state) {
+                                this.isEnabled = state;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
+
                         GoogleErrorService.prototype.handleException = function (source, ex, tags) {
                             if (!this.isOnline)
                                 return;
@@ -1058,10 +1001,10 @@ var proto;
                                 } else {
                                     var urlGa = 'https://ssl.google-analytics.com/ga.js';
                                     this.$log.log('Loading: ' + urlGa);
-                                    this.handler.busy = true;
+                                    this.busy = true;
                                     $.getScript(urlGa, function (data, textStatus, jqxhr) {
                                         _this.$rootScope.$applyAsync(function () {
-                                            _this.handler.busy = false;
+                                            _this.busy = false;
                                             _this.isEnabled = true;
                                             _this.init();
                                         });
@@ -1120,6 +1063,15 @@ var proto;
                                 throw ex;
                             }
                         };
+
+                        GoogleErrorService.prototype.attach = function () {
+                            var isOnline = this.detect();
+                            this.isEnabled = isOnline;
+                        };
+
+                        GoogleErrorService.prototype.dettach = function () {
+                            this.isEnabled = false;
+                        };
                         return GoogleErrorService;
                     })();
                     google.GoogleErrorService = GoogleErrorService;
@@ -1139,48 +1091,6 @@ var proto;
     (function (ng) {
         (function (samples) {
             (function (errorHandlers) {
-                var ErrorHandlers = (function () {
-                    function ErrorHandlers() {
-                    }
-                    ErrorHandlers.Register = function (handler) {
-                        this.list.push(handler);
-                    };
-
-                    ErrorHandlers.ListAll = function () {
-                        return this.list;
-                    };
-                    ErrorHandlers.enabled = true;
-                    ErrorHandlers.logs = null;
-                    ErrorHandlers.list = [];
-                    return ErrorHandlers;
-                })();
-                errorHandlers.ErrorHandlers = ErrorHandlers;
-
-                function HandleException(source, error, tags) {
-                    var enabled = ErrorHandlers.enabled;
-                    if (enabled) {
-                        try  {
-                            // Notify all handlers that are enabled
-                            ErrorHandlers.ListAll().forEach(function (service) {
-                                if (service.isEnabled && service.handleException) {
-                                    service.handleException(source, error, tags || {});
-                                }
-                            });
-                        } catch (ex) {
-                            // Something went wrong :(
-                            console.error('Critical fault in error reporting services...', ex);
-                        }
-                    }
-
-                    // Display error in the console...
-                    var $log = ErrorHandlers.logs || angular.injector(['ng']).get('$log');
-                    if ($log)
-                        $log.error.apply($log, [source + ': ' + error.message || error, tags]);
-
-                    return enabled;
-                }
-                errorHandlers.HandleException = HandleException;
-
                 var SampleErrorService = (function () {
                     function SampleErrorService($rootScope, $log, appConfig, raven, google) {
                         this.$rootScope = $rootScope;
@@ -1188,21 +1098,95 @@ var proto;
                         this.appConfig = appConfig;
                         this.raven = raven;
                         this.google = google;
+                        this.busy = false;
+                        this.name = 'notify';
+                        this.label = 'User Notifications';
+                        this.locked = false;
+                        this.isOnline = false;
+                        this.isEnabled = false;
                         // Hook the global handlers
-                        ErrorHandlers.logs = $log;
-                        ErrorHandlers.Register(google);
-                        ErrorHandlers.Register(raven);
+                        errorHandlers.ErrorHandlers.logs = $log;
+                        errorHandlers.ErrorHandlers.Register(this);
+                        errorHandlers.ErrorHandlers.Register(google);
+                        errorHandlers.ErrorHandlers.Register(raven);
                     }
                     Object.defineProperty(SampleErrorService.prototype, "enabled", {
+                        //get isEnabled(): boolean { return ErrorHandlers.enabled; }
+                        //set isEnabled(state: boolean) { ErrorHandlers.enabled = state; }
                         get: function () {
-                            return ErrorHandlers.enabled;
+                            return this.isEnabled;
                         },
                         set: function (state) {
-                            ErrorHandlers.enabled = state;
+                            this.isEnabled = state;
                         },
                         enumerable: true,
                         configurable: true
                     });
+
+                    Object.defineProperty(SampleErrorService.prototype, "errorHandlers", {
+                        get: function () {
+                            return errorHandlers.ErrorHandlers.ListAll();
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
+
+                    SampleErrorService.prototype.handleException = function (source, ex, tags) {
+                        if (!this.isOnline)
+                            return;
+                        this.$log.log(' - Notifying User: "' + ex.message + '"...');
+                        if ('alertify' in window) {
+                            window['alertify'].log(source + ': ' + ex.message, 'error', 3000);
+                        }
+                    };
+
+                    SampleErrorService.prototype.detect = function () {
+                        var _this = this;
+                        var scriptUrl = 'https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.min.js';
+                        try  {
+                            // Load required libraries if not defined
+                            if ('alertify' in window) {
+                                this.isEnabled = true;
+                                this.isOnline = true;
+                            } else {
+                                this.$log.log('Loading: ' + scriptUrl);
+                                this.busy = true;
+                                $.getScript(scriptUrl, function (data, textStatus, jqxhr) {
+                                    _this.$rootScope.$applyAsync(function () {
+                                        _this.busy = false;
+                                        _this.isEnabled = true;
+                                        _this.isOnline = true;
+                                    });
+                                });
+                            }
+                        } catch (ex) {
+                            this.isOnline = false;
+                            this.lastError = ex;
+                        }
+                        return this.isOnline;
+
+                        try  {
+                            // Load required libraries if not defined
+                            var url = 'https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.min.js';
+                            $.getScript(url).done(function (script, textStatus) {
+                                _this.$rootScope.$applyAsync(function () {
+                                    _this.isOnline = true;
+                                    _this.isEnabled = true;
+                                });
+                            }).fail(function (jqxhr, settings, exception) {
+                                _this.$rootScope.$applyAsync(function () {
+                                    _this.isOnline = false;
+                                    _this.isEnabled = false;
+                                });
+                            });
+                            this.isOnline = false;
+                            this.isEnabled = false;
+                        } catch (ex) {
+                            this.isOnline = false;
+                        }
+
+                        return false;
+                    };
 
                     SampleErrorService.prototype.checkChanged = function (handler) {
                         if (!handler)
@@ -1230,7 +1214,7 @@ var proto;
                             this.$log.info('About to break something...');
                             window['does not exist'].managedSampleError++;
                         } catch (ex) {
-                            HandleException('Managed Sample', ex, tags);
+                            errorHandlers.HandleException('Managed Sample', ex, tags);
                             this.$log.warn('Exception caught and swallowed.');
                             // throw ex; // this will be caught by the global exception handler
                         }
@@ -1320,6 +1304,15 @@ var proto;
                             window['does not exist'].timeoutSampleError++;
                             _this.$log.info('Exit timeout...');
                         }, 2 * 1000);
+                    };
+
+                    SampleErrorService.prototype.attach = function () {
+                        var isOnline = this.detect();
+                        this.isEnabled = isOnline;
+                    };
+
+                    SampleErrorService.prototype.dettach = function () {
+                        this.isEnabled = false;
                     };
                     return SampleErrorService;
                 })();
@@ -1477,14 +1470,7 @@ var proto;
             (function (_errorHandlers) {
                 function ConfigureErrorHandlers(appConfigProvider) {
                     appConfigProvider.set({
-                        'errorHandlers': [
-                            {
-                                name: 'proto',
-                                locked: true,
-                                enabled: true,
-                                label: 'Prototyped Handlers'
-                            }
-                        ]
+                        'errorHandlers': proto.ng.samples.errorHandlers.ErrorHandlers
                     });
                 }
                 _errorHandlers.ConfigureErrorHandlers = ConfigureErrorHandlers;
@@ -1598,6 +1584,61 @@ angular.module('prototyped.ng.samples.errorHandlers', [
             sampleErrors: sampleErrorService
         });
     }]);
+/// <reference path="raven/RavenService.ts" />
+/// <reference path="google/GoogleErrorService.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                var ErrorHandlers = (function () {
+                    function ErrorHandlers() {
+                    }
+                    ErrorHandlers.Register = function (handler) {
+                        this.list.push(handler);
+                    };
+
+                    ErrorHandlers.ListAll = function () {
+                        return this.list;
+                    };
+                    ErrorHandlers.enabled = true;
+                    ErrorHandlers.logs = null;
+                    ErrorHandlers.list = [];
+                    return ErrorHandlers;
+                })();
+                errorHandlers.ErrorHandlers = ErrorHandlers;
+
+                function HandleException(source, error, tags) {
+                    var enabled = ErrorHandlers.enabled;
+                    if (enabled) {
+                        try  {
+                            // Notify all handlers that are enabled
+                            ErrorHandlers.ListAll().forEach(function (service) {
+                                if (service.isEnabled && service.handleException) {
+                                    service.handleException(source, error, tags || {});
+                                }
+                            });
+                        } catch (ex) {
+                            // Something went wrong :(
+                            console.error('Critical fault in error reporting services...', ex);
+                        }
+                    }
+
+                    // Display error in the console...
+                    var $log = ErrorHandlers.logs || angular.injector(['ng']).get('$log');
+                    if ($log)
+                        $log.error.apply($log, [source + ': ' + error.message || error, tags]);
+
+                    return enabled;
+                }
+                errorHandlers.HandleException = HandleException;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.ng.samples.interceptors', []).config([
     '$stateProvider', function ($stateProvider) {
@@ -3424,13 +3465,13 @@ angular.module('prototyped.ng.samples', [
 });
 ;angular.module('prototyped.ng.samples.views', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('samples/compression/main.tpl.html',
-    '<div id=CompressionView class=container style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a class="btn btn-default" href="" ng-click=compression.clearResult() ng-if=compression.ready>Cancel</a> <a class="btn btn-default" ng-class="{ \'btn-primary\': !compression.ready && compression.text.length }" href="" ng-click=compression.compressText(compression.text) ng-disabled=!compression.text.length>Compress Text</a> <a id=runAsScript ng-disabled=!compression.ready class="btn btn-default" ng-class="{ \'btn-primary\': compression.ready }">Run As Script</a></span><h4>Dynamic Compression <small>Encode strings and urls into more compact forms.</small></h4><hr><div><div class=row><div class=col-md-6><div class="btn-group pull-right"><select ng-model=compression.sampleUrl ng-disabled=compression.busy><option value="">- Custom Text -</option><option value=assets/lib/screen.js>JavaScript #1</option><option value=assets/lib/prototyped.ng.js>JavaScript #2</option><option value=assets/css/app.min.css>CSS Styles #1</option><option value=assets/css/prototyped.min.css>CSS Styles #2</option></select></div><h5>Enter text to compress: <small ng-if=compression.text.length>{{ compression.text.length | toBytes }}, uncompressed</small></h5></div><div class=col-md-6><span class=pull-right>Use Compression:<select ng-model=compression.target ng-disabled=compression.busy><option value="">default</option><option value=lzw>lzw</option><option value=scsu>scsu</option><option value=html>html</option><option value=base64>base64</option></select></span><h5>Compressed Text: <small ng-if=compression.result.length>{{ compression.result.length | toBytes }}</small> <small ng-if="!compression.busy && compression.result.length">, {{ compression.getPercentage() | number:2 }}% reduction</small></h5></div></div><div class=row ng-if=compression.busy><div class=col-md-12><div class="active progress progress-striped"><div ng:init="progA = 1.0" role=progressbar aria-valuenow="{{ progA }}" aria-valuemin=0 aria-valuemax=100 class=progress-bar ng-class="\'progress-bar-info\'" ng-style="{width: (100 * progA) + \'%\'}" aria-valuetext="{{ (100.0 * progA) + \' %\' }}%"><span>Busy...</span></div></div></div></div><div class=row ng-if="!compression.busy && !compression.text.length"><div class=col-md-12><div class=progress><div ng:init="progA = 1.0" role=progressbar aria-valuenow="{{ progA }}" aria-valuemin=0 aria-valuemax=100 class=progress-bar ng-class="\'progress-bar-primary\'" ng-style="{width: (100 * progA) + \'%\'}" aria-valuetext="{{ (100.0 * progA) + \' %\' }}%"><div style="text-align: center"><b>Enter some text to start...</b></div></div></div></div></div><div class=row ng-if="!compression.busy && compression.text.length && (compression.result.length < compression.text.length)"><div class=col-md-12><div class="progress progress-striped"><div class=progress-bar ng-class="\'progress-bar-primary\'" ng:init="progA = (compression.result.length / compression.text.length)" role=progressbar aria-valuenow="{{ progA }}" aria-valuemin=0 aria-valuemax=100 ng-style="{width: (100 * progA) + \'%\'}" aria-valuetext="{{ (100.0 * progA) + \' %\' }}%"><span ng-if="progA > 0">{{ (100 * progA) | number:2 }}%</span></div></div></div></div><div class=row ng-if="!compression.busy && compression.text.length && compression.result.length > compression.text.length"><div class=col-md-12><div class="progress progress-striped"><div class=progress-bar ng-class="\'progress-bar-warning\'" ng:init="progA = 1.0 * compression.text.length / compression.result.length" role=progressbar aria-valuenow="{{ progA }}" aria-valuemin=0 aria-valuemax=100 ng-style="{width: (100 * progA) + \'%\'}" aria-valuetext="{{ (100.0 * progA) + \' %\' }}%"><span ng-if="progA > 0">{{ (compression.text.length) | toBytes }}, 100%</span></div><div class=progress-bar ng-class="\'progress-bar-danger\'" ng:init="progB = 1.0 - compression.text.length / compression.result.length" role=progressbar aria-valuenow="{{ progB }}" aria-valuemin=0 aria-valuemax=100 ng-style="{width: (100 * progB) + \'%\'}" aria-valuetext="{{ (100.0 * progB) + \' %\' }}%"><span ng-if="progB > 0">{{ (compression.result.length - compression.text.length) | toBytes }}, {{ 100.0 * (compression.result.length - compression.text.length) / (1.0 * compression.text.length) | number:2 }}%</span></div></div></div></div><div class=row><div class=col-md-6><textarea ng-model=compression.text ng-disabled="compression.busy || compression.result" style="width: 100%; min-height: 480px" placeholder="Enter some text here..."></textarea></div><div class=col-md-6><textarea ng-model=compression.result ng-disabled="compression.busy || !compression.result" style="width: 100%; min-height: 480px" readonly></textarea></div></div></div><hr><div ng:if=compression.error class="alert alert-danger"><b>Error:</b> {{ compression.error.message || \'Something went wrong.\' }}</div></div></div></div>');
+    '<div id=CompressionView class=container style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a class="btn btn-default" href="" ng-click=compression.clearResult() ng-if=compression.ready>Cancel</a> <a class="btn btn-default" ng-class="{ \'btn-primary\': !compression.ready && compression.text.length }" href="" ng-click=compression.compressText(compression.text) ng-disabled=!compression.text.length>Compress Text</a> <a id=runAsScript ng-disabled=!compression.ready class="btn btn-default" ng-class="{ \'btn-primary\': compression.ready }">Run As Script</a></span><h4>Dynamic Compression <small>Encode strings and urls into more compact forms.</small></h4><hr><div><div class=row><div class=col-md-6><div class="btn-group pull-right"><select ng-model=compression.sampleUrl ng-disabled=compression.busy><option value="">- Custom Text -</option><option value=assets/lib/screen.js>JavaScript #1</option><option value=assets/lib/prototyped.ng.js>JavaScript #2</option><option value=assets/css/app.min.css>CSS Styles #1</option><option value=assets/css/prototyped.min.css>CSS Styles #2</option></select></div><h5>Enter text to compress: <small ng-if=compression.text.length>{{ compression.text.length | toBytes }}, uncompressed</small></h5></div><div class=col-md-6><span class=pull-right>Use Compression:<select ng-model=compression.target ng-disabled=compression.busy><option value="">default</option><option value=lzw>lzw</option><option value=scsu>scsu</option><option value=html>html</option><option value=base64>base64</option></select></span><h5>Compressed Text: <small ng-if=compression.result.length>{{ compression.result.length | toBytes }}</small> <small ng-if="!compression.busy && compression.result.length">, {{ compression.getPercentage() | number:2 }}% reduction</small></h5></div></div><div class=row ng-if=compression.busy><div class=col-md-12><div class="active progress progress-striped"><div ng:init="progA = 1.0" role=progressbar aria-valuenow="{{ progA }}" aria-valuemin=0 aria-valuemax=100 class=progress-bar ng-class="\'progress-bar-info\'" ng-style="{width: (100 * progA) + \'%\'}" aria-valuetext="{{ (100.0 * progA) + \' %\' }}%"><span>Busy...</span></div></div></div></div><div class=row ng-if="!compression.busy && !compression.text.length"><div class=col-md-12><div class=progress><div style="text-align: center"><em>Enter some text to start...</em></div></div></div></div><div class=row ng-if="!compression.busy && compression.text.length && (compression.result.length < compression.text.length)"><div class=col-md-12><div class="progress progress-striped"><div class=progress-bar ng-class="\'progress-bar-primary\'" ng:init="progA = (compression.result.length / compression.text.length)" role=progressbar aria-valuenow="{{ progA }}" aria-valuemin=0 aria-valuemax=100 ng-style="{width: (100 * progA) + \'%\'}" aria-valuetext="{{ (100.0 * progA) + \' %\' }}%"><span ng-if="progA > 0">{{ (100 * progA) | number:2 }}%</span></div></div></div></div><div class=row ng-if="!compression.busy && compression.text.length && compression.result.length > compression.text.length"><div class=col-md-12><div class="progress progress-striped"><div class=progress-bar ng-class="\'progress-bar-warning\'" ng:init="progA = 1.0 * compression.text.length / compression.result.length" role=progressbar aria-valuenow="{{ progA }}" aria-valuemin=0 aria-valuemax=100 ng-style="{width: (100 * progA) + \'%\'}" aria-valuetext="{{ (100.0 * progA) + \' %\' }}%"><span ng-if="progA > 0">{{ (compression.text.length) | toBytes }}, 100%</span></div><div class=progress-bar ng-class="\'progress-bar-danger\'" ng:init="progB = 1.0 - compression.text.length / compression.result.length" role=progressbar aria-valuenow="{{ progB }}" aria-valuemin=0 aria-valuemax=100 ng-style="{width: (100 * progB) + \'%\'}" aria-valuetext="{{ (100.0 * progB) + \' %\' }}%"><span ng-if="progB > 0">{{ (compression.result.length - compression.text.length) | toBytes }}, {{ 100.0 * (compression.result.length - compression.text.length) / (1.0 * compression.text.length) | number:2 }}%</span></div></div></div></div><div class=row><div class=col-md-6><textarea ng-model=compression.text ng-disabled="compression.busy || compression.result" style="width: 100%; min-height: 480px" placeholder="Enter some text here..."></textarea></div><div class=col-md-6><textarea ng-model=compression.result ng-disabled="compression.busy || !compression.result" style="width: 100%; min-height: 480px" readonly></textarea></div></div></div><hr><div ng:if=compression.error class="alert alert-danger"><b>Error:</b> {{ compression.error.message || \'Something went wrong.\' }}</div></div></div></div>');
   $templateCache.put('samples/decorators/dialogs/interceptor.tpl.html',
     '<div class=modal-body style="min-height: 180px; padding: 6px"><ul class="nav nav-tabs"><li role=presentation ng-class="{ \'active\' : (modalAction == \'req\') }"><a href="" ng-click="modalAction = \'req\'">Request Details</a></li><li role=presentation ng-class="{ \'active\' : (modalAction == \'resp\') }"><a href="" ng-click="modalAction = \'resp\'">Return Result</a></li></ul><div class=thumbnail style="border-top: none; margin-bottom: 0; border-top-left-radius: 0; border-top-right-radius: 0"><form ng-switch=modalAction style="margin-top: 6px"><div ng-if=statusMsg class="alert alert-warning" style="padding: 8px; margin: 0">{{ statusMsg }}</div><div ng-switch-default class=docked><em class=text-muted style="padding: 6px; margin: 50px auto">Select an action to start with...</em></div><div ng-switch-when=req><h5>Request Details <small>More about the source</small></h5><p>...</p></div><div ng-switch-when=resp><h5>Result Returned <small ng-if=!status class="text-danger pull-right"><i class="fa fa-close"></i> Rejected</small> <small ng-if=status class="text-success pull-right"><i class="fa fa-check"></i> Responded</small></h5><div class="input-group input-group-sm"><span class=input-group-addon id=sizing-addon3>Type</span> <input class=form-control ng-value=getType() ng-readonly=true placeholder=undefined aria-describedby=sizing-addon3> <span class=input-group-btn><button type=button ng-disabled=true class="btn btn-default dropdown-toggle" data-toggle=dropdown aria-expanded=false>Edit <span class=caret></span></button><ul class="dropdown-menu dropdown-menu-right" role=menu><li><a href=#>Accepted Reply</a></li><li><a href=#>Rejection Reason</a></li><li class=divider></li><li><a href=#>Reset to Defaults</a></li></ul></span></div><textarea ng-class="{ \'alert alert-danger\':!getStatus(), \'alert alert-success\':getStatus() }" ng-readonly=true ng-bind=getBody() style="width: 100%; min-height: 160px; margin:0"></textarea><div class=input-group><div ng-click=setToggle(!allowEmpty) style="padding-left: 8px"><i class=fa ng-class="{ \'fa-check\':allowEmpty, \'fa-close\':!allowEmpty }"></i> <span>Allow empty value as return value</span></div></div></div></form></div></div><div class=modal-footer><button id=btnCancel ng-disabled="!allowEmpty && !rejectValue" class="btn btn-danger pull-left" ng-click=cancel()>Reject Action</button> <button id=btnUpdate ng-disabled="!allowEmpty && !promisedValue" class="btn btn-success pull-right" ng-click=ok()>Complete Action</button></div>');
   $templateCache.put('samples/decorators/main.tpl.html',
     '<div id=DecoratorView style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=decorators.busy ng-click=decorators.apply() class=btn ng-class="{ \'btn-primary\': !decorators.isPatched(), \'btn-success\': decorators.isPatched() }">{{ decorators.isPatched() ? \'Application Patched!\' : \'Apply Monkey Patches\' }}</a></span><h4>Patching Services <small>Monkey patching the normal behaviour of your application.</small></h4><hr><p>By making use of angular\'s <a href=https://docs.angularjs.org/api/auto/service/$provide>$provide decorators</a>, we patch the <a href=https://docs.angularjs.org/api/ng/service/$q>$q service</a> to intercept any promised actions and take over the reply mechanism.</p><p>After the initial investigation, it quickly became clear there are just way too many promises to intercept and keep track of, many of them in the angular framework itself. A mechanism was required to identify (and filter out) the promises we were looking for.</p><p>With no <em>real</em> unique identifiers to work with, stack traces are used for tracking identity. In javascript, stack traces are ugly, and not always helpful, but with a little bit of regular expressions, enough sensible info can be extracted to get a picture of <em>where</em> the actions originate from. And this opens up a whole new world of oppertunities...</p><p>- This sample was inspired by <a target=_blank href=http://www.bennadel.com/blog/2775-monkey-patching-the-q-service-using-provide-decorator-in-angularjs.htm>this awesome blog post</a>. :)<br>- The idea to use stack traces was inspired from <a target=_blank href=http://www.codeovertones.com/2011/08/how-to-print-stack-trace-anywhere-in.html>this awesome blog post</a>.</p><hr><p><a class="btn btn-default" ng-class="{ \'btn-success\': (decorators.lastStatus && decorators.lastResult), \'btn-danger\': (!decorators.lastStatus && decorators.lastResult.message) }" href="" ng-click=decorators.runPromiseAction()>Run Promised Action</a> <a class="btn btn-default" ng-class="{ \'btn-warning\':decorators.isPatched(), \'btn-success\': decorators.fcallState == \'Resolved\', \'btn-danger\': decorators.fcallState == \'Rejected\' }" href="" ng-click=decorators.fcall() ng-disabled=!decorators.isPatched()>Call Marshalled Function</a></p><hr><div ng:if=decorators.error class="alert alert-danger"><b>Error:</b> {{ decorators.error.message || \'Something went wrong.\' }}</div><div ng:if=!decorators.error><div class="alert alert-success" ng-if="decorators.lastStatus === true"><b>Accepted:</b> {{ decorators.lastResult || \'No additional information specified.\' }}</div><div class="alert alert-danger" ng-if="decorators.lastStatus === false"><b>Rejected:</b> {{ (decorators.lastResult.message || decorators.lastResult) || \'No additional information specified.\' }}</div></div></div></div></div>');
   $templateCache.put('samples/errorHandlers/main.tpl.html',
-    '<div ng:cloak class=container style="width: 100%"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link rel=stylesheet resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input type=checkbox ng:show="sampleErrors.result !== null" ng:model=sampleErrors.enabled bs:switch switch:size=mini switch:inverse=true></span><h4>Exception Handling <small>Error reporting and client-side exception handling</small></h4><hr><div class=row><div class=col-md-3><div><h5>Throw Exceptions</h5><ul class=list-group><li class=list-group-item><a href="" ng-click=sampleErrors.throwManagedException()><i class="fa fa-cubes" ng-class="{ \'glow-blue animate-glow\': samples.busy, \'glow-green\': !samples.busy, \'glow-red animate-glow\': samples.error }"></i>&nbsp; Catch Managed Error</a></li><li class=list-group-item><a href="" ng-click=sampleErrors.throwAjaxException()><i class="fa fa-cubes" ng-class="{ \'glow-blue animate-glow\': samples.busy, \'glow-green\': !samples.busy, \'glow-red animate-glow\': samples.error }"></i>&nbsp; Create Ajax Error</a></li><li class=list-group-item><a href="" ng-click=sampleErrors.throwAngularException()><i class="fa fa-cubes" ng-class="{ \'glow-blue animate-glow\': samples.busy, \'glow-green\': !samples.busy, \'glow-red animate-glow\': samples.error }"></i>&nbsp; AngularJS Error</a></li><li class=list-group-item><a href="" ng-click=sampleErrors.throwTimeoutException()><i class="fa fa-cubes" ng-class="{ \'glow-blue animate-glow\': samples.busy, \'glow-green\': !samples.busy, \'glow-red animate-glow\': samples.error }"></i>&nbsp; Timeout Error</a></li><li class=list-group-item><a href="" onclick=sampleError.dontExist++><i class="fa fa-cogs" ng-class="{ \'glow-blue animate-glow\': samples.busy, \'glow-green\': !samples.busy, \'glow-red animate-glow\': samples.error }"></i>&nbsp; Unhandled Exception</a></li></ul></div></div><div ng-class="{ \'col-md-6\':sampleErrors.enabled, \'col-md-9\': !sampleErrors.enabled }"><span class=pull-right><a href="" ng-click="">Refresh</a> | <a href="" ng-click="appStatus.logs = []">Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appStatus.logs.length><td colspan=3><em>No event have been logged...</em></td></tr><tr ng-repeat="row in appStatus.logs" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td><div class=ellipsis style="width: 100%">{{ row.desc }}</div></td></tr></tbody></table><div ng-if=!appStatus.logs.length><h5>Inspired by these blogs:</h5><ul class="alert alert-info" style="list-style: none"><li><a target=_blank href=http://www.davecap.com/post/46522098029/using-sentry-raven-js-with-angularjs-to-catch><i class="fa fa-external-link-square"></i> http://www.davecap.com</a></li><li><a target=_blank href=http://bahmutov.calepin.co/catch-all-errors-in-angular-app.html><i class="fa fa-external-link-square"></i> http://bahmutov.calepin.co</a></li><li><a target=_blank href=http://davidwalsh.name/track-errors-google-analytics><i class="fa fa-external-link-square"></i> http://davidwalsh.name</a></li></ul></div></div><div ng-class="{ \'col-md-3\':sampleErrors.enabled, \'hide\': !sampleErrors.enabled }"><div><h5>Exception Handlers</h5><form class=thumbnail><div style="padding: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !handler.enabled && handler.locked }" ng:repeat="handler in appConfig.errorHandlers"><label><input type=checkbox ng-disabled=handler.locked ng-checked=handler.enabled ng-click=sampleErrors.checkChanged(handler)> <span ng-if=!handler.busy><strong ng:if=handler.enabled>{{ handler.label }}</strong> <span ng:if=!handler.enabled>{{ handler.label }}</span></span> <span ng-if=handler.busy><i class="fa fa-spinner fa-spin"></i> <em>Loading third-party scripts...</em></span></label></div></div></form></div><div ng:if="sampleErrors.google.isEnabled && !sampleErrors.google.handler.busy"><span class=pull-right style="padding: 3px"><b ng:if=sampleErrors.google.isOnline class=glow-green>Online</b> <b ng:if=!sampleErrors.google.isOnline class=glow-red>Offline</b></span><h5>Google Analytics</h5><div style="padding: 0 8px"><div ng-show=sampleErrors.google.isOnline><a href="" class=pull-right ng:click="sampleErrors.google.isOnline = false;"><i class="glyphicon glyphicon-remove"></i></a><div class=ellipsis><b>Public Key:</b> <a class=inactive-text>{{ sampleErrors.google.config.publicKey }}</a></div></div><form class=form-inline role=form ng-show=!sampleErrors.google.isOnline><div class=form-group><label for=sentryKey>Google API key (required)</label><div class=input-group><input class="form-control input-sm" id=googleKey ng:model=sampleErrors.google.config.publicKey placeholder=UA-XXXX-Y><div class=input-group-btn><a class="btn btn-sm btn-default" ng-class="{ \'btn-danger\': sampleErrors.google.lastError, \'btn-primary\': sampleErrors.google.config.publicKey, \'btn-default\': !sampleErrors.google.config.publicKey }" ng-disabled=!sampleErrors.google.config.publicKey ng-click=sampleErrors.google.connect(sampleErrors.google.config.publicKey)>Set</a></div></div></div></form><br><div class="alert alert-danger" ng-if="!sampleErrors.google.isOnline && sampleErrors.google.lastError">{{ sampleErrors.google.lastError.message }}</div></div></div><div ng:if="sampleErrors.raven.isEnabled && !sampleErrors.raven.handler.busy"><span class=pull-right style="padding: 3px"><b ng:if=sampleErrors.raven.isOnline class=glow-green>Online</b> <b ng:if=!sampleErrors.raven.isOnline class=glow-red>Offline</b></span><h5>Sentry and RavenJS</h5><div style="padding: 0 8px"><div ng-show=sampleErrors.raven.isOnline><a href="" class=pull-right ng:click="sampleErrors.raven.isOnline = false;"><i class="glyphicon glyphicon-remove"></i></a><div class=ellipsis><b>Public Key:</b> <a ng-href="{{ sampleErrors.raven.config.publicKey }}" target=_blank class=inactive-text>{{ sampleErrors.raven.config.publicKey }}</a></div></div><form class=form-inline role=form ng-show=!sampleErrors.raven.isOnline><div class=form-group><label for=sentryKey>Sentry public key (required)</label><div class=input-group><input class="form-control input-sm" id=sentryKey ng:model=sampleErrors.raven.config.publicKey placeholder="https://<-key->@app.getsentry.com/12345"><div class=input-group-btn><a class="btn btn-sm btn-default" ng-class="{ \'btn-danger\': sampleErrors.raven.lastError, \'btn-primary\': sampleErrors.raven.config.publicKey, \'btn-default\': !sampleErrors.raven.config.publicKey }" ng-disabled=!sampleErrors.raven.config.publicKey ng-click=sampleErrors.raven.connect(sampleErrors.raven.config.publicKey)>Set</a></div></div></div></form><br><div class="alert alert-danger" ng-if="!sampleErrors.raven.isOnline && sampleErrors.raven.lastError">{{ sampleErrors.raven.lastError.message }}</div><div class="alert alert-info" ng-if="!sampleErrors.raven.isOnline && !sampleErrors.raven.lastError"><a target=_blank href="https://www.getsentry.com/welcome/">Sentry</a> is a third party online service used to track errors. <a target=_blank href="http://raven-js.readthedocs.org/en/latest/">RavenJS</a> is used on the client-side to catch and send events on to Sentry.</div></div></div></div></div></div></div></div>');
+    '<div ng:cloak class=container style="width: 100%"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link rel=stylesheet resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.core.css"><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.default.min.css"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.min.js></script><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input type=checkbox ng:show="sampleErrors.result !== null" ng:model=appConfig.errorHandlers.enabled bs:switch switch:size=mini switch:inverse=true></span><h4>Exception Handling <small>Error reporting and client-side exception handling</small></h4><hr><div class=row><div class=col-md-3><div><h5>Throw Exceptions</h5><ul class=list-group><li class=list-group-item><a href="" ng-click=sampleErrors.throwManagedException()><i class="fa fa-cubes"></i>&nbsp; Catch Managed Error</a></li><li class=list-group-item><a href="" ng-click=sampleErrors.throwAjaxException()><i class="fa fa-cubes"></i>&nbsp; Create Ajax Error</a></li><li class=list-group-item><a href="" ng-click=sampleErrors.throwAngularException()><i class="fa fa-cubes"></i>&nbsp; AngularJS Error</a></li><li class=list-group-item><a href="" ng-click=sampleErrors.throwTimeoutException()><i class="fa fa-cubes"></i>&nbsp; Timeout Error</a></li><li class=list-group-item><a href="" onclick=sampleError.dontExist++><i class="fa fa-cogs"></i>&nbsp; Unhandled Exception</a></li></ul></div></div><div class=ellipsis style="overflow: hidden" ng-class="{ \'col-md-6\':appConfig.errorHandlers.enabled, \'col-md-9\': !appConfig.errorHandlers.enabled }"><div><span class=pull-right style="padding: 3px"><a href="" ng-click="">Refresh</a> | <a href="" ng-click="appStatus.logs = []">Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appStatus.logs.length><td colspan=3><em>No events have been logged...</em></td></tr><tr ng-repeat="row in appStatus.logs" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td class=ellipsis style="width: auto; overflow: hidden">{{ row.desc }}</td></tr></tbody></table></div><div ng-if=!appStatus.logs.length><h5>Inspired by these blogs:</h5><ul class="alert alert-info" style="list-style: none"><li><a target=_blank href=http://www.davecap.com/post/46522098029/using-sentry-raven-js-with-angularjs-to-catch><i class="fa fa-external-link-square"></i> http://www.davecap.com</a></li><li><a target=_blank href=http://bahmutov.calepin.co/catch-all-errors-in-angular-app.html><i class="fa fa-external-link-square"></i> http://bahmutov.calepin.co</a></li><li><a target=_blank href=http://davidwalsh.name/track-errors-google-analytics><i class="fa fa-external-link-square"></i> http://davidwalsh.name</a></li></ul></div></div><div ng-class="{ \'col-md-3\':appConfig.errorHandlers.enabled, \'hide\': !appConfig.errorHandlers.enabled }"><div><h5>Exception Handlers</h5><form class=thumbnail><div style="padding: 0 8px"><div class=checkbox ng:class="{ \'inactive-gray\': !handler.enabled && handler.locked }" ng:repeat="handler in sampleErrors.errorHandlers"><label><input type=checkbox ng-disabled=handler.locked ng-checked=handler.enabled ng-click=sampleErrors.checkChanged(handler)> <span ng-if=!handler.busy><strong ng:if=handler.enabled>{{ handler.label }}</strong> <span ng:if=!handler.enabled>{{ handler.label }}</span></span> <span ng-if=handler.busy><i class="fa fa-spinner fa-spin"></i> <em>Loading third-party scripts...</em></span></label></div></div></form></div><div ng:if="sampleErrors.google.isEnabled && !sampleErrors.google.handler.busy"><span class=pull-right style="padding: 3px"><b ng:if=sampleErrors.google.isOnline class=glow-green>Online</b> <b ng:if=!sampleErrors.google.isOnline class=glow-red>Offline</b></span><h5>Google Analytics</h5><div style="padding: 0 8px"><div ng-show=sampleErrors.google.isOnline><a href="" class=pull-right ng:click="sampleErrors.google.isOnline = false;"><i class="glyphicon glyphicon-remove"></i></a><div class=ellipsis><b>Public Key:</b> <a class=inactive-text>{{ sampleErrors.google.config.publicKey }}</a></div></div><form class=form-inline role=form ng-show=!sampleErrors.google.isOnline><div class=form-group><label for=sentryKey>Google API key (required)</label><div class=input-group><input class="form-control input-sm" id=googleKey ng:model=sampleErrors.google.config.publicKey placeholder=UA-XXXX-Y><div class=input-group-btn><a class="btn btn-sm btn-default" ng-class="{ \'btn-danger\': sampleErrors.google.lastError, \'btn-primary\': sampleErrors.google.config.publicKey, \'btn-default\': !sampleErrors.google.config.publicKey }" ng-disabled=!sampleErrors.google.config.publicKey ng-click=sampleErrors.google.connect(sampleErrors.google.config.publicKey)>Set</a></div></div></div></form><br><div class="alert alert-danger" ng-if="!sampleErrors.google.isOnline && sampleErrors.google.lastError">{{ sampleErrors.google.lastError.message }}</div></div></div><div ng:if="sampleErrors.raven.isEnabled && !sampleErrors.raven.handler.busy"><span class=pull-right style="padding: 3px"><b ng:if=sampleErrors.raven.isOnline class=glow-green>Online</b> <b ng:if=!sampleErrors.raven.isOnline class=glow-red>Offline</b></span><h5>Sentry and RavenJS</h5><div style="padding: 0 8px"><div ng-show=sampleErrors.raven.isOnline><a href="" class=pull-right ng:click="sampleErrors.raven.isOnline = false;"><i class="glyphicon glyphicon-remove"></i></a><div class=ellipsis><b>Public Key:</b> <a ng-href="{{ sampleErrors.raven.config.publicKey }}" target=_blank class=inactive-text>{{ sampleErrors.raven.config.publicKey }}</a></div></div><form class=form-inline role=form ng-show=!sampleErrors.raven.isOnline><div class=form-group><label for=sentryKey>Sentry public key (required)</label><div class=input-group><input class="form-control input-sm" id=sentryKey ng:model=sampleErrors.raven.config.publicKey placeholder="https://<-key->@app.getsentry.com/12345"><div class=input-group-btn><a class="btn btn-sm btn-default" ng-class="{ \'btn-danger\': sampleErrors.raven.lastError, \'btn-primary\': sampleErrors.raven.config.publicKey, \'btn-default\': !sampleErrors.raven.config.publicKey }" ng-disabled=!sampleErrors.raven.config.publicKey ng-click=sampleErrors.raven.connect(sampleErrors.raven.config.publicKey)>Set</a></div></div></div></form><br><div class="alert alert-danger" ng-if="!sampleErrors.raven.isOnline && sampleErrors.raven.lastError">{{ sampleErrors.raven.lastError.message }}</div><div class="alert alert-info" ng-if="!sampleErrors.raven.isOnline && !sampleErrors.raven.lastError"><a target=_blank href="https://www.getsentry.com/welcome/">Sentry</a> is a third party online service used to track errors. <a target=_blank href="http://raven-js.readthedocs.org/en/latest/">RavenJS</a> is used on the client-side to catch and send events on to Sentry.</div></div></div></div></div></div></div></div>');
   $templateCache.put('samples/interceptors/main.tpl.html',
     '<div id=InterceptorView style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=interceptors.busy ng-click=interceptors.apply() class=btn ng-class="{ \'btn-primary\': !interceptors.isPatched(), \'btn-success\': interceptors.isPatched() }">{{ interceptors.isPatched() ? \'Interceptors Active\' : \'Enable Interceptors\' }}</a></span><h4>HTTP Interceptors <small>Register and utilise Angular\'s interceptors.</small></h4><hr><p>...</p><hr><p><a class="btn btn-default" ng-class="{ \'btn-warning\': interceptors.isPatched(), \'btn-success\': interceptors.fcallState == \'Resolved\', \'btn-danger\': interceptors.fcallState == \'Rejected\' }" href="" ng-click=interceptors.triggerBadRequest() ng-disabled=!interceptors.isPatched()>Create Bad Request</a></p><hr><div ng:if=interceptors.error class="alert alert-danger"><b>Error:</b> {{ interceptors.error.message || \'Something went wrong.\' }}</div></div></div></div>');
   $templateCache.put('samples/left.tpl.html',

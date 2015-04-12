@@ -1,9 +1,14 @@
 ﻿<div id="contents" class="contents">
-    <div id="left" class="ui-view-left" ui:view="left"
+    <div id="left" class="ui-view-left ng-cloak" ui:view="left"
          ng:show="state.current.views['left'] || state.current.views['left@']">
         <em>Left View</em>
     </div>
     <div id="main" class="ui-view-main" ui:view="main">
-        <em>Main View</em>
+        <em class="inactive-fill-text" ng:if="false">
+            <i class="fa fa-spinner fa-spin"></i> Loading...
+        </em>
+        <b class="inactive-fill-text ng-cloak" ng:if="!(state.current.views['main'] || state.current.views['main@'])">
+            <i class="fa fa-exclamation-triangle faa-flash glow-orange"></i> Page not found
+        </b>
     </div>
 </div>

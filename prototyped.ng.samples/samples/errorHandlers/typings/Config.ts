@@ -6,14 +6,7 @@ module proto.ng.samples.errorHandlers {
 
     export function ConfigureErrorHandlers(appConfigProvider) {
         appConfigProvider.set({
-            'errorHandlers': [
-                {
-                    name: 'proto',
-                    locked: true,
-                    enabled: true,
-                    label: 'Prototyped Handlers'
-                },
-            ],
+            'errorHandlers': proto.ng.samples.errorHandlers.ErrorHandlers,
         });
     }
 

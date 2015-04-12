@@ -7,7 +7,7 @@ module proto.ng.commands {
         private _currentProxy: IConsoleProxy;
         private _proxyList: IConsoleProxy[] = [];
 
-        constructor(private $scope: any) {
+        constructor(private $scope: any, private $log: any) {
             try {
                 // Set the scope vars
                 $scope.myConsole = this;
@@ -117,6 +117,7 @@ module proto.ng.commands {
         }
 
         info(msg: string) {
+            this.$log.info(msg);
             this.$scope.lines.push({
                 time: Date.now(),
                 text: msg,
@@ -125,6 +126,7 @@ module proto.ng.commands {
         }
 
         warning(msg: string) {
+            this.$log.warn(msg);
             this.$scope.lines.push({
                 time: Date.now(),
                 text: msg,
@@ -133,6 +135,7 @@ module proto.ng.commands {
         }
 
         success(msg: string) {
+            this.$log.info(msg);
             this.$scope.lines.push({
                 time: Date.now(),
                 text: msg,
@@ -141,6 +144,7 @@ module proto.ng.commands {
         }
 
         error(msg: string) {
+            this.$log.error(msg);
             this.$scope.lines.push({
                 time: Date.now(),
                 text: msg,

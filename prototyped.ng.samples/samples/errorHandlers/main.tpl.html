@@ -4,12 +4,17 @@
     <script resx:import="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js"></script>
     <link rel="stylesheet" resx:import="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css"></style>
 
+    <!-- Define required styling for alertify -->
+    <link rel="stylesheet" resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.core.css" />
+    <link rel="stylesheet" resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.default.min.css" />
+    <script resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.min.js"></script>
+
     <div class="row">
         <div class="col-md-12">
             <span class="pull-right ng-cloak" style="padding: 6px;">
                 <input type="checkbox"
                        ng:show="sampleErrors.result !== null"
-                       ng:model="sampleErrors.enabled"
+                       ng:model="appConfig.errorHandlers.enabled"
                        bs:switch
                        switch:size="mini"
                        switch:inverse="true">
@@ -28,19 +33,19 @@
                         <ul class="list-group">
                             <li class="list-group-item">
                                 <a href="" ng-click="sampleErrors.throwManagedException()">
-                                    <i class="fa fa-cubes" ng-class="{ 'glow-blue animate-glow': samples.busy, 'glow-green': !samples.busy, 'glow-red animate-glow': samples.error }"></i>&nbsp;
+                                    <i class="fa fa-cubes"></i>&nbsp;
                                     Catch Managed Error
                                 </a>
                             </li>
                             <li class="list-group-item">
                                 <a href="" ng-click="sampleErrors.throwAjaxException()">
-                                    <i class="fa fa-cubes" ng-class="{ 'glow-blue animate-glow': samples.busy, 'glow-green': !samples.busy, 'glow-red animate-glow': samples.error }"></i>&nbsp;
+                                    <i class="fa fa-cubes"></i>&nbsp;
                                     Create Ajax Error
                                 </a>
                             </li>
                             <li class="list-group-item">
                                 <a href="" ng-click="sampleErrors.throwAngularException()">
-                                    <i class="fa fa-cubes" ng-class="{ 'glow-blue animate-glow': samples.busy, 'glow-green': !samples.busy, 'glow-red animate-glow': samples.error }"></i>&nbsp;
+                                    <i class="fa fa-cubes"></i>&nbsp;
                                     AngularJS Error
                                 </a>
                                 <!-- ul class="dropdown-menu" role="menu">
@@ -63,51 +68,52 @@
                             </li>
                             <li class="list-group-item">
                                 <a href="" ng-click="sampleErrors.throwTimeoutException()">
-                                    <i class="fa fa-cubes" ng-class="{ 'glow-blue animate-glow': samples.busy, 'glow-green': !samples.busy, 'glow-red animate-glow': samples.error }"></i>&nbsp;
+                                    <i class="fa fa-cubes"></i>&nbsp;
                                     Timeout Error
                                 </a>
                             </li>
                             <li class="list-group-item">
                                 <a href="" onclick="sampleError.dontExist++;">
-                                    <i class="fa fa-cogs" ng-class="{ 'glow-blue animate-glow': samples.busy, 'glow-green': !samples.busy, 'glow-red animate-glow': samples.error }"></i>&nbsp;
+                                    <i class="fa fa-cogs"></i>&nbsp;
                                     Unhandled Exception
                                 </a>
                             </li>
-                        </ul>                        
+                        </ul>
                     </div>
                 </div>
-                <div class="" ng-class="{ 'col-md-6':sampleErrors.enabled, 'col-md-9': !sampleErrors.enabled }">
-                    <span class="pull-right">
-                        <a href="" ng-click="">Refresh</a> | 
-                        <a href="" ng-click="appStatus.logs = []">Clear</a>
-                    </span>
-                    <h5>Event Logs</h5>
-                    <table class="table table-hover table-condensed">
-                        <thead>
-                            <tr>
-                                <th style="width: 80px;">Time</th>
-                                <th style="width: 64px;">Type</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr ng-if="!appStatus.logs.length">
-                                <td colspan="3">
-                                    <em>No event have been logged...</em>
-                                </td>
-                            </tr>
-                            <tr ng-repeat="row in appStatus.logs"
-                                ng-class="{ 'text-info inactive-gray':row.type=='debug', 'text-info':row.type=='info', 'text-warning glow-orange':row.type=='warn', 'text-danger glow-red':row.type=='error' }">
-                                <td>{{ row.time | date:'hh:mm:ss' }}</td>
-                                <td>{{ row.type }}</td>
-                                <td>
-                                    <div class="ellipsis" style="width: 100%">
+                <div class="ellipsis" style="overflow: hidden"
+                     ng-class="{ 'col-md-6':appConfig.errorHandlers.enabled, 'col-md-9': !appConfig.errorHandlers.enabled }">
+                    <div>
+                        <span class="pull-right" style="padding: 3px;">
+                            <a href="" ng-click="">Refresh</a> |
+                            <a href="" ng-click="appStatus.logs = []">Clear</a>
+                        </span>
+                        <h5>Event Logs</h5>
+                        <table class="table table-hover table-condensed">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">Time</th>
+                                    <th style="width: 64px;">Type</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-if="!appStatus.logs.length">
+                                    <td colspan="3">
+                                        <em>No events have been logged...</em>
+                                    </td>
+                                </tr>
+                                <tr ng-repeat="row in appStatus.logs"
+                                    ng-class="{ 'text-info inactive-gray':row.type=='debug', 'text-info':row.type=='info', 'text-warning glow-orange':row.type=='warn', 'text-danger glow-red':row.type=='error' }">
+                                    <td>{{ row.time | date:'hh:mm:ss' }}</td>
+                                    <td>{{ row.type }}</td>
+                                    <td class="ellipsis" style="width: auto; overflow: hidden">
                                         {{ row.desc }}
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                     <div ng-if="!appStatus.logs.length">
                         <h5>Inspired by these blogs:</h5>
                         <ul class="alert alert-info" style="list-style: none">
@@ -129,14 +135,16 @@
                         </ul>
                     </div>
                 </div>
-                <div ng-class="{ 'col-md-3':sampleErrors.enabled, 'hide': !sampleErrors.enabled }">
+                <div ng-class="{ 'col-md-3':appConfig.errorHandlers.enabled, 'hide': !appConfig.errorHandlers.enabled }">
                     <div>
                         <h5>
                             Exception Handlers
                         </h5>
                         <form class="thumbnail">
                             <div style="padding: 0 8px;">
-                                <div class="checkbox" ng-class="{ 'inactive-gray': !handler.enabled && handler.locked }" ng:repeat="handler in appConfig.errorHandlers">
+                                <div class="checkbox"
+                                     ng:class="{ 'inactive-gray': !handler.enabled && handler.locked }"
+                                     ng:repeat="handler in sampleErrors.errorHandlers">
                                     <label>
                                         <input type="checkbox"
                                                ng-disabled="handler.locked"

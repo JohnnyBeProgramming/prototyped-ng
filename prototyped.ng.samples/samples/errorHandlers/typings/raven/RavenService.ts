@@ -1,22 +1,26 @@
-﻿/// <reference path="RavenErrorHandler.ts" />
+﻿/// <reference path="../../../../imports.d.ts" />
 
 declare var Raven: any;
 
 module proto.ng.samples.errorHandlers.raven {
 
     export class RavenService {
+        public busy: boolean = false;
+        public name: string = 'raven';
+        public label: string = 'Sentry via RavenJS';
+        public locked: boolean = false;
+
+        get enabled(): boolean { return this.isEnabled; }
+        set enabled(state: boolean) { this.isEnabled = state; }
 
         public editMode: boolean = false;
         public isOnline: boolean = false;
         public isEnabled: boolean = false;
         public lastError: any = null;
         public config: any;
-        public handler: any;
 
         constructor(private $rootScope, private $log, private appConfig) {
             this.config = appConfig.ravenConfig;
-            this.handler = new RavenErrorHandler(this);
-            appConfig.errorHandlers.push(this.handler);
         }
 
         public handleException(source: string, ex: any, tags: any) {
@@ -36,10 +40,10 @@ module proto.ng.samples.errorHandlers.raven {
                 // Load required libraries if not defined
                 if (typeof Raven === 'undefined') {
                     this.$log.log('Loading: ' + urlRavenJS);
-                    this.handler.busy = true;
+                    this.busy = true;
                     $.getScript(urlRavenJS, (data, textStatus, jqxhr) => {
                         this.$rootScope.$applyAsync(() => {
-                            this.handler.busy = false;
+                            this.busy = false;
                             this.init();
                         });
                     });
@@ -109,6 +113,15 @@ module proto.ng.samples.errorHandlers.raven {
                 console.warn(' - RavenJS failed to initialise.');
                 throw ex;
             }
+        }
+
+        public attach() {
+            var isOnline = this.detect();
+            this.isEnabled = true;
+        }
+
+        public dettach() {
+            this.isEnabled = false;
         }
 
     }

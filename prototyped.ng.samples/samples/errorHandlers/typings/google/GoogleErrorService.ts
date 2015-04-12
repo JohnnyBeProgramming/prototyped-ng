@@ -1,22 +1,25 @@
-﻿/// <reference path="GoogleErrorHandler.ts" />
+﻿/// <reference path="../../../../imports.d.ts" />
 
 declare var ga: any;
 
 module proto.ng.samples.errorHandlers.google {
 
     export class GoogleErrorService {
-
+        public busy: boolean = false;
+        public name: string = 'google';
+        public label: string = 'Google Analytics';
+        public locked: boolean = false;
         public editMode: boolean = false;
         public isOnline: boolean = false;
         public isEnabled: boolean = false;
         public lastError: any = null;
         public config: any;
-        public handler: any;
+
+        get enabled(): boolean { return this.isEnabled; }
+        set enabled(state: boolean) { this.isEnabled = state; }
 
         constructor(private $rootScope, private $log, private appConfig) {
             this.config = appConfig.googleConfig;
-            this.handler = new GoogleErrorHandler(this);
-            appConfig.errorHandlers.push(this.handler);
         }
 
         public handleException(source: string, ex: any, tags: any) {
@@ -43,10 +46,10 @@ module proto.ng.samples.errorHandlers.google {
                 } else {
                     var urlGa = 'https://ssl.google-analytics.com/ga.js';
                     this.$log.log('Loading: ' + urlGa);
-                    this.handler.busy = true;
+                    this.busy = true;
                     $.getScript(urlGa, (data, textStatus, jqxhr) => {
                         this.$rootScope.$applyAsync(() => {
-                            this.handler.busy = false;
+                            this.busy = false;
                             this.isEnabled = true;
                             this.init();
                         });
@@ -106,6 +109,14 @@ module proto.ng.samples.errorHandlers.google {
             }
         }
 
+        public attach() {
+            var isOnline = this.detect();
+            this.isEnabled = isOnline;
+        }
+
+        public dettach() {
+            this.isEnabled = false;
+        }
     }
 
 }

@@ -70,6 +70,7 @@
     <TypeScriptCompile Include="modules\explore\controllers\AddressBarController.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\ExplorerController.ts" />
     <TypeScriptCompile Include="modules\explore\module.ng.ts" />
+    <Content Include="modules\console\views\logs.tpl.html" />
     <Content Include="modules\editor\styles\css\editor.css" />
     <Content Include="modules\editor\styles\css\editor.min.css">
       <DependentUpon>editor.css</DependentUpon>

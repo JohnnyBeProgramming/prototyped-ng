@@ -792,53 +792,7 @@ angular.module('prototyped.ng.samples.decorators', []).config([
             };
         }
     }]);
-/// <reference path="RavenService.ts" />
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (samples) {
-            (function (errorHandlers) {
-                (function (raven) {
-                    var RavenErrorHandler = (function () {
-                        function RavenErrorHandler(service) {
-                            this.service = service;
-                            this.name = 'raven';
-                            this.label = 'Sentry via RavenJS';
-                        }
-                        Object.defineProperty(RavenErrorHandler.prototype, "enabled", {
-                            get: function () {
-                                return this.service.isEnabled;
-                            },
-                            set: function (state) {
-                                this.service.isEnabled = state;
-                            },
-                            enumerable: true,
-                            configurable: true
-                        });
-
-                        RavenErrorHandler.prototype.attach = function () {
-                            var isOnline = this.service.detect();
-                            this.service.isEnabled = true;
-                            this.service.handler.enabled = true;
-                        };
-
-                        RavenErrorHandler.prototype.dettach = function () {
-                            this.service.isEnabled = false;
-                            this.service.handler.enabled = false;
-                        };
-                        return RavenErrorHandler;
-                    })();
-                    raven.RavenErrorHandler = RavenErrorHandler;
-                })(errorHandlers.raven || (errorHandlers.raven = {}));
-                var raven = errorHandlers.raven;
-            })(samples.errorHandlers || (samples.errorHandlers = {}));
-            var errorHandlers = samples.errorHandlers;
-        })(ng.samples || (ng.samples = {}));
-        var samples = ng.samples;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-/// <reference path="RavenErrorHandler.ts" />
+/// <reference path="../../../../imports.d.ts" />
 
 var proto;
 (function (proto) {
@@ -851,14 +805,27 @@ var proto;
                             this.$rootScope = $rootScope;
                             this.$log = $log;
                             this.appConfig = appConfig;
+                            this.busy = false;
+                            this.name = 'raven';
+                            this.label = 'Sentry via RavenJS';
+                            this.locked = false;
                             this.editMode = false;
                             this.isOnline = false;
                             this.isEnabled = false;
                             this.lastError = null;
                             this.config = appConfig.ravenConfig;
-                            this.handler = new raven.RavenErrorHandler(this);
-                            appConfig.errorHandlers.push(this.handler);
                         }
+                        Object.defineProperty(RavenService.prototype, "enabled", {
+                            get: function () {
+                                return this.isEnabled;
+                            },
+                            set: function (state) {
+                                this.isEnabled = state;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
+
                         RavenService.prototype.handleException = function (source, ex, tags) {
                             if (!this.isOnline)
                                 return;
@@ -878,10 +845,10 @@ var proto;
                                 // Load required libraries if not defined
                                 if (typeof Raven === 'undefined') {
                                     this.$log.log('Loading: ' + urlRavenJS);
-                                    this.handler.busy = true;
+                                    this.busy = true;
                                     $.getScript(urlRavenJS, function (data, textStatus, jqxhr) {
                                         _this.$rootScope.$applyAsync(function () {
-                                            _this.handler.busy = false;
+                                            _this.busy = false;
                                             _this.init();
                                         });
                                     });
@@ -953,6 +920,15 @@ var proto;
                                 throw ex;
                             }
                         };
+
+                        RavenService.prototype.attach = function () {
+                            var isOnline = this.detect();
+                            this.isEnabled = true;
+                        };
+
+                        RavenService.prototype.dettach = function () {
+                            this.isEnabled = false;
+                        };
                         return RavenService;
                     })();
                     raven.RavenService = RavenService;
@@ -965,53 +941,7 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
-/// <reference path="GoogleErrorService.ts" />
-
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (samples) {
-            (function (errorHandlers) {
-                (function (google) {
-                    var GoogleErrorHandler = (function () {
-                        function GoogleErrorHandler(service) {
-                            this.service = service;
-                            this.locked = false;
-                            this.name = 'google';
-                            this.label = 'Google Analytics';
-                        }
-                        Object.defineProperty(GoogleErrorHandler.prototype, "enabled", {
-                            get: function () {
-                                return this.service.isEnabled;
-                            },
-                            set: function (state) {
-                                this.service.isEnabled = state;
-                            },
-                            enumerable: true,
-                            configurable: true
-                        });
-
-                        GoogleErrorHandler.prototype.attach = function () {
-                            var isOnline = this.service.detect();
-                            this.service.isEnabled = isOnline;
-                        };
-
-                        GoogleErrorHandler.prototype.dettach = function () {
-                            this.service.isEnabled = false;
-                        };
-                        return GoogleErrorHandler;
-                    })();
-                    google.GoogleErrorHandler = GoogleErrorHandler;
-                })(errorHandlers.google || (errorHandlers.google = {}));
-                var google = errorHandlers.google;
-            })(samples.errorHandlers || (samples.errorHandlers = {}));
-            var errorHandlers = samples.errorHandlers;
-        })(ng.samples || (ng.samples = {}));
-        var samples = ng.samples;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-/// <reference path="GoogleErrorHandler.ts" />
+/// <reference path="../../../../imports.d.ts" />
 
 var proto;
 (function (proto) {
@@ -1024,14 +954,27 @@ var proto;
                             this.$rootScope = $rootScope;
                             this.$log = $log;
                             this.appConfig = appConfig;
+                            this.busy = false;
+                            this.name = 'google';
+                            this.label = 'Google Analytics';
+                            this.locked = false;
                             this.editMode = false;
                             this.isOnline = false;
                             this.isEnabled = false;
                             this.lastError = null;
                             this.config = appConfig.googleConfig;
-                            this.handler = new google.GoogleErrorHandler(this);
-                            appConfig.errorHandlers.push(this.handler);
                         }
+                        Object.defineProperty(GoogleErrorService.prototype, "enabled", {
+                            get: function () {
+                                return this.isEnabled;
+                            },
+                            set: function (state) {
+                                this.isEnabled = state;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
+
                         GoogleErrorService.prototype.handleException = function (source, ex, tags) {
                             if (!this.isOnline)
                                 return;
@@ -1058,10 +1001,10 @@ var proto;
                                 } else {
                                     var urlGa = 'https://ssl.google-analytics.com/ga.js';
                                     this.$log.log('Loading: ' + urlGa);
-                                    this.handler.busy = true;
+                                    this.busy = true;
                                     $.getScript(urlGa, function (data, textStatus, jqxhr) {
                                         _this.$rootScope.$applyAsync(function () {
-                                            _this.handler.busy = false;
+                                            _this.busy = false;
                                             _this.isEnabled = true;
                                             _this.init();
                                         });
@@ -1120,6 +1063,15 @@ var proto;
                                 throw ex;
                             }
                         };
+
+                        GoogleErrorService.prototype.attach = function () {
+                            var isOnline = this.detect();
+                            this.isEnabled = isOnline;
+                        };
+
+                        GoogleErrorService.prototype.dettach = function () {
+                            this.isEnabled = false;
+                        };
                         return GoogleErrorService;
                     })();
                     google.GoogleErrorService = GoogleErrorService;
@@ -1139,48 +1091,6 @@ var proto;
     (function (ng) {
         (function (samples) {
             (function (errorHandlers) {
-                var ErrorHandlers = (function () {
-                    function ErrorHandlers() {
-                    }
-                    ErrorHandlers.Register = function (handler) {
-                        this.list.push(handler);
-                    };
-
-                    ErrorHandlers.ListAll = function () {
-                        return this.list;
-                    };
-                    ErrorHandlers.enabled = true;
-                    ErrorHandlers.logs = null;
-                    ErrorHandlers.list = [];
-                    return ErrorHandlers;
-                })();
-                errorHandlers.ErrorHandlers = ErrorHandlers;
-
-                function HandleException(source, error, tags) {
-                    var enabled = ErrorHandlers.enabled;
-                    if (enabled) {
-                        try  {
-                            // Notify all handlers that are enabled
-                            ErrorHandlers.ListAll().forEach(function (service) {
-                                if (service.isEnabled && service.handleException) {
-                                    service.handleException(source, error, tags || {});
-                                }
-                            });
-                        } catch (ex) {
-                            // Something went wrong :(
-                            console.error('Critical fault in error reporting services...', ex);
-                        }
-                    }
-
-                    // Display error in the console...
-                    var $log = ErrorHandlers.logs || angular.injector(['ng']).get('$log');
-                    if ($log)
-                        $log.error.apply($log, [source + ': ' + error.message || error, tags]);
-
-                    return enabled;
-                }
-                errorHandlers.HandleException = HandleException;
-
                 var SampleErrorService = (function () {
                     function SampleErrorService($rootScope, $log, appConfig, raven, google) {
                         this.$rootScope = $rootScope;
@@ -1188,21 +1098,95 @@ var proto;
                         this.appConfig = appConfig;
                         this.raven = raven;
                         this.google = google;
+                        this.busy = false;
+                        this.name = 'notify';
+                        this.label = 'User Notifications';
+                        this.locked = false;
+                        this.isOnline = false;
+                        this.isEnabled = false;
                         // Hook the global handlers
-                        ErrorHandlers.logs = $log;
-                        ErrorHandlers.Register(google);
-                        ErrorHandlers.Register(raven);
+                        errorHandlers.ErrorHandlers.logs = $log;
+                        errorHandlers.ErrorHandlers.Register(this);
+                        errorHandlers.ErrorHandlers.Register(google);
+                        errorHandlers.ErrorHandlers.Register(raven);
                     }
                     Object.defineProperty(SampleErrorService.prototype, "enabled", {
+                        //get isEnabled(): boolean { return ErrorHandlers.enabled; }
+                        //set isEnabled(state: boolean) { ErrorHandlers.enabled = state; }
                         get: function () {
-                            return ErrorHandlers.enabled;
+                            return this.isEnabled;
                         },
                         set: function (state) {
-                            ErrorHandlers.enabled = state;
+                            this.isEnabled = state;
                         },
                         enumerable: true,
                         configurable: true
                     });
+
+                    Object.defineProperty(SampleErrorService.prototype, "errorHandlers", {
+                        get: function () {
+                            return errorHandlers.ErrorHandlers.ListAll();
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
+
+                    SampleErrorService.prototype.handleException = function (source, ex, tags) {
+                        if (!this.isOnline)
+                            return;
+                        this.$log.log(' - Notifying User: "' + ex.message + '"...');
+                        if ('alertify' in window) {
+                            window['alertify'].log(source + ': ' + ex.message, 'error', 3000);
+                        }
+                    };
+
+                    SampleErrorService.prototype.detect = function () {
+                        var _this = this;
+                        var scriptUrl = 'https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.min.js';
+                        try  {
+                            // Load required libraries if not defined
+                            if ('alertify' in window) {
+                                this.isEnabled = true;
+                                this.isOnline = true;
+                            } else {
+                                this.$log.log('Loading: ' + scriptUrl);
+                                this.busy = true;
+                                $.getScript(scriptUrl, function (data, textStatus, jqxhr) {
+                                    _this.$rootScope.$applyAsync(function () {
+                                        _this.busy = false;
+                                        _this.isEnabled = true;
+                                        _this.isOnline = true;
+                                    });
+                                });
+                            }
+                        } catch (ex) {
+                            this.isOnline = false;
+                            this.lastError = ex;
+                        }
+                        return this.isOnline;
+
+                        try  {
+                            // Load required libraries if not defined
+                            var url = 'https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.min.js';
+                            $.getScript(url).done(function (script, textStatus) {
+                                _this.$rootScope.$applyAsync(function () {
+                                    _this.isOnline = true;
+                                    _this.isEnabled = true;
+                                });
+                            }).fail(function (jqxhr, settings, exception) {
+                                _this.$rootScope.$applyAsync(function () {
+                                    _this.isOnline = false;
+                                    _this.isEnabled = false;
+                                });
+                            });
+                            this.isOnline = false;
+                            this.isEnabled = false;
+                        } catch (ex) {
+                            this.isOnline = false;
+                        }
+
+                        return false;
+                    };
 
                     SampleErrorService.prototype.checkChanged = function (handler) {
                         if (!handler)
@@ -1230,7 +1214,7 @@ var proto;
                             this.$log.info('About to break something...');
                             window['does not exist'].managedSampleError++;
                         } catch (ex) {
-                            HandleException('Managed Sample', ex, tags);
+                            errorHandlers.HandleException('Managed Sample', ex, tags);
                             this.$log.warn('Exception caught and swallowed.');
                             // throw ex; // this will be caught by the global exception handler
                         }
@@ -1320,6 +1304,15 @@ var proto;
                             window['does not exist'].timeoutSampleError++;
                             _this.$log.info('Exit timeout...');
                         }, 2 * 1000);
+                    };
+
+                    SampleErrorService.prototype.attach = function () {
+                        var isOnline = this.detect();
+                        this.isEnabled = isOnline;
+                    };
+
+                    SampleErrorService.prototype.dettach = function () {
+                        this.isEnabled = false;
                     };
                     return SampleErrorService;
                 })();
@@ -1477,14 +1470,7 @@ var proto;
             (function (_errorHandlers) {
                 function ConfigureErrorHandlers(appConfigProvider) {
                     appConfigProvider.set({
-                        'errorHandlers': [
-                            {
-                                name: 'proto',
-                                locked: true,
-                                enabled: true,
-                                label: 'Prototyped Handlers'
-                            }
-                        ]
+                        'errorHandlers': proto.ng.samples.errorHandlers.ErrorHandlers
                     });
                 }
                 _errorHandlers.ConfigureErrorHandlers = ConfigureErrorHandlers;
@@ -1598,6 +1584,61 @@ angular.module('prototyped.ng.samples.errorHandlers', [
             sampleErrors: sampleErrorService
         });
     }]);
+/// <reference path="raven/RavenService.ts" />
+/// <reference path="google/GoogleErrorService.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (errorHandlers) {
+                var ErrorHandlers = (function () {
+                    function ErrorHandlers() {
+                    }
+                    ErrorHandlers.Register = function (handler) {
+                        this.list.push(handler);
+                    };
+
+                    ErrorHandlers.ListAll = function () {
+                        return this.list;
+                    };
+                    ErrorHandlers.enabled = true;
+                    ErrorHandlers.logs = null;
+                    ErrorHandlers.list = [];
+                    return ErrorHandlers;
+                })();
+                errorHandlers.ErrorHandlers = ErrorHandlers;
+
+                function HandleException(source, error, tags) {
+                    var enabled = ErrorHandlers.enabled;
+                    if (enabled) {
+                        try  {
+                            // Notify all handlers that are enabled
+                            ErrorHandlers.ListAll().forEach(function (service) {
+                                if (service.isEnabled && service.handleException) {
+                                    service.handleException(source, error, tags || {});
+                                }
+                            });
+                        } catch (ex) {
+                            // Something went wrong :(
+                            console.error('Critical fault in error reporting services...', ex);
+                        }
+                    }
+
+                    // Display error in the console...
+                    var $log = ErrorHandlers.logs || angular.injector(['ng']).get('$log');
+                    if ($log)
+                        $log.error.apply($log, [source + ': ' + error.message || error, tags]);
+
+                    return enabled;
+                }
+                errorHandlers.HandleException = HandleException;
+            })(samples.errorHandlers || (samples.errorHandlers = {}));
+            var errorHandlers = samples.errorHandlers;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.ng.samples.interceptors', []).config([
     '$stateProvider', function ($stateProvider) {
