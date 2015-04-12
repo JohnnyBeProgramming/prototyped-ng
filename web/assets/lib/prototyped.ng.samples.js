@@ -276,8 +276,126 @@ angular.module('prototyped.ng.samples.compression', []).config([
     }]);
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.ng.samples.decorators', []).config([
+    'appConfigProvider', function (appConfigProvider) {
+        appConfigProvider.set({
+            'interceptors': {
+                debug: true,
+                enabled: appConfigProvider.getPersisted('interceptors.enabled') == '1',
+                extendXMLHttpRequest: function () {
+                    // Do some magic with the ajax request handler
+                    var callback = XMLHttpRequest.prototype.open;
+                    XMLHttpRequest.prototype.open = function (method, url, async, user, pass) {
+                        var ctx = {};
+
+                        // Check for auth info
+                        if (user || pass) {
+                            // Extended with auth info
+                            angular.extend(ctx, {
+                                username: user,
+                                password: pass
+                            });
+                        }
+                        console.log(' - [ Ajax ] ( ' + (async ? 'Async' : 'Sync') + ' ) => ' + url + ' => ', ctx);
+
+                        // Call the original function
+                        if (callback) {
+                            callback.apply(this, arguments);
+                        }
+                    };
+
+                    console.log(' - Extended the "XMLHttpRequest" object.');
+                }
+            }
+        });
+    }]).config([
+    '$httpProvider', 'appConfigProvider', function ($httpProvider, appConfigProvider) {
+        var appConfig = appConfigProvider.$get();
+        var cfg = appConfig['interceptors'];
+
+        if (cfg.enabled) {
+            // Attach Angular's interceptor
+            $httpProvider.interceptors.push('httpInterceptor');
+
+            // Extend the base ajax request handler
+            console.log(' - Attaching interceptors...');
+            cfg.extendXMLHttpRequest();
+        }
+    }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
+        $stateProvider.state('samples.interceptors', {
+            url: '/interceptors',
+            views: {
+                'left@': { templateUrl: 'samples/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'samples/interceptors/main.tpl.html',
+                    controller: 'interceptorsController'
+                }
+            }
+        }).state('samples.interceptors.badRequest', {
+            url: '/badRequest',
+            views: {
+                'left@': { templateUrl: 'samples/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'samples/interceptors/bad.filename'
+                }
+            }
+        });
+    }]).service('httpInterceptor', [
+    '$rootScope', '$q', 'appConfig', function ($rootScope, $q, appConfig) {
+        var cfg = appConfig['interceptors'];
+        var service = this;
+
+        // Request interceptor (pre-fetch)
+        service.request = function (config) {
+            if (cfg.enabled) {
+                console.groupCollapsed(' -> Requesting: ' + config.url);
+                console.log(config);
+                console.groupEnd();
+            }
+            return config;
+        };
+
+        service.requestError = function (rejection) {
+            if (cfg.enabled) {
+                console.groupCollapsed(' -> Bad Request!');
+                console.error(rejection);
+                console.groupEnd();
+            }
+            return $q.reject(rejection);
+        };
+
+        service.response = function (response) {
+            if (cfg.enabled) {
+                console.groupCollapsed(' <- Responding: ' + response.config.url);
+                console.log(response);
+                console.groupEnd();
+            }
+
+            if (response.status === 401) {
+                $rootScope.$broadcast('unauthorized');
+            }
+
+            return response;
+        };
+
+        service.responseError = function (rejection) {
+            if (cfg.enabled) {
+                console.groupCollapsed(' <- Bad Response!');
+                console.error(rejection);
+                console.groupEnd();
+            }
+            return $q.reject(rejection);
+        };
+    }]).config([
+    'appConfigProvider', function (appConfigProvider) {
+        appConfigProvider.set({
+            'decorators': {
+                enabled: appConfigProvider.getPersisted('decorators.enabled') == '1'
+            }
+        });
+    }]).config([
+    '$stateProvider', function ($stateProvider) {
         $stateProvider.state('samples.decorators', {
             url: '/decorators',
             views: {
@@ -288,87 +406,7 @@ angular.module('prototyped.ng.samples.decorators', []).config([
                 }
             }
         });
-    }]).constant('decoratorConfig', {
-    debug: false,
-    enabled: false,
-    filters: [
-        function (include, item) {
-            // Exclude loading bar delegates
-            if (/(loading-bar)/i.test(item.filename))
-                return false;
-            return include;
-        },
-        function (include, item) {
-            // Ignore routing...?
-            if (/(angular-ui-router)/i.test(item.filename))
-                return false;
-            return include;
-        },
-        function (include, item) {
-            return include || /(scope\.decorators\.runPromiseAction)/i.test(item.source);
-        }
-    ],
-    promptme: undefined,
-    template: 'samples/decorators/dialogs/interceptor.tpl.html',
-    modalController: function ($scope, $modalInstance) {
-        // Define modal scope
-        var _scope = $scope;
-        var status = $scope.status;
-        var result = $scope.result;
-        _scope.allowEmpty = typeof result === 'undefined';
-        _scope.action = status ? 'Accept' : 'Reject';
-        _scope.modalAction = (typeof status !== 'undefined') ? 'resp' : 'req';
-        _scope.promisedValue = status ? result : undefined;
-        _scope.rejectValue = !status ? result : new Error("Interceptor rejected the action.");
-        _scope.getStatus = function () {
-            return _scope.action == 'Accept';
-        };
-        _scope.getResult = function () {
-            return _scope.getStatus() ? _scope.promisedValue : _scope.rejectValue;
-        };
-        _scope.getType = function () {
-            var result = _scope.getResult();
-            return (typeof result);
-        };
-        _scope.getBody = function () {
-            return JSON.stringify(_scope.getResult());
-        };
-        _scope.setToggle = function (val) {
-            _scope.allowEmpty = val;
-        };
-        _scope.ok = function () {
-            if (!_scope.allowEmpty && !_scope.promisedValue) {
-                alert(_scope.allowEmpty);
-                return;
-            }
-            $modalInstance.close(_scope.promisedValue);
-        };
-        _scope.cancel = function () {
-            if (!_scope.allowEmpty && !_scope.rejectValue) {
-                return;
-            }
-            $modalInstance.dismiss(_scope.rejectValue);
-        };
-    },
-    getPersisted: function (cname) {
-        var name = cname + '=';
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ')
-                c = c.substring(1);
-            if (c.indexOf(name) == 0)
-                return c.substring(name.length, c.length);
-        }
-        return '';
-    },
-    setPersisted: function (cname, cvalue, exdays) {
-        var d = new Date();
-        d.setTime(d.getTime() + ((exdays || 7) * 24 * 60 * 60 * 1000));
-        var expires = "expires=" + d.toUTCString();
-        document.cookie = cname + "=" + cvalue + "; " + expires;
-    }
-}).config([
+    }]).config([
     '$provide', 'decoratorConfig', function ($provide, cfg) {
         // Our decorator will get called when / if the $q service needs to be
         // instantiated in the application. It is made available as the
@@ -655,17 +693,96 @@ angular.module('prototyped.ng.samples.decorators', []).config([
         if (cfg.enabled) {
             $provide.decorator("$q", decorateQService);
         }
-    }]).controller('decoratorsController', [
+    }]).constant('decoratorConfig', {
+    debug: false,
+    enabled: false,
+    filters: [
+        function (include, item) {
+            // Exclude loading bar delegates
+            if (/(loading-bar)/i.test(item.filename))
+                return false;
+            return include;
+        },
+        function (include, item) {
+            // Ignore routing...?
+            if (/(angular-ui-router)/i.test(item.filename))
+                return false;
+            return include;
+        },
+        function (include, item) {
+            return include || /(scope\.decorators\.runPromiseAction)/i.test(item.source);
+        }
+    ],
+    promptme: undefined,
+    template: 'samples/decorators/dialogs/interceptor.tpl.html',
+    modalController: function ($scope, $modalInstance) {
+        // Define modal scope
+        var _scope = $scope;
+        var status = $scope.status;
+        var result = $scope.result;
+        _scope.allowEmpty = typeof result === 'undefined';
+        _scope.action = status ? 'Accept' : 'Reject';
+        _scope.modalAction = (typeof status !== 'undefined') ? 'resp' : 'req';
+        _scope.promisedValue = status ? result : undefined;
+        _scope.rejectValue = !status ? result : new Error("Interceptor rejected the action.");
+        _scope.getStatus = function () {
+            return _scope.action == 'Accept';
+        };
+        _scope.getResult = function () {
+            return _scope.getStatus() ? _scope.promisedValue : _scope.rejectValue;
+        };
+        _scope.getType = function () {
+            var result = _scope.getResult();
+            return (typeof result);
+        };
+        _scope.getBody = function () {
+            return JSON.stringify(_scope.getResult());
+        };
+        _scope.setToggle = function (val) {
+            _scope.allowEmpty = val;
+        };
+        _scope.ok = function () {
+            if (!_scope.allowEmpty && !_scope.promisedValue) {
+                alert(_scope.allowEmpty);
+                return;
+            }
+            $modalInstance.close(_scope.promisedValue);
+        };
+        _scope.cancel = function () {
+            if (!_scope.allowEmpty && !_scope.rejectValue) {
+                return;
+            }
+            $modalInstance.dismiss(_scope.rejectValue);
+        };
+    },
+    getPersisted: function (cname) {
+        var name = cname + '=';
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ')
+                c = c.substring(1);
+            if (c.indexOf(name) == 0)
+                return c.substring(name.length, c.length);
+        }
+        return '';
+    },
+    setPersisted: function (cname, cvalue, exdays) {
+        var d = new Date();
+        d.setTime(d.getTime() + ((exdays || 7) * 24 * 60 * 60 * 1000));
+        var expires = "expires=" + d.toUTCString();
+        document.cookie = cname + "=" + cvalue + "; " + expires;
+    }
+}).controller('decoratorsController', [
     '$rootScope', '$scope', '$state', '$stateParams', '$modal', '$q', '$timeout', '$window', 'decoratorConfig', function ($rootScope, $scope, $state, $stateParams, $modal, $q, $timeout, $window, cfg) {
+        $scope.interceptors = {
+            triggerBadRequest: function () {
+                $state.go('samples.interceptors.badRequest');
+            }
+        };
+
         // Define the model
         var context = $scope.decorators = {
-            busy: true,
-            apply: function () {
-                // Set the persisted value
-                var val = cfg.enabled ? '0' : '1';
-                cfg.setPersisted('monkeyPatching.enabled', val);
-                $window.location.reload(true);
-            },
             fcall: function () {
                 // Clear last result
                 context.error = null;
@@ -696,9 +813,6 @@ angular.module('prototyped.ng.samples.decorators', []).config([
                     }
                     return ($q.when("someValue"));
                 }
-            },
-            isPatched: function () {
-                return cfg.enabled;
             },
             runPromiseAction: function () {
                 // Clear last result
@@ -748,49 +862,23 @@ angular.module('prototyped.ng.samples.decorators', []).config([
                 return modalInstance;
             }
         };
-
-        // Apply updates (including async)
-        var updates = {};
-        try  {
-            // Check for required libraries
-            if (typeof require !== 'undefined') {
-                // We are now in NodeJS!
-                updates = {
-                    busy: false,
-                    hasNode: true
-                };
-            } else {
-                // Not available
-                updates.hasNode = false;
-                updates.busy = false;
-            }
-        } catch (ex) {
-            updates.busy = false;
-            updates.error = ex;
-        } finally {
-            // Extend updates for scope
-            angular.extend(context, updates);
-        }
     }]).run([
     '$modal', 'decoratorConfig', function ($modal, cfg) {
-        //console.warn(' - Started: ', cfg);
         // Hook the interceptor function
-        if (cfg.enabled) {
-            cfg.promptme = function (status, result) {
-                return $modal.open({
-                    templateUrl: cfg.template,
-                    controller: function ($scope, $modalInstance) {
-                        $scope.status = status;
-                        $scope.result = result;
+        cfg.promptme = function (status, result) {
+            return $modal.open({
+                templateUrl: cfg.template,
+                controller: function ($scope, $modalInstance) {
+                    $scope.status = status;
+                    $scope.result = result;
 
-                        // Delegate the controller logic
-                        cfg.modalController($scope, $modalInstance);
-                    },
-                    size: 'sm',
-                    resolve: {}
-                }).result;
-            };
-        }
+                    // Delegate the controller logic
+                    cfg.modalController($scope, $modalInstance);
+                },
+                size: 'sm',
+                resolve: {}
+            }).result;
+        };
     }]);
 /// <reference path="../../../../imports.d.ts" />
 
@@ -1641,6 +1729,51 @@ var proto;
 })(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.ng.samples.interceptors', []).config([
+    'appConfigProvider', function (appConfigProvider) {
+        appConfigProvider.set({
+            'interceptors': {
+                debug: true,
+                enabled: appConfigProvider.getPersisted('interceptors.enabled') == '1',
+                extendXMLHttpRequest: function () {
+                    // Do some magic with the ajax request handler
+                    var callback = XMLHttpRequest.prototype.open;
+                    XMLHttpRequest.prototype.open = function (method, url, async, user, pass) {
+                        var ctx = {};
+
+                        // Check for auth info
+                        if (user || pass) {
+                            // Extended with auth info
+                            angular.extend(ctx, {
+                                username: user,
+                                password: pass
+                            });
+                        }
+                        console.log(' - [ Ajax ] ( ' + (async ? 'Async' : 'Sync') + ' ) => ' + url + ' => ', ctx);
+
+                        // Call the original function
+                        if (callback) {
+                            callback.apply(this, arguments);
+                        }
+                    };
+
+                    console.log(' - Extended the "XMLHttpRequest" object.');
+                }
+            }
+        });
+    }]).config([
+    '$httpProvider', 'appConfigProvider', function ($httpProvider, appConfigProvider) {
+        var appConfig = appConfigProvider.$get();
+        var cfg = appConfig['interceptors'];
+
+        if (cfg.enabled) {
+            // Attach Angular's interceptor
+            $httpProvider.interceptors.push('httpInterceptor');
+
+            // Extend the base ajax request handler
+            console.log(' - Attaching interceptors...');
+            cfg.extendXMLHttpRequest();
+        }
+    }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.interceptors', {
@@ -1661,58 +1794,14 @@ angular.module('prototyped.ng.samples.interceptors', []).config([
                 }
             }
         });
-    }]).constant('interceptorConfig', {
-    debug: true,
-    enabled: false,
-    getPersisted: function (cname) {
-        var name = cname + '=';
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ')
-                c = c.substring(1);
-            if (c.indexOf(name) == 0)
-                return c.substring(name.length, c.length);
-        }
-        return '';
-    },
-    setPersisted: function (cname, cvalue, exdays) {
-        var d = new Date();
-        d.setTime(d.getTime() + ((exdays || 7) * 24 * 60 * 60 * 1000));
-        var expires = "expires=" + d.toUTCString();
-        document.cookie = cname + "=" + cvalue + "; " + expires;
-    },
-    extendXMLHttpRequest: function () {
-        // Do some magic with the ajax request handler
-        var callback = XMLHttpRequest.prototype.open;
-        XMLHttpRequest.prototype.open = function (method, url, async, user, pass) {
-            var ctx = {};
-
-            // Check for auth info
-            if (user || pass) {
-                // Extended with auth info
-                angular.extend(ctx, {
-                    username: user,
-                    password: pass
-                });
-            }
-            console.log(' - [ Ajax ] ( ' + (async ? 'Async' : 'Sync') + ' ) => ' + url + ' => ', ctx);
-
-            // Call the original function
-            if (callback) {
-                callback.apply(this, arguments);
-            }
-        };
-
-        console.log(' - Extended the "XMLHttpRequest" object.');
-    }
-}).service('httpInterceptor', [
-    '$rootScope', '$q', 'interceptorConfig', function ($rootScope, $q, cfg) {
+    }]).service('httpInterceptor', [
+    '$rootScope', '$q', 'appConfig', function ($rootScope, $q, appConfig) {
+        var cfg = appConfig['interceptors'];
         var service = this;
 
         // Request interceptor (pre-fetch)
         service.request = function (config) {
-            if (cfg.debug) {
+            if (cfg.enabled) {
                 console.groupCollapsed(' -> Requesting: ' + config.url);
                 console.log(config);
                 console.groupEnd();
@@ -1721,7 +1810,7 @@ angular.module('prototyped.ng.samples.interceptors', []).config([
         };
 
         service.requestError = function (rejection) {
-            if (cfg.debug) {
+            if (cfg.enabled) {
                 console.groupCollapsed(' -> Bad Request!');
                 console.error(rejection);
                 console.groupEnd();
@@ -1730,7 +1819,7 @@ angular.module('prototyped.ng.samples.interceptors', []).config([
         };
 
         service.response = function (response) {
-            if (cfg.debug) {
+            if (cfg.enabled) {
                 console.groupCollapsed(' <- Responding: ' + response.config.url);
                 console.log(response);
                 console.groupEnd();
@@ -1744,72 +1833,23 @@ angular.module('prototyped.ng.samples.interceptors', []).config([
         };
 
         service.responseError = function (rejection) {
-            if (cfg.debug) {
+            if (cfg.enabled) {
                 console.groupCollapsed(' <- Bad Response!');
                 console.error(rejection);
                 console.groupEnd();
             }
             return $q.reject(rejection);
         };
-    }]).config([
-    '$httpProvider', 'interceptorConfig', function ($httpProvider, cfg) {
-        // Get the value from persisted store
-        cfg.enabled = cfg.getPersisted('interceptors.enabled') == '1';
-
-        // Register interceptors
-        if (cfg.enabled) {
-            if (cfg.debug)
-                console.log(' - Attaching interceptors...');
-
-            // Attach Angular's interceptor
-            $httpProvider.interceptors.push('httpInterceptor');
-
-            // Extend the base ajax request handler
-            cfg.extendXMLHttpRequest();
-        }
     }]).controller('interceptorsController', [
-    '$rootScope', '$scope', '$state', '$stateParams', '$q', '$timeout', '$window', 'interceptorConfig', function ($rootScope, $scope, $state, $stateParams, $q, $timeout, $window, cfg) {
-        // Define the model
+    '$scope', '$state', function ($scope, $state) {
+        // Define the model controller
         var context = $scope.interceptors = {
-            busy: true,
-            apply: function () {
-                // Set the persisted value
-                var val = cfg.enabled ? '0' : '1';
-                cfg.setPersisted('interceptors.enabled', val);
-                $window.location.reload(true);
-            },
-            isPatched: function () {
-                return cfg.enabled;
-            },
             triggerBadRequest: function () {
                 $state.go('samples.interceptors.badRequest');
             }
         };
-
-        // Apply updates (including async)
-        var updates = {};
-        try  {
-            // Check for required libraries
-            if (typeof require !== 'undefined') {
-                // We are now in NodeJS!
-                updates = {
-                    busy: false,
-                    hasNode: true
-                };
-            } else {
-                // Not available
-                updates.hasNode = false;
-                updates.busy = false;
-            }
-        } catch (ex) {
-            updates.busy = false;
-            updates.error = ex;
-        } finally {
-            // Extend updates for scope
-            angular.extend(context, updates);
-        }
     }]).run([
-    '$state', '$templateCache', 'interceptorConfig', function ($state, $templateCache, cfg) {
+    '$state', 'appConfig', function ($state, appConfig) {
     }]);
 ///<reference path="../../../imports.d.ts"/>
 var proto;
@@ -3127,7 +3167,6 @@ angular.module('prototyped.ng.samples', [
     'prototyped.ng.samples.sampleData',
     'prototyped.ng.samples.location',
     'prototyped.ng.samples.decorators',
-    'prototyped.ng.samples.interceptors',
     'prototyped.ng.samples.notifications',
     'prototyped.ng.samples.compression',
     'prototyped.ng.samples.styles3d'
@@ -3469,11 +3508,11 @@ angular.module('prototyped.ng.samples', [
   $templateCache.put('samples/decorators/dialogs/interceptor.tpl.html',
     '<div class=modal-body style="min-height: 180px; padding: 6px"><ul class="nav nav-tabs"><li role=presentation ng-class="{ \'active\' : (modalAction == \'req\') }"><a href="" ng-click="modalAction = \'req\'">Request Details</a></li><li role=presentation ng-class="{ \'active\' : (modalAction == \'resp\') }"><a href="" ng-click="modalAction = \'resp\'">Return Result</a></li></ul><div class=thumbnail style="border-top: none; margin-bottom: 0; border-top-left-radius: 0; border-top-right-radius: 0"><form ng-switch=modalAction style="margin-top: 6px"><div ng-if=statusMsg class="alert alert-warning" style="padding: 8px; margin: 0">{{ statusMsg }}</div><div ng-switch-default class=docked><em class=text-muted style="padding: 6px; margin: 50px auto">Select an action to start with...</em></div><div ng-switch-when=req><h5>Request Details <small>More about the source</small></h5><p>...</p></div><div ng-switch-when=resp><h5>Result Returned <small ng-if=!status class="text-danger pull-right"><i class="fa fa-close"></i> Rejected</small> <small ng-if=status class="text-success pull-right"><i class="fa fa-check"></i> Responded</small></h5><div class="input-group input-group-sm"><span class=input-group-addon id=sizing-addon3>Type</span> <input class=form-control ng-value=getType() ng-readonly=true placeholder=undefined aria-describedby=sizing-addon3> <span class=input-group-btn><button type=button ng-disabled=true class="btn btn-default dropdown-toggle" data-toggle=dropdown aria-expanded=false>Edit <span class=caret></span></button><ul class="dropdown-menu dropdown-menu-right" role=menu><li><a href=#>Accepted Reply</a></li><li><a href=#>Rejection Reason</a></li><li class=divider></li><li><a href=#>Reset to Defaults</a></li></ul></span></div><textarea ng-class="{ \'alert alert-danger\':!getStatus(), \'alert alert-success\':getStatus() }" ng-readonly=true ng-bind=getBody() style="width: 100%; min-height: 160px; margin:0"></textarea><div class=input-group><div ng-click=setToggle(!allowEmpty) style="padding-left: 8px"><i class=fa ng-class="{ \'fa-check\':allowEmpty, \'fa-close\':!allowEmpty }"></i> <span>Allow empty value as return value</span></div></div></div></form></div></div><div class=modal-footer><button id=btnCancel ng-disabled="!allowEmpty && !rejectValue" class="btn btn-danger pull-left" ng-click=cancel()>Reject Action</button> <button id=btnUpdate ng-disabled="!allowEmpty && !promisedValue" class="btn btn-success pull-right" ng-click=ok()>Complete Action</button></div>');
   $templateCache.put('samples/decorators/main.tpl.html',
-    '<div id=DecoratorView class=container style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=decorators.busy ng-click=decorators.apply() class=btn ng-class="{ \'btn-primary\': !decorators.isPatched(), \'btn-success\': decorators.isPatched() }">{{ decorators.isPatched() ? \'Application Patched!\' : \'Apply Monkey Patches\' }}</a></span><h4>Patching Services <small>Monkey patching the normal behaviour of your application.</small></h4><hr><p>By making use of angular\'s <a href=https://docs.angularjs.org/api/auto/service/$provide>$provide decorators</a>, we patch the <a href=https://docs.angularjs.org/api/ng/service/$q>$q service</a> to intercept any promised actions and take over the reply mechanism.</p><p>After the initial investigation, it quickly became clear there are just way too many promises to intercept and keep track of, many of them in the angular framework itself. A mechanism was required to identify (and filter out) the promises we were looking for.</p><p>With no <em>real</em> unique identifiers to work with, stack traces are used for tracking identity. In javascript, stack traces are ugly, and not always helpful, but with a little bit of regular expressions, enough sensible info can be extracted to get a picture of <em>where</em> the actions originate from. And this opens up a whole new world of oppertunities...</p><p>- This sample was inspired by <a target=_blank href=http://www.bennadel.com/blog/2775-monkey-patching-the-q-service-using-provide-decorator-in-angularjs.htm>this awesome blog post</a>. :)<br>- The idea to use stack traces was inspired from <a target=_blank href=http://www.codeovertones.com/2011/08/how-to-print-stack-trace-anywhere-in.html>this awesome blog post</a>.</p><hr><p><a class="btn btn-default" ng-class="{ \'btn-success\': (decorators.lastStatus && decorators.lastResult), \'btn-danger\': (!decorators.lastStatus && decorators.lastResult.message) }" href="" ng-click=decorators.runPromiseAction()>Run Promised Action</a> <a class="btn btn-default" ng-class="{ \'btn-warning\':decorators.isPatched(), \'btn-success\': decorators.fcallState == \'Resolved\', \'btn-danger\': decorators.fcallState == \'Rejected\' }" href="" ng-click=decorators.fcall() ng-disabled=!decorators.isPatched()>Call Marshalled Function</a></p><hr><div ng:if=decorators.error class="alert alert-danger"><b>Error:</b> {{ decorators.error.message || \'Something went wrong.\' }}</div><div ng:if=!decorators.error><div class="alert alert-success" ng-if="decorators.lastStatus === true"><b>Accepted:</b> {{ decorators.lastResult || \'No additional information specified.\' }}</div><div class="alert alert-danger" ng-if="decorators.lastStatus === false"><b>Rejected:</b> {{ (decorators.lastResult.message || decorators.lastResult) || \'No additional information specified.\' }}</div></div></div></div></div>');
+    '<div id=DecoratorView class=container style="width: 100%"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css rel="stylesheet"><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input type=checkbox ng:model=appConfig.interceptors.enabled bs:switch switch:size=mini switch:inverse="true"> <input type=checkbox ng:model=appConfig.decorators.enabled bs:switch switch:size=mini switch:inverse="true"></span><h4>Interceptors and Decorators <small>Monkey patching the normal behaviour of your application.</small></h4><hr><p>By making use of angular\'s <a href=https://docs.angularjs.org/api/auto/service/$provide>$provide decorators</a>, we patch the <a href=https://docs.angularjs.org/api/ng/service/$q>$q service</a> to intercept any promised actions and take over the reply mechanism.</p><p>After the initial investigation, it quickly became clear there are just way too many promises to intercept and keep track of, many of them in the angular framework itself. A mechanism was required to identify (and filter out) the promises we were looking for.</p><p>With no <em>real</em> unique identifiers to work with, stack traces are used for tracking identity. In javascript, stack traces are ugly, and not always helpful, but with a little bit of regular expressions, enough sensible info can be extracted to get a picture of <em>where</em> the actions originate from. And this opens up a whole new world of oppertunities...</p><p>- This sample was inspired by <a target=_blank href=http://www.bennadel.com/blog/2775-monkey-patching-the-q-service-using-provide-decorator-in-angularjs.htm>this awesome blog post</a>. :)<br>- The idea to use stack traces was inspired from <a target=_blank href=http://www.codeovertones.com/2011/08/how-to-print-stack-trace-anywhere-in.html>this awesome blog post</a>.</p><hr><p><a class="btn btn-default" ng-class="{ \'btn-success\': (decorators.lastStatus && decorators.lastResult), \'btn-danger\': (!decorators.lastStatus && decorators.lastResult.message) }" href="" ng-click=decorators.runPromiseAction()>Run Promised Action</a> <a class="btn btn-default" ng-click=decorators.fcall() ng-disabled=!appConfig.decorators.enabled ng-class="{ \'btn-warning\':appConfig.decorators.enabled, \'btn-success\': decorators.fcallState == \'Resolved\', \'btn-danger\': decorators.fcallState == \'Rejected\' }" href="">Call Marshalled Function</a> <a class="btn btn-default" href="" ng-click=interceptors.triggerBadRequest() ng-disabled=!appConfig.interceptors.enabled ng-class="{ \'btn-warning\': appConfig.interceptors.enabled, \'btn-success\': interceptors.fcallState == \'Resolved\', \'btn-danger\': interceptors.fcallState == \'Rejected\' }">Create Bad Request</a></p><hr><div ng:if=decorators.error class="alert alert-danger"><b>Error:</b> {{ decorators.error.message || \'Something went wrong.\' }}</div><div ng:if=!decorators.error><div class="alert alert-success" ng-if="decorators.lastStatus === true"><b>Accepted:</b> {{ decorators.lastResult || \'No additional information specified.\' }}</div><div class="alert alert-danger" ng-if="decorators.lastStatus === false"><b>Rejected:</b> {{ (decorators.lastResult.message || decorators.lastResult) || \'No additional information specified.\' }}</div></div></div></div></div>');
   $templateCache.put('samples/errorHandlers/main.tpl.html',
     '<div ng:cloak class=container style="width: 100%"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link rel=stylesheet resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.core.css"><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.default.min.css"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.min.js></script><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input type=checkbox ng:show="sampleErrors.result !== null" ng:model=appConfig.errorHandlers.enabled bs:switch switch:size=mini switch:inverse=true></span><h4>Exception Handling <small>Error reporting and client-side exception handling</small></h4><hr><div class=row><div class=col-md-3><div><h5>Throw Exceptions</h5><ul class=list-group><li class=list-group-item><a href="" ng-click=sampleErrors.throwManagedException()><i class="fa fa-cubes"></i>&nbsp; Catch Managed Error</a></li><li class=list-group-item><a href="" ng-click=sampleErrors.throwAjaxException()><i class="fa fa-cubes"></i>&nbsp; Create Ajax Error</a></li><li class=list-group-item><a href="" ng-click=sampleErrors.throwAngularException()><i class="fa fa-cubes"></i>&nbsp; AngularJS Error</a></li><li class=list-group-item><a href="" ng-click=sampleErrors.throwTimeoutException()><i class="fa fa-cubes"></i>&nbsp; Timeout Error</a></li><li class=list-group-item><a href="" onclick=sampleError.dontExist++><i class="fa fa-cogs"></i>&nbsp; Unhandled Exception</a></li></ul></div></div><div class=ellipsis style="overflow: hidden" ng-class="{ \'col-md-6\':appConfig.errorHandlers.enabled, \'col-md-9\': !appConfig.errorHandlers.enabled }"><div><span class=pull-right style="padding: 3px"><a href="" ng-click="">Refresh</a> | <a href="" ng-click="appStatus.logs = []">Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appStatus.logs.length><td colspan=3><em>No events have been logged...</em></td></tr><tr ng-repeat="row in appStatus.logs" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td class=ellipsis style="width: auto; overflow: hidden">{{ row.desc }}</td></tr></tbody></table></div><div ng-if=!appStatus.logs.length><h5>Inspired by these blogs:</h5><ul class="alert alert-info" style="list-style: none"><li><a target=_blank href=http://www.davecap.com/post/46522098029/using-sentry-raven-js-with-angularjs-to-catch><i class="fa fa-external-link-square"></i> http://www.davecap.com</a></li><li><a target=_blank href=http://bahmutov.calepin.co/catch-all-errors-in-angular-app.html><i class="fa fa-external-link-square"></i> http://bahmutov.calepin.co</a></li><li><a target=_blank href=http://davidwalsh.name/track-errors-google-analytics><i class="fa fa-external-link-square"></i> http://davidwalsh.name</a></li></ul></div></div><div ng-class="{ \'col-md-3\':appConfig.errorHandlers.enabled, \'hide\': !appConfig.errorHandlers.enabled }"><div><h5>Exception Handlers</h5><form class=thumbnail><div style="padding: 0 8px"><div class=checkbox ng:class="{ \'inactive-gray\': !handler.enabled && handler.locked }" ng:repeat="handler in sampleErrors.errorHandlers"><label><input type=checkbox ng-disabled=handler.locked ng-checked=handler.enabled ng-click=sampleErrors.checkChanged(handler)> <span ng-if=!handler.busy><strong ng:if=handler.enabled>{{ handler.label }}</strong> <span ng:if=!handler.enabled>{{ handler.label }}</span></span> <span ng-if=handler.busy><i class="fa fa-spinner fa-spin"></i> <em>Loading third-party scripts...</em></span></label></div></div></form></div><div ng:if="sampleErrors.google.isEnabled && !sampleErrors.google.handler.busy"><span class=pull-right style="padding: 3px"><b ng:if=sampleErrors.google.isOnline class=glow-green>Online</b> <b ng:if=!sampleErrors.google.isOnline class=glow-red>Offline</b></span><h5>Google Analytics</h5><div style="padding: 0 8px"><div ng-show=sampleErrors.google.isOnline><a href="" class=pull-right ng:click="sampleErrors.google.isOnline = false;"><i class="glyphicon glyphicon-remove"></i></a><div class=ellipsis><b>Public Key:</b> <a class=inactive-text>{{ sampleErrors.google.config.publicKey }}</a></div></div><form class=form-inline role=form ng-show=!sampleErrors.google.isOnline><div class=form-group><label for=sentryKey>Google API key (required)</label><div class=input-group><input class="form-control input-sm" id=googleKey ng:model=sampleErrors.google.config.publicKey placeholder=UA-XXXX-Y><div class=input-group-btn><a class="btn btn-sm btn-default" ng-class="{ \'btn-danger\': sampleErrors.google.lastError, \'btn-primary\': sampleErrors.google.config.publicKey, \'btn-default\': !sampleErrors.google.config.publicKey }" ng-disabled=!sampleErrors.google.config.publicKey ng-click=sampleErrors.google.connect(sampleErrors.google.config.publicKey)>Set</a></div></div></div></form><br><div class="alert alert-danger" ng-if="!sampleErrors.google.isOnline && sampleErrors.google.lastError">{{ sampleErrors.google.lastError.message }}</div></div></div><div ng:if="sampleErrors.raven.isEnabled && !sampleErrors.raven.handler.busy"><span class=pull-right style="padding: 3px"><b ng:if=sampleErrors.raven.isOnline class=glow-green>Online</b> <b ng:if=!sampleErrors.raven.isOnline class=glow-red>Offline</b></span><h5>Sentry and RavenJS</h5><div style="padding: 0 8px"><div ng-show=sampleErrors.raven.isOnline><a href="" class=pull-right ng:click="sampleErrors.raven.isOnline = false;"><i class="glyphicon glyphicon-remove"></i></a><div class=ellipsis><b>Public Key:</b> <a ng-href="{{ sampleErrors.raven.config.publicKey }}" target=_blank class=inactive-text>{{ sampleErrors.raven.config.publicKey }}</a></div></div><form class=form-inline role=form ng-show=!sampleErrors.raven.isOnline><div class=form-group><label for=sentryKey>Sentry public key (required)</label><div class=input-group><input class="form-control input-sm" id=sentryKey ng:model=sampleErrors.raven.config.publicKey placeholder="https://<-key->@app.getsentry.com/12345"><div class=input-group-btn><a class="btn btn-sm btn-default" ng-class="{ \'btn-danger\': sampleErrors.raven.lastError, \'btn-primary\': sampleErrors.raven.config.publicKey, \'btn-default\': !sampleErrors.raven.config.publicKey }" ng-disabled=!sampleErrors.raven.config.publicKey ng-click=sampleErrors.raven.connect(sampleErrors.raven.config.publicKey)>Set</a></div></div></div></form><br><div class="alert alert-danger" ng-if="!sampleErrors.raven.isOnline && sampleErrors.raven.lastError">{{ sampleErrors.raven.lastError.message }}</div><div class="alert alert-info" ng-if="!sampleErrors.raven.isOnline && !sampleErrors.raven.lastError"><a target=_blank href="https://www.getsentry.com/welcome/">Sentry</a> is a third party online service used to track errors. <a target=_blank href="http://raven-js.readthedocs.org/en/latest/">RavenJS</a> is used on the client-side to catch and send events on to Sentry.</div></div></div></div></div></div></div></div>');
   $templateCache.put('samples/interceptors/main.tpl.html',
-    '<div id=InterceptorView class=container style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=interceptors.busy ng-click=interceptors.apply() class=btn ng-class="{ \'btn-primary\': !interceptors.isPatched(), \'btn-success\': interceptors.isPatched() }">{{ interceptors.isPatched() ? \'Interceptors Active\' : \'Enable Interceptors\' }}</a></span><h4>HTTP Interceptors <small>Register and utilise Angular\'s interceptors.</small></h4><hr><p>...</p><hr><p><a class="btn btn-default" ng-class="{ \'btn-warning\': interceptors.isPatched(), \'btn-success\': interceptors.fcallState == \'Resolved\', \'btn-danger\': interceptors.fcallState == \'Rejected\' }" href="" ng-click=interceptors.triggerBadRequest() ng-disabled=!interceptors.isPatched()>Create Bad Request</a></p><hr><div ng:if=interceptors.error class="alert alert-danger"><b>Error:</b> {{ interceptors.error.message || \'Something went wrong.\' }}</div></div></div></div>');
+    '<div id=InterceptorView class=container style="width: 100%"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css rel="stylesheet"><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input type=checkbox ng:model=appConfig.interceptors.enabled bs:switch switch:size=mini switch:inverse="true"></span><h4>HTTP Interceptors <small>Register and utilise Angular\'s interceptors.</small></h4><hr><p>...</p><hr><p><a class="btn btn-default" href="" ng-click=interceptors.triggerBadRequest() ng-disabled=!appConfig.interceptors.enabled ng-class="{ \'btn-warning\': appConfig.interceptors.enabled, \'btn-success\': interceptors.fcallState == \'Resolved\', \'btn-danger\': interceptors.fcallState == \'Rejected\' }">Create Bad Request</a></p><hr><div ng:if=interceptors.error class="alert alert-danger"><b>Error:</b> {{ interceptors.error.message || \'Something went wrong.\' }}</div></div></div></div>');
   $templateCache.put('samples/left.tpl.html',
     '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=samples.info><i class=fa ng-class="{ \'fa-refresh glow-blue animate-glow\': samples.busy, \'fa-cubes glow-green\': !samples.busy, \'fa-warning glow-red animate-glow\': samples.error }"></i>&nbsp; Samples Home Page</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.notifications><i class="fa fa-comment"></i> Web Notifications</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.errors><i class="fa fa-life-ring"></i> Exception Handlers</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.compression><i class="fa fa-file-archive-o"></i> Dynamic Encoders</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.sampleData><i class="fa fa-gears"></i> Online Sample Data</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.interceptors><i class="fa fa-crosshairs"></i> HTTP Interceptors</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.decorators><i class="fa fa-plug"></i> Service Decorators</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.location><i class="fa fa-crosshairs"></i> Geo Location Tracking</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': false }"><a app:nav-link ui:sref=samples.styles3d><i class="fa fa-codepen"></i> Exploring Styles 3D</a></li></ul>');
   $templateCache.put('samples/location/views/aside.tpl.html',

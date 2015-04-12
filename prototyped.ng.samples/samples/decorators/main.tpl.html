@@ -1,14 +1,27 @@
 ﻿<div id="DecoratorView" class="container" style="width: 100%;">
+
+    <!-- Define required scripts & styling for bootstrap switch -->
+    <script resx:import="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js"></script>
+    <link resx:import="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css" rel="stylesheet" />
+
     <div class="row">
         <div class="col-md-12">
-            <span class="pull-right">
-                <a href="" ng-disabled="decorators.busy" ng-click="decorators.apply()"
-                   class="btn" ng-class="{ 'btn-primary': !decorators.isPatched(), 'btn-success': decorators.isPatched() }">
-                    {{ decorators.isPatched() ? 'Application Patched!' : 'Apply Monkey Patches' }}
-                </a>
+            <span class="pull-right ng-cloak" style="padding: 6px;">
+                <input type="checkbox"
+                       ng:model="appConfig.decorators.enabled"
+                       bs:switch
+                       switch:size="mini"
+                       switch:label="Decorators"
+                       switch:inverse="false" />
+                <input type="checkbox"
+                       ng:model="appConfig.interceptors.enabled"
+                       bs:switch
+                       switch:size="mini"
+                       switch:label="Interceptors"
+                       switch:inverse="false" />
             </span>
             <h4>
-                Patching Services
+                Interceptors and Decorators
                 <small>Monkey patching the normal behaviour of your application.</small>
             </h4>
             <hr />
@@ -36,7 +49,18 @@
             <hr />
             <p>
                 <a class="btn btn-default" ng-class="{ 'btn-success': (decorators.lastStatus && decorators.lastResult), 'btn-danger': (!decorators.lastStatus && decorators.lastResult.message) }" href="" ng-click="decorators.runPromiseAction()">Run Promised Action</a>
-                <a class="btn btn-default" ng-class="{ 'btn-warning':decorators.isPatched(), 'btn-success': decorators.fcallState == 'Resolved', 'btn-danger': decorators.fcallState == 'Rejected' }" href="" ng-click="decorators.fcall()" ng-disabled="!decorators.isPatched()">Call Marshalled Function</a>
+                <a class="btn btn-default"
+                   ng-click="decorators.fcall()"
+                   ng-disabled="!appConfig.decorators.enabled"
+                   ng-class="{ 'btn-warning':appConfig.decorators.enabled, 'btn-success': decorators.fcallState == 'Resolved', 'btn-danger': decorators.fcallState == 'Rejected' }" href="">
+                    Call Marshalled Function
+                </a>
+                <a class="btn btn-default" href=""
+                   ng-click="interceptors.triggerBadRequest()"
+                   ng-disabled="!appConfig.interceptors.enabled"
+                   ng-class="{ 'btn-warning': appConfig.interceptors.enabled, 'btn-success': interceptors.fcallState == 'Resolved', 'btn-danger': interceptors.fcallState == 'Rejected' }">
+                    Create Bad Request
+                </a>
             </p>
             <hr />
             <div ng:if="decorators.error" class="alert alert-danger">

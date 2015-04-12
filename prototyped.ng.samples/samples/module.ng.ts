@@ -17,7 +17,7 @@ angular.module('prototyped.ng.samples', [
     'prototyped.ng.samples.sampleData',
     'prototyped.ng.samples.location',
     'prototyped.ng.samples.decorators',
-    'prototyped.ng.samples.interceptors',
+    //'prototyped.ng.samples.interceptors',
     'prototyped.ng.samples.notifications',
     'prototyped.ng.samples.compression',
     'prototyped.ng.samples.styles3d',

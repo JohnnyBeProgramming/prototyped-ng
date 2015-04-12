@@ -1,9 +1,134 @@
 /// <reference path="../../imports.d.ts" />
 
 angular.module('prototyped.ng.samples.decorators', [])
-    .config(['$stateProvider', function ($stateProvider) {
+    .config(['appConfigProvider', function (appConfigProvider) {
+        appConfigProvider.set({
+            'interceptors': {
+                debug: true,
+                enabled: appConfigProvider.getPersisted('interceptors.enabled') == '1',
+                extendXMLHttpRequest: function () {
+                    // Do some magic with the ajax request handler
+                    var callback = XMLHttpRequest.prototype.open;
+                    XMLHttpRequest.prototype.open = function (method, url, async, user, pass) {
+                        var ctx = {};
 
+                        // Check for auth info
+                        if (user || pass) {
+                            // Extended with auth info
+                            angular.extend(ctx, {
+                                username: user,
+                                password: pass
+                            });
+                        }
+                        console.log(' - [ Ajax ] ( ' + (async ? 'Async' : 'Sync') + ' ) => ' + url + ' => ', ctx);
+
+                        // Call the original function
+                        if (callback) {
+                            callback.apply(this, arguments);
+                        }
+                    };
+
+                    console.log(' - Extended the "XMLHttpRequest" object.');
+                },
+            },
+        });
+    }])
+    .config(['$httpProvider', 'appConfigProvider', function ($httpProvider, appConfigProvider) {
+        var appConfig = appConfigProvider.$get();
+        var cfg = appConfig['interceptors'];
+
+        if (cfg.enabled) {
+            // Attach Angular's interceptor
+            $httpProvider.interceptors.push('httpInterceptor');
+
+            // Extend the base ajax request handler
+            console.log(' - Attaching interceptors...');
+            cfg.extendXMLHttpRequest();
+        }
+    }])
+    .config(['$stateProvider', function ($stateProvider) {
         // Now set up the states
+        $stateProvider
+            .state('samples.interceptors', {
+                url: '/interceptors',
+                views: {
+                    'left@': { templateUrl: 'samples/left.tpl.html' },
+                    'main@': {
+                        templateUrl: 'samples/interceptors/main.tpl.html',
+                        controller: 'interceptorsController'
+                    },
+                }
+            })
+            .state('samples.interceptors.badRequest', {
+                url: '/badRequest',
+                views: {
+                    'left@': { templateUrl: 'samples/left.tpl.html' },
+                    'main@': {
+                        templateUrl: 'samples/interceptors/bad.filename',
+                    },
+                }
+            })
+    }])
+
+    .service('httpInterceptor', ['$rootScope', '$q', 'appConfig', function ($rootScope, $q, appConfig) {
+        var cfg = appConfig['interceptors'];
+        var service = this;
+
+        // Request interceptor (pre-fetch)
+        service.request = function (config) {
+            if (cfg.enabled) {
+                console.groupCollapsed(' -> Requesting: ' + config.url);
+                console.log(config);
+                console.groupEnd();
+            }
+            return config;
+        };
+
+        service.requestError = function (rejection) {
+            if (cfg.enabled) {
+                console.groupCollapsed(' -> Bad Request!');
+                console.error(rejection);
+                console.groupEnd();
+            }
+            return $q.reject(rejection);
+        };
+
+        service.response = function (response) {
+            if (cfg.enabled) {
+                console.groupCollapsed(' <- Responding: ' + response.config.url);
+                console.log(response);
+                console.groupEnd();
+            }
+
+            if (response.status === 401) {
+                $rootScope.$broadcast('unauthorized');
+            }
+
+            return response;
+        };
+
+        service.responseError = function (rejection) {
+            if (cfg.enabled) {
+                console.groupCollapsed(' <- Bad Response!');
+                console.error(rejection);
+                console.groupEnd();
+            }
+            return $q.reject(rejection);
+        };
+
+    }])
+
+// -----------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------
+
+    .config(['appConfigProvider', function (appConfigProvider) {
+        appConfigProvider.set({
+            'decorators': {
+                enabled: appConfigProvider.getPersisted('decorators.enabled') == '1',
+            },
+        });
+    }])
+    .config(['$stateProvider', function ($stateProvider) {
         $stateProvider
             .state('samples.decorators', {
                 url: '/decorators',
@@ -15,99 +140,7 @@ angular.module('prototyped.ng.samples.decorators', [])
                     },
                 }
             })
-
     }])
-
-    .constant('decoratorConfig', {
-        debug: false,
-        enabled: false,
-        filters: [
-            function (include, item) {
-                // Exclude loading bar delegates
-                if (/(loading-bar)/i.test(item.filename)) return false;
-                return include;
-            },
-            function (include, item) {
-                // Ignore routing...?
-                if (/(angular-ui-router)/i.test(item.filename)) return false;
-                return include;
-            },
-            /*
-            function (include, item) {
-                if (/(localhost)/i.test(item.hostname)) return true;
-                return include;
-            },
-            function (include, item) {
-                if (/(localhost)/i.test(item.hostname)) return true;
-                return include;
-            },
-            function (include, item) {
-                if (/(scope\.decorators\.openModalWindow)/i.test(item.source)) return false;
-                return include;
-            },
-            function (include, item) {
-                if (/(Scope\._scope\.ok)/i.test(item.source)) return false;
-                return include;
-            },
-            */
-            function (include, item) {
-                return include
-                    || /(scope\.decorators\.runPromiseAction)/i.test(item.source);
-            },
-        ],
-        promptme: undefined,
-        template: 'samples/decorators/dialogs/interceptor.tpl.html',
-        modalController: function ($scope, $modalInstance) {
-            // Define modal scope
-            var _scope = $scope;
-            var status = $scope.status;
-            var result = $scope.result;
-            _scope.allowEmpty = typeof result === 'undefined';
-            _scope.action = status ? 'Accept' : 'Reject';
-            _scope.modalAction = (typeof status !== 'undefined') ? 'resp' : 'req';
-            _scope.promisedValue = status ? result : undefined;
-            _scope.rejectValue = !status ? result : new Error("Interceptor rejected the action.");
-            _scope.getStatus = function () { return _scope.action == 'Accept'; };
-            _scope.getResult = function () { return _scope.getStatus() ? _scope.promisedValue : _scope.rejectValue; };
-            _scope.getType = function () {
-                var result = _scope.getResult();
-                return (typeof result);
-            };
-            _scope.getBody = function () { return JSON.stringify(_scope.getResult()); };
-            _scope.setToggle = function (val) {
-                _scope.allowEmpty = val;
-            };
-            _scope.ok = function () {
-                if (!_scope.allowEmpty && !_scope.promisedValue) {
-                    alert(_scope.allowEmpty);
-                    return;
-                }
-                $modalInstance.close(_scope.promisedValue);
-            };
-            _scope.cancel = function () {
-                if (!_scope.allowEmpty && !_scope.rejectValue) {
-                    return;
-                }
-                $modalInstance.dismiss(_scope.rejectValue);
-            };
-        },
-        getPersisted: function (cname) {
-            var name = cname + '=';
-            var ca = document.cookie.split(';');
-            for (var i = 0; i < ca.length; i++) {
-                var c = ca[i];
-                while (c.charAt(0) == ' ') c = c.substring(1);
-                if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
-            }
-            return '';
-        },
-        setPersisted: function (cname, cvalue, exdays) {
-            var d = new Date();
-            d.setTime(d.getTime() + ((exdays || 7) * 24 * 60 * 60 * 1000));
-            var expires = "expires=" + d.toUTCString();
-            document.cookie = cname + "=" + cvalue + "; " + expires;
-        }
-    })
     .config(['$provide', 'decoratorConfig', function ($provide, cfg) {
         // Our decorator will get called when / if the $q service needs to be
         // instantiated in the application. It is made available as the
@@ -146,10 +179,10 @@ angular.module('prototyped.ng.samples.decorators', [])
 
                     // Build a stack trace
                     var stack = (<any>new Error('dummy')).stack
-                                    .replace(/^[^\(]+?[\n$]/gm, '')
-                                    .replace(/^\s+at\s+/gm, '')
-                                    .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
-                                    .split('\n').splice(1);
+                        .replace(/^[^\(]+?[\n$]/gm, '')
+                        .replace(/^\s+at\s+/gm, '')
+                        .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
+                        .split('\n').splice(1);
 
 
                     // Parse each line and store
@@ -419,16 +452,106 @@ angular.module('prototyped.ng.samples.decorators', [])
 
     }])
 
+    .constant('decoratorConfig', {
+        debug: false,
+        enabled: false,
+        filters: [
+            function (include, item) {
+                // Exclude loading bar delegates
+                if (/(loading-bar)/i.test(item.filename)) return false;
+                return include;
+            },
+            function (include, item) {
+                // Ignore routing...?
+                if (/(angular-ui-router)/i.test(item.filename)) return false;
+                return include;
+            },
+            /*
+            function (include, item) {
+                if (/(localhost)/i.test(item.hostname)) return true;
+                return include;
+            },
+            function (include, item) {
+                if (/(localhost)/i.test(item.hostname)) return true;
+                return include;
+            },
+            function (include, item) {
+                if (/(scope\.decorators\.openModalWindow)/i.test(item.source)) return false;
+                return include;
+            },
+            function (include, item) {
+                if (/(Scope\._scope\.ok)/i.test(item.source)) return false;
+                return include;
+            },
+            */
+            function (include, item) {
+                return include
+                    || /(scope\.decorators\.runPromiseAction)/i.test(item.source);
+            },
+        ],
+        promptme: undefined,
+        template: 'samples/decorators/dialogs/interceptor.tpl.html',
+        modalController: function ($scope, $modalInstance) {
+            // Define modal scope
+            var _scope = $scope;
+            var status = $scope.status;
+            var result = $scope.result;
+            _scope.allowEmpty = typeof result === 'undefined';
+            _scope.action = status ? 'Accept' : 'Reject';
+            _scope.modalAction = (typeof status !== 'undefined') ? 'resp' : 'req';
+            _scope.promisedValue = status ? result : undefined;
+            _scope.rejectValue = !status ? result : new Error("Interceptor rejected the action.");
+            _scope.getStatus = function () { return _scope.action == 'Accept'; };
+            _scope.getResult = function () { return _scope.getStatus() ? _scope.promisedValue : _scope.rejectValue; };
+            _scope.getType = function () {
+                var result = _scope.getResult();
+                return (typeof result);
+            };
+            _scope.getBody = function () { return JSON.stringify(_scope.getResult()); };
+            _scope.setToggle = function (val) {
+                _scope.allowEmpty = val;
+            };
+            _scope.ok = function () {
+                if (!_scope.allowEmpty && !_scope.promisedValue) {
+                    alert(_scope.allowEmpty);
+                    return;
+                }
+                $modalInstance.close(_scope.promisedValue);
+            };
+            _scope.cancel = function () {
+                if (!_scope.allowEmpty && !_scope.rejectValue) {
+                    return;
+                }
+                $modalInstance.dismiss(_scope.rejectValue);
+            };
+        },
+        getPersisted: function (cname) {
+            var name = cname + '=';
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1);
+                if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+            }
+            return '';
+        },
+        setPersisted: function (cname, cvalue, exdays) {
+            var d = new Date();
+            d.setTime(d.getTime() + ((exdays || 7) * 24 * 60 * 60 * 1000));
+            var expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=" + cvalue + "; " + expires;
+        }
+    })
+
     .controller('decoratorsController', ['$rootScope', '$scope', '$state', '$stateParams', '$modal', '$q', '$timeout', '$window', 'decoratorConfig', function ($rootScope, $scope, $state, $stateParams, $modal, $q, $timeout, $window, cfg) {
+        $scope.interceptors = {
+            triggerBadRequest: function () {
+                $state.go('samples.interceptors.badRequest');
+            },
+        };
+
         // Define the model
         var context = $scope.decorators = <any>{
-            busy: true,
-            apply: function () {
-                // Set the persisted value                
-                var val = cfg.enabled ? '0' : '1';
-                cfg.setPersisted('monkeyPatching.enabled', val);
-                $window.location.reload(true);
-            },
             fcall: function () {
                 // Clear last result
                 context.error = null;
@@ -438,17 +561,17 @@ angular.module('prototyped.ng.samples.decorators', [])
                 // return a promise even if the method invocation fails.
                 $q.fcall(loadSomething, [1, 2, 3])
                     .then(
-                        function handleResolve(value) {
-                            context.fcallState = 'Resolved';
-                            console.log("Resolved!");
-                            console.log(value);
-                        },
-                        function handleReject(error) {
-                            context.fcallState = 'Rejected';
-                            context.error = error;
-                            console.warn("Rejected!");
-                            console.warn(error);
-                        }
+                    function handleResolve(value) {
+                        context.fcallState = 'Resolved';
+                        console.log("Resolved!");
+                        console.log(value);
+                    },
+                    function handleReject(error) {
+                        context.fcallState = 'Rejected';
+                        context.error = error;
+                        console.warn("Rejected!");
+                        console.warn(error);
+                    }
                     );
 
                 // ---
@@ -463,9 +586,6 @@ angular.module('prototyped.ng.samples.decorators', [])
                     }
                     return ($q.when("someValue"));
                 }
-            },
-            isPatched: function () {
-                return cfg.enabled;
             },
             runPromiseAction: function () {
                 // Clear last result
@@ -517,51 +637,22 @@ angular.module('prototyped.ng.samples.decorators', [])
                 return modalInstance;
             },
         };
-
-        // Apply updates (including async)
-        var updates = <any>{};
-        try {
-            // Check for required libraries
-            if (typeof require !== 'undefined') {
-                // We are now in NodeJS!
-                updates = {
-                    busy: false,
-                    hasNode: true,
-                };
-            } else {
-                // Not available
-                updates.hasNode = false;
-                updates.busy = false;
-            }
-        } catch (ex) {
-            updates.busy = false;
-            updates.error = ex;
-        } finally {
-            // Extend updates for scope
-            angular.extend(context, updates);
-        }
-
     }])
 
     .run(['$modal', 'decoratorConfig', function ($modal, cfg) {
-        //console.warn(' - Started: ', cfg);
-
         // Hook the interceptor function
-        if (cfg.enabled) {
-            cfg.promptme = function (status, result) {
-                return $modal.open({
-                    templateUrl: cfg.template,
-                    controller: function ($scope, $modalInstance) {
-                        $scope.status = status;
-                        $scope.result = result;
+        cfg.promptme = function (status, result) {
+            return $modal.open({
+                templateUrl: cfg.template,
+                controller: function ($scope, $modalInstance) {
+                    $scope.status = status;
+                    $scope.result = result;
 
-                        // Delegate the controller logic
-                        cfg.modalController($scope, $modalInstance);
-                    },
-                    size: 'sm',
-                    resolve: {}
-                }).result;
-            };
-        }
+                    // Delegate the controller logic
+                    cfg.modalController($scope, $modalInstance);
+                },
+                size: 'sm',
+                resolve: {}
+            }).result;
+        };
     }])
-;
