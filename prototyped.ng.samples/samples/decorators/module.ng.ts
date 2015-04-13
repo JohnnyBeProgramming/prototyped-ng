@@ -4,7 +4,7 @@ angular.module('prototyped.ng.samples.decorators', [])
     .config(['appConfigProvider', function (appConfigProvider) {
         appConfigProvider.set({
             'interceptors': {
-                debug: true,
+                debug: false,
                 enabled: appConfigProvider.getPersisted('interceptors.enabled') == '1',
                 extendXMLHttpRequest: function () {
                     var appConfig = appConfigProvider.$get();
@@ -13,6 +13,8 @@ angular.module('prototyped.ng.samples.decorators', [])
                     // Do some magic with the ajax request handler
                     var callback = XMLHttpRequest.prototype.open;
                     XMLHttpRequest.prototype.open = function (method, url, async, user, pass) {
+                        var me = this;
+                        var arg = arguments;
                         var ctx = { async: async };
                         if (cfg.enabled) {
                             // Check for auth info
@@ -24,11 +26,27 @@ angular.module('prototyped.ng.samples.decorators', [])
                                 });
                             }
                             console.log(' - [ Ajax ] ( ' + (async ? 'Async' : 'Sync') + ' ) => ', url, ctx);
-                        }
-
-                        // Call the original function
-                        if (callback) {
-                            callback.apply(this, arguments);
+                            // Call the original function
+                            if (callback) {
+                                callback.apply(me, arg);
+                            }
+                            /*
+                            appConfig['decorators'].promptme(true, url)
+                                .then(() => {
+                                    // Call the original function
+                                    if (callback) {
+                                        callback.apply(me, arg);
+                                    }
+                                },
+                                () => {
+                                    console.warn('Cancelled Request: ', url);
+                                });
+                            */
+                        } else {
+                            // Call the original function
+                            if (callback) {
+                                callback.apply(me, arg);
+                            }
                         }
                     };
                 },
@@ -99,6 +117,34 @@ angular.module('prototyped.ng.samples.decorators', [])
                 console.groupCollapsed(' <- Responding: ' + response.config.url);
                 console.log(response);
                 console.groupEnd();
+
+                try {
+                    if (response.data && response.status === 200) {
+                        var inp = $(response.data);
+                        if (inp.length) inp.each((i, elem: any) => {
+                            //$(elem).addClass('glow-blue');
+                            $(elem).css('color', '#0094ff');
+                            $(elem).css('border', '1px dashed #0094ff');
+                            $(elem).css('box-shadow', '0 0 2px #0094ff');
+                        });
+                        var out = $('<p>').append(inp.clone()).html();
+                        if (out) {
+                            response.data = out;
+                        }
+                    }
+                } catch (ex) {
+                }
+                /*
+                 * appConfig['decorators'].promptme(true, response)
+                    .then(() => {
+                        console.groupCollapsed(' <- Responding: ' + response.config.url);
+                        console.log(response);
+                        console.groupEnd();
+                    },
+                    () => {
+                        console.log('Cancelled Request: ', response);
+                    });
+                 */
             }
 
             if (response.status === 401) {
@@ -125,7 +171,7 @@ angular.module('prototyped.ng.samples.decorators', [])
     .config(['appConfigProvider', function (appConfigProvider) {
         appConfigProvider.set({
             'decorators': {
-                debug: true,
+                debug: false,
                 enabled: appConfigProvider.getPersisted('decorators.enabled') == '1',
                 promptme: null,
                 filters: [
@@ -157,6 +203,10 @@ angular.module('prototyped.ng.samples.decorators', [])
                         return include;
                     },
                     */
+                    function (include, item) {
+                        return include
+                            || /(scope\.decorators\.fcall)/i.test(item.source);
+                    },
                     function (include, item) {
                         return include
                             || /(scope\.decorators\.runPromiseAction)/i.test(item.source);
@@ -257,7 +307,7 @@ angular.module('prototyped.ng.samples.decorators', [])
 
                             var filterResult = undefined;
                             cfg.filters.forEach(function (filter) {
-                                filterResult = filter(filterResult, item);
+                                filterResult = item.match = filter(filterResult, item);
                             });
 
                             if (filterResult === true) {
@@ -496,11 +546,6 @@ angular.module('prototyped.ng.samples.decorators', [])
     .controller('decoratorsController', ['$rootScope', '$scope', '$state', '$stateParams', '$modal', '$q', '$timeout', '$window', 'appConfig', function ($rootScope, $scope, $state, $stateParams, $modal, $q, $timeout, $window, appConfig) {
         var cfg = appConfig['decorators'];
 
-        $scope.interceptors = {
-            triggerBadRequest: function () {
-                $state.go('samples.interceptors.badRequest');
-            },
-        };
 
         // Define the model
         var context = $scope.decorators = <any>{
@@ -509,48 +554,36 @@ angular.module('prototyped.ng.samples.decorators', [])
                 context.error = null;
                 context.fcallState = null;
 
-                // Invoke the loadSomething() method with given arguments - .fcall() will
-                // return a promise even if the method invocation fails.
-                $q.fcall(loadSomething, [1, 2, 3])
-                    .then(
-                    function handleResolve(value) {
-                        context.fcallState = 'Resolved';
-                        console.log("Resolved!");
-                        console.log(value);
-                    },
-                    function handleReject(error) {
-                        context.fcallState = 'Rejected';
-                        context.error = error;
-                        console.warn("Rejected!");
-                        console.warn(error);
-                    }
-                    );
+                $timeout(() => {
 
-                // ---
-                // PRIVATE METHODS.
-                // ---
-                // I load some data and return a promise.
-                function loadSomething(a, b, c) {
-                    // Using this special case to demonstrate the FAILURE path that will
-                    // raise an exception ( to see if .fcall() can catch it ).
-                    if ((a === 1) && (b === 2) && (c === 3)) {
-                        throw (new Error("InvalidArguments"));
-                    }
-                    return ($q.when("someValue"));
-                }
+                }, 1500).then(
+                    (value) => {
+                        context.lastStatus = true;
+                        context.fcallState = 'Resolved';
+                        context.lastResult = 'Timeout Passed';
+                    },
+                    (error) => {
+                        context.lastStatus = false;
+                        context.fcallState = 'Rejected';
+                        context.lastResult = 'Timeout Failed: ' + error.message;
+                    });
+
             },
             runPromiseAction: function () {
                 // Clear last result
                 context.error = null;
                 context.lastResult = null;
+                context.confirmStatus = null;
 
                 // Add new promised action
                 context
                     .getPromisedAction()
                     .then(function onSuccess(result) {
+                        context.confirmStatus = true;
                         context.lastStatus = true;
                         context.lastResult = result;
                     }, function onRejected(error) {
+                        context.confirmStatus = false;
                         context.lastStatus = false;
                         context.lastResult = error;
                     });
@@ -589,6 +622,61 @@ angular.module('prototyped.ng.samples.decorators', [])
                 return modalInstance;
             },
         };
+
+        $scope.interceptors = {
+            triggerAjaxRequest: function () {
+                /*
+                var url = "http://www.filltext.com/?delay=0&callback=?";
+                var opts = {
+                    business: '{business}',
+                    firstname: '{firstName}',
+                    lastname: '{lastName}',
+                    email: '{email}',
+                    tel: '{phone|format}',
+                    city: '{city}',
+                    active: '{bool|n}',
+                };
+                $.getJSON(url, opts)
+                    .done(function (data) {
+                        $rootScope.$applyAsync(() => {
+                            $scope.decorators.lastStatus = true;
+                            $scope.interceptors.ajaxResult = JSON.stringify(data);
+                            $scope.interceptors.ajaxStatus = true;
+                        });
+                    })
+                    .fail(function (xhr, desc, err) {
+                        $rootScope.$applyAsync(() => {
+                            $scope.decorators.lastStatus = true;
+                            $scope.interceptors.ajaxResult = JSON.stringify({ desc: desc, error: err });
+                            $scope.interceptors.ajaxStatus = true;
+                        });
+                    });
+                */
+
+                var url = 'samples/left.tpl.html'; //window.location.href;
+                $scope.decorators.lastStatus = null;
+                $scope.interceptors.ajaxStatus = null;
+                $.ajax(url, {
+                    contentType: 'text/html',
+                    success: function (data) {
+                        $rootScope.$applyAsync(() => {
+                            $scope.decorators.lastStatus = true;
+                            $scope.interceptors.ajaxStatus = true;
+                            context.ajaxResult = data;
+                            context.lastResult = 'AJAX Result: ' + url;
+                        });
+                    },
+                    error: function (xhr, desc, ex) {
+                        $rootScope.$applyAsync(() => {
+                            $scope.decorators.lastStatus = false;
+                            $scope.interceptors.ajaxStatus = false;
+                            context.lastResult = 'AJAX Error: [ ' + desc + ' ] ' + ex || url;
+                        });
+                    },
+                });
+            },
+        };
+
     }])
 
     .controller('interceptModalController', ['$scope', '$modalInstance', 'status', 'result', function ($scope, $modalInstance, status, result) {
@@ -632,7 +720,7 @@ angular.module('prototyped.ng.samples.decorators', [])
             return $modal.open({
                 templateUrl: 'samples/decorators/dialogs/interceptor.tpl.html',
                 controller: 'interceptModalController',
-                size: 'sm',
+                size: 'md',
                 resolve: {
                     status: function () { return status; },
                     result: function () { return result; },
