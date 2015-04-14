@@ -15,4 +15,21 @@
             }
         }
     }
+
+    .content-border-glow {
+        outline: 1px solid #ff6a00;
+        box-shadow: 0 0 5px #ff6a00 inset;
+        position: relative;
+
+        &.-before:before {
+            content: 'Intercepted HTML';
+            padding: 3px;
+            color: white;
+            font-size: 9px;
+            top: 0;
+            left: 0;
+            position: absolute;
+            background-color: rgba(0,0,0,0.5);
+        }
+    }
 }

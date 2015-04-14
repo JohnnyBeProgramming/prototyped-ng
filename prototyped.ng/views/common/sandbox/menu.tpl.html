@@ -3,14 +3,18 @@
         <div>
             <div ui:view="menu">
                 <ul class="nav navbar-nav pull-right">
-                    <li ui:sref-active="open">
-                        <a ui:sref="default">Default</a>
+                    <li ui:sref-active="hidden">
+                        <a ui:sref="default"><i class="fa fa-chevron-left"></i></a>
                     </li>
                     <li ui:sref-active="open"
                         ng:repeat="route in appConfig.routers | orderBy:'(priority || 1)'"
                         ng:if="route.menuitem && (!route.visible || route.visible())">
-                        <a ng:if="route.menuitem.state" ui:sref="{{ route.menuitem.state }}">{{ route.menuitem.label }}</a>
-                        <a ng:if="!route.menuitem.state" ng:href="{{ route.url }}">{{ route.menuitem.label }}</a>
+                        <a ng:if="route.menuitem.state" ui:sref="{{ route.menuitem.state }}">
+                            <i ng-if="route.menuitem.icon" class="{{route.menuitem.icon}}"></i> {{ route.menuitem.label }}
+                        </a>
+                        <a ng:if="!route.menuitem.state" ng:href="{{ route.url }}">
+                            <i ng-if="route.menuitem.icon" class="{{route.menuitem.icon}}"></i> {{ route.menuitem.label }}
+                        </a>
                     </li>
                 </ul>
             </div>

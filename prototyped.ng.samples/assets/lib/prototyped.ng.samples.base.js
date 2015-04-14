@@ -274,103 +274,702 @@ angular.module('prototyped.ng.samples.compression', []).config([
     }]).run([
     '$state', '$templateCache', function ($state, $templateCache) {
     }]);
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (decorators) {
+                (function (config) {
+                    function ConfigureHttpRequestInterceptor($httpProvider, appConfigProvider) {
+                        // Attach our interceptor to Angular's interceptors
+                        $httpProvider.interceptors.push('httpInterceptor'); // This is defined later...
+
+                        // Extend the base ajax request handler
+                        var appConfig = appConfigProvider.$get();
+                        var cfg = appConfig['decorators'];
+                        if (cfg) {
+                            // Do some magic with the ajax request handlers
+                            var openCommand = XMLHttpRequest.prototype.open;
+                            XMLHttpRequest.prototype.open = function (method, url, async, user, pass) {
+                                var me = this;
+                                var arg = arguments;
+                                if (cfg.xhttp) {
+                                    if (cfg.debug)
+                                        console.log(' - [ Ajax ] ( ' + (async ? 'Async' : 'Sync') + ' ) => ', url, ctx);
+                                    var ctx = {
+                                        url: url,
+                                        async: async,
+                                        method: method
+                                    };
+
+                                    // Check for auth info
+                                    if (user || pass) {
+                                        // Extended with auth info
+                                        angular.extend(ctx, {
+                                            username: user,
+                                            password: pass
+                                        });
+                                    }
+
+                                    //ToDo: Promt....
+                                    me._protoStack = me._protoStack || [];
+                                    me._protoStack.push(ctx);
+
+                                    // Call the original function
+                                    if (openCommand) {
+                                        openCommand.apply(me, arg);
+                                    }
+                                } else {
+                                    // Call the original function
+                                    if (openCommand) {
+                                        openCommand.apply(me, arg);
+                                    }
+                                }
+                            };
+                            var sendCommand = XMLHttpRequest.prototype.send;
+                            XMLHttpRequest.prototype.send = function () {
+                                var me = this;
+                                var arg = arguments;
+                                if (cfg.xhttp) {
+                                    var ctx = me._protoStack ? me._protoStack.pop() : null;
+                                    if (ctx === null)
+                                        return;
+
+                                    var readyCommand = me.onreadystatechange;
+                                    me.onreadystatechange = function (evt) {
+                                        var me = this;
+                                        var arg = arguments;
+                                        if (cfg.xhttp) {
+                                            if (ctx === null)
+                                                return;
+                                            if (me.readyState == 4 && me.status == 200 && me.responseText) {
+                                                if (cfg.debug)
+                                                    console.log(' - [ Ajax ] ( Recieved ) => ', ctx);
+                                                if (cfg.promptme) {
+                                                    // Intercept the method
+                                                    cfg.promptme(true, me.responseText).then(function (revised) {
+                                                        // Call the original function
+                                                        if (readyCommand) {
+                                                            readyCommand.apply(me, arg);
+                                                        }
+                                                    }, function (revised) {
+                                                        // Reject the result
+                                                    });
+                                                } else {
+                                                    // Call the original function
+                                                    if (readyCommand) {
+                                                        readyCommand.apply(me, arg);
+                                                    }
+                                                }
+                                            }
+                                            me._protoActive = null;
+                                        } else {
+                                            // Call the original function
+                                            if (readyCommand) {
+                                                readyCommand.apply(me, arg);
+                                            }
+                                        }
+                                    };
+
+                                    if (cfg.debug)
+                                        console.log(' - [ Ajax ] ( Send ) => ', ctx);
+                                    me._protoActive = ctx;
+
+                                    // Call the original function
+                                    if (sendCommand) {
+                                        sendCommand.apply(me, arg);
+                                    }
+                                } else {
+                                    // Call the original function
+                                    if (sendCommand) {
+                                        sendCommand.apply(me, arg);
+                                    }
+                                }
+                            };
+                        }
+                    }
+                    config.ConfigureHttpRequestInterceptor = ConfigureHttpRequestInterceptor;
+
+                    function ConfigureQServiceInterceptor($provide, appConfigProvider) {
+                        var appConfig = appConfigProvider.$get();
+                        var cfg = appConfig['decorators'];
+
+                        $provide.decorator("$q", decorateQService);
+
+                        // Our decorator will get called when / if the $q service needs to be
+                        // instantiated in the application. It is made available as the
+                        // "$delegate" reference (made available as an override in the "locals"
+                        // used to .invoke() the method. Other services can be injected by name.
+                        // --
+                        // NOTE: This decorator MUST RETURN the "$q" service, otherwise, $q will
+                        // be undefined within the application.
+                        function decorateQService($delegate, $exceptionHandler) {
+                            // Create a "natural" reference to our delegate for use locally.
+                            var $q = $delegate;
+
+                            // Monkey-patch our fcall() method.
+                            $q.fcall = fcall;
+
+                            var proxy;
+                            proxy = $q.defer;
+                            $q.defer = function () {
+                                // Use default call-through if not enabled...
+                                if (!cfg.enabled)
+                                    return proxy.apply(this, arguments);
+                                var result, value;
+                                var info = {
+                                    startAt: Date.now()
+                                };
+                                try  {
+                                    // Try and get the original result
+                                    result = proxy.apply(this, arguments);
+
+                                    // Execute extended functionality....
+                                    var timeString = new Date(info.startAt).toLocaleTimeString();
+                                    if (cfg.debug)
+                                        console.groupCollapsed('[ ' + timeString + ' ] Promised action intercepted...');
+
+                                    info.resultAt = Date.now();
+                                    info.stack = [];
+
+                                    var stubResolve = result.resolve;
+                                    var stubReject = result.reject;
+                                    var callTime = (info.resultAt - info.startAt);
+                                    if (cfg.debug)
+                                        console.info('[ ' + callTime + ' ms ] Execution time.');
+
+                                    // Build a stack trace
+                                    var stack = (new Error('dummy')).stack.replace(/^[^\(]+?[\n$]/gm, '').replace(/^\s+at\s+/gm, '').replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@').split('\n').splice(1);
+
+                                    // Parse each line and store
+                                    var passCount = 0;
+                                    var failCount = 0;
+                                    if (cfg.debug)
+                                        console.debug('-------------------------------------------------------------------------------');
+                                    if (stack.length)
+                                        stack.forEach(function (line, i) {
+                                            // Extrack the function name and url location from the string
+                                            var match = /(.+)(\s+)(\()(.+)(\))(\s*)/i.exec(line);
+                                            if (match) {
+                                                var item = {
+                                                    source: match[1].trim(),
+                                                    rawUrl: match[4].trim()
+                                                };
+
+                                                var parts = /(\w+:\/\/)([^\/]+)(\/)(.+\/)(.+.js)(:)?(\d+)?(:)?(\d+)?/i.exec(item.rawUrl);
+                                                if (parts) {
+                                                    item.protocol = parts[1];
+                                                    item.hostname = parts[2];
+                                                    item.basepath = parts[4];
+                                                    item.filename = parts[5];
+                                                    item.fullname = item.basepath + '/' + item.filename;
+                                                    item.line = parts.length > 7 ? parts[7] : null;
+                                                    item.char = parts.length > 9 ? parts[9] : null;
+                                                }
+
+                                                var filterResult = undefined;
+                                                cfg.filters.forEach(function (filter) {
+                                                    filterResult = item.match = filter(filterResult, item);
+                                                });
+
+                                                if (filterResult === true) {
+                                                    // Includes takes pref.
+                                                    if (cfg.debug)
+                                                        console.info(' @ [ ' + item.hostname + ' ] \t' + item.filename + ' => ' + item.source);
+                                                    passCount++;
+                                                } else if (filterResult === false) {
+                                                    // Some excludes found...
+                                                    if (cfg.debug)
+                                                        console.warn(' @ [ ' + item.hostname + ' ] \t' + item.filename + ' => ' + item.source);
+                                                    failCount++;
+                                                } else {
+                                                    // No filters matched...
+                                                    if (cfg.debug)
+                                                        console.debug(' @ [ ' + item.hostname + ' ] \t' + item.filename + ' => ' + item.source);
+                                                }
+
+                                                info.stack.push(item);
+                                            }
+                                        });
+                                    if (cfg.debug)
+                                        console.debug('-------------------------------------------------------------------------------');
+                                    if (cfg.debug)
+                                        console.debug(' - Filters [ ' + passCount + ' Passed, ' + failCount + ' Failed ]');
+
+                                    var attach = undefined;
+                                    if (passCount > 0) {
+                                        attach = true;
+                                    } else if (failCount > 0) {
+                                        attach = false;
+                                    }
+
+                                    if (attach) {
+                                        if (cfg.debug)
+                                            console.debug(' - Attaching stubs...');
+
+                                        // Override the resolve function
+                                        result.resolve = function (answer) {
+                                            var _this = this;
+                                            var _args = arguments;
+                                            var timeString = new Date().toLocaleTimeString();
+                                            if (cfg.promptme) {
+                                                // Intercept the method
+                                                cfg.promptme(true, answer).then(function (revised) {
+                                                    // Set the result
+                                                    console.info('[ ' + timeString + ' ] Intercepted Result.', revised);
+                                                    stubResolve.apply(_this, _args);
+                                                }, function (revised) {
+                                                    // Reject the result
+                                                    console.info('[ ' + timeString + ' ] Intercepted Rejection.', revised);
+                                                    stubReject.apply(_this, _args);
+                                                });
+                                            } else {
+                                                // Apply action directly
+                                                if (cfg.debug)
+                                                    console.info('[ ' + timeString + ' ] Accepting promise.');
+                                                stubResolve.apply(_this, _args);
+                                            }
+                                        };
+
+                                        // Override the reject function
+                                        result.reject = function (reason) {
+                                            var _this = this;
+                                            var _args = arguments;
+                                            if (cfg.promptme) {
+                                                // Intercept the method
+                                                cfg.promptme(false, reason).then(function (revised) {
+                                                    // Set the result
+                                                    console.info('[ ' + timeString + ' ] Intercepted Result.', revised);
+                                                    stubResolve.apply(_this, _args);
+                                                }, function (revised) {
+                                                    // Reject the result
+                                                    console.info('[ ' + timeString + ' ] Intercepted Rejection.', revised);
+                                                    stubReject.apply(_this, _args);
+                                                });
+                                            } else {
+                                                // Apply action directly
+                                                if (cfg.debug)
+                                                    console.warn('[ ' + timeString + ' ] Rejecting promise.');
+                                                stubReject.apply(_this, _args);
+                                            }
+                                        };
+                                    } else {
+                                    }
+                                } catch (ex) {
+                                    // Something went wrong!
+                                    info.error = ex;
+                                    console.error(ex);
+                                } finally {
+                                    // Record end time
+                                    info.endedAt = Date.now();
+                                    var fullTime = (info.endedAt - info.startAt) - callTime;
+                                    if (cfg.debug)
+                                        console.info('[ ' + fullTime + ' ms ] Execution Overhead.');
+                                    if (cfg.debug)
+                                        console.groupEnd();
+                                }
+
+                                return result;
+                            };
+
+                            // Return the original delegate as our instance of $q.
+                            return ($q);
+
+                            // ---
+                            // PUBLIC METHODS.
+                            // ---
+                            // I invoke the given function using the given arguments. If the
+                            // invocation is successful, it will result in a resolved promise;
+                            // if it throws an error, it will result in a rejected promise,
+                            // passing the error object through as the "reason."
+                            // --
+                            // The possible method signatures:
+                            // --
+                            // .fcall( methodReference )
+                            // .fcall( methodReference, argsArray )
+                            // .fcall( context, methodReference, argsArray )
+                            // .fcall( context, methodName, argsArrray )
+                            // .fcall( context, methodReference )
+                            // .fcall( context, methodName )
+                            function fcall() {
+                                try  {
+                                    var components = parseArguments(arguments);
+                                    var context = components.context;
+                                    var method = components.method;
+                                    var inputs = components.inputs;
+
+                                    return ($q.when(method.apply(context, inputs)));
+                                } catch (error) {
+                                    try  {
+                                        $exceptionHandler(error);
+                                    } catch (loggingError) {
+                                        // Nothing we can do here.
+                                    }
+                                    return ($q.reject(error));
+                                }
+                            }
+
+                            // ---
+                            // PRIVATE METHODS.
+                            // ---
+                            // I parse the .fcall() arguments into a normalized structure that is
+                            // ready for consumption.
+                            function parseArguments(args) {
+                                // First, let's deal with the non-ambiguous arguments. If there
+                                // are three arguments, we know exactly which each should be.
+                                if (args.length === 3) {
+                                    var context = args[0];
+                                    var method = args[1];
+                                    var inputs = args[2];
+
+                                    // Normalize the method reference.
+                                    if (angular.isString(method)) {
+                                        method = context[method];
+                                    }
+
+                                    return ({
+                                        context: context,
+                                        method: method,
+                                        inputs: inputs
+                                    });
+                                }
+
+                                // If we have only one argument to work with, then it can only be
+                                // a direct method reference.
+                                if (args.length === 1) {
+                                    return ({
+                                        context: null,
+                                        method: args[0],
+                                        inputs: []
+                                    });
+                                }
+
+                                // Now, we have to look at the ambiguous arguments. If w have
+                                // two arguments, we don't immediately know which of the following
+                                // it is:
+                                // --
+                                // .fcall( methodReference, argsArray )
+                                // .fcall( context, methodReference )
+                                // .fcall( context, methodName )
+                                // --
+                                // Since the args array is always passed as an Array, it means
+                                // that we can determine the signature by inspecting the last
+                                // argument. If it's a function, then we don't have any argument
+                                // inputs.
+                                if (angular.isFunction(args[1])) {
+                                    return ({
+                                        context: args[0],
+                                        method: args[1],
+                                        inputs: []
+                                    });
+                                    // And, if it's a string, then don't have any argument inputs.
+                                } else if (angular.isString(args[1])) {
+                                    // Normalize the method reference.
+                                    return ({
+                                        context: args[0],
+                                        method: args[0][args[1]],
+                                        inputs: []
+                                    });
+                                    // Otherwise, the last argument is the arguments input and we
+                                    // know, in that case, that we don't have a context object to
+                                    // deal with.
+                                } else {
+                                    return ({
+                                        context: null,
+                                        method: args[0],
+                                        inputs: args[1]
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    config.ConfigureQServiceInterceptor = ConfigureQServiceInterceptor;
+                })(decorators.config || (decorators.config = {}));
+                var config = decorators.config;
+            })(samples.decorators || (samples.decorators = {}));
+            var decorators = samples.decorators;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (_decorators) {
+                (function (controllers) {
+                    var DecoratorsController = (function () {
+                        function DecoratorsController($rootScope, $scope, $modal, $q, $timeout, appConfig) {
+                            var cfg = appConfig['decorators'];
+
+                            // Define the model
+                            var context = $scope.decorators = {
+                                fcall: function () {
+                                    // Clear last result
+                                    context.error = null;
+                                    context.fcallState = null;
+
+                                    $timeout(function () {
+                                        // Timeout action...
+                                    }, 1500).then(function (value) {
+                                        context.lastStatus = true;
+                                        context.fcallState = 'Resolved';
+                                        context.lastResult = 'Timeout Passed';
+                                    }, function (error) {
+                                        context.lastStatus = false;
+                                        context.fcallState = 'Rejected';
+                                        context.lastResult = 'Timeout Failed: ' + error.message;
+                                    });
+                                },
+                                runPromiseAction: function () {
+                                    // Clear last result
+                                    context.error = null;
+                                    context.lastResult = null;
+                                    context.confirmStatus = null;
+
+                                    // Add new promised action
+                                    context.getPromisedAction().then(function onSuccess(result) {
+                                        context.confirmStatus = true;
+                                        context.lastStatus = true;
+                                        context.lastResult = result;
+                                    }, function onRejected(error) {
+                                        context.confirmStatus = false;
+                                        context.lastStatus = false;
+                                        context.lastResult = error;
+                                    });
+                                },
+                                getPromisedAction: function (callback) {
+                                    var deferred = $q.defer();
+                                    $rootScope.$applyAsync(function () {
+                                        if (confirm('Pass Action?')) {
+                                            var result = 'The action was passed @ ' + new Date().toLocaleTimeString();
+                                            deferred.resolve(result);
+                                        } else {
+                                            var err = new Error('The action was rejected @ ' + new Date().toLocaleTimeString());
+                                            deferred.reject(err);
+                                        }
+                                    });
+                                    return deferred.promise;
+                                },
+                                openModalWindow: function (templateUrl, status, result) {
+                                    var modalInstance = $modal.open({
+                                        templateUrl: templateUrl,
+                                        controller: function ($scope, $modalInstance) {
+                                            $scope.status = status;
+                                            $scope.result = result;
+
+                                            // Delegate the controller logic
+                                            cfg.modalController($scope, $modalInstance);
+                                        },
+                                        size: 'sm',
+                                        resolve: {
+                                            decorators: function () {
+                                                console.log(' - Get Decorators...', $scope);
+                                                return $scope.decorators;
+                                            }
+                                        }
+                                    });
+                                    return modalInstance;
+                                },
+                                triggerAjaxRequest: function () {
+                                    var url = 'http://www.filltext.com/?rows=2&fname={firstName}&lname={lastName}&tel={phone|format}&address={streetAddress}&city={city}&state={usState|abbr}&zip={zip}&pretty=true';
+                                    context.lastStatus = null;
+                                    context.ajaxStatus = null;
+                                    $.ajax(url, {
+                                        contentType: 'text/html',
+                                        success: function (data) {
+                                            $rootScope.$applyAsync(function () {
+                                                var isHtmlPartial = !/\<!doctype html\>/i.test(data);
+                                                context.ajaxStatus = isHtmlPartial;
+                                                context.ajaxResult = isHtmlPartial ? data : '[ <a href="' + url + '">HTML Document</a> ]';
+                                                context.lastStatus = true;
+                                                context.lastResult = 'AJAX Result: ' + url;
+                                            });
+                                        },
+                                        error: function (xhr, desc, ex) {
+                                            $rootScope.$applyAsync(function () {
+                                                context.lastStatus = false;
+                                                context.ajaxStatus = false;
+                                                context.lastResult = 'AJAX Error: [ ' + desc + ' ] ' + ex || url;
+                                            });
+                                        }
+                                    });
+                                }
+                            };
+                        }
+                        return DecoratorsController;
+                    })();
+                    controllers.DecoratorsController = DecoratorsController;
+                })(_decorators.controllers || (_decorators.controllers = {}));
+                var controllers = _decorators.controllers;
+            })(samples.decorators || (samples.decorators = {}));
+            var decorators = samples.decorators;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (decorators) {
+                (function (controllers) {
+                    var InterceptModalController = (function () {
+                        function InterceptModalController($scope, $modalInstance, status, result) {
+                            this.$scope = $scope;
+                            this.$modalInstance = $modalInstance;
+                            this.status = status;
+                            this.result = result;
+                            $scope.status = status;
+                            $scope.result = result;
+
+                            // Define modal scope
+                            $scope.allowEmpty = typeof result === 'undefined';
+                            $scope.action = status ? 'Accept' : 'Reject';
+                            $scope.modalAction = (typeof status !== 'undefined') ? 'resp' : 'req';
+                            $scope.promisedValue = status ? result : undefined;
+                            $scope.rejectValue = !status ? result : new Error("Interceptor rejected the action.");
+                            $scope.getStatus = function () {
+                                return $scope.action == 'Accept';
+                            };
+                            $scope.getResult = function () {
+                                return $scope.getStatus() ? $scope.promisedValue : $scope.rejectValue;
+                            };
+                            $scope.getType = function () {
+                                var result = $scope.getResult();
+                                return (typeof result);
+                            };
+                            $scope.getBody = function () {
+                                return JSON.stringify($scope.getResult());
+                            };
+                            $scope.setToggle = function (val) {
+                                $scope.allowEmpty = val;
+                            };
+                            $scope.ok = function () {
+                                if (!$scope.allowEmpty && !$scope.promisedValue) {
+                                    alert($scope.allowEmpty);
+                                    return;
+                                }
+                                $modalInstance.close($scope.promisedValue);
+                            };
+                            $scope.cancel = function () {
+                                if (!$scope.allowEmpty && !$scope.rejectValue) {
+                                    return;
+                                }
+                                $modalInstance.dismiss($scope.rejectValue);
+                            };
+                        }
+                        return InterceptModalController;
+                    })();
+                    controllers.InterceptModalController = InterceptModalController;
+                })(decorators.controllers || (decorators.controllers = {}));
+                var controllers = decorators.controllers;
+            })(samples.decorators || (samples.decorators = {}));
+            var decorators = samples.decorators;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (decorators) {
+                function InterceptHttpResponse(response) {
+                    if (response.data && response.status === 200) {
+                        var out = DecorateHttpContents(response.data);
+                        if (out) {
+                            response.data = out;
+                        }
+                    }
+                }
+                decorators.InterceptHttpResponse = InterceptHttpResponse;
+
+                function DecorateHttpContents(html) {
+                    var inp = $(html);
+                    if (inp.length)
+                        inp.each(function (i, elem) {
+                            var el = $(elem);
+                            el.addClass('content-border-glow');
+                            el.addClass('-before');
+                        });
+                    var out = $('<p>').append(inp).html();
+                    return out;
+                }
+                decorators.DecorateHttpContents = DecorateHttpContents;
+
+                function InterceptorAjaxRequest(evt) {
+                    // Decorate the intercepted html
+                    var me = evt.target;
+                    var out = proto.ng.samples.decorators.DecorateHttpContents(me.responseText);
+                    angular.extend(me, {
+                        response: out,
+                        responseText: out
+                    });
+                }
+                decorators.InterceptorAjaxRequest = InterceptorAjaxRequest;
+            })(samples.decorators || (samples.decorators = {}));
+            var decorators = samples.decorators;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
+/// <reference path="typings/HttpInterceptorService.ts" />
 angular.module('prototyped.ng.samples.decorators', []).config([
     'appConfigProvider', function (appConfigProvider) {
         appConfigProvider.set({
-            'interceptors': {
+            'decorators': {
                 debug: false,
-                enabled: appConfigProvider.getPersisted('interceptors.enabled') == '1',
-                extendXMLHttpRequest: function () {
-                    var appConfig = appConfigProvider.$get();
-                    var cfg = appConfig['interceptors'];
-
-                    // Do some magic with the ajax request handler
-                    var callback = XMLHttpRequest.prototype.open;
-                    XMLHttpRequest.prototype.open = function (method, url, async, user, pass) {
-                        var me = this;
-                        var arg = arguments;
-                        var ctx = { async: async };
-                        if (cfg.enabled) {
-                            // Check for auth info
-                            if (user || pass) {
-                                // Extended with auth info
-                                angular.extend(ctx, {
-                                    username: user,
-                                    password: pass
-                                });
-                            }
-                            console.log(' - [ Ajax ] ( ' + (async ? 'Async' : 'Sync') + ' ) => ', url, ctx);
-
-                            // Call the original function
-                            if (callback) {
-                                callback.apply(me, arg);
-                            }
-                            /*
-                            appConfig['decorators'].promptme(true, url)
-                            .then(() => {
-                            // Call the original function
-                            if (callback) {
-                            callback.apply(me, arg);
-                            }
-                            },
-                            () => {
-                            console.warn('Cancelled Request: ', url);
-                            });
-                            */
-                        } else {
-                            // Call the original function
-                            if (callback) {
-                                callback.apply(me, arg);
-                            }
-                        }
-                    };
-                }
+                promptme: null,
+                enabled: appConfigProvider.getPersisted('decorators.enabled') == '1',
+                filters: proto.ng.samples.decorators.StackTraceUtils.filters
             }
         });
     }]).config([
-    '$httpProvider', 'appConfigProvider', function ($httpProvider, appConfigProvider) {
-        // Extend the base ajax request handler
-        var appConfig = appConfigProvider.$get();
-        var cfg = appConfig['interceptors'];
-        if (cfg) {
-            cfg.extendXMLHttpRequest();
-        }
-
-        // Attach Angular's interceptor
-        $httpProvider.interceptors.push('httpInterceptor');
-    }]).config([
     '$stateProvider', function ($stateProvider) {
-        // Now set up the states
-        $stateProvider.state('samples.interceptors', {
-            url: '/interceptors',
+        $stateProvider.state('samples.decorators', {
+            url: '/decorators',
             views: {
                 'left@': { templateUrl: 'samples/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'samples/interceptors/main.tpl.html',
-                    controller: 'interceptorsController'
+                    templateUrl: 'samples/decorators/main.tpl.html',
+                    controller: 'decoratorsController'
                 }
             }
-        }).state('samples.interceptors.badRequest', {
+        }).state('samples.decorators.badRequest', {
             url: '/badRequest',
             views: {
                 'left@': { templateUrl: 'samples/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'samples/interceptors/bad.filename'
+                    templateUrl: 'samples/decorators/bad.filename'
                 }
             }
         });
-    }]).service('httpInterceptor', [
+    }]).config(['$provide', 'appConfigProvider', proto.ng.samples.decorators.config.ConfigureQServiceInterceptor]).config(['$httpProvider', 'appConfigProvider', proto.ng.samples.decorators.config.ConfigureHttpRequestInterceptor]).service('httpInterceptor', [
     '$rootScope', '$q', 'appConfig', function ($rootScope, $q, appConfig) {
-        var cfg = appConfig['interceptors'];
+        //return new proto.ng.samples.decorators.HttpInterceptorService($rootScope, $q, appConfig);
+        var cfg = appConfig['decorators'];
         var service = this;
 
         // Request interceptor (pre-fetch)
         service.request = function (config) {
-            if (cfg.enabled) {
-                console.groupCollapsed(' -> Requesting: ' + config.url);
-                console.log(config);
-                console.groupEnd();
+            try  {
+                if (cfg.debug)
+                    console.groupCollapsed(' -> Requesting: ' + config.url);
+                if (cfg.enabled) {
+                    if (cfg.debug)
+                        console.log(config);
+                }
+            } catch (ex) {
+                console.warn('Fatal Request Issue: ' + ex.message);
+            } finally {
+                if (cfg.debug)
+                    console.groupEnd();
             }
             return config;
         };
@@ -385,45 +984,25 @@ angular.module('prototyped.ng.samples.decorators', []).config([
         };
 
         service.response = function (response) {
-            if (cfg.enabled) {
-                console.groupCollapsed(' <- Responding: ' + response.config.url);
-                console.log(response);
-                console.groupEnd();
+            try  {
+                if (cfg.debug)
+                    console.groupCollapsed(' <- Responding: ' + response.config.url);
 
-                try  {
-                    if (response.data && response.status === 200) {
-                        var inp = $(response.data);
-                        if (inp.length)
-                            inp.each(function (i, elem) {
-                                //$(elem).addClass('glow-blue');
-                                $(elem).css('color', '#0094ff');
-                                $(elem).css('border', '1px dashed #0094ff');
-                                $(elem).css('box-shadow', '0 0 2px #0094ff');
-                            });
-                        var out = $('<p>').append(inp.clone()).html();
-                        if (out) {
-                            response.data = out;
-                        }
-                    }
-                } catch (ex) {
+                if (response.status === 401) {
+                    $rootScope.$broadcast('unauthorized');
                 }
-                /*
-                * appConfig['decorators'].promptme(true, response)
-                .then(() => {
-                console.groupCollapsed(' <- Responding: ' + response.config.url);
-                console.log(response);
-                console.groupEnd();
-                },
-                () => {
-                console.log('Cancelled Request: ', response);
-                });
-                */
-            }
 
-            if (response.status === 401) {
-                $rootScope.$broadcast('unauthorized');
+                if (cfg.xhttp) {
+                    if (cfg.debug)
+                        console.log('Response: ', response);
+                    proto.ng.samples.decorators.InterceptHttpResponse(response);
+                }
+            } catch (ex) {
+                console.warn('Fatal Response Issue: ' + ex.message);
+            } finally {
+                if (cfg.debug)
+                    console.groupEnd();
             }
-
             return response;
         };
 
@@ -435,507 +1014,7 @@ angular.module('prototyped.ng.samples.decorators', []).config([
             }
             return $q.reject(rejection);
         };
-    }]).config([
-    'appConfigProvider', function (appConfigProvider) {
-        appConfigProvider.set({
-            'decorators': {
-                debug: false,
-                enabled: appConfigProvider.getPersisted('decorators.enabled') == '1',
-                promptme: null,
-                filters: [
-                    function (include, item) {
-                        // Exclude loading bar delegates
-                        if (/(loading-bar)/i.test(item.filename))
-                            return false;
-                        return include;
-                    },
-                    function (include, item) {
-                        // Ignore routing...?
-                        if (/(angular-ui-router)/i.test(item.filename))
-                            return false;
-                        return include;
-                    },
-                    function (include, item) {
-                        return include || /(scope\.decorators\.fcall)/i.test(item.source);
-                    },
-                    function (include, item) {
-                        return include || /(scope\.decorators\.runPromiseAction)/i.test(item.source);
-                    }
-                ]
-            }
-        });
-    }]).config([
-    '$stateProvider', function ($stateProvider) {
-        $stateProvider.state('samples.decorators', {
-            url: '/decorators',
-            views: {
-                'left@': { templateUrl: 'samples/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'samples/decorators/main.tpl.html',
-                    controller: 'decoratorsController'
-                }
-            }
-        });
-    }]).config([
-    '$provide', 'appConfigProvider', function ($provide, appConfigProvider) {
-        var appConfig = appConfigProvider.$get();
-        var cfg = appConfig['decorators'];
-
-        // Our decorator will get called when / if the $q service needs to be
-        // instantiated in the application. It is made available as the
-        // "$delegate" reference (made available as an override in the "locals"
-        // used to .invoke() the method. Other services can be injected by name.
-        // --
-        // NOTE: This decorator MUST RETURN the "$q" service, otherwise, $q will
-        // be undefined within the application.
-        function decorateQService($delegate, $exceptionHandler) {
-            // Create a "natural" reference to our delegate for use locally.
-            var $q = $delegate;
-
-            // Monkey-patch our fcall() method.
-            $q.fcall = fcall;
-
-            var proxy;
-            proxy = $q.defer;
-            $q.defer = function () {
-                // Use default call-through if not enabled...
-                if (!cfg.enabled)
-                    return proxy.apply(this, arguments);
-                var result, value;
-                var info = {
-                    startAt: Date.now()
-                };
-                try  {
-                    // Try and get the original result
-                    result = proxy.apply(this, arguments);
-
-                    // Execute extended functionality....
-                    var timeString = new Date(info.startAt).toLocaleTimeString();
-                    if (cfg.debug)
-                        console.groupCollapsed('[ ' + timeString + ' ] Promised action intercepted...');
-
-                    info.resultAt = Date.now();
-                    info.stack = [];
-
-                    var stubResolve = result.resolve;
-                    var stubReject = result.reject;
-                    var callTime = (info.resultAt - info.startAt);
-                    if (cfg.debug)
-                        console.info('[ ' + callTime + ' ms ] Execution time.');
-
-                    // Build a stack trace
-                    var stack = (new Error('dummy')).stack.replace(/^[^\(]+?[\n$]/gm, '').replace(/^\s+at\s+/gm, '').replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@').split('\n').splice(1);
-
-                    // Parse each line and store
-                    var passCount = 0;
-                    var failCount = 0;
-                    if (cfg.debug)
-                        console.debug('-------------------------------------------------------------------------------');
-                    if (stack.length)
-                        stack.forEach(function (line, i) {
-                            // Extrack the function name and url location from the string
-                            var match = /(.+)(\s+)(\()(.+)(\))(\s*)/i.exec(line);
-                            if (match) {
-                                var item = {
-                                    source: match[1].trim(),
-                                    rawUrl: match[4].trim()
-                                };
-
-                                var parts = /(\w+:\/\/)([^\/]+)(\/)(.+\/)(.+.js)(:)?(\d+)?(:)?(\d+)?/i.exec(item.rawUrl);
-                                if (parts) {
-                                    item.protocol = parts[1];
-                                    item.hostname = parts[2];
-                                    item.basepath = parts[4];
-                                    item.filename = parts[5];
-                                    item.fullname = item.basepath + '/' + item.filename;
-                                    item.line = parts.length > 7 ? parts[7] : null;
-                                    item.char = parts.length > 9 ? parts[9] : null;
-                                }
-
-                                var filterResult = undefined;
-                                cfg.filters.forEach(function (filter) {
-                                    filterResult = item.match = filter(filterResult, item);
-                                });
-
-                                if (filterResult === true) {
-                                    // Includes takes pref.
-                                    if (cfg.debug)
-                                        console.info(' @ [ ' + item.hostname + ' ] \t' + item.filename + ' => ' + item.source);
-                                    passCount++;
-                                } else if (filterResult === false) {
-                                    // Some excludes found...
-                                    if (cfg.debug)
-                                        console.warn(' @ [ ' + item.hostname + ' ] \t' + item.filename + ' => ' + item.source);
-                                    failCount++;
-                                } else {
-                                    // No filters matched...
-                                    if (cfg.debug)
-                                        console.debug(' @ [ ' + item.hostname + ' ] \t' + item.filename + ' => ' + item.source);
-                                }
-
-                                info.stack.push(item);
-                            }
-                        });
-                    if (cfg.debug)
-                        console.debug('-------------------------------------------------------------------------------');
-                    if (cfg.debug)
-                        console.debug(' - Filters [ ' + passCount + ' Passed, ' + failCount + ' Failed ]');
-
-                    var attach = undefined;
-                    if (passCount > 0) {
-                        attach = true;
-                    } else if (failCount > 0) {
-                        attach = false;
-                    }
-
-                    if (attach) {
-                        if (cfg.debug)
-                            console.debug(' - Attaching stubs...');
-
-                        // Override the resolve function
-                        result.resolve = function (answer) {
-                            var _this = this;
-                            var _args = arguments;
-                            var timeString = new Date().toLocaleTimeString();
-                            if (cfg.promptme) {
-                                // Intercept the method
-                                cfg.promptme(true, answer).then(function (revised) {
-                                    // Set the result
-                                    console.info('[ ' + timeString + ' ] Intercepted Result.', revised);
-                                    stubResolve.apply(_this, _args);
-                                }, function (revised) {
-                                    // Reject the result
-                                    console.info('[ ' + timeString + ' ] Intercepted Rejection.', revised);
-                                    stubReject.apply(_this, _args);
-                                });
-                            } else {
-                                // Apply action directly
-                                if (cfg.debug)
-                                    console.info('[ ' + timeString + ' ] Accepting promise.');
-                                stubResolve.apply(_this, _args);
-                            }
-                        };
-
-                        // Override the reject function
-                        result.reject = function (reason) {
-                            var _this = this;
-                            var _args = arguments;
-                            if (cfg.promptme) {
-                                // Intercept the method
-                                cfg.promptme(false, reason).then(function (revised) {
-                                    // Set the result
-                                    console.info('[ ' + timeString + ' ] Intercepted Result.', revised);
-                                    stubResolve.apply(_this, _args);
-                                }, function (revised) {
-                                    // Reject the result
-                                    console.info('[ ' + timeString + ' ] Intercepted Rejection.', revised);
-                                    stubReject.apply(_this, _args);
-                                });
-                            } else {
-                                // Apply action directly
-                                if (cfg.debug)
-                                    console.warn('[ ' + timeString + ' ] Rejecting promise.');
-                                stubReject.apply(_this, _args);
-                            }
-                        };
-                    } else {
-                    }
-                } catch (ex) {
-                    // Something went wrong!
-                    info.error = ex;
-                    console.error(ex);
-                } finally {
-                    // Record end time
-                    info.endedAt = Date.now();
-                    var fullTime = (info.endedAt - info.startAt) - callTime;
-                    if (cfg.debug)
-                        console.info('[ ' + fullTime + ' ms ] Execution Overhead.');
-                    if (cfg.debug)
-                        console.groupEnd();
-                }
-
-                return result;
-            };
-
-            // Return the original delegate as our instance of $q.
-            return ($q);
-
-            // ---
-            // PUBLIC METHODS.
-            // ---
-            // I invoke the given function using the given arguments. If the
-            // invocation is successful, it will result in a resolved promise;
-            // if it throws an error, it will result in a rejected promise,
-            // passing the error object through as the "reason."
-            // --
-            // The possible method signatures:
-            // --
-            // .fcall( methodReference )
-            // .fcall( methodReference, argsArray )
-            // .fcall( context, methodReference, argsArray )
-            // .fcall( context, methodName, argsArrray )
-            // .fcall( context, methodReference )
-            // .fcall( context, methodName )
-            function fcall() {
-                try  {
-                    var components = parseArguments(arguments);
-                    var context = components.context;
-                    var method = components.method;
-                    var inputs = components.inputs;
-
-                    return ($q.when(method.apply(context, inputs)));
-                } catch (error) {
-                    try  {
-                        $exceptionHandler(error);
-                    } catch (loggingError) {
-                        // Nothing we can do here.
-                    }
-                    return ($q.reject(error));
-                }
-            }
-
-            // ---
-            // PRIVATE METHODS.
-            // ---
-            // I parse the .fcall() arguments into a normalized structure that is
-            // ready for consumption.
-            function parseArguments(args) {
-                // First, let's deal with the non-ambiguous arguments. If there
-                // are three arguments, we know exactly which each should be.
-                if (args.length === 3) {
-                    var context = args[0];
-                    var method = args[1];
-                    var inputs = args[2];
-
-                    // Normalize the method reference.
-                    if (angular.isString(method)) {
-                        method = context[method];
-                    }
-
-                    return ({
-                        context: context,
-                        method: method,
-                        inputs: inputs
-                    });
-                }
-
-                // If we have only one argument to work with, then it can only be
-                // a direct method reference.
-                if (args.length === 1) {
-                    return ({
-                        context: null,
-                        method: args[0],
-                        inputs: []
-                    });
-                }
-
-                // Now, we have to look at the ambiguous arguments. If w have
-                // two arguments, we don't immediately know which of the following
-                // it is:
-                // --
-                // .fcall( methodReference, argsArray )
-                // .fcall( context, methodReference )
-                // .fcall( context, methodName )
-                // --
-                // Since the args array is always passed as an Array, it means
-                // that we can determine the signature by inspecting the last
-                // argument. If it's a function, then we don't have any argument
-                // inputs.
-                if (angular.isFunction(args[1])) {
-                    return ({
-                        context: args[0],
-                        method: args[1],
-                        inputs: []
-                    });
-                    // And, if it's a string, then don't have any argument inputs.
-                } else if (angular.isString(args[1])) {
-                    // Normalize the method reference.
-                    return ({
-                        context: args[0],
-                        method: args[0][args[1]],
-                        inputs: []
-                    });
-                    // Otherwise, the last argument is the arguments input and we
-                    // know, in that case, that we don't have a context object to
-                    // deal with.
-                } else {
-                    return ({
-                        context: null,
-                        method: args[0],
-                        inputs: args[1]
-                    });
-                }
-            }
-        }
-
-        $provide.decorator("$q", decorateQService);
-    }]).controller('decoratorsController', [
-    '$rootScope', '$scope', '$state', '$stateParams', '$modal', '$q', '$timeout', '$window', 'appConfig', function ($rootScope, $scope, $state, $stateParams, $modal, $q, $timeout, $window, appConfig) {
-        var cfg = appConfig['decorators'];
-
-        // Define the model
-        var context = $scope.decorators = {
-            fcall: function () {
-                // Clear last result
-                context.error = null;
-                context.fcallState = null;
-
-                $timeout(function () {
-                }, 1500).then(function (value) {
-                    context.lastStatus = true;
-                    context.fcallState = 'Resolved';
-                    context.lastResult = 'Timeout Passed';
-                }, function (error) {
-                    context.lastStatus = false;
-                    context.fcallState = 'Rejected';
-                    context.lastResult = 'Timeout Failed: ' + error.message;
-                });
-            },
-            runPromiseAction: function () {
-                // Clear last result
-                context.error = null;
-                context.lastResult = null;
-                context.confirmStatus = null;
-
-                // Add new promised action
-                context.getPromisedAction().then(function onSuccess(result) {
-                    context.confirmStatus = true;
-                    context.lastStatus = true;
-                    context.lastResult = result;
-                }, function onRejected(error) {
-                    context.confirmStatus = false;
-                    context.lastStatus = false;
-                    context.lastResult = error;
-                });
-            },
-            getPromisedAction: function (callback) {
-                var deferred = $q.defer();
-                $rootScope.$applyAsync(function () {
-                    if (confirm('Pass Action?')) {
-                        var result = 'The action was passed @ ' + new Date().toLocaleTimeString();
-                        deferred.resolve(result);
-                    } else {
-                        var err = new Error('The action was rejected @ ' + new Date().toLocaleTimeString());
-                        deferred.reject(err);
-                    }
-                });
-                return deferred.promise;
-            },
-            openModalWindow: function (templateUrl, status, result) {
-                var modalInstance = $modal.open({
-                    templateUrl: templateUrl,
-                    controller: function ($scope, $modalInstance) {
-                        $scope.status = status;
-                        $scope.result = result;
-
-                        // Delegate the controller logic
-                        cfg.modalController($scope, $modalInstance);
-                    },
-                    size: 'sm',
-                    resolve: {
-                        decorators: function () {
-                            console.log(' - Get Decorators...', $scope);
-                            return $scope.decorators;
-                        }
-                    }
-                });
-                return modalInstance;
-            }
-        };
-
-        $scope.interceptors = {
-            triggerAjaxRequest: function () {
-                /*
-                var url = "http://www.filltext.com/?delay=0&callback=?";
-                var opts = {
-                business: '{business}',
-                firstname: '{firstName}',
-                lastname: '{lastName}',
-                email: '{email}',
-                tel: '{phone|format}',
-                city: '{city}',
-                active: '{bool|n}',
-                };
-                $.getJSON(url, opts)
-                .done(function (data) {
-                $rootScope.$applyAsync(() => {
-                $scope.decorators.lastStatus = true;
-                $scope.interceptors.ajaxResult = JSON.stringify(data);
-                $scope.interceptors.ajaxStatus = true;
-                });
-                })
-                .fail(function (xhr, desc, err) {
-                $rootScope.$applyAsync(() => {
-                $scope.decorators.lastStatus = true;
-                $scope.interceptors.ajaxResult = JSON.stringify({ desc: desc, error: err });
-                $scope.interceptors.ajaxStatus = true;
-                });
-                });
-                */
-                var url = 'samples/left.tpl.html';
-                $scope.decorators.lastStatus = null;
-                $scope.interceptors.ajaxStatus = null;
-                $.ajax(url, {
-                    contentType: 'text/html',
-                    success: function (data) {
-                        $rootScope.$applyAsync(function () {
-                            $scope.decorators.lastStatus = true;
-                            $scope.interceptors.ajaxStatus = true;
-                            context.ajaxResult = data;
-                            context.lastResult = 'AJAX Result: ' + url;
-                        });
-                    },
-                    error: function (xhr, desc, ex) {
-                        $rootScope.$applyAsync(function () {
-                            $scope.decorators.lastStatus = false;
-                            $scope.interceptors.ajaxStatus = false;
-                            context.lastResult = 'AJAX Error: [ ' + desc + ' ] ' + ex || url;
-                        });
-                    }
-                });
-            }
-        };
-    }]).controller('interceptModalController', [
-    '$scope', '$modalInstance', 'status', 'result', function ($scope, $modalInstance, status, result) {
-        $scope.status = status;
-        $scope.result = result;
-
-        // Define modal scope
-        $scope.allowEmpty = typeof result === 'undefined';
-        $scope.action = status ? 'Accept' : 'Reject';
-        $scope.modalAction = (typeof status !== 'undefined') ? 'resp' : 'req';
-        $scope.promisedValue = status ? result : undefined;
-        $scope.rejectValue = !status ? result : new Error("Interceptor rejected the action.");
-        $scope.getStatus = function () {
-            return $scope.action == 'Accept';
-        };
-        $scope.getResult = function () {
-            return $scope.getStatus() ? $scope.promisedValue : $scope.rejectValue;
-        };
-        $scope.getType = function () {
-            var result = $scope.getResult();
-            return (typeof result);
-        };
-        $scope.getBody = function () {
-            return JSON.stringify($scope.getResult());
-        };
-        $scope.setToggle = function (val) {
-            $scope.allowEmpty = val;
-        };
-        $scope.ok = function () {
-            if (!$scope.allowEmpty && !$scope.promisedValue) {
-                alert($scope.allowEmpty);
-                return;
-            }
-            $modalInstance.close($scope.promisedValue);
-        };
-        $scope.cancel = function () {
-            if (!$scope.allowEmpty && !$scope.rejectValue) {
-                return;
-            }
-            $modalInstance.dismiss($scope.rejectValue);
-        };
-    }]).run([
+    }]).controller('decoratorsController', ['$rootScope', '$scope', '$modal', '$q', '$timeout', 'appConfig', proto.ng.samples.decorators.controllers.DecoratorsController]).controller('interceptModalController', ['$scope', '$modalInstance', 'status', 'result', proto.ng.samples.decorators.controllers.InterceptModalController]).run([
     '$modal', 'appConfig', function ($modal, appConfig) {
         // Hook the interceptor function
         var cfg = appConfig['decorators'];
@@ -955,6 +1034,44 @@ angular.module('prototyped.ng.samples.decorators', []).config([
             }).result;
         };
     }]);
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (decorators) {
+                var StackTraceUtils = (function () {
+                    function StackTraceUtils() {
+                    }
+                    StackTraceUtils.filters = [
+                        function (include, item) {
+                            // Exclude loading bar delegates
+                            if (/(loading-bar)/i.test(item.filename))
+                                return false;
+                            return include;
+                        },
+                        function (include, item) {
+                            // Ignore routing...?
+                            if (/(angular-ui-router)/i.test(item.filename))
+                                return false;
+                            return include;
+                        },
+                        function (include, item) {
+                            return include || /(scope\.decorators\.fcall)/i.test(item.source);
+                        },
+                        function (include, item) {
+                            return include || /(scope\.decorators\.runPromiseAction)/i.test(item.source);
+                        }
+                    ];
+                    return StackTraceUtils;
+                })();
+                decorators.StackTraceUtils = StackTraceUtils;
+            })(samples.decorators || (samples.decorators = {}));
+            var decorators = samples.decorators;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../../../../imports.d.ts" />
 
 var proto;
@@ -2239,275 +2356,278 @@ var proto;
 ///<reference path="proto.utils.ts"/>
 var proto;
 (function (proto) {
-    (function (samples) {
-        (function (location) {
-            var GeoController = (function () {
-                function GeoController($rootScope, $scope, geo) {
-                    this.$rootScope = $rootScope;
-                    this.$scope = $scope;
-                    this.geo = geo;
-                    // Link to current scope
-                    this.$scope.geoCtrl = this;
+    (function (ng) {
+        (function (samples) {
+            (function (location) {
+                var GeoController = (function () {
+                    function GeoController($rootScope, $scope, geo) {
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.geo = geo;
+                        // Link to current scope
+                        this.$scope.geoCtrl = this;
 
-                    // Load resources
-                    this.init();
-                }
-                GeoController.prototype.init = function () {
-                    var _this = this;
-                    this.initMaps(function (map) {
-                        // Load sample data
-                        _this.getSamples();
+                        // Load resources
+                        this.init();
+                    }
+                    GeoController.prototype.init = function () {
+                        var _this = this;
+                        this.initMaps(function (map) {
+                            // Load sample data
+                            _this.getSamples();
 
-                        // Request network and geo location info
-                        _this.getClientInfoPassive(function (response) {
-                            _this.$rootScope.$applyAsync(function () {
-                                _this.setClientInfoResponse(response);
+                            // Request network and geo location info
+                            _this.getClientInfoPassive(function (response) {
+                                _this.$rootScope.$applyAsync(function () {
+                                    _this.setClientInfoResponse(response);
+                                });
                             });
                         });
-                    });
-                };
-
-                GeoController.prototype.setClientInfoResponse = function (response) {
-                    if (response) {
-                        // Set the client info
-                        this.$scope.client = this.Client = response;
-
-                        // Get results
-                        var ip = response.ip;
-                        var org = response.org;
-                        var city = response.city;
-                        var region = response.region;
-                        var country = response.country;
-                        var hostname = response.hostname;
-
-                        // Parse Lat Long
-                        var lat, lng;
-                        var loc = response.loc;
-                        if (loc) {
-                            var ll = loc.split(',');
-                            if (ll.length > 1) {
-                                lat = ll[0];
-                                lng = ll[1];
-                            }
-                        }
-                        if (lat && lng) {
-                            var lbl = country + ' ( ' + ip + ' )';
-                            var pin = new proto.utils.GeoPoint(lbl, lat, lng, 3);
-                            var url = 'https://chart.googleapis.com/chart?chst=d_simple_text_icon_left&chld=' + country + '|14|FFF|flag_' + country.toLowerCase() + '|20|FFF|333';
-
-                            // Set the country of origin
-                            this.setGeoPoint(pin, {
-                                icon: 'http://maps.gstatic.com/mapfiles/markers2/dd-via.png'
-                            }, {
-                                content: '<div>' + lbl + '</div>'
-                            });
-                        }
-                    }
-                };
-                GeoController.prototype.getClientInfoPassive = function (callback) {
-                    // Request client info from online service
-                    $.get("http://ipinfo.io", function (response) {
-                        if (callback) {
-                            callback(response);
-                        }
-                    }, "jsonp");
-                };
-
-                GeoController.prototype.initMaps = function (callback) {
-                    var _this = this;
-                    // Define the google mapper class
-                    this.Mapper = new proto.utils.GoogleMapper({
-                        'v': '3.exp',
-                        //'key': apiKey,
-                        'sensor': false,
-                        'libraries': 'places,weather'
-                    });
-
-                    // Start the mapper class
-                    this.Mapper.initMaps(function () {
-                        var map = _this.Mapper.getMap();
-                        if (map) {
-                            // Load resources
-                            _this.loadMaps(map);
-                        }
-
-                        // Maps loaded, update UI...
-                        _this.$rootScope.$applyAsync(function () {
-                            if (callback)
-                                callback(map);
-                        });
-                    });
-                };
-                GeoController.prototype.loadMaps = function (map) {
-                    // Load additional map resources
-                    var transitLayer = new google.maps.TransitLayer();
-                    transitLayer.setMap(map);
-
-                    var cloudLayer = new google.maps.weather.CloudLayer();
-                    cloudLayer.setMap(map);
-
-                    var objClass = eval('google.maps.weather.WeatherLayer');
-                    var weatherLayer = new objClass({
-                        temperatureUnits: google.maps.weather.TemperatureUnit.CELSIUS
-                    });
-                    weatherLayer.setMap(map);
-                };
-
-                GeoController.prototype.getStatus = function () {
-                    var lbl = 'Unavailable';
-                    if (this.$scope.client) {
-                        lbl = this.$scope.client.hostname || this.$scope.client.city || this.$scope.client.country ? 'Somewhere in ' + this.$scope.client.country : 'Locating...';
-                    }
-                    if (this.$scope.position) {
-                        lbl = this.$scope.position.coords ? 'Position Found' : (this.$scope.position.isBusy ? 'Requesting...' : 'Request Declined');
-                    }
-                    return lbl;
-                };
-
-                GeoController.prototype.getPosition = function () {
-                    var _this = this;
-                    console.info(' - [ Geo ] Requesting position...');
-                    this.$scope.position = {
-                        timestamp: Date.now(),
-                        isBusy: true
                     };
 
-                    // Request the current GPS position from browser
-                    this.geo.GetPosition().then(function (position) {
-                        console.log(' - [ Geo ] Position found!');
+                    GeoController.prototype.setClientInfoResponse = function (response) {
+                        if (response) {
+                            // Set the client info
+                            this.$scope.client = this.Client = response;
 
-                        // Update current position
-                        var lat = position.coords.latitude;
-                        var lng = position.coords.longitude;
-                        _this.$scope.position = position;
-                        _this.Mapper.setPosition(lat, lng);
+                            // Get results
+                            var ip = response.ip;
+                            var org = response.org;
+                            var city = response.city;
+                            var region = response.region;
+                            var country = response.country;
+                            var hostname = response.hostname;
 
-                        // Set a marker at current location
-                        if (!_this.Marker) {
-                            // Create a mew marker
-                            var marker = _this.Marker = _this.Mapper.createMarker(lat, lng, {
-                                title: 'Your Location',
-                                animation: google.maps.Animation.DROP,
-                                icon: 'http://maps.gstatic.com/mapfiles/markers2/boost-marker-mapview.png'
-                            });
-
-                            // Add the info window
-                            var infowindow = new google.maps.InfoWindow({ content: '<em>Your current location</em>' });
-                            var map = _this.Mapper ? _this.Mapper.getMap() : null;
-                            if (map) {
-                                // Add click event to pin
-                                google.maps.event.addListener(marker, 'click', function () {
-                                    infowindow.open(map, marker);
-                                });
-                                infowindow.open(map, marker);
-                                map.setZoom(16);
-
-                                if (position.coords.accuracy) {
-                                    var accuracyZone = {
-                                        strokeColor: '#0000FF',
-                                        strokeOpacity: 0.8,
-                                        strokeWeight: 2,
-                                        fillColor: '#61d8f3',
-                                        fillOpacity: 0.15,
-                                        map: map,
-                                        center: marker.getPosition(),
-                                        radius: position.coords.accuracy
-                                    };
-
-                                    // Add the circle for this city to the map.
-                                    var zoneCircle = new google.maps.Circle(accuracyZone);
+                            // Parse Lat Long
+                            var lat, lng;
+                            var loc = response.loc;
+                            if (loc) {
+                                var ll = loc.split(',');
+                                if (ll.length > 1) {
+                                    lat = ll[0];
+                                    lng = ll[1];
                                 }
                             }
-                        } else {
-                            // Update existing
-                            _this.Marker.setPosition(new google.maps.LatLng(lat, lng));
+                            if (lat && lng) {
+                                var lbl = country + ' ( ' + ip + ' )';
+                                var pin = new proto.utils.GeoPoint(lbl, lat, lng, 3);
+                                var url = 'https://chart.googleapis.com/chart?chst=d_simple_text_icon_left&chld=' + country + '|14|FFF|flag_' + country.toLowerCase() + '|20|FFF|333';
+
+                                // Set the country of origin
+                                this.setGeoPoint(pin, {
+                                    icon: 'http://maps.gstatic.com/mapfiles/markers2/dd-via.png'
+                                }, {
+                                    content: '<div>' + lbl + '</div>'
+                                });
+                            }
                         }
-                    }, function (ex) {
-                        console.error(' - [ Geo ] ' + (ex.message || 'Request denied.'));
+                    };
+                    GeoController.prototype.getClientInfoPassive = function (callback) {
+                        // Request client info from online service
+                        $.get("http://ipinfo.io", function (response) {
+                            if (callback) {
+                                callback(response);
+                            }
+                        }, "jsonp");
+                    };
 
-                        // Update UI state
-                        _this.$scope.position = {
-                            timestamp: Date.now(),
-                            failed: true
-                        };
-                    });
-                };
-
-                GeoController.prototype.setGeoPoint = function (point, opts, infoWindowOpts) {
-                    var lat = point.Lat;
-                    var lng = point.Lng;
-                    var key = '' + lat + '_' + lng;
-                    var pin = null;
-                    if (!pin) {
-                        var opts = $.extend(opts || {}, {
-                            title: point.Label
+                    GeoController.prototype.initMaps = function (callback) {
+                        var _this = this;
+                        // Define the google mapper class
+                        this.Mapper = new proto.utils.GoogleMapper({
+                            'v': '3.exp',
+                            //'key': apiKey,
+                            'sensor': false,
+                            'libraries': 'places,weather'
                         });
-                        if (!opts.icon) {
-                            opts.icon = 'http://maps.gstatic.com/mapfiles/markers2/icon_greenC.png';
-                        }
-                        pin = this.Mapper.createMarker(lat, lng, opts);
 
-                        //this.PinsPOI[key] = pin;
-                        // Add the info window
-                        if (infoWindowOpts) {
-                            var map = this.Mapper ? this.Mapper.getMap() : null;
+                        // Start the mapper class
+                        this.Mapper.initMaps(function () {
+                            var map = _this.Mapper.getMap();
                             if (map) {
-                                var opts = $.extend(infoWindowOpts, {});
-                                if (!opts.content) {
-                                    opts.content = '<div>' + point.Label + '</div>';
-                                }
+                                // Load resources
+                                _this.loadMaps(map);
+                            }
 
-                                var infowindow = new google.maps.InfoWindow(opts);
-                                infowindow.open(map, pin);
+                            // Maps loaded, update UI...
+                            _this.$rootScope.$applyAsync(function () {
+                                if (callback)
+                                    callback(map);
+                            });
+                        });
+                    };
+                    GeoController.prototype.loadMaps = function (map) {
+                        // Load additional map resources
+                        var transitLayer = new google.maps.TransitLayer();
+                        transitLayer.setMap(map);
 
-                                // Add click event to pin
-                                google.maps.event.addListener(pin, 'click', function () {
-                                    infowindow.open(map, pin);
+                        var cloudLayer = new google.maps.weather.CloudLayer();
+                        cloudLayer.setMap(map);
+
+                        var objClass = eval('google.maps.weather.WeatherLayer');
+                        var weatherLayer = new objClass({
+                            temperatureUnits: google.maps.weather.TemperatureUnit.CELSIUS
+                        });
+                        weatherLayer.setMap(map);
+                    };
+
+                    GeoController.prototype.getStatus = function () {
+                        var lbl = 'Unavailable';
+                        if (this.$scope.client) {
+                            lbl = this.$scope.client.hostname || this.$scope.client.city || this.$scope.client.country ? 'Somewhere in ' + this.$scope.client.country : 'Locating...';
+                        }
+                        if (this.$scope.position) {
+                            lbl = this.$scope.position.coords ? 'Position Found' : (this.$scope.position.isBusy ? 'Requesting...' : 'Request Declined');
+                        }
+                        return lbl;
+                    };
+
+                    GeoController.prototype.getPosition = function () {
+                        var _this = this;
+                        console.info(' - [ Geo ] Requesting position...');
+                        this.$scope.position = {
+                            timestamp: Date.now(),
+                            isBusy: true
+                        };
+
+                        // Request the current GPS position from browser
+                        this.geo.GetPosition().then(function (position) {
+                            console.log(' - [ Geo ] Position found!');
+
+                            // Update current position
+                            var lat = position.coords.latitude;
+                            var lng = position.coords.longitude;
+                            _this.$scope.position = position;
+                            _this.Mapper.setPosition(lat, lng);
+
+                            // Set a marker at current location
+                            if (!_this.Marker) {
+                                // Create a mew marker
+                                var marker = _this.Marker = _this.Mapper.createMarker(lat, lng, {
+                                    title: 'Your Location',
+                                    animation: google.maps.Animation.DROP,
+                                    icon: 'http://maps.gstatic.com/mapfiles/markers2/boost-marker-mapview.png'
                                 });
+
+                                // Add the info window
+                                var infowindow = new google.maps.InfoWindow({ content: '<em>Your current location</em>' });
+                                var map = _this.Mapper ? _this.Mapper.getMap() : null;
+                                if (map) {
+                                    // Add click event to pin
+                                    google.maps.event.addListener(marker, 'click', function () {
+                                        infowindow.open(map, marker);
+                                    });
+                                    infowindow.open(map, marker);
+                                    map.setZoom(16);
+
+                                    if (position.coords.accuracy) {
+                                        var accuracyZone = {
+                                            strokeColor: '#0000FF',
+                                            strokeOpacity: 0.8,
+                                            strokeWeight: 2,
+                                            fillColor: '#61d8f3',
+                                            fillOpacity: 0.15,
+                                            map: map,
+                                            center: marker.getPosition(),
+                                            radius: position.coords.accuracy
+                                        };
+
+                                        // Add the circle for this city to the map.
+                                        var zoneCircle = new google.maps.Circle(accuracyZone);
+                                    }
+                                }
+                            } else {
+                                // Update existing
+                                _this.Marker.setPosition(new google.maps.LatLng(lat, lng));
+                            }
+                        }, function (ex) {
+                            console.error(' - [ Geo ] ' + (ex.message || 'Request denied.'));
+
+                            // Update UI state
+                            _this.$scope.position = {
+                                timestamp: Date.now(),
+                                failed: true
+                            };
+                        });
+                    };
+
+                    GeoController.prototype.setGeoPoint = function (point, opts, infoWindowOpts) {
+                        var lat = point.Lat;
+                        var lng = point.Lng;
+                        var key = '' + lat + '_' + lng;
+                        var pin = null;
+                        if (!pin) {
+                            var opts = $.extend(opts || {}, {
+                                title: point.Label
+                            });
+                            if (!opts.icon) {
+                                opts.icon = 'http://maps.gstatic.com/mapfiles/markers2/icon_greenC.png';
+                            }
+                            pin = this.Mapper.createMarker(lat, lng, opts);
+
+                            //this.PinsPOI[key] = pin;
+                            // Add the info window
+                            if (infoWindowOpts) {
+                                var map = this.Mapper ? this.Mapper.getMap() : null;
+                                if (map) {
+                                    var opts = $.extend(infoWindowOpts, {});
+                                    if (!opts.content) {
+                                        opts.content = '<div>' + point.Label + '</div>';
+                                    }
+
+                                    var infowindow = new google.maps.InfoWindow(opts);
+                                    infowindow.open(map, pin);
+
+                                    // Add click event to pin
+                                    google.maps.event.addListener(pin, 'click', function () {
+                                        infowindow.open(map, pin);
+                                    });
+                                }
                             }
                         }
-                    }
-                    if (this.Mapper) {
-                        this.Mapper.setPosition(lat, lng);
-                    }
-                };
+                        if (this.Mapper) {
+                            this.Mapper.setPosition(lat, lng);
+                        }
+                    };
 
-                GeoController.prototype.setPosition = function (lat, lng) {
-                    if (this.Mapper) {
-                        this.Mapper.setPosition(lat, lng);
-                    }
-                };
+                    GeoController.prototype.setPosition = function (lat, lng) {
+                        if (this.Mapper) {
+                            this.Mapper.setPosition(lat, lng);
+                        }
+                    };
 
-                GeoController.prototype.hasSamples = function () {
-                    return this.Samples && this.Samples.length > 0;
-                };
+                    GeoController.prototype.hasSamples = function () {
+                        return this.Samples && this.Samples.length > 0;
+                    };
 
-                GeoController.prototype.getSamples = function () {
-                    // Ensure maps loaded
-                    if (!this.Mapper || !this.Mapper.isMapsDefined())
-                        return [];
+                    GeoController.prototype.getSamples = function () {
+                        // Ensure maps loaded
+                        if (!this.Mapper || !this.Mapper.isMapsDefined())
+                            return [];
 
-                    // Define if not exist
-                    if (!this.Samples) {
-                        this.Samples = [
-                            new proto.utils.GeoPoint('New York', 40.7056258, -73.97968, 10),
-                            new proto.utils.GeoPoint('London', 51.5286416, -0.1015987, 10),
-                            new proto.utils.GeoPoint('Paris', 48.8588589, 2.3470599, 12),
-                            new proto.utils.GeoPoint('Amsterdam', 52.3747158, 4.8986166, 12),
-                            new proto.utils.GeoPoint('Cape Town', -33.919892, 18.425713, 9),
-                            new proto.utils.GeoPoint('Hong Kong', 22.3700556, 114.1535941, 11),
-                            new proto.utils.GeoPoint('Sydney', -33.7969235, 150.9224326, 10)
-                        ];
-                    }
-                    return this.Samples;
-                };
-                return GeoController;
-            })();
-            location.GeoController = GeoController;
-        })(samples.location || (samples.location = {}));
-        var location = samples.location;
-    })(proto.samples || (proto.samples = {}));
-    var samples = proto.samples;
+                        // Define if not exist
+                        if (!this.Samples) {
+                            this.Samples = [
+                                new proto.utils.GeoPoint('New York', 40.7056258, -73.97968, 10),
+                                new proto.utils.GeoPoint('London', 51.5286416, -0.1015987, 10),
+                                new proto.utils.GeoPoint('Paris', 48.8588589, 2.3470599, 12),
+                                new proto.utils.GeoPoint('Amsterdam', 52.3747158, 4.8986166, 12),
+                                new proto.utils.GeoPoint('Cape Town', -33.919892, 18.425713, 9),
+                                new proto.utils.GeoPoint('Hong Kong', 22.3700556, 114.1535941, 11),
+                                new proto.utils.GeoPoint('Sydney', -33.7969235, 150.9224326, 10)
+                            ];
+                        }
+                        return this.Samples;
+                    };
+                    return GeoController;
+                })();
+                location.GeoController = GeoController;
+            })(samples.location || (samples.location = {}));
+            var location = samples.location;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
 })(proto || (proto = {}));
 // ----------------------------------------------------------------------
 // Geo Locator sample definition
@@ -2524,7 +2644,7 @@ angular.module('prototyped.ng.samples.location', [
                 'left@': { templateUrl: 'samples/left.tpl.html' },
                 'main@': {
                     templateUrl: 'samples/location/views/main.tpl.html',
-                    controller: 'proto.samples.GeoController',
+                    controller: 'proto.ng.samples.GeoController',
                     constrollerAs: 'geoCtrl'
                 }
             }
@@ -2554,11 +2674,11 @@ angular.module('prototyped.ng.samples.location', [
         return proto.utils.GeoFactory.FormatLongitude;
     }]).filter('formatted', [function () {
         return proto.String.FormatFilter;
-    }]).controller('proto.samples.GeoController', [
+    }]).controller('proto.ng.samples.GeoController', [
     '$rootScope',
     '$scope',
     'geoService',
-    proto.samples.location.GeoController
+    proto.ng.samples.location.GeoController
 ]).run([
     '$rootScope', function ($rootScope) {
     }]);

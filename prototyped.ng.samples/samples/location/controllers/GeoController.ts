@@ -2,7 +2,7 @@
 ///<reference path="proto.ts"/>
 ///<reference path="proto.utils.ts"/>
 
-module proto.samples.location {
+module proto.ng.samples.location {
 
     export class GeoController {
 

@@ -15,7 +15,7 @@ angular.module('prototyped.ng.samples.location', [
                     'left@': { templateUrl: 'samples/left.tpl.html' },
                     'main@': {
                         templateUrl: 'samples/location/views/main.tpl.html',
-                        controller: 'proto.samples.GeoController',
+                        controller: 'proto.ng.samples.GeoController',
                         constrollerAs: 'geoCtrl',
                     },
                 }
@@ -52,11 +52,11 @@ angular.module('prototyped.ng.samples.location', [
 // ----------------------------------------------------------------------
 // Register Controller(s)
 // ----------------------------------------------------------------------
-    .controller('proto.samples.GeoController', [
+    .controller('proto.ng.samples.GeoController', [
         '$rootScope',
         '$scope',
         'geoService',
-        proto.samples.location.GeoController
+        proto.ng.samples.location.GeoController
     ])
 
     .run(['$rootScope', function ($rootScope) {

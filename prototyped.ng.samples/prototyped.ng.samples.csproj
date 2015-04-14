@@ -47,8 +47,13 @@
     <TypeScriptCompile Include="samples\compression\module.ng.ts" />
     <Content Include="samples\decorators\dialogs\interceptor.tpl.html" />
     <Content Include="samples\decorators\main.tpl.html" />
+    <TypeScriptCompile Include="samples\decorators\config.ng.ts" />
+    <TypeScriptCompile Include="samples\decorators\controllers\DecoratorsController.ts" />
+    <TypeScriptCompile Include="samples\decorators\controllers\InterceptModalController.ts" />
     <TypeScriptCompile Include="samples\decorators\module.ng.ts" />
     <Content Include="samples\errorHandlers\main.tpl.html" />
+    <TypeScriptCompile Include="samples\decorators\typings\HttpInterceptorService.ts" />
+    <TypeScriptCompile Include="samples\decorators\typings\StackTraceUtils.ts" />
     <TypeScriptCompile Include="samples\errorHandlers\module.ng.ts" />
     <TypeScriptCompile Include="samples\errorHandlers\typings\ErrorHandlers.ts" />
     <TypeScriptCompile Include="samples\errorHandlers\typings\ErrorHttpInterceptor.ts" />

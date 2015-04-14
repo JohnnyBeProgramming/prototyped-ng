@@ -8,23 +8,23 @@
         <div class="col-md-12">
             <span class="pull-right ng-cloak" style="padding: 6px;">
                 <input bs:switch type="checkbox"
+                       ng:model="appConfig.decorators.enabled"
+                       switch:size="mini"
+                       switch:label="Patch Promises"
+                       switch:inverse="false" />
+                <input bs:switch type="checkbox"
+                       ng:model="appConfig.decorators.xhttp"
+                       switch:size="mini"
+                       switch:label="Intercep HTTP"
+                       switch:inverse="false" />
+                <input bs:switch type="checkbox"
                        ng:model="appConfig.decorators.debug"
                        switch:size="mini"
                        switch:label="Debug"
                        switch:inverse="false" />
-                <input bs:switch type="checkbox"
-                       ng:model="appConfig.decorators.enabled"
-                       switch:size="mini"
-                       switch:label="Interceptors"
-                       switch:inverse="false" />
-                <input bs:switch type="checkbox"
-                       ng:model="appConfig.interceptors.enabled"
-                       switch:size="mini"
-                       switch:label="HTTP Trackers"
-                       switch:inverse="false" />
             </span>
             <h4>
-                Interceptors and Decorators
+                Service Decorators
                 <small>Monkey patching the normal behaviour of your application.</small>
             </h4>
             <hr />
@@ -32,7 +32,7 @@
                 <div class="col-md-6">
                     <p>
                         <a href="" class="btn btn-default"
-                           ng-class="{ 'btn-success': (decorators.confirmStatus && decorators.lastResult), 'btn-danger': (!decorators.confirmStatus && decorators.lastResult), 'btn-primary': appConfig.decorators.enabled }"
+                           ng-class="{ 'btn-success': (decorators.confirmStatus === true), 'btn-danger': (decorators.confirmStatus === false), 'btn-primary': appConfig.decorators.enabled }"
                            ng-click="decorators.runPromiseAction()">
                             Run Promised Action
                         </a>
@@ -43,13 +43,12 @@
                             Invoke Timeout
                         </a>
                         <a class="btn btn-default" href=""
-                           ng-click="interceptors.triggerAjaxRequest()"
-                           xxx-ng-disabled="!appConfig.interceptors.enabled"
-                           ng-class="{ 'btn-success': interceptors.ajaxStatus === true, 'btn-danger': interceptors.ajaxStatus === false, 'btn-primary': appConfig.interceptors.enabled }">
-                           HTML Ajax Request
+                           ng-click="decorators.triggerAjaxRequest()"
+                           xxx-ng-disabled="!appConfig.decorators.enabled"
+                           ng-class="{ 'btn-success': decorators.ajaxStatus === true, 'btn-danger': decorators.ajaxStatus === false, 'btn-primary': appConfig.decorators.xhttp }">
+                            HTML Ajax Request
                         </a>
                     </p>
-
                     <p>
                         By making use of angular's <a href="https://docs.angularjs.org/api/auto/service/$provide">$provide decorators</a>,
                         we patch the <a href="https://docs.angularjs.org/api/ng/service/$q">$q service</a> to intercept any promised
