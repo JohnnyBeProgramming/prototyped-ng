@@ -7,8 +7,7 @@
 
         public handleException(exception, cause) {
             try {
-                var source = this.appNode.active ? 'Angular[ NW ]' : 'Angular[ JS ]';
-                proto.ng.samples.errorHandlers.HandleException(source, exception, {
+                proto.ng.samples.errorHandlers.HandleException('Angular', exception, {
                     cause: cause,
                 });
             } catch (ex) {

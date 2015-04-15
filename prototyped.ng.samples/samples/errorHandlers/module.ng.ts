@@ -41,7 +41,7 @@ angular.module('prototyped.ng.samples.errorHandlers', [
 
     .service('ravenService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.raven.RavenService])
     .service('googleErrorService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.google.GoogleErrorService])
-    .service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService])
+    .service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'appStatus', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService])
 
     .controller('errorHandlersController', ['$rootScope', '$scope', 'appStatus', function ($rootScope, $scope, appStatus) {
         $scope.appStatus = appStatus;

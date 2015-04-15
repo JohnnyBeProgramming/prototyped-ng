@@ -91,13 +91,14 @@
     <Content Include="views\common\sandbox\footer.tpl.html" />
     <Content Include="views\common\sandbox\menu.tpl.html" />
     <Content Include="views\default.tpl.html" />
+    <Content Include="views\explore\main.tpl.html" />
+    <Content Include="views\explore\left.tpl.html" />
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="imports.d.ts" />
     <TypeScriptCompile Include="modules\module.ng.ts" />
     <TypeScriptCompile Include="modules\about\module.ng.ts" />
-    <TypeScriptCompile Include="modules\default.ng.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="assets\less\app.less" />

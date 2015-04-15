@@ -1,6 +1,5 @@
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
-/// <reference path="../modules/default.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
 
 // Define main module with all dependencies
@@ -10,7 +9,6 @@ angular.module('prototyped.ng', [
     'prototyped.ng.styles',
 
 // Define sub modules
-    'prototyped.default',
     'prototyped.about',
     'prototyped.editor',
     'prototyped.explorer',
@@ -31,12 +29,12 @@ angular.module('prototyped.ng', [
         if (appConfig) {
             // Define module routes
             appConfig.routers.push({
-                url: '/proto',
+                url: '/explore',
                 abstract: true,
                 priority: 0,
                 menuitem: {
                     label: 'Explore',
-                    state: 'proto.cmd',
+                    state: 'proto.explore',
                     icon: 'fa fa-cubes',
                 },
                 cardview: {
@@ -89,9 +87,32 @@ angular.module('prototyped.ng', [
 
         // Set up routing...
         $stateProvider
+            .state('default', {
+                url: '/',
+                views: {
+                    'main@': {
+                        templateUrl: 'views/default.tpl.html',
+                        controller: 'CardViewCtrl',
+                        controllerAs: 'sliderCtrl',
+                    },
+                }
+            })
             .state('proto', {
                 url: '/proto',
                 abstract: true,
+            })
+            .state('proto.explore', {
+                url: '^/explore',
+                views: {
+                    'left@': {
+                        templateUrl: 'views/explore/left.tpl.html',
+                    },
+                    'main@': {
+                        templateUrl: 'views/explore/main.tpl.html',
+                        controller: 'CardViewCtrl',
+                        controllerAs: 'sliderCtrl',
+                    },
+                }
             })
 
     }])
@@ -165,6 +186,40 @@ angular.module('prototyped.ng', [
             debug: false,
         },
     })
+
+
+    .controller('CardViewCtrl', ['$scope', 'appConfig', function ($scope, appConfig) {
+        // Make sure 'mySiteMap' exists
+        $scope.pages = appConfig.routers || [];
+
+        // initial image index
+        $scope._Index = 0;
+
+        $scope.count = function () {
+            return $scope.pages.length;
+        };
+
+        // if a current image is the same as requested image
+        $scope.isActive = function (index) {
+            return $scope._Index === index;
+        };
+
+        // show prev image
+        $scope.showPrev = function () {
+            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
+        };
+
+        // show next image
+        $scope.showNext = function () {
+            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
+        };
+
+        // show a certain image
+        $scope.showPhoto = function (index) {
+            $scope._Index = index;
+        };
+    }])
+
 
     .directive('appClean', ['$rootScope', '$window', '$route', '$state', 'appNode', 'appStatus', function ($rootScope, $window, $route, $state, appNode, appStatus) {
         return function (scope, elem, attrs) {

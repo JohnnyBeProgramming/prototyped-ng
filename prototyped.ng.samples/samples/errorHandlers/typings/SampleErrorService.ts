@@ -20,7 +20,7 @@ module proto.ng.samples.errorHandlers {
 
         get errorHandlers(): any[] { return ErrorHandlers.ListAll(); }
 
-        constructor(private $rootScope, private $log, private appConfig, private raven: raven.RavenService, private google: google.GoogleErrorService) {
+        constructor(private $rootScope, private $log, private appConfig, private appStatus, private raven: raven.RavenService, private google: google.GoogleErrorService) {
             // Hook the global handlers
             ErrorHandlers.logs = $log;
             ErrorHandlers.Register(this);
@@ -204,6 +204,10 @@ module proto.ng.samples.errorHandlers {
             this.isEnabled = false;
         }
 
+        public clear() {
+            this.appStatus.logs = [];
+            this.appConfig['errorHandlers']['counts'] = {};
+        }
     }
 
 }  

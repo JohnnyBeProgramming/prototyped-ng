@@ -6,9 +6,38 @@
                 <small>Beware, code monkeys at play... ;)</small>
             </h4>
             <hr />
-            <p ui:view="body">
-                .....
-            </p>
+            <div ui:view="body">
+                <div class="list-group">
+                    <a ui:sref="samples.notifications" class="list-group-item">
+                        <h4 class="list-group-item-heading">Web Notifications</h4>
+                        <p class="list-group-item-text">Exploring ways to interact with the user, including different ways and states. Notifications on the web and directly into your native OS.</p>
+                    </a>
+                    <a ui:sref="samples.errors" class="list-group-item">
+                        <h4 class="list-group-item-heading">Exception Handlers</h4>
+                        <p class="list-group-item-text">Because we all know how annoying errors can be. This is a pro-active look at how to catch, manage and report exceptions on remote clients.</p>
+                    </a>
+                    <a ui:sref="samples.compression" class="list-group-item">
+                        <h4 class="list-group-item-heading">Dynamic Encoders</h4>
+                        <p class="list-group-item-text">Investigating the different ways to encode and/or compress text on the fly. Interactive metrics show compression ratios and performace.</p>
+                    </a>
+                    <a ui:sref="samples.sampleData" class="list-group-item">
+                        <h4 class="list-group-item-heading">Online Sample Data</h4>
+                        <p class="list-group-item-text">Directly from the cloud! Create mocked sample data on the fly, for free and in whatever way you want it. Supplied by www.filltext.com</p>
+                    </a>
+                    <a ui:sref="samples.decorators" class="list-group-item">
+                        <h4 class="list-group-item-heading">Service Decorators</h4>
+                        <p class="list-group-item-text">Researching ways to intercept and decorate existing services for built-in and third-party application functionality.</p>
+                    </a>
+                    <a ui:sref="samples.location" class="list-group-item">
+                        <h4 class="list-group-item-heading">Geo Location Tracking</h4>
+                        <p class="list-group-item-text">So how much geo locational info can your browser give? Lets check, includes passive geo locational tracking by doing a reverse lookup of your IP address.</p>
+                    </a>
+                    <a ui:sref="samples.styles3d" class="list-group-item">
+                        <h4 class="list-group-item-heading">Exploring Styles 3D</h4>
+                        <p class="list-group-item-text">Modern browsers with CSS3 capabilities come with some pretty impressive new features. Hardware accelerated graphics for smooth animations and rendering.</p>
+                    </a>
+                </div>
+            </div>
             <hr />
         </div>
     </div>

@@ -7,10 +7,10 @@ angular.module('prototyped.explorer', [
     .config(['$stateProvider', ($stateProvider) => {
 
         $stateProvider
-            .state('proto.explore', {
-                url: '^/explore',
+            .state('proto.browser', {
+                url: '^/browser',
                 views: {
-                    'left@': { templateUrl: 'views/left.tpl.html' },
+                    'left@': { templateUrl: 'views/explore/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/explore/views/index.tpl.html',
                         controller: 'proto.explorer.ExplorerController',

@@ -169,4 +169,8 @@ angular.module('prototyped.ng.views', []).run(['$templateCache', function($templ
     '            padding: 0 !important;\n' +
     '            background: #E0E0E0!important;\n' +
     '        }</style><div class="slider docked"><a class="arrow prev" href="" ng-show=false ng-click=showPrev()><i class="glyphicon glyphicon-chevron-left"></i></a> <a class="arrow next" href="" ng-show=false ng-click=showNext()><i class="glyphicon glyphicon-chevron-right"></i></a><div class=boxed><a class="card fixed-width slide" ng-class="{ \'inactive-gray-25\': route.cardview.ready === false }" ng-repeat="route in pages | orderBy:\'(priority || 1)\'" ng-if="route.cardview && (!route.visible || route.visible())" ng-href={{route.url}} ng-class="{ \'active\': isActive($index) }" ng-swipe-right=showPrev() ng-swipe-left=showNext()><div class=card-image ng-class=route.cardview.style><div class=banner></div><h2>{{route.cardview.title}}</h2></div><p>{{route.cardview.desc}}</p></a></div><ul class="small-only slider-nav"><li ng-repeat="page in pages" ng-class="{\'active\':isActive($index)}"><a href="" ng-click=showPhoto($index); title={{page.title}}><i class="glyphicon glyphicon-file"></i></a></li></ul></div></div>');
+  $templateCache.put('views/explore/left.tpl.html',
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-info-circle"></i>&nbsp; Explorer Home</a></li><li class=list-group-item ui:sref-active=active>...</li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.browser><i class="fa fa-cogs"></i>&nbsp; Browser</a></li></ul>');
+  $templateCache.put('views/explore/main.tpl.html',
+    '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail>...</div></div>');
 }]);

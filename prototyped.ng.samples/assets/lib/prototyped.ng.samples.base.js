@@ -1372,10 +1372,11 @@ var proto;
         (function (samples) {
             (function (errorHandlers) {
                 var SampleErrorService = (function () {
-                    function SampleErrorService($rootScope, $log, appConfig, raven, google) {
+                    function SampleErrorService($rootScope, $log, appConfig, appStatus, raven, google) {
                         this.$rootScope = $rootScope;
                         this.$log = $log;
                         this.appConfig = appConfig;
+                        this.appStatus = appStatus;
                         this.raven = raven;
                         this.google = google;
                         this.busy = false;
@@ -1595,6 +1596,11 @@ var proto;
                     SampleErrorService.prototype.dettach = function () {
                         this.isEnabled = false;
                     };
+
+                    SampleErrorService.prototype.clear = function () {
+                        this.appStatus.logs = [];
+                        this.appConfig['errorHandlers']['counts'] = {};
+                    };
                     return SampleErrorService;
                 })();
                 errorHandlers.SampleErrorService = SampleErrorService;
@@ -1720,8 +1726,7 @@ var proto;
                     }
                     ExceptionHandlerFactory.prototype.handleException = function (exception, cause) {
                         try  {
-                            var source = this.appNode.active ? 'Angular[ NW ]' : 'Angular[ JS ]';
-                            proto.ng.samples.errorHandlers.HandleException(source, exception, {
+                            proto.ng.samples.errorHandlers.HandleException('Angular', exception, {
                                 cause: cause
                             });
                         } catch (ex) {
@@ -1828,7 +1833,7 @@ angular.module('prototyped.ng.samples.errorHandlers', [
     }]).factory('errorHttpInterceptor', [
     '$log', '$q', function ($log, $q) {
         return new proto.ng.samples.errorHandlers.ErrorHttpInterceptor($log, $q);
-    }]).service('ravenService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.raven.RavenService]).service('googleErrorService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.google.GoogleErrorService]).service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService]).controller('errorHandlersController', [
+    }]).service('ravenService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.raven.RavenService]).service('googleErrorService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.google.GoogleErrorService]).service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'appStatus', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService]).controller('errorHandlersController', [
     '$rootScope', '$scope', 'appStatus', function ($rootScope, $scope, appStatus) {
         $scope.appStatus = appStatus;
         $scope.$watch('appStatus.logs.length', function () {
@@ -1882,9 +1887,18 @@ var proto;
                     ErrorHandlers.ListAll = function () {
                         return this.list;
                     };
+
+                    ErrorHandlers.CountErrorType = function (source) {
+                        if (source in ErrorHandlers.counts) {
+                            ErrorHandlers.counts[source] += 1;
+                        } else {
+                            ErrorHandlers.counts[source] = 1;
+                        }
+                    };
                     ErrorHandlers.enabled = true;
                     ErrorHandlers.logs = null;
                     ErrorHandlers.list = [];
+                    ErrorHandlers.counts = {};
                     return ErrorHandlers;
                 })();
                 errorHandlers.ErrorHandlers = ErrorHandlers;
@@ -1893,6 +1907,8 @@ var proto;
                     var enabled = ErrorHandlers.enabled;
                     if (enabled) {
                         try  {
+                            ErrorHandlers.CountErrorType(source);
+
                             // Notify all handlers that are enabled
                             ErrorHandlers.ListAll().forEach(function (service) {
                                 if (service.isEnabled && service.handleException) {

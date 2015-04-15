@@ -33,18 +33,30 @@
                         <ul class="list-group">
                             <li class="list-group-item">
                                 <a href="" ng-click="sampleErrors.throwManagedException()">
+                                    <span class="badge pull-right"
+                                          ng-if="appConfig.errorHandlers.counts['Managed Sample']">
+                                        {{ appConfig.errorHandlers.counts['Managed Sample'] }}
+                                    </span>
                                     <i class="fa fa-exclamation glow-red"></i>&nbsp;
                                     Catch Managed Error
                                 </a>
                             </li>
                             <li class="list-group-item">
                                 <a href="" ng-click="sampleErrors.throwAjaxException()">
+                                    <span class="badge pull-right"
+                                          ng-if="appConfig.errorHandlers.counts['Ajax Error']">
+                                        {{ appConfig.errorHandlers.counts['Ajax Error'] }}
+                                    </span>                                    
                                     <i class="fa fa-exclamation glow-red"></i>&nbsp;
                                     Create Ajax Error
                                 </a>
                             </li>
                             <li class="list-group-item">
                                 <a href="" ng-click="sampleErrors.throwAngularException()">
+                                    <span class="badge pull-right"
+                                          ng-if="appConfig.errorHandlers.counts['Angular']">
+                                        {{ appConfig.errorHandlers.counts['Angular'] }}
+                                    </span>
                                     <i class="fa fa-exclamation glow-red"></i>&nbsp;
                                     AngularJS Error
                                 </a>
@@ -74,6 +86,10 @@
                             </li>
                             <li class="list-group-item">
                                 <a href="" onclick="sampleError.dontExist++;">
+                                    <span class="badge pull-right"
+                                          ng-if="appConfig.errorHandlers.counts['Javascript Error']">
+                                        {{ appConfig.errorHandlers.counts['Javascript Error'] }}
+                                    </span>
                                     <i class="fa fa-exclamation glow-red"></i>&nbsp;
                                     Unhandled Exception
                                 </a>
@@ -86,7 +102,7 @@
                     <div>
                         <span class="pull-right" style="padding: 3px;">
                             <a href="" ng-click="">Refresh</a> |
-                            <a href="" ng-click="appStatus.logs = []">Clear</a>
+                            <a href="" ng-click="sampleErrors.clear()">Clear</a>
                         </span>
                         <h5>Event Logs</h5>
                         <table class="table table-hover table-condensed">

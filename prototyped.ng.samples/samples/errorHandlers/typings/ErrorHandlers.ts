@@ -7,6 +7,7 @@ module proto.ng.samples.errorHandlers {
         public static enabled: boolean = true;
         public static logs: any = null;
         private static list: any[] = [];
+        private static counts: any = {};
 
         public static Register(handler: any) {
             this.list.push(handler);
@@ -15,12 +16,22 @@ module proto.ng.samples.errorHandlers {
         public static ListAll(): any[] {
             return this.list;
         }
+
+        public static CountErrorType(source: string) {
+            if (source in ErrorHandlers.counts) {
+                ErrorHandlers.counts[source] += 1;
+            } else {
+                ErrorHandlers.counts[source] = 1;
+            }
+        }
     }
 
     export function HandleException(source: string, error: any, tags: any) {
         var enabled = ErrorHandlers.enabled;
         if (enabled) {
             try {
+                ErrorHandlers.CountErrorType(source);
+
                 // Notify all handlers that are enabled
                 ErrorHandlers.ListAll().forEach((service: any) => {
                     if (service.isEnabled && service.handleException) {

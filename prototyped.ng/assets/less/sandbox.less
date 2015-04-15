@@ -96,11 +96,13 @@ body {
         }
     }
 
-    .list-group-item.active {
-        background-color: #d8e1e8;
-    }
-
     .ui-view-left {
+        .list-group-item {
+            &.active {
+                color: black;
+                background-color: #d8e1e8;
+            }
+        }
     }
 
     .ui-view-main {
