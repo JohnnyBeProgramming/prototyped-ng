@@ -1211,177 +1211,275 @@ var proto;
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
-    (function (explorer) {
-        var ExplorerController = (function () {
-            function ExplorerController($rootScope, $scope, $q) {
-                var _this = this;
-                this.$rootScope = $rootScope;
-                this.$scope = $scope;
-                this.$q = $q;
-                var dir = './';
-                try  {
-                    // Hook up to the current scope
-                    this.$scope.isBusy = true;
+    (function (ng) {
+        (function (explorer) {
+            var ExplorerController = (function () {
+                function ExplorerController($rootScope, $scope, $q) {
+                    var _this = this;
+                    this.$rootScope = $rootScope;
+                    this.$scope = $scope;
+                    this.$q = $q;
+                    var dir = './';
+                    try  {
+                        // Hook up to the current scope
+                        this.$scope.isBusy = true;
 
-                    // Initialize the cotroller
-                    this.init(dir);
+                        // Initialize the cotroller
+                        this.init(dir);
 
-                    // Hook event for when folder path changes
-                    this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
-                        if (folder != _this.$scope.dir_path) {
-                            console.warn(' - Explorer Navigate: ', folder);
-                            _this.$scope.dir_path = folder;
-                            _this.navigate(folder);
-                        }
-                    });
-                } catch (ex) {
-                    console.error(ex);
-                }
-            }
-            ExplorerController.prototype.init = function (dir) {
-                // Resolve the initial folder path
-                this.navigate(dir);
-            };
-
-            ExplorerController.prototype.navigate = function (dir_path) {
-                var _this = this;
-                var deferred = this.$q.defer();
-                try  {
-                    // Set busy flag
-                    this.$scope.isBusy = true;
-                    this.$scope.error = null;
-
-                    // Resolve the full path
-                    var path = require('path');
-                    dir_path = path.resolve(dir_path);
-
-                    // Read the folder contents (async)
-                    var fs = require('fs');
-                    fs.readdir(dir_path, function (error, files) {
-                        if (error) {
-                            deferred.reject(error);
-                            return;
-                        }
-
-                        // Split and sort results
-                        var folders = [];
-                        var lsFiles = [];
-                        for (var i = 0; i < files.sort().length; ++i) {
-                            var targ = path.join(dir_path, files[i]);
-                            var stat = _this.mimeType(targ);
-                            if (stat.type == 'folder') {
-                                folders.push(stat);
-                            } else {
-                                lsFiles.push(stat);
+                        // Hook event for when folder path changes
+                        this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                            if (folder != _this.$scope.dir_path) {
+                                console.warn(' - Explorer Navigate: ', folder);
+                                _this.$scope.dir_path = folder;
+                                _this.navigate(folder);
                             }
-                        }
-
-                        // Generate the contents
-                        var result = {
-                            path: dir_path,
-                            folders: folders,
-                            files: lsFiles
-                        };
-
-                        // Mark promise as resolved
-                        deferred.resolve(result);
-                    });
-                } catch (ex) {
-                    // Mark promise and rejected
-                    deferred.reject(ex);
+                        });
+                    } catch (ex) {
+                        console.error(ex);
+                    }
                 }
-
-                // Handle the result and error conditions
-                deferred.promise.then(function (result) {
-                    // Clear busy flag
-                    _this.$scope.isBusy = false;
-                    _this.$scope.dir_path = result.path;
-                    _this.$scope.files = result.files;
-                    _this.$scope.folders = result.folders;
-
-                    // Breadcast event that path has changed
-                    _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
-                }, function (error) {
-                    // Clear busy flag
-                    _this.$scope.isBusy = false;
-                    _this.$scope.error = error;
-                });
-
-                return deferred.promise;
-            };
-
-            ExplorerController.prototype.select = function (filePath) {
-                this.$scope.selected = filePath;
-            };
-
-            ExplorerController.prototype.open = function (filePath) {
-                var req = 'nw.gui';
-                var gui = require(req);
-                if (gui)
-                    gui.Shell.openItem(filePath);
-            };
-
-            ExplorerController.prototype.mimeType = function (filepath) {
-                var map = {
-                    'compressed': ['zip', 'rar', 'gz', '7z'],
-                    'text': ['txt', 'md', ''],
-                    'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
-                    'pdf': ['pdf'],
-                    'css': ['css'],
-                    'excel': ['csv', 'xls', 'xlsx'],
-                    'html': ['html'],
-                    'word': ['doc', 'docx'],
-                    'powerpoint': ['ppt', 'pptx'],
-                    'movie': ['mkv', 'avi', 'rmvb']
-                };
-                var cached = {};
-
-                var fs = require('fs');
-                var path = require('path');
-                var result = {
-                    name: path.basename(filepath),
-                    path: filepath,
-                    type: null
+                ExplorerController.prototype.init = function (dir) {
+                    // Resolve the initial folder path
+                    this.navigate(dir);
                 };
 
-                try  {
-                    var stat = fs.statSync(filepath);
-                    if (stat.isDirectory()) {
-                        result.type = 'folder';
-                    } else {
-                        var ext = path.extname(filepath).substr(1);
-                        result.type = cached[ext];
-                        if (!result.type) {
-                            for (var key in map) {
-                                var arr = map[key];
-                                if (arr.length > 0 && arr.indexOf(ext) >= 0) {
-                                    cached[ext] = result.type = key;
-                                    break;
+                ExplorerController.prototype.navigate = function (dir_path) {
+                    var _this = this;
+                    var deferred = this.$q.defer();
+                    try  {
+                        // Set busy flag
+                        this.$scope.isBusy = true;
+                        this.$scope.error = null;
+
+                        // Resolve the full path
+                        var path = require('path');
+                        dir_path = path.resolve(dir_path);
+
+                        // Read the folder contents (async)
+                        var fs = require('fs');
+                        fs.readdir(dir_path, function (error, files) {
+                            if (error) {
+                                deferred.reject(error);
+                                return;
+                            }
+
+                            // Split and sort results
+                            var folders = [];
+                            var lsFiles = [];
+                            for (var i = 0; i < files.sort().length; ++i) {
+                                var targ = path.join(dir_path, files[i]);
+                                var stat = _this.mimeType(targ);
+                                if (stat.type == 'folder') {
+                                    folders.push(stat);
+                                } else {
+                                    lsFiles.push(stat);
                                 }
                             }
 
-                            if (!result.type)
-                                result.type = 'blank';
-                        }
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
+                            // Generate the contents
+                            var result = {
+                                path: dir_path,
+                                folders: folders,
+                                files: lsFiles
+                            };
 
-                return result;
-            };
-            return ExplorerController;
-        })();
-        explorer.ExplorerController = ExplorerController;
-    })(proto.explorer || (proto.explorer = {}));
-    var explorer = proto.explorer;
+                            // Mark promise as resolved
+                            deferred.resolve(result);
+                        });
+                    } catch (ex) {
+                        // Mark promise and rejected
+                        deferred.reject(ex);
+                    }
+
+                    // Handle the result and error conditions
+                    deferred.promise.then(function (result) {
+                        // Clear busy flag
+                        _this.$scope.isBusy = false;
+                        _this.$scope.dir_path = result.path;
+                        _this.$scope.files = result.files;
+                        _this.$scope.folders = result.folders;
+
+                        // Breadcast event that path has changed
+                        _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
+                    }, function (error) {
+                        // Clear busy flag
+                        _this.$scope.isBusy = false;
+                        _this.$scope.error = error;
+                    });
+
+                    return deferred.promise;
+                };
+
+                ExplorerController.prototype.select = function (filePath) {
+                    this.$scope.selected = filePath;
+                };
+
+                ExplorerController.prototype.open = function (filePath) {
+                    var req = 'nw.gui';
+                    var gui = require(req);
+                    if (gui)
+                        gui.Shell.openItem(filePath);
+                };
+
+                ExplorerController.prototype.mimeType = function (filepath) {
+                    var map = {
+                        'compressed': ['zip', 'rar', 'gz', '7z'],
+                        'text': ['txt', 'md', ''],
+                        'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
+                        'pdf': ['pdf'],
+                        'css': ['css'],
+                        'excel': ['csv', 'xls', 'xlsx'],
+                        'html': ['html'],
+                        'word': ['doc', 'docx'],
+                        'powerpoint': ['ppt', 'pptx'],
+                        'movie': ['mkv', 'avi', 'rmvb']
+                    };
+                    var cached = {};
+
+                    var fs = require('fs');
+                    var path = require('path');
+                    var result = {
+                        name: path.basename(filepath),
+                        path: filepath,
+                        type: null
+                    };
+
+                    try  {
+                        var stat = fs.statSync(filepath);
+                        if (stat.isDirectory()) {
+                            result.type = 'folder';
+                        } else {
+                            var ext = path.extname(filepath).substr(1);
+                            result.type = cached[ext];
+                            if (!result.type) {
+                                for (var key in map) {
+                                    var arr = map[key];
+                                    if (arr.length > 0 && arr.indexOf(ext) >= 0) {
+                                        cached[ext] = result.type = key;
+                                        break;
+                                    }
+                                }
+
+                                if (!result.type)
+                                    result.type = 'blank';
+                            }
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+
+                    return result;
+                };
+                return ExplorerController;
+            })();
+            explorer.ExplorerController = ExplorerController;
+        })(ng.explorer || (ng.explorer = {}));
+        var explorer = ng.explorer;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (explorer) {
+            var ExplorerViewController = (function () {
+                function ExplorerViewController($rootScope, $scope, $q) {
+                    this.$rootScope = $rootScope;
+                    this.$scope = $scope;
+                    this.$q = $q;
+                }
+                return ExplorerViewController;
+            })();
+            explorer.ExplorerViewController = ExplorerViewController;
+        })(ng.explorer || (ng.explorer = {}));
+        var explorer = ng.explorer;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (explorer) {
+            var SiteNode = (function () {
+                function SiteNode(nodeName) {
+                    this.children = [];
+                    this.classes = [];
+                    this.label = nodeName;
+                }
+                return SiteNode;
+            })();
+            explorer.SiteNode = SiteNode;
+
+            var SiteNavigationRoot = (function (_super) {
+                __extends(SiteNavigationRoot, _super);
+                function SiteNavigationRoot($q, nodeName) {
+                    _super.call(this, nodeName);
+                    this.$q = $q;
+                    this.init();
+                }
+                SiteNavigationRoot.prototype.init = function () {
+                    this.children = [];
+                };
+
+                SiteNavigationRoot.prototype.onSelect = function () {
+                };
+                return SiteNavigationRoot;
+            })(SiteNode);
+            explorer.SiteNavigationRoot = SiteNavigationRoot;
+
+            var NavigationService = (function () {
+                function NavigationService($state, $q) {
+                    this.$state = $state;
+                    this.$q = $q;
+                    this.TreeData = [];
+                    this.init();
+                }
+                NavigationService.prototype.init = function () {
+                    this.TreeData = [
+                        new proto.ng.explorer.SiteNavigationRoot(this.$q, 'Home Page')
+                    ];
+                };
+
+                NavigationService.prototype.getTreeData = function () {
+                    return this.TreeData;
+                };
+                return NavigationService;
+            })();
+            explorer.NavigationService = NavigationService;
+        })(ng.explorer || (ng.explorer = {}));
+        var explorer = ng.explorer;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
 })(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.explorer', [
     'ui.router'
 ]).config([
     '$stateProvider', function ($stateProvider) {
-        $stateProvider.state('proto.browser', {
+        $stateProvider.state('proto.explore', {
+            url: '^/explore',
+            views: {
+                'left@': {
+                    templateUrl: 'views/explore/left.tpl.html',
+                    controller: [
+                        '$scope', 'navigationService', function ($scope, navigationService) {
+                            $scope.navigation = navigationService;
+                        }]
+                },
+                'main@': {
+                    templateUrl: 'views/explore/main.tpl.html',
+                    controller: 'ExplorerViewController',
+                    controllerAs: 'exploreCtrl'
+                }
+            }
+        }).state('proto.browser', {
             url: '^/browser',
             views: {
                 'left@': { templateUrl: 'views/explore/left.tpl.html' },
@@ -1392,7 +1490,7 @@ angular.module('prototyped.explorer', [
                 }
             }
         });
-    }]).directive('protoAddressBar', [
+    }]).service('navigationService', ['$q', proto.ng.explorer.NavigationService]).directive('protoAddressBar', [
     '$q', function ($q) {
         return {
             restrict: 'EA',
@@ -1413,7 +1511,12 @@ angular.module('prototyped.explorer', [
     '$rootScope',
     '$scope',
     '$q',
-    proto.explorer.ExplorerController
+    proto.ng.explorer.ExplorerController
+]).controller('ExplorerViewController', [
+    '$rootScope',
+    '$scope',
+    '$q',
+    proto.ng.explorer.ExplorerViewController
 ]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
@@ -1502,18 +1605,6 @@ angular.module('prototyped.ng', [
         }).state('proto', {
             url: '/proto',
             abstract: true
-        }).state('proto.explore', {
-            url: '^/explore',
-            views: {
-                'left@': {
-                    templateUrl: 'views/explore/left.tpl.html'
-                },
-                'main@': {
-                    templateUrl: 'views/explore/main.tpl.html',
-                    controller: 'CardViewCtrl',
-                    controllerAs: 'sliderCtrl'
-                }
-            }
         });
     }]).constant('appNode', {
     html5: true,
@@ -1994,6 +2085,486 @@ angular.module('prototyped.ng', [
                     post: function (scope, element) {
                     }
                 };
+            }
+        };
+    }]).directive('abnTree', [
+    '$timeout', function ($timeout) {
+        return {
+            restrict: 'E',
+            template: "<ul class=\"nav nav-list nav-pills nav-stacked abn-tree\">\n  <li ng-repeat=\"row in tree_rows | filter:{visible:true} track by row.branch.uid\" ng-animate=\"'abn-tree-animate'\" ng-class=\"'level-' + {{ row.level }} + (row.branch.selected ? ' active':'') + ' ' +row.classes.join(' ')\" class=\"abn-tree-row\"><a ng-click=\"user_clicks_branch(row.branch)\"><i ng-class=\"row.tree_icon\" ng-click=\"row.branch.expanded = !row.branch.expanded\" class=\"indented tree-icon\"> </i><span class=\"indented tree-label\">{{ row.label }} </span></a></li>\n</ul>",
+            replace: true,
+            scope: {
+                treeData: '=',
+                onSelect: '&',
+                initialSelection: '@',
+                treeControl: '='
+            },
+            link: function (scope, element, attrs) {
+                var error, expand_all_parents, expand_level, for_all_ancestors, for_each_branch, get_parent, n, on_treeData_change, select_branch, selected_branch, tree;
+                error = function (s) {
+                    console.log('ERROR:' + s);
+                    debugger;
+                    return void 0;
+                };
+                if (attrs.iconExpand == null) {
+                    attrs.iconExpand = 'icon-plus  glyphicon glyphicon-plus  fa fa-plus';
+                }
+                if (attrs.iconCollapse == null) {
+                    attrs.iconCollapse = 'icon-minus glyphicon glyphicon-minus fa fa-minus';
+                }
+                if (attrs.iconLeaf == null) {
+                    attrs.iconLeaf = 'icon-file  glyphicon glyphicon-file  fa fa-file';
+                }
+                if (attrs.expandLevel == null) {
+                    attrs.expandLevel = '3';
+                }
+                expand_level = parseInt(attrs.expandLevel, 10);
+                if (!scope.treeData) {
+                    alert('no treeData defined for the tree!');
+                    return;
+                }
+                if (scope.treeData.length == null) {
+                    if (scope.treeData.label != null) {
+                        scope.treeData = [scope.treeData];
+                    } else {
+                        alert('treeData should be an array of root branches');
+                        return;
+                    }
+                }
+                for_each_branch = function (f) {
+                    var do_f, root_branch, _i, _len, _ref, _results;
+                    do_f = function (branch, level) {
+                        var child, _i, _len, _ref, _results;
+                        f(branch, level);
+                        if (branch.children != null) {
+                            _ref = branch.children;
+                            _results = [];
+                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                child = _ref[_i];
+                                _results.push(do_f(child, level + 1));
+                            }
+                            return _results;
+                        }
+                    };
+                    _ref = scope.treeData;
+                    _results = [];
+                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                        root_branch = _ref[_i];
+                        _results.push(do_f(root_branch, 1));
+                    }
+                    return _results;
+                };
+                selected_branch = null;
+                select_branch = function (branch) {
+                    if (!branch) {
+                        if (selected_branch != null) {
+                            selected_branch.selected = false;
+                        }
+                        selected_branch = null;
+                        return;
+                    }
+                    if (branch !== selected_branch) {
+                        if (selected_branch != null) {
+                            selected_branch.selected = false;
+                        }
+                        branch.selected = true;
+                        selected_branch = branch;
+                        expand_all_parents(branch);
+                        if (branch.onSelect != null) {
+                            return $timeout(function () {
+                                return branch.onSelect(branch);
+                            });
+                        } else {
+                            if (scope.onSelect != null) {
+                                return $timeout(function () {
+                                    return scope.onSelect({
+                                        branch: branch
+                                    });
+                                });
+                            }
+                        }
+                    }
+                };
+                scope.user_clicks_branch = function (branch) {
+                    if (branch !== selected_branch) {
+                        return select_branch(branch);
+                    }
+                };
+                get_parent = function (child) {
+                    var parent;
+                    parent = void 0;
+                    if (child.parent_uid) {
+                        for_each_branch(function (b) {
+                            if (b.uid === child.parent_uid) {
+                                return parent = b;
+                            }
+                        });
+                    }
+                    return parent;
+                };
+                for_all_ancestors = function (child, fn) {
+                    var parent;
+                    parent = get_parent(child);
+                    if (parent != null) {
+                        fn(parent);
+                        return for_all_ancestors(parent, fn);
+                    }
+                };
+                expand_all_parents = function (child) {
+                    return for_all_ancestors(child, function (b) {
+                        return b.expanded = true;
+                    });
+                };
+                scope.tree_rows = [];
+                on_treeData_change = function () {
+                    var add_branch_to_list, root_branch, _i, _len, _ref, _results;
+                    for_each_branch(function (b, level) {
+                        if (!b.uid) {
+                            return b.uid = "" + Math.random();
+                        }
+                    });
+                    for_each_branch(function (b) {
+                        var child, _i, _len, _ref, _results;
+                        if (angular.isArray(b.children)) {
+                            _ref = b.children;
+                            _results = [];
+                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                child = _ref[_i];
+                                _results.push(child.parent_uid = b.uid);
+                            }
+                            return _results;
+                        }
+                    });
+                    scope.tree_rows = [];
+                    for_each_branch(function (branch) {
+                        var child, f;
+                        if (branch.children) {
+                            if (branch.children.length > 0) {
+                                f = function (e) {
+                                    if (typeof e === 'string') {
+                                        return {
+                                            label: e,
+                                            children: []
+                                        };
+                                    } else {
+                                        return e;
+                                    }
+                                };
+                                return branch.children = (function () {
+                                    var _i, _len, _ref, _results;
+                                    _ref = branch.children;
+                                    _results = [];
+                                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                        child = _ref[_i];
+                                        _results.push(f(child));
+                                    }
+                                    return _results;
+                                })();
+                            }
+                        } else {
+                            return branch.children = [];
+                        }
+                    });
+                    add_branch_to_list = function (level, branch, visible) {
+                        var child, child_visible, tree_icon, _i, _len, _ref, _results;
+                        if (branch.expanded == null) {
+                            branch.expanded = false;
+                        }
+                        if (branch.classes == null) {
+                            branch.classes = [];
+                        }
+                        if (!branch.noLeaf && (!branch.children || branch.children.length === 0)) {
+                            tree_icon = attrs.iconLeaf;
+                            if (branch.classes.indexOf("leaf") < 0) {
+                                branch.classes.push("leaf");
+                            }
+                        } else {
+                            if (branch.expanded) {
+                                tree_icon = attrs.iconCollapse;
+                            } else {
+                                tree_icon = attrs.iconExpand;
+                            }
+                        }
+                        scope.tree_rows.push({
+                            level: level,
+                            branch: branch,
+                            label: branch.label,
+                            classes: branch.classes,
+                            tree_icon: tree_icon,
+                            visible: visible
+                        });
+                        if (branch.children != null) {
+                            _ref = branch.children;
+                            _results = [];
+                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                child = _ref[_i];
+                                child_visible = visible && branch.expanded;
+                                _results.push(add_branch_to_list(level + 1, child, child_visible));
+                            }
+                            return _results;
+                        }
+                    };
+                    _ref = scope.treeData;
+                    _results = [];
+                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                        root_branch = _ref[_i];
+                        _results.push(add_branch_to_list(1, root_branch, true));
+                    }
+                    return _results;
+                };
+                scope.$watch('treeData', on_treeData_change, true);
+                if (attrs.initialSelection != null) {
+                    for_each_branch(function (b) {
+                        if (b.label === attrs.initialSelection) {
+                            return $timeout(function () {
+                                return select_branch(b);
+                            });
+                        }
+                    });
+                }
+                n = scope.treeData.length;
+                for_each_branch(function (b, level) {
+                    b.level = level;
+                    return b.expanded = b.level < expand_level;
+                });
+                if (scope.treeControl != null) {
+                    if (angular.isObject(scope.treeControl)) {
+                        tree = scope.treeControl;
+                        tree.expand_all = function () {
+                            return for_each_branch(function (b, level) {
+                                return b.expanded = true;
+                            });
+                        };
+                        tree.collapse_all = function () {
+                            return for_each_branch(function (b, level) {
+                                return b.expanded = false;
+                            });
+                        };
+                        tree.get_first_branch = function () {
+                            n = scope.treeData.length;
+                            if (n > 0) {
+                                return scope.treeData[0];
+                            }
+                        };
+                        tree.select_first_branch = function () {
+                            var b;
+                            b = tree.get_first_branch();
+                            return tree.select_branch(b);
+                        };
+                        tree.get_selected_branch = function () {
+                            return selected_branch;
+                        };
+                        tree.get_parent_branch = function (b) {
+                            return get_parent(b);
+                        };
+                        tree.select_branch = function (b) {
+                            select_branch(b);
+                            return b;
+                        };
+                        tree.get_children = function (b) {
+                            return b.children;
+                        };
+                        tree.select_parent_branch = function (b) {
+                            var p;
+                            if (b == null) {
+                                b = tree.get_selected_branch();
+                            }
+                            if (b != null) {
+                                p = tree.get_parent_branch(b);
+                                if (p != null) {
+                                    tree.select_branch(p);
+                                    return p;
+                                }
+                            }
+                        };
+                        tree.add_branch = function (parent, new_branch) {
+                            if (parent != null) {
+                                parent.children.push(new_branch);
+                                parent.expanded = true;
+                            } else {
+                                scope.treeData.push(new_branch);
+                            }
+                            return new_branch;
+                        };
+                        tree.add_root_branch = function (new_branch) {
+                            tree.add_branch(null, new_branch);
+                            return new_branch;
+                        };
+                        tree.expand_branch = function (b) {
+                            if (b == null) {
+                                b = tree.get_selected_branch();
+                            }
+                            if (b != null) {
+                                b.expanded = true;
+                                return b;
+                            }
+                        };
+                        tree.collapse_branch = function (b) {
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                b.expanded = false;
+                                return b;
+                            }
+                        };
+                        tree.get_siblings = function (b) {
+                            var p, siblings;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                p = tree.get_parent_branch(b);
+                                if (p) {
+                                    siblings = p.children;
+                                } else {
+                                    siblings = scope.treeData;
+                                }
+                                return siblings;
+                            }
+                        };
+                        tree.get_next_sibling = function (b) {
+                            var i, siblings;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                siblings = tree.get_siblings(b);
+                                n = siblings.length;
+                                i = siblings.indexOf(b);
+                                if (i < n) {
+                                    return siblings[i + 1];
+                                }
+                            }
+                        };
+                        tree.get_prev_sibling = function (b) {
+                            var i, siblings;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            siblings = tree.get_siblings(b);
+                            n = siblings.length;
+                            i = siblings.indexOf(b);
+                            if (i > 0) {
+                                return siblings[i - 1];
+                            }
+                        };
+                        tree.select_next_sibling = function (b) {
+                            var next;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                next = tree.get_next_sibling(b);
+                                if (next != null) {
+                                    return tree.select_branch(next);
+                                }
+                            }
+                        };
+                        tree.select_prev_sibling = function (b) {
+                            var prev;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                prev = tree.get_prev_sibling(b);
+                                if (prev != null) {
+                                    return tree.select_branch(prev);
+                                }
+                            }
+                        };
+                        tree.get_first_child = function (b) {
+                            var _ref;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                if (((_ref = b.children) != null ? _ref.length : void 0) > 0) {
+                                    return b.children[0];
+                                }
+                            }
+                        };
+                        tree.get_closest_ancestor_next_sibling = function (b) {
+                            var next, parent;
+                            next = tree.get_next_sibling(b);
+                            if (next != null) {
+                                return next;
+                            } else {
+                                parent = tree.get_parent_branch(b);
+                                return tree.get_closest_ancestor_next_sibling(parent);
+                            }
+                        };
+                        tree.get_next_branch = function (b) {
+                            var next;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                next = tree.get_first_child(b);
+                                if (next != null) {
+                                    return next;
+                                } else {
+                                    next = tree.get_closest_ancestor_next_sibling(b);
+                                    return next;
+                                }
+                            }
+                        };
+                        tree.select_next_branch = function (b) {
+                            var next;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                next = tree.get_next_branch(b);
+                                if (next != null) {
+                                    tree.select_branch(next);
+                                    return next;
+                                }
+                            }
+                        };
+                        tree.last_descendant = function (b) {
+                            var last_child;
+                            if (b == null) {
+                                debugger;
+                            }
+                            n = b.children.length;
+                            if (n === 0) {
+                                return b;
+                            } else {
+                                last_child = b.children[n - 1];
+                                return tree.last_descendant(last_child);
+                            }
+                        };
+                        tree.get_prev_branch = function (b) {
+                            var parent, prev_sibling;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                prev_sibling = tree.get_prev_sibling(b);
+                                if (prev_sibling != null) {
+                                    return tree.last_descendant(prev_sibling);
+                                } else {
+                                    parent = tree.get_parent_branch(b);
+                                    return parent;
+                                }
+                            }
+                        };
+                        return tree.select_prev_branch = function (b) {
+                            var prev;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                prev = tree.get_prev_branch(b);
+                                if (prev != null) {
+                                    tree.select_branch(prev);
+                                    return prev;
+                                }
+                            }
+                        };
+                    }
+                }
             }
         };
     }]).run([

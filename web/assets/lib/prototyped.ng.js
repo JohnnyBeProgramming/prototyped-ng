@@ -1211,177 +1211,262 @@ var proto;
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
-    (function (explorer) {
-        var ExplorerController = (function () {
-            function ExplorerController($rootScope, $scope, $q) {
-                var _this = this;
-                this.$rootScope = $rootScope;
-                this.$scope = $scope;
-                this.$q = $q;
-                var dir = './';
-                try  {
-                    // Hook up to the current scope
-                    this.$scope.isBusy = true;
+    (function (ng) {
+        (function (explorer) {
+            var ExplorerController = (function () {
+                function ExplorerController($rootScope, $scope, $q) {
+                    var _this = this;
+                    this.$rootScope = $rootScope;
+                    this.$scope = $scope;
+                    this.$q = $q;
+                    var dir = './';
+                    try  {
+                        // Hook up to the current scope
+                        this.$scope.isBusy = true;
 
-                    // Initialize the cotroller
-                    this.init(dir);
+                        // Initialize the cotroller
+                        this.init(dir);
 
-                    // Hook event for when folder path changes
-                    this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
-                        if (folder != _this.$scope.dir_path) {
-                            console.warn(' - Explorer Navigate: ', folder);
-                            _this.$scope.dir_path = folder;
-                            _this.navigate(folder);
-                        }
-                    });
-                } catch (ex) {
-                    console.error(ex);
-                }
-            }
-            ExplorerController.prototype.init = function (dir) {
-                // Resolve the initial folder path
-                this.navigate(dir);
-            };
-
-            ExplorerController.prototype.navigate = function (dir_path) {
-                var _this = this;
-                var deferred = this.$q.defer();
-                try  {
-                    // Set busy flag
-                    this.$scope.isBusy = true;
-                    this.$scope.error = null;
-
-                    // Resolve the full path
-                    var path = require('path');
-                    dir_path = path.resolve(dir_path);
-
-                    // Read the folder contents (async)
-                    var fs = require('fs');
-                    fs.readdir(dir_path, function (error, files) {
-                        if (error) {
-                            deferred.reject(error);
-                            return;
-                        }
-
-                        // Split and sort results
-                        var folders = [];
-                        var lsFiles = [];
-                        for (var i = 0; i < files.sort().length; ++i) {
-                            var targ = path.join(dir_path, files[i]);
-                            var stat = _this.mimeType(targ);
-                            if (stat.type == 'folder') {
-                                folders.push(stat);
-                            } else {
-                                lsFiles.push(stat);
+                        // Hook event for when folder path changes
+                        this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                            if (folder != _this.$scope.dir_path) {
+                                console.warn(' - Explorer Navigate: ', folder);
+                                _this.$scope.dir_path = folder;
+                                _this.navigate(folder);
                             }
-                        }
-
-                        // Generate the contents
-                        var result = {
-                            path: dir_path,
-                            folders: folders,
-                            files: lsFiles
-                        };
-
-                        // Mark promise as resolved
-                        deferred.resolve(result);
-                    });
-                } catch (ex) {
-                    // Mark promise and rejected
-                    deferred.reject(ex);
+                        });
+                    } catch (ex) {
+                        console.error(ex);
+                    }
                 }
-
-                // Handle the result and error conditions
-                deferred.promise.then(function (result) {
-                    // Clear busy flag
-                    _this.$scope.isBusy = false;
-                    _this.$scope.dir_path = result.path;
-                    _this.$scope.files = result.files;
-                    _this.$scope.folders = result.folders;
-
-                    // Breadcast event that path has changed
-                    _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
-                }, function (error) {
-                    // Clear busy flag
-                    _this.$scope.isBusy = false;
-                    _this.$scope.error = error;
-                });
-
-                return deferred.promise;
-            };
-
-            ExplorerController.prototype.select = function (filePath) {
-                this.$scope.selected = filePath;
-            };
-
-            ExplorerController.prototype.open = function (filePath) {
-                var req = 'nw.gui';
-                var gui = require(req);
-                if (gui)
-                    gui.Shell.openItem(filePath);
-            };
-
-            ExplorerController.prototype.mimeType = function (filepath) {
-                var map = {
-                    'compressed': ['zip', 'rar', 'gz', '7z'],
-                    'text': ['txt', 'md', ''],
-                    'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
-                    'pdf': ['pdf'],
-                    'css': ['css'],
-                    'excel': ['csv', 'xls', 'xlsx'],
-                    'html': ['html'],
-                    'word': ['doc', 'docx'],
-                    'powerpoint': ['ppt', 'pptx'],
-                    'movie': ['mkv', 'avi', 'rmvb']
-                };
-                var cached = {};
-
-                var fs = require('fs');
-                var path = require('path');
-                var result = {
-                    name: path.basename(filepath),
-                    path: filepath,
-                    type: null
+                ExplorerController.prototype.init = function (dir) {
+                    // Resolve the initial folder path
+                    this.navigate(dir);
                 };
 
-                try  {
-                    var stat = fs.statSync(filepath);
-                    if (stat.isDirectory()) {
-                        result.type = 'folder';
-                    } else {
-                        var ext = path.extname(filepath).substr(1);
-                        result.type = cached[ext];
-                        if (!result.type) {
-                            for (var key in map) {
-                                var arr = map[key];
-                                if (arr.length > 0 && arr.indexOf(ext) >= 0) {
-                                    cached[ext] = result.type = key;
-                                    break;
+                ExplorerController.prototype.navigate = function (dir_path) {
+                    var _this = this;
+                    var deferred = this.$q.defer();
+                    try  {
+                        // Set busy flag
+                        this.$scope.isBusy = true;
+                        this.$scope.error = null;
+
+                        // Resolve the full path
+                        var path = require('path');
+                        dir_path = path.resolve(dir_path);
+
+                        // Read the folder contents (async)
+                        var fs = require('fs');
+                        fs.readdir(dir_path, function (error, files) {
+                            if (error) {
+                                deferred.reject(error);
+                                return;
+                            }
+
+                            // Split and sort results
+                            var folders = [];
+                            var lsFiles = [];
+                            for (var i = 0; i < files.sort().length; ++i) {
+                                var targ = path.join(dir_path, files[i]);
+                                var stat = _this.mimeType(targ);
+                                if (stat.type == 'folder') {
+                                    folders.push(stat);
+                                } else {
+                                    lsFiles.push(stat);
                                 }
                             }
 
-                            if (!result.type)
-                                result.type = 'blank';
-                        }
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
+                            // Generate the contents
+                            var result = {
+                                path: dir_path,
+                                folders: folders,
+                                files: lsFiles
+                            };
 
-                return result;
-            };
-            return ExplorerController;
-        })();
-        explorer.ExplorerController = ExplorerController;
-    })(proto.explorer || (proto.explorer = {}));
-    var explorer = proto.explorer;
+                            // Mark promise as resolved
+                            deferred.resolve(result);
+                        });
+                    } catch (ex) {
+                        // Mark promise and rejected
+                        deferred.reject(ex);
+                    }
+
+                    // Handle the result and error conditions
+                    deferred.promise.then(function (result) {
+                        // Clear busy flag
+                        _this.$scope.isBusy = false;
+                        _this.$scope.dir_path = result.path;
+                        _this.$scope.files = result.files;
+                        _this.$scope.folders = result.folders;
+
+                        // Breadcast event that path has changed
+                        _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
+                    }, function (error) {
+                        // Clear busy flag
+                        _this.$scope.isBusy = false;
+                        _this.$scope.error = error;
+                    });
+
+                    return deferred.promise;
+                };
+
+                ExplorerController.prototype.select = function (filePath) {
+                    this.$scope.selected = filePath;
+                };
+
+                ExplorerController.prototype.open = function (filePath) {
+                    var req = 'nw.gui';
+                    var gui = require(req);
+                    if (gui)
+                        gui.Shell.openItem(filePath);
+                };
+
+                ExplorerController.prototype.mimeType = function (filepath) {
+                    var map = {
+                        'compressed': ['zip', 'rar', 'gz', '7z'],
+                        'text': ['txt', 'md', ''],
+                        'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
+                        'pdf': ['pdf'],
+                        'css': ['css'],
+                        'excel': ['csv', 'xls', 'xlsx'],
+                        'html': ['html'],
+                        'word': ['doc', 'docx'],
+                        'powerpoint': ['ppt', 'pptx'],
+                        'movie': ['mkv', 'avi', 'rmvb']
+                    };
+                    var cached = {};
+
+                    var fs = require('fs');
+                    var path = require('path');
+                    var result = {
+                        name: path.basename(filepath),
+                        path: filepath,
+                        type: null
+                    };
+
+                    try  {
+                        var stat = fs.statSync(filepath);
+                        if (stat.isDirectory()) {
+                            result.type = 'folder';
+                        } else {
+                            var ext = path.extname(filepath).substr(1);
+                            result.type = cached[ext];
+                            if (!result.type) {
+                                for (var key in map) {
+                                    var arr = map[key];
+                                    if (arr.length > 0 && arr.indexOf(ext) >= 0) {
+                                        cached[ext] = result.type = key;
+                                        break;
+                                    }
+                                }
+
+                                if (!result.type)
+                                    result.type = 'blank';
+                            }
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+
+                    return result;
+                };
+                return ExplorerController;
+            })();
+            explorer.ExplorerController = ExplorerController;
+        })(ng.explorer || (ng.explorer = {}));
+        var explorer = ng.explorer;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (explorer) {
+            var NavigationService = (function () {
+                function NavigationService($q) {
+                    this.$q = $q;
+                    this.TreeData = [];
+                    this.init();
+                }
+                NavigationService.prototype.init = function () {
+                    this.TreeData = [{
+                            label: 'Languages',
+                            children: [
+                                'Jade',
+                                'Less',
+                                'Coffeescript',
+                                {
+                                    label: 'Languages',
+                                    children: [
+                                        'Jade',
+                                        'Less',
+                                        'Coffeescript',
+                                        {
+                                            label: 'Languages',
+                                            children: [
+                                                'Jade',
+                                                'Less',
+                                                'Coffeescript',
+                                                {
+                                                    label: 'Languages',
+                                                    children: [
+                                                        'Jade',
+                                                        'Less',
+                                                        'Coffeescript'
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }];
+                };
+
+                NavigationService.prototype.getTreeData = function () {
+                    return this.TreeData;
+                };
+                return NavigationService;
+            })();
+            explorer.NavigationService = NavigationService;
+
+            var ExplorerViewController = (function () {
+                function ExplorerViewController($rootScope, $scope, $q) {
+                    this.$rootScope = $rootScope;
+                    this.$scope = $scope;
+                    this.$q = $q;
+                }
+                return ExplorerViewController;
+            })();
+            explorer.ExplorerViewController = ExplorerViewController;
+        })(ng.explorer || (ng.explorer = {}));
+        var explorer = ng.explorer;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
 })(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.explorer', [
     'ui.router'
 ]).config([
     '$stateProvider', function ($stateProvider) {
-        $stateProvider.state('proto.browser', {
+        $stateProvider.state('proto.explore', {
+            url: '^/explore',
+            views: {
+                'left@': {
+                    templateUrl: 'views/explore/left.tpl.html',
+                    controller: [
+                        '$scope', 'navigationService', function ($scope, navigationService) {
+                            $scope.navigation = navigationService;
+                        }]
+                },
+                'main@': {
+                    templateUrl: 'views/explore/main.tpl.html',
+                    controller: 'ExplorerViewController',
+                    controllerAs: 'exploreCtrl'
+                }
+            }
+        }).state('proto.browser', {
             url: '^/browser',
             views: {
                 'left@': { templateUrl: 'views/explore/left.tpl.html' },
@@ -1392,7 +1477,7 @@ angular.module('prototyped.explorer', [
                 }
             }
         });
-    }]).directive('protoAddressBar', [
+    }]).service('navigationService', ['$q', proto.ng.explorer.NavigationService]).directive('protoAddressBar', [
     '$q', function ($q) {
         return {
             restrict: 'EA',
@@ -1413,7 +1498,12 @@ angular.module('prototyped.explorer', [
     '$rootScope',
     '$scope',
     '$q',
-    proto.explorer.ExplorerController
+    proto.ng.explorer.ExplorerController
+]).controller('ExplorerViewController', [
+    '$rootScope',
+    '$scope',
+    '$q',
+    proto.ng.explorer.ExplorerViewController
 ]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
@@ -1502,18 +1592,6 @@ angular.module('prototyped.ng', [
         }).state('proto', {
             url: '/proto',
             abstract: true
-        }).state('proto.explore', {
-            url: '^/explore',
-            views: {
-                'left@': {
-                    templateUrl: 'views/explore/left.tpl.html'
-                },
-                'main@': {
-                    templateUrl: 'views/explore/main.tpl.html',
-                    controller: 'CardViewCtrl',
-                    controllerAs: 'sliderCtrl'
-                }
-            }
         });
     }]).constant('appNode', {
     html5: true,
@@ -1996,6 +2074,488 @@ angular.module('prototyped.ng', [
                 };
             }
         };
+    }]).directive('abnTree', [
+    '$timeout', function ($timeout) {
+        return {
+            restrict: 'E',
+            template: "<ul class=\"nav nav-list nav-pills nav-stacked abn-tree\">\n  <li ng-repeat=\"row in tree_rows | filter:{visible:true} track by row.branch.uid\" ng-animate=\"'abn-tree-animate'\" ng-class=\"'level-' + {{ row.level }} + (row.branch.selected ? ' active':'') + ' ' +row.classes.join(' ')\" class=\"abn-tree-row\"><a ng-click=\"user_clicks_branch(row.branch)\"><i ng-class=\"row.tree_icon\" ng-click=\"row.branch.expanded = !row.branch.expanded\" class=\"indented tree-icon\"> </i><span class=\"indented tree-label\">{{ row.label }} </span></a></li>\n</ul>",
+            replace: true,
+            scope: {
+                treeData: '=',
+                onSelect: '&',
+                initialSelection: '@',
+                treeControl: '='
+            },
+            link: function (scope, element, attrs) {
+                var error, expand_all_parents, expand_level, for_all_ancestors, for_each_branch, get_parent, n, on_treeData_change, select_branch, selected_branch, tree;
+                error = function (s) {
+                    console.log('ERROR:' + s);
+                    debugger;
+                    return void 0;
+                };
+                if (attrs.iconExpand == null) {
+                    attrs.iconExpand = 'icon-plus  glyphicon glyphicon-plus  fa fa-plus';
+                }
+                if (attrs.iconCollapse == null) {
+                    attrs.iconCollapse = 'icon-minus glyphicon glyphicon-minus fa fa-minus';
+                }
+                if (attrs.iconLeaf == null) {
+                    attrs.iconLeaf = 'icon-file  glyphicon glyphicon-file  fa fa-file';
+                }
+                if (attrs.expandLevel == null) {
+                    attrs.expandLevel = '3';
+                }
+                expand_level = parseInt(attrs.expandLevel, 10);
+                if (!scope.treeData) {
+                    alert('no treeData defined for the tree!');
+                    return;
+                }
+                if (scope.treeData.length == null) {
+                    if (scope.treeData.label != null) {
+                        scope.treeData = [scope.treeData];
+                    } else {
+                        alert('treeData should be an array of root branches');
+                        return;
+                    }
+                }
+                for_each_branch = function (f) {
+                    var do_f, root_branch, _i, _len, _ref, _results;
+                    do_f = function (branch, level) {
+                        var child, _i, _len, _ref, _results;
+                        f(branch, level);
+                        if (branch.children != null) {
+                            _ref = branch.children;
+                            _results = [];
+                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                child = _ref[_i];
+                                _results.push(do_f(child, level + 1));
+                            }
+                            return _results;
+                        }
+                    };
+                    _ref = scope.treeData;
+                    _results = [];
+                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                        root_branch = _ref[_i];
+                        _results.push(do_f(root_branch, 1));
+                    }
+                    return _results;
+                };
+                selected_branch = null;
+                select_branch = function (branch) {
+                    if (!branch) {
+                        if (selected_branch != null) {
+                            selected_branch.selected = false;
+                        }
+                        selected_branch = null;
+                        return;
+                    }
+                    if (branch !== selected_branch) {
+                        if (selected_branch != null) {
+                            selected_branch.selected = false;
+                        }
+                        branch.selected = true;
+                        selected_branch = branch;
+                        expand_all_parents(branch);
+                        if (branch.onSelect != null) {
+                            return $timeout(function () {
+                                return branch.onSelect(branch);
+                            });
+                        } else {
+                            if (scope.onSelect != null) {
+                                return $timeout(function () {
+                                    return scope.onSelect({
+                                        branch: branch
+                                    });
+                                });
+                            }
+                        }
+                    }
+                };
+                scope.user_clicks_branch = function (branch) {
+                    if (branch !== selected_branch) {
+                        return select_branch(branch);
+                    }
+                };
+                get_parent = function (child) {
+                    var parent;
+                    parent = void 0;
+                    if (child.parent_uid) {
+                        for_each_branch(function (b) {
+                            if (b.uid === child.parent_uid) {
+                                return parent = b;
+                            }
+                        });
+                    }
+                    return parent;
+                };
+                for_all_ancestors = function (child, fn) {
+                    var parent;
+                    parent = get_parent(child);
+                    if (parent != null) {
+                        fn(parent);
+                        return for_all_ancestors(parent, fn);
+                    }
+                };
+                expand_all_parents = function (child) {
+                    return for_all_ancestors(child, function (b) {
+                        return b.expanded = true;
+                    });
+                };
+                scope.tree_rows = [];
+                on_treeData_change = function () {
+                    var add_branch_to_list, root_branch, _i, _len, _ref, _results;
+                    for_each_branch(function (b, level) {
+                        if (!b.uid) {
+                            return b.uid = "" + Math.random();
+                        }
+                    });
+                    console.log('UIDs are set.');
+                    for_each_branch(function (b) {
+                        var child, _i, _len, _ref, _results;
+                        if (angular.isArray(b.children)) {
+                            _ref = b.children;
+                            _results = [];
+                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                child = _ref[_i];
+                                _results.push(child.parent_uid = b.uid);
+                            }
+                            return _results;
+                        }
+                    });
+                    scope.tree_rows = [];
+                    for_each_branch(function (branch) {
+                        var child, f;
+                        if (branch.children) {
+                            if (branch.children.length > 0) {
+                                f = function (e) {
+                                    if (typeof e === 'string') {
+                                        return {
+                                            label: e,
+                                            children: []
+                                        };
+                                    } else {
+                                        return e;
+                                    }
+                                };
+                                return branch.children = (function () {
+                                    var _i, _len, _ref, _results;
+                                    _ref = branch.children;
+                                    _results = [];
+                                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                        child = _ref[_i];
+                                        _results.push(f(child));
+                                    }
+                                    return _results;
+                                })();
+                            }
+                        } else {
+                            return branch.children = [];
+                        }
+                    });
+                    add_branch_to_list = function (level, branch, visible) {
+                        var child, child_visible, tree_icon, _i, _len, _ref, _results;
+                        if (branch.expanded == null) {
+                            branch.expanded = false;
+                        }
+                        if (branch.classes == null) {
+                            branch.classes = [];
+                        }
+                        if (!branch.noLeaf && (!branch.children || branch.children.length === 0)) {
+                            tree_icon = attrs.iconLeaf;
+                            if (branch.classes.indexOf("leaf") < 0) {
+                                branch.classes.push("leaf");
+                            }
+                        } else {
+                            if (branch.expanded) {
+                                tree_icon = attrs.iconCollapse;
+                            } else {
+                                tree_icon = attrs.iconExpand;
+                            }
+                        }
+                        scope.tree_rows.push({
+                            level: level,
+                            branch: branch,
+                            label: branch.label,
+                            classes: branch.classes,
+                            tree_icon: tree_icon,
+                            visible: visible
+                        });
+                        if (branch.children != null) {
+                            _ref = branch.children;
+                            _results = [];
+                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                child = _ref[_i];
+                                child_visible = visible && branch.expanded;
+                                _results.push(add_branch_to_list(level + 1, child, child_visible));
+                            }
+                            return _results;
+                        }
+                    };
+                    _ref = scope.treeData;
+                    _results = [];
+                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                        root_branch = _ref[_i];
+                        _results.push(add_branch_to_list(1, root_branch, true));
+                    }
+                    return _results;
+                };
+                scope.$watch('treeData', on_treeData_change, true);
+                if (attrs.initialSelection != null) {
+                    for_each_branch(function (b) {
+                        if (b.label === attrs.initialSelection) {
+                            return $timeout(function () {
+                                return select_branch(b);
+                            });
+                        }
+                    });
+                }
+                n = scope.treeData.length;
+                console.log('num root branches = ' + n);
+                for_each_branch(function (b, level) {
+                    b.level = level;
+                    return b.expanded = b.level < expand_level;
+                });
+                if (scope.treeControl != null) {
+                    if (angular.isObject(scope.treeControl)) {
+                        tree = scope.treeControl;
+                        tree.expand_all = function () {
+                            return for_each_branch(function (b, level) {
+                                return b.expanded = true;
+                            });
+                        };
+                        tree.collapse_all = function () {
+                            return for_each_branch(function (b, level) {
+                                return b.expanded = false;
+                            });
+                        };
+                        tree.get_first_branch = function () {
+                            n = scope.treeData.length;
+                            if (n > 0) {
+                                return scope.treeData[0];
+                            }
+                        };
+                        tree.select_first_branch = function () {
+                            var b;
+                            b = tree.get_first_branch();
+                            return tree.select_branch(b);
+                        };
+                        tree.get_selected_branch = function () {
+                            return selected_branch;
+                        };
+                        tree.get_parent_branch = function (b) {
+                            return get_parent(b);
+                        };
+                        tree.select_branch = function (b) {
+                            select_branch(b);
+                            return b;
+                        };
+                        tree.get_children = function (b) {
+                            return b.children;
+                        };
+                        tree.select_parent_branch = function (b) {
+                            var p;
+                            if (b == null) {
+                                b = tree.get_selected_branch();
+                            }
+                            if (b != null) {
+                                p = tree.get_parent_branch(b);
+                                if (p != null) {
+                                    tree.select_branch(p);
+                                    return p;
+                                }
+                            }
+                        };
+                        tree.add_branch = function (parent, new_branch) {
+                            if (parent != null) {
+                                parent.children.push(new_branch);
+                                parent.expanded = true;
+                            } else {
+                                scope.treeData.push(new_branch);
+                            }
+                            return new_branch;
+                        };
+                        tree.add_root_branch = function (new_branch) {
+                            tree.add_branch(null, new_branch);
+                            return new_branch;
+                        };
+                        tree.expand_branch = function (b) {
+                            if (b == null) {
+                                b = tree.get_selected_branch();
+                            }
+                            if (b != null) {
+                                b.expanded = true;
+                                return b;
+                            }
+                        };
+                        tree.collapse_branch = function (b) {
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                b.expanded = false;
+                                return b;
+                            }
+                        };
+                        tree.get_siblings = function (b) {
+                            var p, siblings;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                p = tree.get_parent_branch(b);
+                                if (p) {
+                                    siblings = p.children;
+                                } else {
+                                    siblings = scope.treeData;
+                                }
+                                return siblings;
+                            }
+                        };
+                        tree.get_next_sibling = function (b) {
+                            var i, siblings;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                siblings = tree.get_siblings(b);
+                                n = siblings.length;
+                                i = siblings.indexOf(b);
+                                if (i < n) {
+                                    return siblings[i + 1];
+                                }
+                            }
+                        };
+                        tree.get_prev_sibling = function (b) {
+                            var i, siblings;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            siblings = tree.get_siblings(b);
+                            n = siblings.length;
+                            i = siblings.indexOf(b);
+                            if (i > 0) {
+                                return siblings[i - 1];
+                            }
+                        };
+                        tree.select_next_sibling = function (b) {
+                            var next;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                next = tree.get_next_sibling(b);
+                                if (next != null) {
+                                    return tree.select_branch(next);
+                                }
+                            }
+                        };
+                        tree.select_prev_sibling = function (b) {
+                            var prev;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                prev = tree.get_prev_sibling(b);
+                                if (prev != null) {
+                                    return tree.select_branch(prev);
+                                }
+                            }
+                        };
+                        tree.get_first_child = function (b) {
+                            var _ref;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                if (((_ref = b.children) != null ? _ref.length : void 0) > 0) {
+                                    return b.children[0];
+                                }
+                            }
+                        };
+                        tree.get_closest_ancestor_next_sibling = function (b) {
+                            var next, parent;
+                            next = tree.get_next_sibling(b);
+                            if (next != null) {
+                                return next;
+                            } else {
+                                parent = tree.get_parent_branch(b);
+                                return tree.get_closest_ancestor_next_sibling(parent);
+                            }
+                        };
+                        tree.get_next_branch = function (b) {
+                            var next;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                next = tree.get_first_child(b);
+                                if (next != null) {
+                                    return next;
+                                } else {
+                                    next = tree.get_closest_ancestor_next_sibling(b);
+                                    return next;
+                                }
+                            }
+                        };
+                        tree.select_next_branch = function (b) {
+                            var next;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                next = tree.get_next_branch(b);
+                                if (next != null) {
+                                    tree.select_branch(next);
+                                    return next;
+                                }
+                            }
+                        };
+                        tree.last_descendant = function (b) {
+                            var last_child;
+                            if (b == null) {
+                                debugger;
+                            }
+                            n = b.children.length;
+                            if (n === 0) {
+                                return b;
+                            } else {
+                                last_child = b.children[n - 1];
+                                return tree.last_descendant(last_child);
+                            }
+                        };
+                        tree.get_prev_branch = function (b) {
+                            var parent, prev_sibling;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                prev_sibling = tree.get_prev_sibling(b);
+                                if (prev_sibling != null) {
+                                    return tree.last_descendant(prev_sibling);
+                                } else {
+                                    parent = tree.get_parent_branch(b);
+                                    return parent;
+                                }
+                            }
+                        };
+                        return tree.select_prev_branch = function (b) {
+                            var prev;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                prev = tree.get_prev_branch(b);
+                                if (prev != null) {
+                                    tree.select_branch(prev);
+                                    return prev;
+                                }
+                            }
+                        };
+                    }
+                }
+            }
+        };
     }]).run([
     '$rootScope', '$state', '$filter', 'appConfig', 'appNode', 'appStatus', function ($rootScope, $state, $filter, appConfig, appNode, appStatus) {
         // Extend root scope with (global) vars
@@ -2212,7 +2772,7 @@ angular.module('prototyped.ng', [
     '            background: #E0E0E0!important;\n' +
     '        }</style><div class="slider docked"><a class="arrow prev" href="" ng-show=false ng-click=showPrev()><i class="glyphicon glyphicon-chevron-left"></i></a> <a class="arrow next" href="" ng-show=false ng-click=showNext()><i class="glyphicon glyphicon-chevron-right"></i></a><div class=boxed><a class="card fixed-width slide" ng-class="{ \'inactive-gray-25\': route.cardview.ready === false }" ng-repeat="route in pages | orderBy:\'(priority || 1)\'" ng-if="route.cardview && (!route.visible || route.visible())" ng-href={{route.url}} ng-class="{ \'active\': isActive($index) }" ng-swipe-right=showPrev() ng-swipe-left=showNext()><div class=card-image ng-class=route.cardview.style><div class=banner></div><h2>{{route.cardview.title}}</h2></div><p>{{route.cardview.desc}}</p></a></div><ul class="small-only slider-nav"><li ng-repeat="page in pages" ng-class="{\'active\':isActive($index)}"><a href="" ng-click=showPhoto($index); title={{page.title}}><i class="glyphicon glyphicon-file"></i></a></li></ul></div></div>');
   $templateCache.put('views/explore/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-info-circle"></i>&nbsp; Explorer Home</a></li><li class=list-group-item ui:sref-active=active>...</li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.browser><i class="fa fa-cogs"></i>&nbsp; Browser</a></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-info-circle"></i>&nbsp; Explorer Home</a></li><li class=list-group-item style="padding: 0 0 6px"><abn:tree tree-data=navigation.getTreeData() icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus"></abn:tree></li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.browser><i class="fa fa-cogs"></i>&nbsp; Browser</a></li></ul>');
   $templateCache.put('views/explore/main.tpl.html',
     '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail>...</div></div>');
 }]);
@@ -2230,7 +2790,7 @@ angular.module('prototyped.ng', [
 
 
   $templateCache.put('assets/css/prototyped.min.css',
-    "body .docked{flex-grow:1;flex-shrink:1;display:flex;height:100%;overflow:none}body .dock-tight{flex-grow:0;flex-shrink:0}body .dock-fill{flex-grow:1;flex-shrink:1}body .ellipsis{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .dragable{-webkit-app-region:drag;-webkit-user-select:none}body .non-dragable{-webkit-app-region:no-drag;-webkit-user-select:auto}body .inactive-gray{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .inactive-gray:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-25{opacity:.25;filter:alpha(opacity=25);filter:grayscale(100%) opacity(0.25);-webkit-filter:grayscale(100%) opacity(0.25);-moz-filter:alpha(opacity=25);-o-filter:alpha(opacity=25)}body .inactive-gray-25:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-10{opacity:.1;filter:alpha(opacity=10);filter:grayscale(100%) opacity(0.1);-webkit-filter:grayscale(100%) opacity(0.1);-moz-filter:alpha(opacity=10);-o-filter:alpha(opacity=10)}body .inactive-gray-10:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-ctrl{opacity:.65;filter:alpha(opacity=65);filter:grayscale(100%) opacity(0.65);-webkit-filter:grayscale(100%) opacity(0.65);-moz-filter:alpha(opacity=65);-o-filter:alpha(opacity=65)}body .inactive-fill-text{width:100%;height:100%;display:block;padding:64px 0;font-size:14px;text-align:center;color:rgba(128,128,128,.75)}body .glow-green{color:#00b500!important;text-shadow:0 0 2px #00b500}body .glow-red{color:#D00!important;text-shadow:0 0 2px #D00}body .glow-orange{color:#ff8d00!important;text-shadow:0 0 2px #ff8d00}body .glow-blue{color:#0094ff!important;text-shadow:0 0 2px #0094ff}body .results{min-width:480px;display:flex}body .results .icon{margin:0 8px;font-size:128px;width:128px!important;height:128px!important;position:relative;flex-grow:0;flex-shrink:0}body .results .icon .sub-icon{font-size:64px!important;width:64px!important;height:64px!important;position:absolute;right:0;top:0;margin-top:100px}body .results .info{margin:0 16px;min-height:128px;min-width:300px;display:inline-block;flex-grow:1;flex-shrink:1}body .results .info h4{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .results .info h4 a{color:#000}body .info-row{display:flex}body .info-row-links{color:silver}body .info-row-links a{color:#4a4a4a;margin-left:8px}body .info-row-links a:hover{color:#000}body .info-col-primary{flex-grow:1;flex-shrink:1}body .info-col-secondary{flex-grow:0;flex-shrink:0}body .info-overview{vertical-align:top}body .info-overview .panel-icon-lg{width:128px;height:128px;padding:0;margin:0 auto 10px;display:block;position:relative;background-repeat:no-repeat;background-size:auto 128px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inner{width:92px;height:92px;margin:6px auto;background-repeat:no-repeat;background-size:auto 86px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-overlay{right:0;bottom:0;width:48px;height:48px;position:absolute;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inset{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-inset-bl{margin:0;position:absolute;background-repeat:no-repeat;background-position:center center;width:64px;height:64px;left:10px;bottom:10px;background-size:auto 64px}body .info-overview .panel-label{margin:6px auto;text-align:center;text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .info-overview .panel-mid{text-align:center}body .info-tabs .trim-top{padding:10px;border-top:none;min-height:380px;border-top-left-radius:0;border-top-right-radius:0}body .img-clipper{width:48px;height:48px;padding:0;margin:3px auto;text-align:center;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .app-info-aside{display:flex;margin-bottom:12px}body .app-info-aside .app-info-icon{flex-grow:0;flex-shrink:0;flex-basis:64px;vertical-align:top}body .app-info-aside .app-info-info{flex-grow:1;flex-shrink:1;text-align:left;vertical-align:top}body .app-info-aside .app-info-info p{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .app-info-aside.info-disabled .app-info-icon{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .app-info-aside.info-disabled .app-info-icon:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .app-aside-collapser a{margin:0;padding:0;display:block;color:silver;text-decoration:none}body .app-aside-collapser a:hover{color:gray}body .iframe-body,body .iframe-body iframe{margin:0;padding:0}body .alertify-hidden{display:none}body .console .cmd-output{padding:8px;font-size:10.5px;font-family:Courier New,Courier,monospace;color:#2f4f4f}body .console .cmd-line{padding:0;margin:0}body .console .cmd-time{color:silver}body .console .cmd-text{white-space:pre}@media screen and (max-width:640px) and (max-height:480px){body .console .cmd-output{padding:4px;font-size:10.4px}}body .card-view{margin:0 auto;padding:0;color:#333;height:100%;overflow:auto}body .card-view.float-left .card{float:left}body .card-view .multi-column{columns:300px 3;-webkit-columns:300px 3}body .card-view a{color:#4c4c4c;text-decoration:none}body .card-view .boxed{margin:0 auto 36px;max-width:1056px;display:inline-block}body .card-view .card{width:320px;height:200px;padding:0;margin:15px 15px 0;overflow:hidden;background:#fff;background:#ededed;background:-moz-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#ededed),color-stop(45%,#f6f6f6),color-stop(61%,#fff),color-stop(61%,#fff));background:-webkit-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-o-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-ms-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:linear-gradient(to bottom,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#ffffff', GradientType=0);border:1px solid #AAA;border-bottom:3px solid #BBB}body .card-view .card:hover{-webkit-box-shadow:0 0 10px 1px rgba(128,128,128,.75);-moz-box-shadow:0 0 10px 1px rgba(128,128,128,.75);box-shadow:0 0 10px 1px rgba(128,128,128,.75)}body .card-view .card p{background:#fff;margin:0;padding:10px}body .card-view .card-image{width:100%;height:140px;padding:0;margin:0;position:relative;overflow:hidden;background-position:center;background-repeat:no-repeat}body .card-view .card-image .banner{height:50px;width:50px;top:0;right:0;background-position:top right;background-repeat:no-repeat;position:absolute}body .card-view .card-image h1,body .card-view .card-image h2,body .card-view .card-image h3,body .card-view .card-image h4,body .card-view .card-image h5,body .card-view .card-image h6{position:absolute;bottom:0;left:0;width:100%;color:#fff;background:rgba(0,0,0,.65);margin:0;padding:6px 12px!important;border:none}body .card-view .small-only{display:none!important}body .card-view .leftColumn,body .card-view .rightColumn{display:inline-block;width:49%;vertical-align:top}body .card-view .column{display:inline-block;vertical-align:top}body .card-view .arrow{top:50%;width:50px;bottom:0;margin:auto 0;outline:medium none;position:absolute;font-size:40px;cursor:pointer;z-index:5}body .card-view .arrow i{top:-25px}body .card-view .arrow.prev{left:0;opacity:.2}body .card-view .arrow.prev:hover{opacity:1}body .card-view .arrow.next{right:0;opacity:.2;text-align:right}body .card-view .arrow.next:hover{opacity:1}body .card-view .img-default{background:#b3bead;background:-moz-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fcfff4),color-stop(40%,#dfe5d7),color-stop(100%,#b3bead));background:-webkit-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-o-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-ms-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:linear-gradient(to bottom,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fcfff4', endColorstr='#b3bead', GradientType=0)}body .card-view .img-explore{background-position:top left;background-image:url(https://farm6.staticflickr.com/5250/5279251697_3ab802e3ef.jpg)}body .card-view .img-editor{background-image:url(http://f.fastcompany.net/multisite_files/fastcompany/inline/2013/10/3020994-inline-d3-data-viz001.jpg);background-size:320px auto}body .card-view .img-console{background-image:url(http://shumakovich.com/uploads/useruploads/images/programming_256x256.png);background-size:auto auto;background-position:top}body .card-view .img-about{background-image:url(https://farm9.staticflickr.com/8282/7807659570_f5ba8dfc63.jpg);background-size:420px auto;background-position:center}body .card-view .img-sandbox{background-image:url(http://8020.photos.jpgmag.com/1727832_147374_5c80086d33_p.jpg);background-size:360px auto;background-position:top center}body .card-view .slider-nav{bottom:0;display:block;height:48px;left:0;margin:0 auto;padding:1em 0 .8em;position:absolute;right:0;text-align:center;width:100%;z-index:5}body .card-view .slider-nav li{margin:3px;padding:1px 3px;cursor:pointer;position:relative;display:inline-block;border:1px dotted #E0E0E0;background-color:rgba(255,255,255,.25)}body .card-view .slider-nav li a{color:rgba(128,128,128,.75)}body .card-view .slider-nav li.active{border:solid 1px #BBB;background-color:rgba(128,128,128,.25)}body .card-view .slider-nav li.active a{color:#000}body .card-view .slider{-webkit-perspective:1000px;-moz-perspective:1000px;-ms-perspective:1000px;-o-perspective:1000px;perspective:1000px;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d;-ms-transform-style:preserve-3d;-o-transform-style:preserve-3d;transform-style:preserve-3d}body .card-view .slide{-webkit-transition:1s linear all;-moz-transition:1s linear all;-o-transition:1s linear all;transition:1s linear all;opacity:1}body .card-view .slide.ng-hide-add{opacity:1}body .card-view .slide.ng-hide-add.ng-hide-add-active,body .card-view .slide.ng-hide-remove{opacity:0}body .card-view .slide.ng-hide-remove.ng-hide-remove-active{opacity:1}body .footer .log-group{padding:1px 6px}@media screen and (min-width:741px) and (max-width:1024px){#cardViewer .boxed{max-width:740px!important}}@media screen and (max-width:740px){#cardViewer .boxed{max-width:350px!important}#cardViewer .small-only{display:block!important}#cardViewer .card-view{height:100%;overflow:auto}#cardViewer .card-view .card{display:none}#cardViewer .card-view .card.active{display:block}}#fileExplorer{-webkit-user-select:none}#fileExplorer .folder-contents{padding:16px 8px;clear:both}#fileExplorer .file{color:#000;text-decoration:none}#fileExplorer .name{margin-top:6px;font-size:11px}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .file .icon img{width:48px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-large{display:block}#fileExplorer .view-large .files{padding:0;margin:0}#fileExplorer .view-large .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-large .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-large .file .name{width:100px;word-wrap:break-word}#fileExplorer .view-large .file.focus .name{color:#fff}#fileExplorer .view-large .file .icon{margin:0 auto;width:60px}#fileExplorer .view-large .file .icon img{width:60px;height:auto}#fileExplorer .view-large .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-med .files{padding:0;margin:0}#fileExplorer .view-med .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-med .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-med .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .view-med .file.focus .name{color:#fff}#fileExplorer .view-med .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .view-med .file .icon img{width:48px;height:auto}#fileExplorer .view-med .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-details{display:block}#fileExplorer .view-details .files{padding:0;margin:0}#fileExplorer .view-details .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .view-details .file.focus{-webkit-border-radius:0}#fileExplorer .view-details .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .view-details .file .icon{margin:0;width:24px;display:inline}#fileExplorer .view-details .file .icon img{width:24px;height:auto}@media screen and (max-width:640px) and (max-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .file.focus{-webkit-border-radius:0}#fileExplorer .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .file .icon{margin:0;width:24px;display:inline}#fileExplorer .file .icon img{width:24px;height:auto}#fileExplorer .name{padding:3px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}}@media screen and (min-width:1024px) and (min-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:100px;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;width:60px}#fileExplorer .file .icon img{width:60px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}}"
+    "body .docked{flex-grow:1;flex-shrink:1;display:flex;height:100%;overflow:none}body .dock-tight{flex-grow:0;flex-shrink:0}body .dock-fill{flex-grow:1;flex-shrink:1}body .ellipsis{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .dragable{-webkit-app-region:drag;-webkit-user-select:none}body .non-dragable{-webkit-app-region:no-drag;-webkit-user-select:auto}body .inactive-gray{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .inactive-gray:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-25{opacity:.25;filter:alpha(opacity=25);filter:grayscale(100%) opacity(0.25);-webkit-filter:grayscale(100%) opacity(0.25);-moz-filter:alpha(opacity=25);-o-filter:alpha(opacity=25)}body .inactive-gray-25:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-10{opacity:.1;filter:alpha(opacity=10);filter:grayscale(100%) opacity(0.1);-webkit-filter:grayscale(100%) opacity(0.1);-moz-filter:alpha(opacity=10);-o-filter:alpha(opacity=10)}body .inactive-gray-10:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-ctrl{opacity:.65;filter:alpha(opacity=65);filter:grayscale(100%) opacity(0.65);-webkit-filter:grayscale(100%) opacity(0.65);-moz-filter:alpha(opacity=65);-o-filter:alpha(opacity=65)}body .inactive-fill-text{width:100%;height:100%;display:block;padding:64px 0;font-size:14px;text-align:center;color:rgba(128,128,128,.75)}body .glow-green{color:#00b500!important;text-shadow:0 0 2px #00b500}body .glow-red{color:#D00!important;text-shadow:0 0 2px #D00}body .glow-orange{color:#ff8d00!important;text-shadow:0 0 2px #ff8d00}body .glow-blue{color:#0094ff!important;text-shadow:0 0 2px #0094ff}body .results{min-width:480px;display:flex}body .results .icon{margin:0 8px;font-size:128px;width:128px!important;height:128px!important;position:relative;flex-grow:0;flex-shrink:0}body .results .icon .sub-icon{font-size:64px!important;width:64px!important;height:64px!important;position:absolute;right:0;top:0;margin-top:100px}body .results .info{margin:0 16px;min-height:128px;min-width:300px;display:inline-block;flex-grow:1;flex-shrink:1}body .results .info h4{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .results .info h4 a{color:#000}body .info-row{display:flex}body .info-row-links{color:silver}body .info-row-links a{color:#4a4a4a;margin-left:8px}body .info-row-links a:hover{color:#000}body .info-col-primary{flex-grow:1;flex-shrink:1}body .info-col-secondary{flex-grow:0;flex-shrink:0}body .info-overview{vertical-align:top}body .info-overview .panel-icon-lg{width:128px;height:128px;padding:0;margin:0 auto 10px;display:block;position:relative;background-repeat:no-repeat;background-size:auto 128px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inner{width:92px;height:92px;margin:6px auto;background-repeat:no-repeat;background-size:auto 86px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-overlay{right:0;bottom:0;width:48px;height:48px;position:absolute;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inset{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-inset-bl{margin:0;position:absolute;background-repeat:no-repeat;background-position:center center;width:64px;height:64px;left:10px;bottom:10px;background-size:auto 64px}body .info-overview .panel-label{margin:6px auto;text-align:center;text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .info-overview .panel-mid{text-align:center}body .info-tabs .trim-top{padding:10px;border-top:none;min-height:380px;border-top-left-radius:0;border-top-right-radius:0}body .img-clipper{width:48px;height:48px;padding:0;margin:3px auto;text-align:center;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .app-info-aside{display:flex;margin-bottom:12px}body .app-info-aside .app-info-icon{flex-grow:0;flex-shrink:0;flex-basis:64px;vertical-align:top}body .app-info-aside .app-info-info{flex-grow:1;flex-shrink:1;text-align:left;vertical-align:top}body .app-info-aside .app-info-info p{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .app-info-aside.info-disabled .app-info-icon{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .app-info-aside.info-disabled .app-info-icon:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .app-aside-collapser a{margin:0;padding:0;display:block;color:silver;text-decoration:none}body .app-aside-collapser a:hover{color:gray}body .iframe-body,body .iframe-body iframe{margin:0;padding:0}body .alertify-hidden{display:none}body .console .cmd-output{padding:8px;font-size:10.5px;font-family:Courier New,Courier,monospace;color:#2f4f4f}body .console .cmd-line{padding:0;margin:0}body .console .cmd-time{color:silver}body .console .cmd-text{white-space:pre}@media screen and (max-width:640px) and (max-height:480px){body .console .cmd-output{padding:4px;font-size:10.4px}}body .card-view{margin:0 auto;padding:0;color:#333;height:100%;overflow:auto}body .card-view.float-left .card{float:left}body .card-view .multi-column{columns:300px 3;-webkit-columns:300px 3}body .card-view a{color:#4c4c4c;text-decoration:none}body .card-view .boxed{margin:0 auto 36px;max-width:1056px;display:inline-block}body .card-view .card{width:320px;height:200px;padding:0;margin:15px 15px 0;overflow:hidden;background:#fff;background:#ededed;background:-moz-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#ededed),color-stop(45%,#f6f6f6),color-stop(61%,#fff),color-stop(61%,#fff));background:-webkit-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-o-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-ms-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:linear-gradient(to bottom,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#ffffff', GradientType=0);border:1px solid #AAA;border-bottom:3px solid #BBB}body .card-view .card:hover{-webkit-box-shadow:0 0 10px 1px rgba(128,128,128,.75);-moz-box-shadow:0 0 10px 1px rgba(128,128,128,.75);box-shadow:0 0 10px 1px rgba(128,128,128,.75)}body .card-view .card p{background:#fff;margin:0;padding:10px}body .card-view .card-image{width:100%;height:140px;padding:0;margin:0;position:relative;overflow:hidden;background-position:center;background-repeat:no-repeat}body .card-view .card-image .banner{height:50px;width:50px;top:0;right:0;background-position:top right;background-repeat:no-repeat;position:absolute}body .card-view .card-image h1,body .card-view .card-image h2,body .card-view .card-image h3,body .card-view .card-image h4,body .card-view .card-image h5,body .card-view .card-image h6{position:absolute;bottom:0;left:0;width:100%;color:#fff;background:rgba(0,0,0,.65);margin:0;padding:6px 12px!important;border:none}body .card-view .small-only{display:none!important}body .card-view .leftColumn,body .card-view .rightColumn{display:inline-block;width:49%;vertical-align:top}body .card-view .column{display:inline-block;vertical-align:top}body .card-view .arrow{top:50%;width:50px;bottom:0;margin:auto 0;outline:medium none;position:absolute;font-size:40px;cursor:pointer;z-index:5}body .card-view .arrow i{top:-25px}body .card-view .arrow.prev{left:0;opacity:.2}body .card-view .arrow.prev:hover{opacity:1}body .card-view .arrow.next{right:0;opacity:.2;text-align:right}body .card-view .arrow.next:hover{opacity:1}body .card-view .img-default{background:#b3bead;background:-moz-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fcfff4),color-stop(40%,#dfe5d7),color-stop(100%,#b3bead));background:-webkit-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-o-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-ms-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:linear-gradient(to bottom,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fcfff4', endColorstr='#b3bead', GradientType=0)}body .card-view .img-explore{background-position:top left;background-image:url(https://farm6.staticflickr.com/5250/5279251697_3ab802e3ef.jpg)}body .card-view .img-editor{background-image:url(http://f.fastcompany.net/multisite_files/fastcompany/inline/2013/10/3020994-inline-d3-data-viz001.jpg);background-size:320px auto}body .card-view .img-console{background-image:url(http://shumakovich.com/uploads/useruploads/images/programming_256x256.png);background-size:auto auto;background-position:top}body .card-view .img-about{background-image:url(https://farm9.staticflickr.com/8282/7807659570_f5ba8dfc63.jpg);background-size:420px auto;background-position:center}body .card-view .img-sandbox{background-image:url(http://8020.photos.jpgmag.com/1727832_147374_5c80086d33_p.jpg);background-size:360px auto;background-position:top center}body .card-view .slider-nav{bottom:0;display:block;height:48px;left:0;margin:0 auto;padding:1em 0 .8em;position:absolute;right:0;text-align:center;width:100%;z-index:5}body .card-view .slider-nav li{margin:3px;padding:1px 3px;cursor:pointer;position:relative;display:inline-block;border:1px dotted #E0E0E0;background-color:rgba(255,255,255,.25)}body .card-view .slider-nav li a{color:rgba(128,128,128,.75)}body .card-view .slider-nav li.active{border:solid 1px #BBB;background-color:rgba(128,128,128,.25)}body .card-view .slider-nav li.active a{color:#000}body .card-view .slider{-webkit-perspective:1000px;-moz-perspective:1000px;-ms-perspective:1000px;-o-perspective:1000px;perspective:1000px;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d;-ms-transform-style:preserve-3d;-o-transform-style:preserve-3d;transform-style:preserve-3d}body .card-view .slide{-webkit-transition:1s linear all;-moz-transition:1s linear all;-o-transition:1s linear all;transition:1s linear all;opacity:1}body .card-view .slide.ng-hide-add{opacity:1}body .card-view .slide.ng-hide-add.ng-hide-add-active,body .card-view .slide.ng-hide-remove{opacity:0}body .card-view .slide.ng-hide-remove.ng-hide-remove-active{opacity:1}body .footer .log-group{padding:1px 6px}@media screen and (min-width:741px) and (max-width:1024px){#cardViewer .boxed{max-width:740px!important}}@media screen and (max-width:740px){#cardViewer .boxed{max-width:350px!important}#cardViewer .small-only{display:block!important}#cardViewer .card-view{height:100%;overflow:auto}#cardViewer .card-view .card{display:none}#cardViewer .card-view .card.active{display:block}}#fileExplorer{-webkit-user-select:none}#fileExplorer .folder-contents{padding:16px 8px;clear:both}#fileExplorer .file{color:#000;text-decoration:none}#fileExplorer .name{margin-top:6px;font-size:11px}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .file .icon img{width:48px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-large{display:block}#fileExplorer .view-large .files{padding:0;margin:0}#fileExplorer .view-large .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-large .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-large .file .name{width:100px;word-wrap:break-word}#fileExplorer .view-large .file.focus .name{color:#fff}#fileExplorer .view-large .file .icon{margin:0 auto;width:60px}#fileExplorer .view-large .file .icon img{width:60px;height:auto}#fileExplorer .view-large .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-med .files{padding:0;margin:0}#fileExplorer .view-med .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-med .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-med .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .view-med .file.focus .name{color:#fff}#fileExplorer .view-med .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .view-med .file .icon img{width:48px;height:auto}#fileExplorer .view-med .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-details{display:block}#fileExplorer .view-details .files{padding:0;margin:0}#fileExplorer .view-details .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .view-details .file.focus{-webkit-border-radius:0}#fileExplorer .view-details .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .view-details .file .icon{margin:0;width:24px;display:inline}#fileExplorer .view-details .file .icon img{width:24px;height:auto}@media screen and (max-width:640px) and (max-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .file.focus{-webkit-border-radius:0}#fileExplorer .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .file .icon{margin:0;width:24px;display:inline}#fileExplorer .file .icon img{width:24px;height:auto}#fileExplorer .name{padding:3px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}}@media screen and (min-width:1024px) and (min-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:100px;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;width:60px}#fileExplorer .file .icon img{width:60px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}}.abn-tree-animate-enter,li.abn-tree-row.ng-enter{transition:200ms linear all;position:relative;display:block;opacity:0;max-height:0}.abn-tree-animate-enter.abn-tree-animate-enter-active,li.abn-tree-row.ng-enter-active{opacity:1;max-height:30px}.abn-tree-animate-leave,li.abn-tree-row.ng-leave{transition:200ms linear all;position:relative;display:block;height:30px;max-height:30px;opacity:1}.abn-tree-animate-leave.abn-tree-animate-leave-active,li.abn-tree-row.ng-leave-active{height:0;max-height:0;opacity:0}ul.abn-tree li.abn-tree-row{padding:0;margin:0}ul.abn-tree li.abn-tree-row a{padding:3px 10px}ul.abn-tree i.indented{padding:2px 6px}.abn-tree{cursor:pointer}ul.nav.abn-tree .level-1 .indented{position:relative;left:0}ul.nav.abn-tree .level-2 .indented{position:relative;left:16px}ul.nav.abn-tree .level-3 .indented{position:relative;left:40px}ul.nav.abn-tree .level-4 .indented{position:relative;left:60px}ul.nav.abn-tree .level-5 .indented{position:relative;left:80px}ul.nav.abn-tree .level-6 .indented{position:relative;left:100px}ul.nav.nav-list.abn-tree .level-7 .indented{position:relative;left:120px}ul.nav.nav-list.abn-tree .level-8 .indented{position:relative;left:140px}ul.nav.nav-list.abn-tree .level-9 .indented{position:relative;left:160px}"
   );
 
 

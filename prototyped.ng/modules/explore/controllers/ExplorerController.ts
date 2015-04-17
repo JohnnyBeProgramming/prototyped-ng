@@ -1,6 +1,6 @@
 ﻿///<reference path="../../../imports.d.ts"/>
 
-module proto.explorer {
+module proto.ng.explorer {
 
     export class ExplorerController {
 
