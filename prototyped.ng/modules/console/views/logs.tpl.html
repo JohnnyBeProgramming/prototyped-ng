@@ -1,7 +1,7 @@
 ﻿<div class="container" style="width:100%">
     <span class="pull-right" style="padding: 3px;">
         <a href="" ng-click="">Refresh</a> |
-        <a href="" ng-click="appStatus.logs = []">Clear</a>
+        <a href="" ng-click="appState.logs = []">Clear</a>
     </span>
     <h5>Event Logs</h5>
     <table class="table table-hover table-condensed">
@@ -13,12 +13,12 @@
             </tr>
         </thead>
         <tbody>
-            <tr ng-if="!appStatus.logs.length">
+            <tr ng-if="!appState.logs.length">
                 <td colspan="3">
                     <em>No events have been logged...</em>
                 </td>
             </tr>
-            <tr ng-repeat="row in appStatus.logs"
+            <tr ng-repeat="row in appState.logs"
                 ng-class="{ 'text-info inactive-gray':row.type=='debug', 'text-info':row.type=='info', 'text-warning glow-orange':row.type=='warn', 'text-danger glow-red':row.type=='error' }">
                 <td>{{ row.time | date:'hh:mm:ss' }}</td>
                 <td>{{ row.type }}</td>

@@ -469,6 +469,196 @@ angular.module('prototyped.about', [
             return info;
         };
     }]);
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (common) {
+            var AppNodeProvider = (function () {
+                function AppNodeProvider() {
+                    this.appNode = new AppNode();
+                }
+                AppNodeProvider.prototype.$get = function () {
+                    return this.appNode;
+                };
+                return AppNodeProvider;
+            })();
+            common.AppNodeProvider = AppNodeProvider;
+
+            var AppNode = (function () {
+                function AppNode() {
+                    this.active = typeof require !== 'undefined';
+                }
+                Object.defineProperty(AppNode.prototype, "gui", {
+                    get: function () {
+                        return this.active ? this.ui() : null;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(AppNode.prototype, "window", {
+                    get: function () {
+                        return this.active ? this.win() : null;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+
+                AppNode.prototype.ui = function () {
+                    if (this.active) {
+                        return require('nw.gui');
+                    }
+                    return null;
+                };
+
+                AppNode.prototype.win = function () {
+                    if (this.gui) {
+                        var win = this.gui.Window.get();
+                        return win;
+                    }
+                    return null;
+                };
+
+                AppNode.prototype.reload = function () {
+                    var win = this.window;
+                    if (win) {
+                        win.reloadIgnoringCache();
+                    }
+                };
+
+                AppNode.prototype.close = function () {
+                    var win = this.window;
+                    if (win) {
+                        win.close();
+                    }
+                };
+
+                AppNode.prototype.debug = function () {
+                    var win = this.window;
+                    if (win.isDevToolsOpen()) {
+                        win.closeDevTools();
+                    } else {
+                        win.showDevTools();
+                    }
+                };
+
+                AppNode.prototype.toggleFullscreen = function () {
+                    var win = this.window;
+                    if (win) {
+                        win.toggleFullscreen();
+                    }
+                };
+
+                AppNode.prototype.kiosMode = function () {
+                    var win = this.window;
+                    if (win) {
+                        win.toggleKioskMode();
+                    }
+                };
+                return AppNode;
+            })();
+            common.AppNode = AppNode;
+        })(ng.common || (ng.common = {}));
+        var common = ng.common;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (common) {
+            var AppStateProvider = (function () {
+                function AppStateProvider($stateProvider, appConfigProvider, appNodeProvider) {
+                    this.$stateProvider = $stateProvider;
+                    this.appConfigProvider = appConfigProvider;
+                    this.appNodeProvider = appNodeProvider;
+                    var appConfig = appConfigProvider.$get();
+                    this.appState = new AppState($stateProvider, appNodeProvider, appConfig);
+                    this.appState.debug = appConfig.debug || false;
+                }
+                AppStateProvider.prototype.$get = function () {
+                    return this.appState;
+                };
+                return AppStateProvider;
+            })();
+            common.AppStateProvider = AppStateProvider;
+
+            var AppState = (function () {
+                /*
+                public show: {
+                all: true,
+                log: false,
+                info: true,
+                warn: true,
+                error: true,
+                debug: false,
+                },
+                */
+                function AppState($stateProvider, appNodeProvider, appConfig) {
+                    this.$stateProvider = $stateProvider;
+                    this.appNodeProvider = appNodeProvider;
+                    this.appConfig = appConfig;
+                    this.logs = [];
+                    this.html5 = true;
+                    this.title = appConfig.title || 'Prototyped';
+                    this.version = appConfig.version || '1.0.0';
+                    this.node = appNodeProvider.$get();
+                    this.current = {
+                        state: null
+                    };
+                }
+                AppState.prototype.getIcon = function () {
+                    var icon = (this.node.active) ? 'fa fa-desktop' : 'fa fa-cube';
+                    var match = /\/!(\w+)!/i.exec(this.proxy || '');
+                    if (match && match.length > 1) {
+                        switch (match[1]) {
+                            case 'test':
+                                return 'fa fa-puzzle-piece glow-blue animate-glow';
+                            case 'debug':
+                                return 'fa fa-bug glow-orange animate-glow';
+                        }
+                    }
+
+                    if (this.current && this.current.state) {
+                        var currentState = this.current.state.name;
+                        this.appConfig.routers.forEach(function (itm, i) {
+                            if (itm.menuitem && itm.menuitem.state == currentState) {
+                                icon = itm.menuitem.icon;
+                            }
+                        });
+                    }
+                    return icon;
+                };
+
+                AppState.prototype.getColor = function () {
+                    var logs = this.logs;
+                    if (logs.some(function (val, i, array) {
+                        return val.type == 'error';
+                    })) {
+                        return 'glow-red';
+                    }
+                    if (logs.some(function (val, i, array) {
+                        return val.type == 'warn';
+                    })) {
+                        return 'glow-orange';
+                    }
+                    if (logs.some(function (val, i, array) {
+                        return val.type == 'info';
+                    })) {
+                        return 'glow-blue';
+                    }
+                    if (this.node.active) {
+                        return 'glow-green';
+                    }
+                    return '';
+                };
+                return AppState;
+            })();
+            common.AppState = AppState;
+        })(ng.common || (ng.common = {}));
+        var common = ng.common;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../imports.d.ts" />
 // Constant object with default values
 angular.module('prototyped.ng.config', []).constant('appDefaultConfig', {
@@ -1072,141 +1262,144 @@ angular.module('prototyped.editor', [
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
-    (function (explorer) {
-        var AddressBarController = (function () {
-            function AddressBarController($rootScope, $scope, $q) {
-                var _this = this;
-                this.$rootScope = $rootScope;
-                this.$scope = $scope;
-                this.$q = $q;
-                this.history = [];
-                $scope.busy = true;
-                try  {
-                    // Initialise the address bar
-                    var elem = $('#addressbar');
-                    if (elem) {
-                        this.init(elem);
+    (function (ng) {
+        (function (explorer) {
+            var AddressBarController = (function () {
+                function AddressBarController($rootScope, $scope, $q) {
+                    var _this = this;
+                    this.$rootScope = $rootScope;
+                    this.$scope = $scope;
+                    this.$q = $q;
+                    this.history = [];
+                    $scope.busy = true;
+                    try  {
+                        // Initialise the address bar
+                        var elem = $('#addressbar');
+                        if (elem) {
+                            this.init(elem);
 
-                        this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
-                            if (folder != _this.$scope.dir_path) {
-                                console.warn(' - Addressbar Navigate: ', folder);
-                                _this.$scope.dir_path = folder;
-                                _this.navigate(folder);
-                            }
-                        });
-                    } else {
-                        throw new Error('Element with id "addressbar" not found...');
-                    }
-                } catch (ex) {
-                    // Initialisation failed
-                    console.error(ex);
-                }
-                $scope.busy = false;
-            }
-            AddressBarController.prototype.init = function (element) {
-                // Set the target HTML element
-                this.element = element;
-
-                // Generate the current folder parts
-                this.generateOutput('./');
-            };
-
-            AddressBarController.prototype.openFolder = function (path) {
-                try  {
-                    var nwGui = 'nw.gui';
-                    var gui = require(nwGui);
-                    if (!$.isEmptyObject(gui)) {
-                        console.debug(' - Opening Folder: ' + path);
-                        gui.Shell.openItem(path + '/');
-                    }
-                } catch (ex) {
-                    console.error(ex);
-                }
-                this.generateOutput(path);
-            };
-
-            AddressBarController.prototype.navigate = function (path) {
-                this.generateOutput(path);
-            };
-
-            AddressBarController.prototype.select = function (file) {
-                console.info(' - select: ', file);
-                try  {
-                    var req = 'nw.gui';
-                    var gui = require(req);
-                    gui.Shell.openItem(file);
-                } catch (ex) {
-                    console.error(ex);
-                }
-            };
-
-            AddressBarController.prototype.back = function () {
-                var len = this.history ? this.history.length : -1;
-                if (len > 1) {
-                    var last = this.history[len - 2];
-                    this.history = this.history.splice(0, len - 2);
-                    this.generateOutput(last);
-                }
-            };
-
-            AddressBarController.prototype.hasHistory = function () {
-                var len = this.history ? this.history.length : -1;
-                return (len > 1);
-            };
-
-            AddressBarController.prototype.generateOutput = function (dir_path) {
-                // Set the current dir path
-                this.$scope.dir_path = dir_path;
-                this.$scope.dir_parts = this.generatePaths(dir_path);
-                this.history.push(dir_path);
-
-                // Breadcast event that path has changed
-                this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
-            };
-
-            AddressBarController.prototype.generatePaths = function (dir_path) {
-                try  {
-                    // Get dependecies
-                    var path = require('path');
-
-                    // Update current path
-                    this.$scope.dir_path = dir_path = path.resolve(dir_path);
-
-                    // Try and normalize the folder path
-                    var curr = path.normalize(dir_path);
-                    if (curr) {
-                        // Split path into separate elements
-                        var sequence = curr.split(path.sep);
-                        var result = [];
-
-                        var i = 0;
-                        for (; i < sequence.length; ++i) {
-                            result.push({
-                                name: sequence[i],
-                                path: sequence.slice(0, 1 + i).join(path.sep)
+                            this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                                if (folder != _this.$scope.dir_path) {
+                                    console.warn(' - Addressbar Navigate: ', folder);
+                                    _this.$scope.dir_path = folder;
+                                    _this.navigate(folder);
+                                }
                             });
+                        } else {
+                            throw new Error('Element with id "addressbar" not found...');
                         }
-
-                        // Add root for unix
-                        if (sequence[0] == '' && process.platform != 'win32') {
-                            result[0] = {
-                                name: 'root',
-                                path: '/'
-                            };
-                        }
-
-                        // Return thepath sequences
-                        return { sequence: result };
+                    } catch (ex) {
+                        // Initialisation failed
+                        console.error(ex);
                     }
-                } catch (ex) {
-                    console.error(ex);
+                    $scope.busy = false;
                 }
-            };
-            return AddressBarController;
-        })();
-        explorer.AddressBarController = AddressBarController;
-    })(proto.explorer || (proto.explorer = {}));
-    var explorer = proto.explorer;
+                AddressBarController.prototype.init = function (element) {
+                    // Set the target HTML element
+                    this.element = element;
+
+                    // Generate the current folder parts
+                    this.generateOutput('./');
+                };
+
+                AddressBarController.prototype.openFolder = function (path) {
+                    try  {
+                        var nwGui = 'nw.gui';
+                        var gui = require(nwGui);
+                        if (!$.isEmptyObject(gui)) {
+                            console.debug(' - Opening Folder: ' + path);
+                            gui.Shell.openItem(path + '/');
+                        }
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                    this.generateOutput(path);
+                };
+
+                AddressBarController.prototype.navigate = function (path) {
+                    this.generateOutput(path);
+                };
+
+                AddressBarController.prototype.select = function (file) {
+                    console.info(' - select: ', file);
+                    try  {
+                        var req = 'nw.gui';
+                        var gui = require(req);
+                        gui.Shell.openItem(file);
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                };
+
+                AddressBarController.prototype.back = function () {
+                    var len = this.history ? this.history.length : -1;
+                    if (len > 1) {
+                        var last = this.history[len - 2];
+                        this.history = this.history.splice(0, len - 2);
+                        this.generateOutput(last);
+                    }
+                };
+
+                AddressBarController.prototype.hasHistory = function () {
+                    var len = this.history ? this.history.length : -1;
+                    return (len > 1);
+                };
+
+                AddressBarController.prototype.generateOutput = function (dir_path) {
+                    // Set the current dir path
+                    this.$scope.dir_path = dir_path;
+                    this.$scope.dir_parts = this.generatePaths(dir_path);
+                    this.history.push(dir_path);
+
+                    // Breadcast event that path has changed
+                    this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
+                };
+
+                AddressBarController.prototype.generatePaths = function (dir_path) {
+                    try  {
+                        // Get dependecies
+                        var path = require('path');
+
+                        // Update current path
+                        this.$scope.dir_path = dir_path = path.resolve(dir_path);
+
+                        // Try and normalize the folder path
+                        var curr = path.normalize(dir_path);
+                        if (curr) {
+                            // Split path into separate elements
+                            var sequence = curr.split(path.sep);
+                            var result = [];
+
+                            var i = 0;
+                            for (; i < sequence.length; ++i) {
+                                result.push({
+                                    name: sequence[i],
+                                    path: sequence.slice(0, 1 + i).join(path.sep)
+                                });
+                            }
+
+                            // Add root for unix
+                            if (sequence[0] == '' && process.platform != 'win32') {
+                                result[0] = {
+                                    name: 'root',
+                                    path: '/'
+                                };
+                            }
+
+                            // Return thepath sequences
+                            return { sequence: result };
+                        }
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                };
+                return AddressBarController;
+            })();
+            explorer.AddressBarController = AddressBarController;
+        })(ng.explorer || (ng.explorer = {}));
+        var explorer = ng.explorer;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
 })(proto || (proto = {}));
 ///<reference path="../../../imports.d.ts"/>
 var proto;
@@ -1383,63 +1576,124 @@ var proto;
 (function (proto) {
     (function (ng) {
         (function (explorer) {
-            var NavigationService = (function () {
-                function NavigationService($q) {
-                    this.$q = $q;
-                    this.TreeData = [];
-                    this.init();
-                }
-                NavigationService.prototype.init = function () {
-                    this.TreeData = [{
-                            label: 'Languages',
-                            children: [
-                                'Jade',
-                                'Less',
-                                'Coffeescript',
-                                {
-                                    label: 'Languages',
-                                    children: [
-                                        'Jade',
-                                        'Less',
-                                        'Coffeescript',
-                                        {
-                                            label: 'Languages',
-                                            children: [
-                                                'Jade',
-                                                'Less',
-                                                'Coffeescript',
-                                                {
-                                                    label: 'Languages',
-                                                    children: [
-                                                        'Jade',
-                                                        'Less',
-                                                        'Coffeescript'
-                                                    ]
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            ]
-                        }];
-                };
-
-                NavigationService.prototype.getTreeData = function () {
-                    return this.TreeData;
-                };
-                return NavigationService;
-            })();
-            explorer.NavigationService = NavigationService;
-
             var ExplorerViewController = (function () {
-                function ExplorerViewController($rootScope, $scope, $q) {
+                function ExplorerViewController($rootScope, $scope, $q, navigation) {
                     this.$rootScope = $rootScope;
                     this.$scope = $scope;
                     this.$q = $q;
+                    this.navigation = navigation;
                 }
                 return ExplorerViewController;
             })();
             explorer.ExplorerViewController = ExplorerViewController;
+        })(ng.explorer || (ng.explorer = {}));
+        var explorer = ng.explorer;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (explorer) {
+            var TreeNode = (function () {
+                function TreeNode(nodeName) {
+                    this.children = [];
+                    this.classes = [];
+                    this.label = nodeName;
+                }
+                return TreeNode;
+            })();
+            explorer.TreeNode = TreeNode;
+
+            var SiteNode = (function (_super) {
+                __extends(SiteNode, _super);
+                function SiteNode(nodeName, state) {
+                    _super.call(this, nodeName);
+                    this.state = state;
+                    this.data = state;
+                }
+                SiteNode.prototype.onSelect = function (branch) {
+                    //this.$rootScope.$broadcast('nodeSelect', this);
+                };
+                return SiteNode;
+            })(TreeNode);
+            explorer.SiteNode = SiteNode;
+
+            var SiteNavigationRoot = (function (_super) {
+                __extends(SiteNavigationRoot, _super);
+                function SiteNavigationRoot(nodeName, states) {
+                    _super.call(this, nodeName, null);
+                    this.states = states;
+                    this.stateCache = {};
+                    this.init();
+                }
+                SiteNavigationRoot.prototype.init = function () {
+                    var _this = this;
+                    this.children = [];
+                    this.states.forEach(function (state, i) {
+                        if (state.url == '^' || state.name == '') {
+                            _this.data = state; // Root node
+                        } else if (state.name.indexOf('.') < 0) {
+                            _this.addItem(_this, [state.name], state);
+                        } else {
+                            var parts = state.name.split('.');
+                            _this.addItem(_this, parts, state);
+                        }
+                    });
+                };
+
+                SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
+                    if (paths && paths.length) {
+                        var ident = paths[0];
+                        var parts = paths.splice(1);
+                        var node = this.stateCache[ident];
+                        if (!node) {
+                            node = new SiteNode(ident, null);
+                            this.stateCache[ident] = node;
+                            parentNode.children.push(node);
+                        }
+                        if (!parts.length) {
+                            node.data = state;
+                        } else {
+                            this.addItem(node, parts, state);
+                        }
+                    }
+                };
+                return SiteNavigationRoot;
+            })(SiteNode);
+            explorer.SiteNavigationRoot = SiteNavigationRoot;
+
+            var NavigationService = (function () {
+                function NavigationService($state, $q) {
+                    this.$state = $state;
+                    this.$q = $q;
+                    this._treeData = [];
+                    this.init();
+                }
+                NavigationService.prototype.init = function () {
+                    this._treeData = [
+                        new proto.ng.explorer.SiteNavigationRoot('Home Page', this.$state.get())
+                    ];
+                    /*
+                    this.$rootScope.$on('nodeSelect', function (data) {
+                    console.warn('nodeSelect', data);
+                    //this.selected = data;
+                    });
+                    */
+                };
+
+                NavigationService.prototype.getTreeData = function () {
+                    return this._treeData;
+                };
+                return NavigationService;
+            })();
+            explorer.NavigationService = NavigationService;
         })(ng.explorer || (ng.explorer = {}));
         var explorer = ng.explorer;
     })(proto.ng || (proto.ng = {}));
@@ -1472,12 +1726,12 @@ angular.module('prototyped.explorer', [
                 'left@': { templateUrl: 'views/explore/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/explore/views/index.tpl.html',
-                    controller: 'proto.explorer.ExplorerController',
+                    controller: 'proto.ng.explorer.ExplorerController',
                     controllerAs: 'ctrlExplorer'
                 }
             }
         });
-    }]).service('navigationService', ['$q', proto.ng.explorer.NavigationService]).directive('protoAddressBar', [
+    }]).service('navigationService', ['$state', '$q', proto.ng.explorer.NavigationService]).directive('protoAddressBar', [
     '$q', function ($q) {
         return {
             restrict: 'EA',
@@ -1486,15 +1740,15 @@ angular.module('prototyped.explorer', [
             },
             transclude: false,
             templateUrl: 'modules/explore/views/addressbar.tpl.html',
-            controller: 'proto.explorer.AddressBarController',
+            controller: 'proto.ng.explorer.AddressBarController',
             controllerAs: 'addrBar'
         };
-    }]).controller('proto.explorer.AddressBarController', [
+    }]).controller('proto.ng.explorer.AddressBarController', [
     '$rootScope',
     '$scope',
     '$q',
-    proto.explorer.AddressBarController
-]).controller('proto.explorer.ExplorerController', [
+    proto.ng.explorer.AddressBarController
+]).controller('proto.ng.explorer.ExplorerController', [
     '$rootScope',
     '$scope',
     '$q',
@@ -1503,6 +1757,7 @@ angular.module('prototyped.explorer', [
     '$rootScope',
     '$scope',
     '$q',
+    'navigationService',
     proto.ng.explorer.ExplorerViewController
 ]);
 /// <reference path="../imports.d.ts" />
@@ -1580,7 +1835,10 @@ angular.module('prototyped.ng', [
     }]).config([
     '$stateProvider', function ($stateProvider) {
         // Set up routing...
-        $stateProvider.state('default', {
+        $stateProvider.state('proto', {
+            url: '/proto',
+            abstract: true
+        }).state('default', {
             url: '/',
             views: {
                 'main@': {
@@ -1589,77 +1847,8 @@ angular.module('prototyped.ng', [
                     controllerAs: 'sliderCtrl'
                 }
             }
-        }).state('proto', {
-            url: '/proto',
-            abstract: true
         });
-    }]).constant('appNode', {
-    html5: true,
-    active: typeof require !== 'undefined',
-    ui: function () {
-        if (typeof require !== 'undefined') {
-            return require('nw.gui');
-        }
-        return undefined;
-    },
-    win: function () {
-        if (typeof require !== 'undefined') {
-            var gui = require('nw.gui');
-            var win = gui.Window.get();
-            if (win) {
-                return win;
-            }
-        }
-        return undefined;
-    },
-    reload: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win) {
-            win.reloadIgnoringCache();
-        }
-    },
-    close: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win) {
-            win.close();
-        }
-    },
-    debug: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win.isDevToolsOpen()) {
-            win.closeDevTools();
-        } else {
-            win.showDevTools();
-        }
-    },
-    toggleFullscreen: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win) {
-            win.toggleFullscreen();
-        }
-    },
-    kiosMode: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win) {
-            win.toggleKioskMode();
-        }
-    }
-}).constant('appStatus', {
-    logs: [],
-    show: {
-        all: true,
-        log: false,
-        info: true,
-        warn: true,
-        error: true,
-        debug: false
-    }
-}).controller('CardViewCtrl', [
+    }]).provider('appNode', [proto.ng.common.AppNodeProvider]).provider('appState', ['$stateProvider', 'appConfigProvider', 'appNodeProvider', proto.ng.common.AppStateProvider]).controller('CardViewCtrl', [
     '$scope', 'appConfig', function ($scope, appConfig) {
         // Make sure 'mySiteMap' exists
         $scope.pages = appConfig.routers || [];
@@ -1691,7 +1880,7 @@ angular.module('prototyped.ng', [
             $scope._Index = index;
         };
     }]).directive('appClean', [
-    '$rootScope', '$window', '$route', '$state', 'appNode', 'appStatus', function ($rootScope, $window, $route, $state, appNode, appStatus) {
+    '$rootScope', '$window', '$route', '$state', 'appNode', 'appState', function ($rootScope, $window, $route, $state, appNode, appState) {
         return function (scope, elem, attrs) {
             var keyCtrl = false;
             var keyShift = false;
@@ -1734,7 +1923,7 @@ angular.module('prototyped.ng', [
                 }
 
                 // Clear all previous status messages
-                appStatus.logs = [];
+                appState.logs = [];
                 console.clear();
             });
             scope.$on('$destroy', function () {
@@ -1848,6 +2037,8 @@ angular.module('prototyped.ng', [
 }).filter('typeCount', [function () {
         return function (input, type) {
             var count = 0;
+            if (!input)
+                return null;
             if (input.length > 0) {
                 input.forEach(function (itm) {
                     if (!itm)
@@ -2210,7 +2401,6 @@ angular.module('prototyped.ng', [
                             return b.uid = "" + Math.random();
                         }
                     });
-                    console.log('UIDs are set.');
                     for_each_branch(function (b) {
                         var child, _i, _len, _ref, _results;
                         if (angular.isArray(b.children)) {
@@ -2311,7 +2501,6 @@ angular.module('prototyped.ng', [
                     });
                 }
                 n = scope.treeData.length;
-                console.log('num root branches = ' + n);
                 for_each_branch(function (b, level) {
                     b.level = level;
                     return b.expanded = b.level < expand_level;
@@ -2557,52 +2746,28 @@ angular.module('prototyped.ng', [
             }
         };
     }]).run([
-    '$rootScope', '$state', '$filter', 'appConfig', 'appNode', 'appStatus', function ($rootScope, $state, $filter, appConfig, appNode, appStatus) {
+    '$rootScope', '$state', 'appConfig', 'appState', function ($rootScope, $state, appConfig, appState) {
         // Extend root scope with (global) vars
         angular.extend($rootScope, {
             appConfig: appConfig,
-            appNode: appNode,
-            status: appStatus,
+            appState: appState,
+            appNode: appState.node,
             startAt: Date.now(),
             state: $state
         });
 
-        // Hook extended function(s)
-        appStatus.getIcon = function () {
-            var match = /\/!(\w+)!/i.exec(appNode.proxy || '');
-            if (match && match.length > 1) {
-                switch (match[1]) {
-                    case 'test':
-                        return 'fa fa-puzzle-piece glow-blue animate-glow';
-                    case 'debug':
-                        return 'fa fa-bug glow-orange animate-glow';
-                }
+        $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
+            if (toState) {
+                appState.current.state = toState;
             }
-            return (appNode.active) ? 'fa-desktop' : 'fa-cube';
-        };
-        appStatus.getColor = function () {
-            var logs = appStatus.logs;
-            if ($filter('typeCount')(logs, 'error')) {
-                return 'glow-red';
-            }
-            if ($filter('typeCount')(logs, 'warn')) {
-                return 'glow-orange';
-            }
-            if ($filter('typeCount')(logs, 'info')) {
-                return 'glow-blue';
-            }
-            if (appNode.active > 0) {
-                return 'glow-green';
-            }
-            return '';
-        };
+        });
     }]).run([
     'appConfig', function (appConfig) {
         console.debug(' - Current Config: ', appConfig);
     }]);
 ;angular.module('prototyped.ng.views', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('modules/console/views/logs.tpl.html',
-    '<div class=container style=width:100%><span class=pull-right style="padding: 3px"><a href="" ng-click="">Refresh</a> | <a href="" ng-click="appStatus.logs = []">Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appStatus.logs.length><td colspan=3><em>No events have been logged...</em></td></tr><tr ng-repeat="row in appStatus.logs" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td class=ellipsis style="width: auto; overflow: hidden">{{ row.desc }}</td></tr></tbody></table></div>');
+    '<div class=container style=width:100%><span class=pull-right style="padding: 3px"><a href="" ng-click="">Refresh</a> | <a href="" ng-click="appState.logs = []">Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appState.logs.length><td colspan=3><em>No events have been logged...</em></td></tr><tr ng-repeat="row in appState.logs" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td class=ellipsis style="width: auto; overflow: hidden">{{ row.desc }}</td></tr></tbody></table></div>');
   $templateCache.put('modules/console/views/main.tpl.html',
     '<div class=console><style>.contents.docked {\n' +
     '            padding: 0 !important;\n' +
@@ -2754,7 +2919,7 @@ angular.module('prototyped.ng', [
   $templateCache.put('views/common/components/contents.tpl.html',
     '<div id=contents class=contents><div id=left class="ui-view-left ng-cloak" ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div><div id=main class=ui-view-main ui:view=main><em class=inactive-fill-text ng:if=false><i class="fa fa-spinner fa-spin"></i> Loading...</em> <b class="inactive-fill-text ng-cloak" ng:if="!(state.current.views[\'main\'] || state.current.views[\'main@\'])"><i class="fa fa-exclamation-triangle faa-flash glow-orange"></i> Page not found</b></div></div>');
   $templateCache.put('views/common/components/footer.tpl.html',
-    '<div class=footer><span class=pull-left><label class="log-group ng-cloak" ng:show="status.logs | typeCount:\'error\'"><i class="glyphicon glyphicon-exclamation-sign glow-red"></i> <a ui:sref=proto.logs class=ng-cloak>Errors ({{ status.logs | typeCount:\'error\' }})</a></label><label class="log-group ng-cloak" ng:show="status.logs | typeCount:\'warn\'"><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <a ui:sref=proto.logs class=ng-cloak>Warnings ({{ status.logs | typeCount:\'warn\' }})</a></label></span> <span ng:if=false><em><i class="fa fa-spinner fa-spin"></i> Loading...</em></span> <span ng:if=true class=ng-cloak>Client Version: <span app:version><em>Loading...</em></span> |</span> <span ui:view=foot>Powered by <a href="https://angularjs.org/">AngularJS</a> <span ng:if=appNode.active class=ng-cloak>&amp; <a href=https://github.com/rogerwang/node-webkit>Node Webkit</a></span></span> <span ng:if=startAt class=ng-cloak>| Started {{ startAt | fromNow }}</span></div>');
+    '<div class=footer><span class=pull-left><label class="log-group ng-cloak" ng:show="appState.logs | typeCount:\'error\'"><i class="glyphicon glyphicon-exclamation-sign glow-red"></i> <a ui:sref=proto.logs class=ng-cloak>Errors ({{ appState.logs | typeCount:\'error\' }})</a></label><label class="log-group ng-cloak" ng:show="appState.logs | typeCount:\'warn\'"><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <a ui:sref=proto.logs class=ng-cloak>Warnings ({{ appState.logs | typeCount:\'warn\' }})</a></label></span> <span ng:if=false><em><i class="fa fa-spinner fa-spin"></i> Loading...</em></span> <span ng:if=true class=ng-cloak>Client Version: <span app:version><em>Loading...</em></span> |</span> <span ui:view=foot>Powered by <a href="https://angularjs.org/">AngularJS</a> <span ng:if=appNode.active class=ng-cloak>&amp; <a href=https://github.com/rogerwang/node-webkit>Node Webkit</a></span></span> <span ng:if=startAt class=ng-cloak>| Started {{ startAt | fromNow }}</span></div>');
   $templateCache.put('views/common/components/left.tpl.html',
     '<div id=left ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div>');
   $templateCache.put('views/common/components/menu.tpl.html',
@@ -2764,7 +2929,7 @@ angular.module('prototyped.ng', [
   $templateCache.put('views/common/sandbox/footer.tpl.html',
     '<div class=bottom-spacer><div class=mask></div><div style="padding: 6px; text-align:center; z-index: 1000"><div dom:replace ng:include="\'views/common/components/footer.tpl.html\'"></div></div></div>');
   $templateCache.put('views/common/sandbox/menu.tpl.html',
-    '<div class="top-menu dragable"><div class="top-div pull-left"><div><div ui:view=menu><ul class="nav navbar-nav pull-right"><li ui:sref-active=hidden><a ui:sref=default><i class="fa fa-chevron-left"></i></a></li><li ui:sref-active=open ng:repeat="route in appConfig.routers | orderBy:\'(priority || 1)\'" ng:if="route.menuitem && (!route.visible || route.visible())"><a ng:if=route.menuitem.state ui:sref="{{ route.menuitem.state }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a> <a ng:if=!route.menuitem.state ng:href="{{ route.url }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a></li></ul></div></div></div><div class="top-div pull-right"><ul class="nav navbar-nav pull-left"><li ui:sref-active=open class=disabled><a ui:sref=settings ng:disabled>Settings</a></li></ul></div></div><div class=top-spacer><div class=mask></div><a class=top-spacer-icon href=""><i class="fa fa-2x" ng:class="status.getIcon() + \' \' + status.getColor()"></i></a></div>');
+    '<div class="top-menu dragable"><div class="top-div pull-left"><div><div ui:view=menu><ul class="nav navbar-nav pull-right"><li ui:sref-active=hidden><a ui:sref=default><i class="fa fa-chevron-left"></i></a></li><li ui:sref-active=open ng:repeat="route in appConfig.routers | orderBy:\'(priority || 1)\'" ng:if="route.menuitem && (!route.visible || route.visible())"><a ng:if=route.menuitem.state ui:sref="{{ route.menuitem.state }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a> <a ng:if=!route.menuitem.state ng:href="{{ route.url }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a></li></ul></div></div></div><div class="top-div pull-right"><ul class="nav navbar-nav pull-left"><li ui:sref-active=open class=disabled><a ui:sref=settings ng:disabled>Settings</a></li></ul></div></div><div class=top-spacer><div class=mask></div><a class=top-spacer-icon href=""><i class="fa fa-2x" ng:class="appState.getIcon() + \' \' + appState.getColor()"></i></a></div>');
   $templateCache.put('views/default.tpl.html',
     '<div id=cardViewer class="docked float-left card-view card-view-x"><style resx:import=assets/css/prototyped.min.css></style><style>.contents {\n' +
     '            margin: 0 !important;\n' +
@@ -2772,9 +2937,9 @@ angular.module('prototyped.ng', [
     '            background: #E0E0E0!important;\n' +
     '        }</style><div class="slider docked"><a class="arrow prev" href="" ng-show=false ng-click=showPrev()><i class="glyphicon glyphicon-chevron-left"></i></a> <a class="arrow next" href="" ng-show=false ng-click=showNext()><i class="glyphicon glyphicon-chevron-right"></i></a><div class=boxed><a class="card fixed-width slide" ng-class="{ \'inactive-gray-25\': route.cardview.ready === false }" ng-repeat="route in pages | orderBy:\'(priority || 1)\'" ng-if="route.cardview && (!route.visible || route.visible())" ng-href={{route.url}} ng-class="{ \'active\': isActive($index) }" ng-swipe-right=showPrev() ng-swipe-left=showNext()><div class=card-image ng-class=route.cardview.style><div class=banner></div><h2>{{route.cardview.title}}</h2></div><p>{{route.cardview.desc}}</p></a></div><ul class="small-only slider-nav"><li ng-repeat="page in pages" ng-class="{\'active\':isActive($index)}"><a href="" ng-click=showPhoto($index); title={{page.title}}><i class="glyphicon glyphicon-file"></i></a></li></ul></div></div>');
   $templateCache.put('views/explore/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-info-circle"></i>&nbsp; Explorer Home</a></li><li class=list-group-item style="padding: 0 0 6px"><abn:tree tree-data=navigation.getTreeData() icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus"></abn:tree></li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.browser><i class="fa fa-cogs"></i>&nbsp; Browser</a></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-info-circle"></i>&nbsp; Site Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if=navigation.getTreeData()><abn:tree tree-data=navigation.getTreeData() icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
   $templateCache.put('views/explore/main.tpl.html',
-    '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail>...</div></div>');
+    '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail ng-if=exploreCtrl.selected><br><br>{{ exploreCtrl.navigation.selected }}<div class=row><div class=col-md-9><form class=form-horizontal><div class=form-group><label for=inputState class="col-sm-2 control-label">State</label><div class=col-sm-10><input class=form-control id=inputState placeholder=empty ng-model=exploreCtrl.selected.name readonly></div></div><div class=form-group><label for=inputPath class="col-sm-2 control-label">Path</label><div class=col-sm-10><input class=form-control id=inputPath placeholder="not set" ng-model=exploreCtrl.selected.url readonly></div></div><div class=form-group><div class="col-sm-offset-2 col-sm-10"><div class=checkbox><label><input type=checkbox ng-model=exploreCtrl.selected.abstract> Abstract</label></div></div></div><div class=form-group ng-if=exploreCtrl.selected.name><div class="col-sm-offset-2 col-sm-10"><a class="btn btn-default" ng-class="{ \'btn-primary\': !exploreCtrl.selected.abstract }" ui-sref="{{ exploreCtrl.selected.name }}" ng-disabled=exploreCtrl.selected.abstract>Got to page</a></div></div></form></div><div class=col-md-3>{{ exploreCtrl.selection.views }}</div></div></div></div>');
 }]);
 ;angular.module('prototyped.ng.styles', []).run(['$templateCache', function($templateCache) { 
   'use strict';
@@ -2795,7 +2960,7 @@ angular.module('prototyped.ng', [
 
 
   $templateCache.put('assets/css/sandbox.min.css',
-    "@import url(https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css);@import url(https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.2.0/animate.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css);body{color:#333;font-size:11px;font-family:Verdana,Geneva,Tahoma,sans-serif;display:flex;flex-direction:column}#menu{margin:6px;padding:3px;display:block}#menu ul{margin:0;padding:0}#menu ul li{margin:0;padding:0;display:inline;list-style:none}#menu ul li a{text-decoration:none}#contents{display:flex;flex-direction:row;min-height:520px}#left{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:210px}#main{margin:6px;padding:3px;flex-grow:1;flex-shrink:1}#main h2{margin:0;padding:3px 0;font-size:18px;font-weight:700}#main h5{margin:0 0 6px;padding:3px;border-bottom:solid 1px #f2f2f2;font-weight:bolder}#main h5 small{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#main hr{margin:8px 0}#main .centered{text-align:center}#footer{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:24px;border:dotted 1px gray}body .top-menu{top:0;left:0;right:0;position:absolute;max-height:32px;overflow:hidden;background-color:#FFF}body .top-menu a{padding:6px 12px}body .top-menu .top-div{width:50%;padding:0 32px;margin:0}body .top-menu .top-div .nav.navbar-nav{float:right}body .top-spacer{width:100%;margin:32px auto 0;position:absolute}body .top-spacer .mask{overflow:hidden;height:20px}body .top-spacer .mask:after{content:'';display:block;margin:-28px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}body .top-spacer .top-spacer-icon{width:50px;height:50px;position:absolute;bottom:100%;margin-bottom:-25px;left:50%;margin-left:-25px;border-radius:100%;box-shadow:0 2px 4px #999;background:#fff;z-index:200}body .top-spacer .top-spacer-icon i{position:absolute;top:4px;bottom:4px;left:4px;right:4px;border-radius:100%;border:1px dashed #aaa;text-align:center;line-height:40px;font-style:normal;color:#999;z-index:1000}body .main-view-area{position:absolute;top:32px;left:0;right:0;bottom:24px}body .main-view-area .contents{width:100%;height:100%}body .main-view-area .ui-view-left{border-right:dotted 1px #ddd}body .ui-view-left .list-group-item.active{color:#000;background-color:#d8e1e8}body .ui-view-main{overflow:auto}body .vertical-spacer{width:200px;left:0;top:32px;bottom:16px;position:absolute;display:block;overflow:auto}body .vertical-spacer .mask{overflow:hidden;width:20px;height:100%}body .vertical-spacer.left .mask:after{content:'';display:block;margin-left:-20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .vertical-spacer.right .mask{float:right}body .vertical-spacer.right .mask:before{content:'';display:block;margin-left:20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .main-contents{top:32px;left:200px;right:0;bottom:16px;position:absolute;z-index:100;overflow:auto}body .bottom-spacer{bottom:0;margin:0;padding:0;font-size:10px;color:gray;width:100%;height:24px;position:fixed;background-color:#FFF;z-index:200}body .bottom-spacer .mask{margin:0 auto;overflow:hidden;height:24px;width:100%;position:absolute}body .bottom-spacer .mask:after{content:'';display:block;margin:-25px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}"
+    "@import url(https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css);@import url(https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.2.0/animate.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css);body{color:#333;font-size:11px;font-family:Verdana,Geneva,Tahoma,sans-serif;display:flex;flex-direction:column}#menu{margin:6px;padding:3px;display:block}#menu ul{margin:0;padding:0}#menu ul li{margin:0;padding:0;display:inline;list-style:none}#menu ul li a{text-decoration:none}#contents{display:flex;flex-direction:row;min-height:520px}#left{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:210px}#main{margin:6px;padding:3px;flex-grow:1;flex-shrink:1}#main h2{margin:0;padding:3px 0;font-size:18px;font-weight:700}#main h5{margin:0 0 6px;padding:3px;border-bottom:solid 1px #f2f2f2;font-weight:bolder}#main h5 small{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#main hr{margin:8px 0}#main .centered{text-align:center}#footer{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:24px;border:dotted 1px gray}body .top-menu{top:0;left:0;right:0;position:absolute;max-height:32px;overflow:hidden;background-color:#FFF}body .top-menu a{padding:6px 12px;color:#000}body .top-menu .top-div{width:50%;padding:0 32px;margin:0}body .top-menu .top-div .nav.navbar-nav{float:right}body .top-spacer{width:100%;margin:32px auto 0;position:absolute}body .top-spacer .mask{overflow:hidden;height:20px}body .top-spacer .mask:after{content:'';display:block;margin:-28px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}body .top-spacer .top-spacer-icon{width:50px;height:50px;position:absolute;bottom:100%;margin-bottom:-25px;left:50%;margin-left:-25px;border-radius:100%;box-shadow:0 2px 4px #999;background:#fff;z-index:200}body .top-spacer .top-spacer-icon i{position:absolute;top:4px;bottom:4px;left:4px;right:4px;border-radius:100%;border:1px dashed #aaa;text-align:center;line-height:40px;font-style:normal;color:#999;z-index:1000}body .main-view-area{position:absolute;top:32px;left:0;right:0;bottom:24px}body .main-view-area .contents{width:100%;height:100%}body .main-view-area .ui-view-left{border-right:dotted 1px #ddd}body .ui-view-left .list-group-item.active{color:#000;background-color:#d8e1e8}body .ui-view-left .nav-pills>li.active>a,body .ui-view-left .nav-pills>li.active>a:focus,body .ui-view-left .nav-pills>li.active>a:hover{color:#000;background-color:#d8e1e8;border-radius:0}body .ui-view-main{overflow:auto}body .vertical-spacer{width:200px;left:0;top:32px;bottom:16px;position:absolute;display:block;overflow:auto}body .vertical-spacer .mask{overflow:hidden;width:20px;height:100%}body .vertical-spacer.left .mask:after{content:'';display:block;margin-left:-20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .vertical-spacer.right .mask{float:right}body .vertical-spacer.right .mask:before{content:'';display:block;margin-left:20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .main-contents{top:32px;left:200px;right:0;bottom:16px;position:absolute;z-index:100;overflow:auto}body .bottom-spacer{bottom:0;margin:0;padding:0;font-size:10px;color:gray;width:100%;height:24px;position:fixed;background-color:#FFF;z-index:200}body .bottom-spacer .mask{margin:0 auto;overflow:hidden;height:24px;width:100%;position:absolute}body .bottom-spacer .mask:after{content:'';display:block;margin:-25px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}"
   );
 
 

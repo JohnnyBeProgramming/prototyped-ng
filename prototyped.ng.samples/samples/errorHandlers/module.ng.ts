@@ -41,11 +41,10 @@ angular.module('prototyped.ng.samples.errorHandlers', [
 
     .service('ravenService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.raven.RavenService])
     .service('googleErrorService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.google.GoogleErrorService])
-    .service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'appStatus', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService])
+    .service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'appState', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService])
 
-    .controller('errorHandlersController', ['$rootScope', '$scope', 'appStatus', function ($rootScope, $scope, appStatus) {
-        $scope.appStatus = appStatus;
-        $scope.$watch('appStatus.logs.length', function () {
+    .controller('errorHandlersController', ['$rootScope', '$scope', function ($rootScope, $scope) {
+        $scope.$watch('appState.logs.length', function () {
             $rootScope.$applyAsync(() => {});
         });
     }])
@@ -76,9 +75,8 @@ angular.module('prototyped.ng.samples.errorHandlers', [
 
     }])
 
-    .run(['$rootScope', 'appStatus', 'sampleErrorService', function ($rootScope, appStatus, sampleErrorService) {
+    .run(['$rootScope', 'sampleErrorService', function ($rootScope, sampleErrorService) {
         angular.extend($rootScope, {
-            appStatus: appStatus,
             sampleErrors: sampleErrorService,
         });
     }])

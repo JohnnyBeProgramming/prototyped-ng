@@ -1,3 +1,664 @@
+/// <reference path="../../imports.d.ts" />
+angular.module('prototyped.about', [
+    'prototyped.ng.views',
+    'prototyped.ng.styles',
+    'ui.router'
+]).config([
+    '$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
+        // Define redirects
+        $urlRouterProvider.when('/about', '/about/info');
+
+        // Define the UI states
+        $stateProvider.state('about', {
+            url: '/about',
+            abstract: true
+        }).state('about.info', {
+            url: '/info',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/info.tpl.html',
+                    controller: 'AboutInfoController'
+                }
+            }
+        }).state('about.online', {
+            url: '^/contact',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': { templateUrl: 'views/about/contact.tpl.html' }
+            }
+        }).state('about.conection', {
+            url: '/conection',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/connections.tpl.html',
+                    controller: 'AboutConnectionController'
+                }
+            }
+        });
+    }]).controller('AboutInfoController', [
+    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
+        function css(a) {
+            var sheets = document.styleSheets, o = [];
+            for (var i in sheets) {
+                var rules = sheets[i].rules || sheets[i].cssRules;
+                for (var r in rules) {
+                    if (a.is(rules[r].selectorText)) {
+                        o.push(rules[r].selectorText);
+                    }
+                }
+            }
+            return o;
+        }
+
+        function selectorExists(selector) {
+            return false;
+            //var ret = css($(selector));
+            //return ret;
+        }
+
+        function getVersionInfo(ident) {
+            try  {
+                if (typeof process !== 'undefined' && process.versions) {
+                    return process.versions[ident];
+                }
+            } catch (ex) {
+            }
+            return null;
+        }
+
+        // Define a function to detect the capabilities
+        $scope.detectBrowserInfo = function () {
+            var info = {
+                about: null,
+                versions: {
+                    ie: null,
+                    html: null,
+                    jqry: null,
+                    css: null,
+                    js: null,
+                    ng: null,
+                    nw: null,
+                    njs: null,
+                    v8: null,
+                    openssl: null,
+                    chromium: null
+                },
+                detects: {
+                    jqry: false,
+                    less: false,
+                    bootstrap: false,
+                    ngAnimate: false,
+                    ngUiRouter: false,
+                    ngUiUtils: false,
+                    ngUiBootstrap: false
+                },
+                css: {
+                    boostrap2: null,
+                    boostrap3: null
+                },
+                codeName: navigator.appCodeName,
+                userAgent: navigator.userAgent
+            };
+
+            try  {
+                // Get IE version (if defined)
+                if (!!window['ActiveXObject']) {
+                    info.versions.ie = 10;
+                }
+
+                // Sanitize codeName and userAgentt
+                var cn = info.codeName;
+                var ua = info.userAgent;
+                if (ua) {
+                    // Remove start of string in UAgent upto CName or end of string if not found.
+                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
+
+                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
+                    ua = ua.substring(cn.length);
+
+                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
+                        ua = ua.substring(1);
+                    }
+
+                    // Remove the end of the string from first characrer that is not a number or point etc.
+                    var pointer = 0;
+                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
+                        pointer = pointer + 1;
+                    }
+                    ua = ua.substring(0, pointer);
+
+                    if (!window.isNaN(ua)) {
+                        if (parseInt(ua) > 0) {
+                            info.versions.html = ua;
+                        }
+                        if (parseFloat(ua) >= 5) {
+                            info.versions.css = '3.x';
+                            info.versions.js = '5.x';
+                        }
+                    }
+                }
+                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
+                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
+                info.versions.nw = getVersionInfo('node-webkit');
+                info.versions.njs = getVersionInfo('node');
+                info.versions.v8 = getVersionInfo('v8');
+                info.versions.openssl = getVersionInfo('openssl');
+                info.versions.chromium = getVersionInfo('chromium');
+
+                // Check for CSS extensions
+                info.css.boostrap2 = selectorExists('hero-unit');
+                info.css.boostrap3 = selectorExists('jumbotron');
+
+                // Detect selected features and availability
+                info.about = {
+                    protocol: $location.$$protocol,
+                    browser: {},
+                    server: {
+                        active: undefined,
+                        url: $location.$$absUrl
+                    },
+                    os: {},
+                    hdd: { type: null }
+                };
+
+                // Detect the operating system
+                var osName = 'Unknown OS';
+                var appVer = navigator.appVersion;
+                if (appVer) {
+                    if (appVer.indexOf("Win") != -1)
+                        osName = 'Windows';
+                    if (appVer.indexOf("Mac") != -1)
+                        osName = 'MacOS';
+                    if (appVer.indexOf("X11") != -1)
+                        osName = 'UNIX';
+                    if (appVer.indexOf("Linux") != -1)
+                        osName = 'Linux';
+                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
+                }
+                info.about.os.name = osName;
+
+                // Check for jQuery
+                info.detects.jqry = typeof jQuery !== 'undefined';
+
+                // Check for general header and body scripts
+                $("script").each(function () {
+                    var src = $(this).attr("src");
+                    if (src) {
+                        // Fast check on known script names
+                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
+                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
+                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
+                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
+                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
+                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
+                    }
+                });
+
+                // Get the client browser details (build a url string)
+                var detectUrl = (function () {
+                    var p = [], w = window, d = document, e = 0, f = 0;
+                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
+                    e |= w.ActiveXObject ? 1 : 0;
+                    e |= w.opera ? 2 : 0;
+                    e |= w.chrome ? 4 : 0;
+                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
+                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
+                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
+                    p.push('e=' + e);
+                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
+                    f |= 'WebSocket' in w ? 2 : 0;
+                    f |= w.Worker ? 4 : 0;
+                    f |= w.applicationCache ? 8 : 0;
+                    f |= w.history && history.pushState ? 16 : 0;
+                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
+                    f |= 'FileReader' in w ? 64 : 0;
+                    p.push('f=' + f);
+                    p.push('r=' + Math.random().toString(36).substring(7));
+                    p.push('w=' + screen.width);
+                    p.push('h=' + screen.height);
+                    var s = d.createElement('script');
+                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
+                })();
+
+                // Send a loaded package to a server to detect more features
+                $.getScript(detectUrl).done(function (script, textStatus) {
+                    $rootScope.$applyAsync(function () {
+                        // Browser info and details loaded
+                        var browserInfo = new window.WhichBrowser();
+                        angular.extend(info.about, browserInfo);
+                    });
+                }).fail(function (jqxhr, settings, exception) {
+                    console.error(exception);
+                });
+
+                // Set browser name to IE (if defined)
+                if (navigator.appName == 'Microsoft Internet Explorer') {
+                    info.about.browser.name = 'Internet Explorer';
+                }
+
+                // Check if the browser supports web db's
+                var webDB = info.about.webdb = {
+                    db: null,
+                    version: '1',
+                    active: null,
+                    size: 5 * 1024 * 1024,
+                    test: function (name, desc, dbVer, dbSize) {
+                        try  {
+                            // Try and open a web db
+                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
+                            webDB.onSuccess(null, null);
+                        } catch (ex) {
+                            // Nope, something went wrong
+                            webDB.onError(null, null);
+                        }
+                    },
+                    onSuccess: function (tx, r) {
+                        if (tx) {
+                            if (r) {
+                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
+                            }
+                            if (tx) {
+                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
+                            }
+                        }
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = true;
+                            webDB.used = JSON.stringify(webDB.db).length;
+                        });
+                    },
+                    onError: function (tx, e) {
+                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = false;
+                        });
+                    }
+                };
+                info.about.webdb.test();
+            } catch (ex) {
+                console.error(ex);
+            }
+
+            // Return the preliminary info
+            return info;
+        };
+
+        // Define the state
+        $scope.info = $scope.detectBrowserInfo();
+    }]).controller('AboutConnectionController', [
+    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
+        $scope.result = null;
+        $scope.status = null;
+        $scope.state = {
+            editMode: false,
+            location: $location.$$absUrl,
+            protocol: $location.$$protocol,
+            requireHttps: ($location.$$protocol == 'https')
+        };
+        $scope.detect = function () {
+            var target = $scope.state.location;
+            var started = Date.now();
+            $scope.result = null;
+            $scope.latency = null;
+            $scope.status = { code: 0, desc: '', style: 'label-default' };
+            $.ajax({
+                url: target,
+                crossDomain: true,
+                /*
+                username: 'user',
+                password: 'pass',
+                xhrFields: {
+                withCredentials: true
+                }
+                */
+                beforeSend: function (xhr) {
+                    $timeout(function () {
+                        //$scope.status.code = xhr.status;
+                        $scope.status.desc = 'sending';
+                        $scope.status.style = 'label-info';
+                    });
+                },
+                success: function (data, textStatus, xhr) {
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-success';
+                        $scope.result = {
+                            valid: true,
+                            info: data,
+                            sent: started,
+                            received: Date.now()
+                        };
+                    });
+                },
+                error: function (xhr, textStatus, error) {
+                    xhr.ex = error;
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-danger';
+                        $scope.result = {
+                            valid: false,
+                            info: xhr,
+                            sent: started,
+                            error: xhr.statusText,
+                            received: Date.now()
+                        };
+                    });
+                },
+                complete: function (xhr, textStatus) {
+                    console.debug(' - Status Code: ' + xhr.status);
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                    });
+                }
+            }).always(function (xhr) {
+                $timeout(function () {
+                    $scope.latency = $scope.getLatencyInfo();
+                });
+            });
+        };
+        $scope.setProtocol = function (protocol) {
+            var val = $scope.state.location;
+            var pos = val.indexOf('://');
+            if (pos > 0) {
+                val = protocol + val.substring(pos);
+            }
+            $scope.state.protocol = protocol;
+            $scope.state.location = val;
+            $scope.detect();
+        };
+        $scope.getProtocolStyle = function (protocol, activeStyle) {
+            var cssRes = '';
+            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
+            if (isValid) {
+                if (!$scope.result) {
+                    cssRes += 'btn-primary';
+                } else if ($scope.result.valid && activeStyle) {
+                    cssRes += activeStyle;
+                } else if ($scope.result) {
+                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
+                }
+            }
+            return cssRes;
+        };
+        $scope.getStatusIcon = function (activeStyle) {
+            var cssRes = '';
+            if (!$scope.result) {
+                cssRes += 'glyphicon-refresh';
+            } else if (activeStyle && $scope.result.valid) {
+                cssRes += activeStyle;
+            } else {
+                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
+            }
+            return cssRes;
+        };
+        $scope.submitForm = function () {
+            $scope.state.editMode = false;
+            if ($scope.state.requireHttps) {
+                $scope.setProtocol('https');
+            } else {
+                $scope.detect();
+            }
+        };
+        $scope.getStatusColor = function () {
+            var cssRes = $scope.getStatusIcon() + ' ';
+            if (!$scope.result) {
+                cssRes += 'busy';
+            } else if ($scope.result.valid) {
+                cssRes += 'success';
+            } else {
+                cssRes += 'error';
+            }
+            return cssRes;
+        };
+        $scope.getLatencyInfo = function () {
+            var cssNone = 'text-muted';
+            var cssHigh = 'text-success';
+            var cssMedium = 'text-warning';
+            var cssLow = 'text-danger';
+            var info = {
+                desc: '',
+                style: cssNone
+            };
+
+            if (!$scope.result) {
+                return info;
+            }
+
+            if (!$scope.result.valid) {
+                info.style = 'text-muted';
+                info.desc = 'Connection Failed';
+                return info;
+            }
+
+            var totalMs = $scope.result.received - $scope.result.sent;
+            if (totalMs > 2 * 60 * 1000) {
+                info.style = cssNone;
+                info.desc = 'Timed out';
+            } else if (totalMs > 1 * 60 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Impossibly slow';
+            } else if (totalMs > 30 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Very slow';
+            } else if (totalMs > 1 * 1000) {
+                info.style = cssMedium;
+                info.desc = 'Relatively slow';
+            } else if (totalMs > 500) {
+                info.style = cssMedium;
+                info.desc = 'Moderately slow';
+            } else if (totalMs > 250) {
+                info.style = cssMedium;
+                info.desc = 'Barely Responsive';
+            } else if (totalMs > 150) {
+                info.style = cssHigh;
+                info.desc = 'Average Response Time';
+            } else if (totalMs > 50) {
+                info.style = cssHigh;
+                info.desc = 'Responsive Enough';
+            } else if (totalMs > 15) {
+                info.style = cssHigh;
+                info.desc = 'Very Responsive';
+            } else {
+                info.style = cssHigh;
+                info.desc = 'Optimal';
+            }
+            return info;
+        };
+    }]);
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (common) {
+            var AppNodeProvider = (function () {
+                function AppNodeProvider() {
+                    this.appNode = new AppNode();
+                }
+                AppNodeProvider.prototype.$get = function () {
+                    return this.appNode;
+                };
+                return AppNodeProvider;
+            })();
+            common.AppNodeProvider = AppNodeProvider;
+
+            var AppNode = (function () {
+                function AppNode() {
+                    this.active = typeof require !== 'undefined';
+                }
+                Object.defineProperty(AppNode.prototype, "gui", {
+                    get: function () {
+                        return this.active ? this.ui() : null;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(AppNode.prototype, "window", {
+                    get: function () {
+                        return this.active ? this.win() : null;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+
+                AppNode.prototype.ui = function () {
+                    if (this.active) {
+                        return require('nw.gui');
+                    }
+                    return null;
+                };
+
+                AppNode.prototype.win = function () {
+                    if (this.gui) {
+                        var win = this.gui.Window.get();
+                        return win;
+                    }
+                    return null;
+                };
+
+                AppNode.prototype.reload = function () {
+                    var win = this.window;
+                    if (win) {
+                        win.reloadIgnoringCache();
+                    }
+                };
+
+                AppNode.prototype.close = function () {
+                    var win = this.window;
+                    if (win) {
+                        win.close();
+                    }
+                };
+
+                AppNode.prototype.debug = function () {
+                    var win = this.window;
+                    if (win.isDevToolsOpen()) {
+                        win.closeDevTools();
+                    } else {
+                        win.showDevTools();
+                    }
+                };
+
+                AppNode.prototype.toggleFullscreen = function () {
+                    var win = this.window;
+                    if (win) {
+                        win.toggleFullscreen();
+                    }
+                };
+
+                AppNode.prototype.kiosMode = function () {
+                    var win = this.window;
+                    if (win) {
+                        win.toggleKioskMode();
+                    }
+                };
+                return AppNode;
+            })();
+            common.AppNode = AppNode;
+        })(ng.common || (ng.common = {}));
+        var common = ng.common;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (common) {
+            var AppStateProvider = (function () {
+                function AppStateProvider($stateProvider, appConfigProvider, appNodeProvider) {
+                    this.$stateProvider = $stateProvider;
+                    this.appConfigProvider = appConfigProvider;
+                    this.appNodeProvider = appNodeProvider;
+                    var appConfig = appConfigProvider.$get();
+                    this.appState = new AppState($stateProvider, appNodeProvider, appConfig);
+                    this.appState.debug = appConfig.debug || false;
+                }
+                AppStateProvider.prototype.$get = function () {
+                    return this.appState;
+                };
+                return AppStateProvider;
+            })();
+            common.AppStateProvider = AppStateProvider;
+
+            var AppState = (function () {
+                /*
+                public show: {
+                all: true,
+                log: false,
+                info: true,
+                warn: true,
+                error: true,
+                debug: false,
+                },
+                */
+                function AppState($stateProvider, appNodeProvider, appConfig) {
+                    this.$stateProvider = $stateProvider;
+                    this.appNodeProvider = appNodeProvider;
+                    this.appConfig = appConfig;
+                    this.logs = [];
+                    this.html5 = true;
+                    this.title = appConfig.title || 'Prototyped';
+                    this.version = appConfig.version || '1.0.0';
+                    this.node = appNodeProvider.$get();
+                    this.current = {
+                        state: null
+                    };
+                }
+                AppState.prototype.getIcon = function () {
+                    var icon = (this.node.active) ? 'fa fa-desktop' : 'fa fa-cube';
+                    var match = /\/!(\w+)!/i.exec(this.proxy || '');
+                    if (match && match.length > 1) {
+                        switch (match[1]) {
+                            case 'test':
+                                return 'fa fa-puzzle-piece glow-blue animate-glow';
+                            case 'debug':
+                                return 'fa fa-bug glow-orange animate-glow';
+                        }
+                    }
+
+                    if (this.current && this.current.state) {
+                        var currentState = this.current.state.name;
+                        this.appConfig.routers.forEach(function (itm, i) {
+                            if (itm.menuitem && itm.menuitem.state == currentState) {
+                                icon = itm.menuitem.icon;
+                            }
+                        });
+                    }
+                    return icon;
+                };
+
+                AppState.prototype.getColor = function () {
+                    var logs = this.logs;
+                    if (logs.some(function (val, i, array) {
+                        return val.type == 'error';
+                    })) {
+                        return 'glow-red';
+                    }
+                    if (logs.some(function (val, i, array) {
+                        return val.type == 'warn';
+                    })) {
+                        return 'glow-orange';
+                    }
+                    if (logs.some(function (val, i, array) {
+                        return val.type == 'info';
+                    })) {
+                        return 'glow-blue';
+                    }
+                    if (this.node.active) {
+                        return 'glow-green';
+                    }
+                    return '';
+                };
+                return AppState;
+            })();
+            common.AppState = AppState;
+        })(ng.common || (ng.common = {}));
+        var common = ng.common;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../imports.d.ts" />
 // Constant object with default values
 angular.module('prototyped.ng.config', []).constant('appDefaultConfig', {
@@ -601,309 +1262,442 @@ angular.module('prototyped.editor', [
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
-    (function (explorer) {
-        var AddressBarController = (function () {
-            function AddressBarController($rootScope, $scope, $q) {
-                var _this = this;
-                this.$rootScope = $rootScope;
-                this.$scope = $scope;
-                this.$q = $q;
-                this.history = [];
-                $scope.busy = true;
-                try  {
-                    // Initialise the address bar
-                    var elem = $('#addressbar');
-                    if (elem) {
-                        this.init(elem);
+    (function (ng) {
+        (function (explorer) {
+            var AddressBarController = (function () {
+                function AddressBarController($rootScope, $scope, $q) {
+                    var _this = this;
+                    this.$rootScope = $rootScope;
+                    this.$scope = $scope;
+                    this.$q = $q;
+                    this.history = [];
+                    $scope.busy = true;
+                    try  {
+                        // Initialise the address bar
+                        var elem = $('#addressbar');
+                        if (elem) {
+                            this.init(elem);
 
-                        this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
-                            if (folder != _this.$scope.dir_path) {
-                                console.warn(' - Addressbar Navigate: ', folder);
-                                _this.$scope.dir_path = folder;
-                                _this.navigate(folder);
-                            }
-                        });
-                    } else {
-                        throw new Error('Element with id "addressbar" not found...');
-                    }
-                } catch (ex) {
-                    // Initialisation failed
-                    console.error(ex);
-                }
-                $scope.busy = false;
-            }
-            AddressBarController.prototype.init = function (element) {
-                // Set the target HTML element
-                this.element = element;
-
-                // Generate the current folder parts
-                this.generateOutput('./');
-            };
-
-            AddressBarController.prototype.openFolder = function (path) {
-                try  {
-                    var nwGui = 'nw.gui';
-                    var gui = require(nwGui);
-                    if (!$.isEmptyObject(gui)) {
-                        console.debug(' - Opening Folder: ' + path);
-                        gui.Shell.openItem(path + '/');
-                    }
-                } catch (ex) {
-                    console.error(ex);
-                }
-                this.generateOutput(path);
-            };
-
-            AddressBarController.prototype.navigate = function (path) {
-                this.generateOutput(path);
-            };
-
-            AddressBarController.prototype.select = function (file) {
-                console.info(' - select: ', file);
-                try  {
-                    var req = 'nw.gui';
-                    var gui = require(req);
-                    gui.Shell.openItem(file);
-                } catch (ex) {
-                    console.error(ex);
-                }
-            };
-
-            AddressBarController.prototype.back = function () {
-                var len = this.history ? this.history.length : -1;
-                if (len > 1) {
-                    var last = this.history[len - 2];
-                    this.history = this.history.splice(0, len - 2);
-                    this.generateOutput(last);
-                }
-            };
-
-            AddressBarController.prototype.hasHistory = function () {
-                var len = this.history ? this.history.length : -1;
-                return (len > 1);
-            };
-
-            AddressBarController.prototype.generateOutput = function (dir_path) {
-                // Set the current dir path
-                this.$scope.dir_path = dir_path;
-                this.$scope.dir_parts = this.generatePaths(dir_path);
-                this.history.push(dir_path);
-
-                // Breadcast event that path has changed
-                this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
-            };
-
-            AddressBarController.prototype.generatePaths = function (dir_path) {
-                try  {
-                    // Get dependecies
-                    var path = require('path');
-
-                    // Update current path
-                    this.$scope.dir_path = dir_path = path.resolve(dir_path);
-
-                    // Try and normalize the folder path
-                    var curr = path.normalize(dir_path);
-                    if (curr) {
-                        // Split path into separate elements
-                        var sequence = curr.split(path.sep);
-                        var result = [];
-
-                        var i = 0;
-                        for (; i < sequence.length; ++i) {
-                            result.push({
-                                name: sequence[i],
-                                path: sequence.slice(0, 1 + i).join(path.sep)
+                            this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                                if (folder != _this.$scope.dir_path) {
+                                    console.warn(' - Addressbar Navigate: ', folder);
+                                    _this.$scope.dir_path = folder;
+                                    _this.navigate(folder);
+                                }
                             });
+                        } else {
+                            throw new Error('Element with id "addressbar" not found...');
                         }
-
-                        // Add root for unix
-                        if (sequence[0] == '' && process.platform != 'win32') {
-                            result[0] = {
-                                name: 'root',
-                                path: '/'
-                            };
-                        }
-
-                        // Return thepath sequences
-                        return { sequence: result };
+                    } catch (ex) {
+                        // Initialisation failed
+                        console.error(ex);
                     }
-                } catch (ex) {
-                    console.error(ex);
+                    $scope.busy = false;
                 }
-            };
-            return AddressBarController;
-        })();
-        explorer.AddressBarController = AddressBarController;
-    })(proto.explorer || (proto.explorer = {}));
-    var explorer = proto.explorer;
+                AddressBarController.prototype.init = function (element) {
+                    // Set the target HTML element
+                    this.element = element;
+
+                    // Generate the current folder parts
+                    this.generateOutput('./');
+                };
+
+                AddressBarController.prototype.openFolder = function (path) {
+                    try  {
+                        var nwGui = 'nw.gui';
+                        var gui = require(nwGui);
+                        if (!$.isEmptyObject(gui)) {
+                            console.debug(' - Opening Folder: ' + path);
+                            gui.Shell.openItem(path + '/');
+                        }
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                    this.generateOutput(path);
+                };
+
+                AddressBarController.prototype.navigate = function (path) {
+                    this.generateOutput(path);
+                };
+
+                AddressBarController.prototype.select = function (file) {
+                    console.info(' - select: ', file);
+                    try  {
+                        var req = 'nw.gui';
+                        var gui = require(req);
+                        gui.Shell.openItem(file);
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                };
+
+                AddressBarController.prototype.back = function () {
+                    var len = this.history ? this.history.length : -1;
+                    if (len > 1) {
+                        var last = this.history[len - 2];
+                        this.history = this.history.splice(0, len - 2);
+                        this.generateOutput(last);
+                    }
+                };
+
+                AddressBarController.prototype.hasHistory = function () {
+                    var len = this.history ? this.history.length : -1;
+                    return (len > 1);
+                };
+
+                AddressBarController.prototype.generateOutput = function (dir_path) {
+                    // Set the current dir path
+                    this.$scope.dir_path = dir_path;
+                    this.$scope.dir_parts = this.generatePaths(dir_path);
+                    this.history.push(dir_path);
+
+                    // Breadcast event that path has changed
+                    this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
+                };
+
+                AddressBarController.prototype.generatePaths = function (dir_path) {
+                    try  {
+                        // Get dependecies
+                        var path = require('path');
+
+                        // Update current path
+                        this.$scope.dir_path = dir_path = path.resolve(dir_path);
+
+                        // Try and normalize the folder path
+                        var curr = path.normalize(dir_path);
+                        if (curr) {
+                            // Split path into separate elements
+                            var sequence = curr.split(path.sep);
+                            var result = [];
+
+                            var i = 0;
+                            for (; i < sequence.length; ++i) {
+                                result.push({
+                                    name: sequence[i],
+                                    path: sequence.slice(0, 1 + i).join(path.sep)
+                                });
+                            }
+
+                            // Add root for unix
+                            if (sequence[0] == '' && process.platform != 'win32') {
+                                result[0] = {
+                                    name: 'root',
+                                    path: '/'
+                                };
+                            }
+
+                            // Return thepath sequences
+                            return { sequence: result };
+                        }
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                };
+                return AddressBarController;
+            })();
+            explorer.AddressBarController = AddressBarController;
+        })(ng.explorer || (ng.explorer = {}));
+        var explorer = ng.explorer;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
 })(proto || (proto = {}));
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
-    (function (explorer) {
-        var ExplorerController = (function () {
-            function ExplorerController($rootScope, $scope, $q) {
-                var _this = this;
-                this.$rootScope = $rootScope;
-                this.$scope = $scope;
-                this.$q = $q;
-                var dir = './';
-                try  {
-                    // Hook up to the current scope
-                    this.$scope.isBusy = true;
+    (function (ng) {
+        (function (explorer) {
+            var ExplorerController = (function () {
+                function ExplorerController($rootScope, $scope, $q) {
+                    var _this = this;
+                    this.$rootScope = $rootScope;
+                    this.$scope = $scope;
+                    this.$q = $q;
+                    var dir = './';
+                    try  {
+                        // Hook up to the current scope
+                        this.$scope.isBusy = true;
 
-                    // Initialize the cotroller
-                    this.init(dir);
+                        // Initialize the cotroller
+                        this.init(dir);
 
-                    // Hook event for when folder path changes
-                    this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
-                        if (folder != _this.$scope.dir_path) {
-                            console.warn(' - Explorer Navigate: ', folder);
-                            _this.$scope.dir_path = folder;
-                            _this.navigate(folder);
-                        }
-                    });
-                } catch (ex) {
-                    console.error(ex);
-                }
-            }
-            ExplorerController.prototype.init = function (dir) {
-                // Resolve the initial folder path
-                this.navigate(dir);
-            };
-
-            ExplorerController.prototype.navigate = function (dir_path) {
-                var _this = this;
-                var deferred = this.$q.defer();
-                try  {
-                    // Set busy flag
-                    this.$scope.isBusy = true;
-                    this.$scope.error = null;
-
-                    // Resolve the full path
-                    var path = require('path');
-                    dir_path = path.resolve(dir_path);
-
-                    // Read the folder contents (async)
-                    var fs = require('fs');
-                    fs.readdir(dir_path, function (error, files) {
-                        if (error) {
-                            deferred.reject(error);
-                            return;
-                        }
-
-                        // Split and sort results
-                        var folders = [];
-                        var lsFiles = [];
-                        for (var i = 0; i < files.sort().length; ++i) {
-                            var targ = path.join(dir_path, files[i]);
-                            var stat = _this.mimeType(targ);
-                            if (stat.type == 'folder') {
-                                folders.push(stat);
-                            } else {
-                                lsFiles.push(stat);
+                        // Hook event for when folder path changes
+                        this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                            if (folder != _this.$scope.dir_path) {
+                                console.warn(' - Explorer Navigate: ', folder);
+                                _this.$scope.dir_path = folder;
+                                _this.navigate(folder);
                             }
-                        }
-
-                        // Generate the contents
-                        var result = {
-                            path: dir_path,
-                            folders: folders,
-                            files: lsFiles
-                        };
-
-                        // Mark promise as resolved
-                        deferred.resolve(result);
-                    });
-                } catch (ex) {
-                    // Mark promise and rejected
-                    deferred.reject(ex);
+                        });
+                    } catch (ex) {
+                        console.error(ex);
+                    }
                 }
-
-                // Handle the result and error conditions
-                deferred.promise.then(function (result) {
-                    // Clear busy flag
-                    _this.$scope.isBusy = false;
-                    _this.$scope.dir_path = result.path;
-                    _this.$scope.files = result.files;
-                    _this.$scope.folders = result.folders;
-
-                    // Breadcast event that path has changed
-                    _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
-                }, function (error) {
-                    // Clear busy flag
-                    _this.$scope.isBusy = false;
-                    _this.$scope.error = error;
-                });
-
-                return deferred.promise;
-            };
-
-            ExplorerController.prototype.select = function (filePath) {
-                this.$scope.selected = filePath;
-            };
-
-            ExplorerController.prototype.open = function (filePath) {
-                var req = 'nw.gui';
-                var gui = require(req);
-                if (gui)
-                    gui.Shell.openItem(filePath);
-            };
-
-            ExplorerController.prototype.mimeType = function (filepath) {
-                var map = {
-                    'compressed': ['zip', 'rar', 'gz', '7z'],
-                    'text': ['txt', 'md', ''],
-                    'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
-                    'pdf': ['pdf'],
-                    'css': ['css'],
-                    'excel': ['csv', 'xls', 'xlsx'],
-                    'html': ['html'],
-                    'word': ['doc', 'docx'],
-                    'powerpoint': ['ppt', 'pptx'],
-                    'movie': ['mkv', 'avi', 'rmvb']
-                };
-                var cached = {};
-
-                var fs = require('fs');
-                var path = require('path');
-                var result = {
-                    name: path.basename(filepath),
-                    path: filepath,
-                    type: null
+                ExplorerController.prototype.init = function (dir) {
+                    // Resolve the initial folder path
+                    this.navigate(dir);
                 };
 
-                try  {
-                    var stat = fs.statSync(filepath);
-                    if (stat.isDirectory()) {
-                        result.type = 'folder';
-                    } else {
-                        var ext = path.extname(filepath).substr(1);
-                        result.type = cached[ext];
-                        if (!result.type) {
-                            for (var key in map) {
-                                var arr = map[key];
-                                if (arr.length > 0 && arr.indexOf(ext) >= 0) {
-                                    cached[ext] = result.type = key;
-                                    break;
+                ExplorerController.prototype.navigate = function (dir_path) {
+                    var _this = this;
+                    var deferred = this.$q.defer();
+                    try  {
+                        // Set busy flag
+                        this.$scope.isBusy = true;
+                        this.$scope.error = null;
+
+                        // Resolve the full path
+                        var path = require('path');
+                        dir_path = path.resolve(dir_path);
+
+                        // Read the folder contents (async)
+                        var fs = require('fs');
+                        fs.readdir(dir_path, function (error, files) {
+                            if (error) {
+                                deferred.reject(error);
+                                return;
+                            }
+
+                            // Split and sort results
+                            var folders = [];
+                            var lsFiles = [];
+                            for (var i = 0; i < files.sort().length; ++i) {
+                                var targ = path.join(dir_path, files[i]);
+                                var stat = _this.mimeType(targ);
+                                if (stat.type == 'folder') {
+                                    folders.push(stat);
+                                } else {
+                                    lsFiles.push(stat);
                                 }
                             }
 
-                            if (!result.type)
-                                result.type = 'blank';
+                            // Generate the contents
+                            var result = {
+                                path: dir_path,
+                                folders: folders,
+                                files: lsFiles
+                            };
+
+                            // Mark promise as resolved
+                            deferred.resolve(result);
+                        });
+                    } catch (ex) {
+                        // Mark promise and rejected
+                        deferred.reject(ex);
+                    }
+
+                    // Handle the result and error conditions
+                    deferred.promise.then(function (result) {
+                        // Clear busy flag
+                        _this.$scope.isBusy = false;
+                        _this.$scope.dir_path = result.path;
+                        _this.$scope.files = result.files;
+                        _this.$scope.folders = result.folders;
+
+                        // Breadcast event that path has changed
+                        _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
+                    }, function (error) {
+                        // Clear busy flag
+                        _this.$scope.isBusy = false;
+                        _this.$scope.error = error;
+                    });
+
+                    return deferred.promise;
+                };
+
+                ExplorerController.prototype.select = function (filePath) {
+                    this.$scope.selected = filePath;
+                };
+
+                ExplorerController.prototype.open = function (filePath) {
+                    var req = 'nw.gui';
+                    var gui = require(req);
+                    if (gui)
+                        gui.Shell.openItem(filePath);
+                };
+
+                ExplorerController.prototype.mimeType = function (filepath) {
+                    var map = {
+                        'compressed': ['zip', 'rar', 'gz', '7z'],
+                        'text': ['txt', 'md', ''],
+                        'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
+                        'pdf': ['pdf'],
+                        'css': ['css'],
+                        'excel': ['csv', 'xls', 'xlsx'],
+                        'html': ['html'],
+                        'word': ['doc', 'docx'],
+                        'powerpoint': ['ppt', 'pptx'],
+                        'movie': ['mkv', 'avi', 'rmvb']
+                    };
+                    var cached = {};
+
+                    var fs = require('fs');
+                    var path = require('path');
+                    var result = {
+                        name: path.basename(filepath),
+                        path: filepath,
+                        type: null
+                    };
+
+                    try  {
+                        var stat = fs.statSync(filepath);
+                        if (stat.isDirectory()) {
+                            result.type = 'folder';
+                        } else {
+                            var ext = path.extname(filepath).substr(1);
+                            result.type = cached[ext];
+                            if (!result.type) {
+                                for (var key in map) {
+                                    var arr = map[key];
+                                    if (arr.length > 0 && arr.indexOf(ext) >= 0) {
+                                        cached[ext] = result.type = key;
+                                        break;
+                                    }
+                                }
+
+                                if (!result.type)
+                                    result.type = 'blank';
+                            }
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+
+                    return result;
+                };
+                return ExplorerController;
+            })();
+            explorer.ExplorerController = ExplorerController;
+        })(ng.explorer || (ng.explorer = {}));
+        var explorer = ng.explorer;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (explorer) {
+            var ExplorerViewController = (function () {
+                function ExplorerViewController($rootScope, $scope, $q, navigation) {
+                    this.$rootScope = $rootScope;
+                    this.$scope = $scope;
+                    this.$q = $q;
+                    this.navigation = navigation;
+                }
+                return ExplorerViewController;
+            })();
+            explorer.ExplorerViewController = ExplorerViewController;
+        })(ng.explorer || (ng.explorer = {}));
+        var explorer = ng.explorer;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (explorer) {
+            var TreeNode = (function () {
+                function TreeNode(nodeName) {
+                    this.children = [];
+                    this.classes = [];
+                    this.label = nodeName;
+                }
+                return TreeNode;
+            })();
+            explorer.TreeNode = TreeNode;
+
+            var SiteNode = (function (_super) {
+                __extends(SiteNode, _super);
+                function SiteNode(nodeName, state) {
+                    _super.call(this, nodeName);
+                    this.state = state;
+                    this.data = state;
+                }
+                SiteNode.prototype.onSelect = function (branch) {
+                    //this.$rootScope.$broadcast('nodeSelect', this);
+                };
+                return SiteNode;
+            })(TreeNode);
+            explorer.SiteNode = SiteNode;
+
+            var SiteNavigationRoot = (function (_super) {
+                __extends(SiteNavigationRoot, _super);
+                function SiteNavigationRoot(nodeName, states) {
+                    _super.call(this, nodeName, null);
+                    this.states = states;
+                    this.stateCache = {};
+                    this.init();
+                }
+                SiteNavigationRoot.prototype.init = function () {
+                    var _this = this;
+                    this.children = [];
+                    this.states.forEach(function (state, i) {
+                        if (state.url == '^' || state.name == '') {
+                            _this.data = state; // Root node
+                        } else if (state.name.indexOf('.') < 0) {
+                            _this.addItem(_this, [state.name], state);
+                        } else {
+                            var parts = state.name.split('.');
+                            _this.addItem(_this, parts, state);
+                        }
+                    });
+                };
+
+                SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
+                    if (paths && paths.length) {
+                        var ident = paths[0];
+                        var parts = paths.splice(1);
+                        var node = this.stateCache[ident];
+                        if (!node) {
+                            node = new SiteNode(ident, null);
+                            this.stateCache[ident] = node;
+                            parentNode.children.push(node);
+                        }
+                        if (!parts.length) {
+                            node.data = state;
+                        } else {
+                            this.addItem(node, parts, state);
                         }
                     }
-                } catch (e) {
-                    console.error(e);
-                }
+                };
+                return SiteNavigationRoot;
+            })(SiteNode);
+            explorer.SiteNavigationRoot = SiteNavigationRoot;
 
-                return result;
-            };
-            return ExplorerController;
-        })();
-        explorer.ExplorerController = ExplorerController;
-    })(proto.explorer || (proto.explorer = {}));
-    var explorer = proto.explorer;
+            var NavigationService = (function () {
+                function NavigationService($state, $q) {
+                    this.$state = $state;
+                    this.$q = $q;
+                    this._treeData = [];
+                    this.init();
+                }
+                NavigationService.prototype.init = function () {
+                    this._treeData = [
+                        new proto.ng.explorer.SiteNavigationRoot('Home Page', this.$state.get())
+                    ];
+                    /*
+                    this.$rootScope.$on('nodeSelect', function (data) {
+                    console.warn('nodeSelect', data);
+                    //this.selected = data;
+                    });
+                    */
+                };
+
+                NavigationService.prototype.getTreeData = function () {
+                    return this._treeData;
+                };
+                return NavigationService;
+            })();
+            explorer.NavigationService = NavigationService;
+        })(ng.explorer || (ng.explorer = {}));
+        var explorer = ng.explorer;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
 })(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.explorer', [
@@ -913,15 +1707,31 @@ angular.module('prototyped.explorer', [
         $stateProvider.state('proto.explore', {
             url: '^/explore',
             views: {
-                'left@': { templateUrl: 'views/left.tpl.html' },
+                'left@': {
+                    templateUrl: 'views/explore/left.tpl.html',
+                    controller: [
+                        '$scope', 'navigationService', function ($scope, navigationService) {
+                            $scope.navigation = navigationService;
+                        }]
+                },
+                'main@': {
+                    templateUrl: 'views/explore/main.tpl.html',
+                    controller: 'ExplorerViewController',
+                    controllerAs: 'exploreCtrl'
+                }
+            }
+        }).state('proto.browser', {
+            url: '^/browser',
+            views: {
+                'left@': { templateUrl: 'views/explore/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/explore/views/index.tpl.html',
-                    controller: 'proto.explorer.ExplorerController',
+                    controller: 'proto.ng.explorer.ExplorerController',
                     controllerAs: 'ctrlExplorer'
                 }
             }
         });
-    }]).directive('protoAddressBar', [
+    }]).service('navigationService', ['$state', '$q', proto.ng.explorer.NavigationService]).directive('protoAddressBar', [
     '$q', function ($q) {
         return {
             restrict: 'EA',
@@ -930,549 +1740,34 @@ angular.module('prototyped.explorer', [
             },
             transclude: false,
             templateUrl: 'modules/explore/views/addressbar.tpl.html',
-            controller: 'proto.explorer.AddressBarController',
+            controller: 'proto.ng.explorer.AddressBarController',
             controllerAs: 'addrBar'
         };
-    }]).controller('proto.explorer.AddressBarController', [
+    }]).controller('proto.ng.explorer.AddressBarController', [
     '$rootScope',
     '$scope',
     '$q',
-    proto.explorer.AddressBarController
-]).controller('proto.explorer.ExplorerController', [
+    proto.ng.explorer.AddressBarController
+]).controller('proto.ng.explorer.ExplorerController', [
     '$rootScope',
     '$scope',
     '$q',
-    proto.explorer.ExplorerController
+    proto.ng.explorer.ExplorerController
+]).controller('ExplorerViewController', [
+    '$rootScope',
+    '$scope',
+    '$q',
+    'navigationService',
+    proto.ng.explorer.ExplorerViewController
 ]);
 /// <reference path="../imports.d.ts" />
-angular.module('prototyped.default', [
-    'ui.router'
-]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Now set up the states
-        $stateProvider.state('default', {
-            url: '/',
-            views: {
-                'main@': {
-                    templateUrl: 'views/default.tpl.html',
-                    controller: 'CardViewCtrl',
-                    controllerAs: 'sliderCtrl'
-                }
-            }
-        });
-    }]).controller('CardViewCtrl', [
-    '$scope', 'appConfig', function ($scope, appConfig) {
-        // Make sure 'mySiteMap' exists
-        $scope.pages = appConfig.routers || [];
-
-        // initial image index
-        $scope._Index = 0;
-
-        $scope.count = function () {
-            return $scope.pages.length;
-        };
-
-        // if a current image is the same as requested image
-        $scope.isActive = function (index) {
-            return $scope._Index === index;
-        };
-
-        // show prev image
-        $scope.showPrev = function () {
-            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
-        };
-
-        // show next image
-        $scope.showNext = function () {
-            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
-        };
-
-        // show a certain image
-        $scope.showPhoto = function (index) {
-            $scope._Index = index;
-        };
-    }]);
-/// <reference path="../../imports.d.ts" />
-angular.module('prototyped.about', [
-    'prototyped.ng.views',
-    'prototyped.ng.styles',
-    'ui.router'
-]).config([
-    '$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
-        // Define redirects
-        $urlRouterProvider.when('/about', '/about/info');
-
-        // Define the UI states
-        $stateProvider.state('about', {
-            url: '/about',
-            abstract: true
-        }).state('about.info', {
-            url: '/info',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/about/info.tpl.html',
-                    controller: 'AboutInfoController'
-                }
-            }
-        }).state('about.online', {
-            url: '^/contact',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': { templateUrl: 'views/about/contact.tpl.html' }
-            }
-        }).state('about.conection', {
-            url: '/conection',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/about/connections.tpl.html',
-                    controller: 'AboutConnectionController'
-                }
-            }
-        });
-    }]).controller('AboutInfoController', [
-    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
-        function css(a) {
-            var sheets = document.styleSheets, o = [];
-            for (var i in sheets) {
-                var rules = sheets[i].rules || sheets[i].cssRules;
-                for (var r in rules) {
-                    if (a.is(rules[r].selectorText)) {
-                        o.push(rules[r].selectorText);
-                    }
-                }
-            }
-            return o;
-        }
-
-        function selectorExists(selector) {
-            return false;
-            //var ret = css($(selector));
-            //return ret;
-        }
-
-        function getVersionInfo(ident) {
-            try  {
-                if (typeof process !== 'undefined' && process.versions) {
-                    return process.versions[ident];
-                }
-            } catch (ex) {
-            }
-            return null;
-        }
-
-        // Define a function to detect the capabilities
-        $scope.detectBrowserInfo = function () {
-            var info = {
-                about: null,
-                versions: {
-                    ie: null,
-                    html: null,
-                    jqry: null,
-                    css: null,
-                    js: null,
-                    ng: null,
-                    nw: null,
-                    njs: null,
-                    v8: null,
-                    openssl: null,
-                    chromium: null
-                },
-                detects: {
-                    jqry: false,
-                    less: false,
-                    bootstrap: false,
-                    ngAnimate: false,
-                    ngUiRouter: false,
-                    ngUiUtils: false,
-                    ngUiBootstrap: false
-                },
-                css: {
-                    boostrap2: null,
-                    boostrap3: null
-                },
-                codeName: navigator.appCodeName,
-                userAgent: navigator.userAgent
-            };
-
-            try  {
-                // Get IE version (if defined)
-                if (!!window['ActiveXObject']) {
-                    info.versions.ie = 10;
-                }
-
-                // Sanitize codeName and userAgentt
-                var cn = info.codeName;
-                var ua = info.userAgent;
-                if (ua) {
-                    // Remove start of string in UAgent upto CName or end of string if not found.
-                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
-
-                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
-                    ua = ua.substring(cn.length);
-
-                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
-                        ua = ua.substring(1);
-                    }
-
-                    // Remove the end of the string from first characrer that is not a number or point etc.
-                    var pointer = 0;
-                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
-                        pointer = pointer + 1;
-                    }
-                    ua = ua.substring(0, pointer);
-
-                    if (!window.isNaN(ua)) {
-                        if (parseInt(ua) > 0) {
-                            info.versions.html = ua;
-                        }
-                        if (parseFloat(ua) >= 5) {
-                            info.versions.css = '3.x';
-                            info.versions.js = '5.x';
-                        }
-                    }
-                }
-                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
-                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
-                info.versions.nw = getVersionInfo('node-webkit');
-                info.versions.njs = getVersionInfo('node');
-                info.versions.v8 = getVersionInfo('v8');
-                info.versions.openssl = getVersionInfo('openssl');
-                info.versions.chromium = getVersionInfo('chromium');
-
-                // Check for CSS extensions
-                info.css.boostrap2 = selectorExists('hero-unit');
-                info.css.boostrap3 = selectorExists('jumbotron');
-
-                // Detect selected features and availability
-                info.about = {
-                    protocol: $location.$$protocol,
-                    browser: {},
-                    server: {
-                        active: undefined,
-                        url: $location.$$absUrl
-                    },
-                    os: {},
-                    hdd: { type: null }
-                };
-
-                // Detect the operating system
-                var osName = 'Unknown OS';
-                var appVer = navigator.appVersion;
-                if (appVer) {
-                    if (appVer.indexOf("Win") != -1)
-                        osName = 'Windows';
-                    if (appVer.indexOf("Mac") != -1)
-                        osName = 'MacOS';
-                    if (appVer.indexOf("X11") != -1)
-                        osName = 'UNIX';
-                    if (appVer.indexOf("Linux") != -1)
-                        osName = 'Linux';
-                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
-                }
-                info.about.os.name = osName;
-
-                // Check for jQuery
-                info.detects.jqry = typeof jQuery !== 'undefined';
-
-                // Check for general header and body scripts
-                $("script").each(function () {
-                    var src = $(this).attr("src");
-                    if (src) {
-                        // Fast check on known script names
-                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
-                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
-                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
-                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
-                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
-                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
-                    }
-                });
-
-                // Get the client browser details (build a url string)
-                var detectUrl = (function () {
-                    var p = [], w = window, d = document, e = 0, f = 0;
-                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
-                    e |= w.ActiveXObject ? 1 : 0;
-                    e |= w.opera ? 2 : 0;
-                    e |= w.chrome ? 4 : 0;
-                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
-                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
-                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
-                    p.push('e=' + e);
-                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
-                    f |= 'WebSocket' in w ? 2 : 0;
-                    f |= w.Worker ? 4 : 0;
-                    f |= w.applicationCache ? 8 : 0;
-                    f |= w.history && history.pushState ? 16 : 0;
-                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
-                    f |= 'FileReader' in w ? 64 : 0;
-                    p.push('f=' + f);
-                    p.push('r=' + Math.random().toString(36).substring(7));
-                    p.push('w=' + screen.width);
-                    p.push('h=' + screen.height);
-                    var s = d.createElement('script');
-                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
-                })();
-
-                // Send a loaded package to a server to detect more features
-                $.getScript(detectUrl).done(function (script, textStatus) {
-                    $rootScope.$applyAsync(function () {
-                        // Browser info and details loaded
-                        var browserInfo = new window.WhichBrowser();
-                        angular.extend(info.about, browserInfo);
-                    });
-                }).fail(function (jqxhr, settings, exception) {
-                    console.error(exception);
-                });
-
-                // Set browser name to IE (if defined)
-                if (navigator.appName == 'Microsoft Internet Explorer') {
-                    info.about.browser.name = 'Internet Explorer';
-                }
-
-                // Check if the browser supports web db's
-                var webDB = info.about.webdb = {
-                    db: null,
-                    version: '1',
-                    active: null,
-                    size: 5 * 1024 * 1024,
-                    test: function (name, desc, dbVer, dbSize) {
-                        try  {
-                            // Try and open a web db
-                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
-                            webDB.onSuccess(null, null);
-                        } catch (ex) {
-                            // Nope, something went wrong
-                            webDB.onError(null, null);
-                        }
-                    },
-                    onSuccess: function (tx, r) {
-                        if (tx) {
-                            if (r) {
-                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
-                            }
-                            if (tx) {
-                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
-                            }
-                        }
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = true;
-                            webDB.used = JSON.stringify(webDB.db).length;
-                        });
-                    },
-                    onError: function (tx, e) {
-                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = false;
-                        });
-                    }
-                };
-                info.about.webdb.test();
-            } catch (ex) {
-                console.error(ex);
-            }
-
-            // Return the preliminary info
-            return info;
-        };
-
-        // Define the state
-        $scope.info = $scope.detectBrowserInfo();
-    }]).controller('AboutConnectionController', [
-    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
-        $scope.result = null;
-        $scope.status = null;
-        $scope.state = {
-            editMode: false,
-            location: $location.$$absUrl,
-            protocol: $location.$$protocol,
-            requireHttps: ($location.$$protocol == 'https')
-        };
-        $scope.detect = function () {
-            var target = $scope.state.location;
-            var started = Date.now();
-            $scope.result = null;
-            $scope.latency = null;
-            $scope.status = { code: 0, desc: '', style: 'label-default' };
-            $.ajax({
-                url: target,
-                crossDomain: true,
-                /*
-                username: 'user',
-                password: 'pass',
-                xhrFields: {
-                withCredentials: true
-                }
-                */
-                beforeSend: function (xhr) {
-                    $timeout(function () {
-                        //$scope.status.code = xhr.status;
-                        $scope.status.desc = 'sending';
-                        $scope.status.style = 'label-info';
-                    });
-                },
-                success: function (data, textStatus, xhr) {
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-success';
-                        $scope.result = {
-                            valid: true,
-                            info: data,
-                            sent: started,
-                            received: Date.now()
-                        };
-                    });
-                },
-                error: function (xhr, textStatus, error) {
-                    xhr.ex = error;
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-danger';
-                        $scope.result = {
-                            valid: false,
-                            info: xhr,
-                            sent: started,
-                            error: xhr.statusText,
-                            received: Date.now()
-                        };
-                    });
-                },
-                complete: function (xhr, textStatus) {
-                    console.debug(' - Status Code: ' + xhr.status);
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                    });
-                }
-            }).always(function (xhr) {
-                $timeout(function () {
-                    $scope.latency = $scope.getLatencyInfo();
-                });
-            });
-        };
-        $scope.setProtocol = function (protocol) {
-            var val = $scope.state.location;
-            var pos = val.indexOf('://');
-            if (pos > 0) {
-                val = protocol + val.substring(pos);
-            }
-            $scope.state.protocol = protocol;
-            $scope.state.location = val;
-            $scope.detect();
-        };
-        $scope.getProtocolStyle = function (protocol, activeStyle) {
-            var cssRes = '';
-            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
-            if (isValid) {
-                if (!$scope.result) {
-                    cssRes += 'btn-primary';
-                } else if ($scope.result.valid && activeStyle) {
-                    cssRes += activeStyle;
-                } else if ($scope.result) {
-                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
-                }
-            }
-            return cssRes;
-        };
-        $scope.getStatusIcon = function (activeStyle) {
-            var cssRes = '';
-            if (!$scope.result) {
-                cssRes += 'glyphicon-refresh';
-            } else if (activeStyle && $scope.result.valid) {
-                cssRes += activeStyle;
-            } else {
-                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
-            }
-            return cssRes;
-        };
-        $scope.submitForm = function () {
-            $scope.state.editMode = false;
-            if ($scope.state.requireHttps) {
-                $scope.setProtocol('https');
-            } else {
-                $scope.detect();
-            }
-        };
-        $scope.getStatusColor = function () {
-            var cssRes = $scope.getStatusIcon() + ' ';
-            if (!$scope.result) {
-                cssRes += 'busy';
-            } else if ($scope.result.valid) {
-                cssRes += 'success';
-            } else {
-                cssRes += 'error';
-            }
-            return cssRes;
-        };
-        $scope.getLatencyInfo = function () {
-            var cssNone = 'text-muted';
-            var cssHigh = 'text-success';
-            var cssMedium = 'text-warning';
-            var cssLow = 'text-danger';
-            var info = {
-                desc: '',
-                style: cssNone
-            };
-
-            if (!$scope.result) {
-                return info;
-            }
-
-            if (!$scope.result.valid) {
-                info.style = 'text-muted';
-                info.desc = 'Connection Failed';
-                return info;
-            }
-
-            var totalMs = $scope.result.received - $scope.result.sent;
-            if (totalMs > 2 * 60 * 1000) {
-                info.style = cssNone;
-                info.desc = 'Timed out';
-            } else if (totalMs > 1 * 60 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Impossibly slow';
-            } else if (totalMs > 30 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Very slow';
-            } else if (totalMs > 1 * 1000) {
-                info.style = cssMedium;
-                info.desc = 'Relatively slow';
-            } else if (totalMs > 500) {
-                info.style = cssMedium;
-                info.desc = 'Moderately slow';
-            } else if (totalMs > 250) {
-                info.style = cssMedium;
-                info.desc = 'Barely Responsive';
-            } else if (totalMs > 150) {
-                info.style = cssHigh;
-                info.desc = 'Average Response Time';
-            } else if (totalMs > 50) {
-                info.style = cssHigh;
-                info.desc = 'Responsive Enough';
-            } else if (totalMs > 15) {
-                info.style = cssHigh;
-                info.desc = 'Very Responsive';
-            } else {
-                info.style = cssHigh;
-                info.desc = 'Optimal';
-            }
-            return info;
-        };
-    }]);
-/// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
-/// <reference path="../modules/default.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
 // Define main module with all dependencies
 angular.module('prototyped.ng', [
     'prototyped.ng.config',
     'prototyped.ng.views',
     'prototyped.ng.styles',
-    'prototyped.default',
     'prototyped.about',
     'prototyped.editor',
     'prototyped.explorer',
@@ -1491,12 +1786,12 @@ angular.module('prototyped.ng', [
         if (appConfig) {
             // Define module routes
             appConfig.routers.push({
-                url: '/proto',
+                url: '/explore',
                 abstract: true,
                 priority: 0,
                 menuitem: {
                     label: 'Explore',
-                    state: 'proto.cmd',
+                    state: 'proto.explore',
                     icon: 'fa fa-cubes'
                 },
                 cardview: {
@@ -1543,75 +1838,49 @@ angular.module('prototyped.ng', [
         $stateProvider.state('proto', {
             url: '/proto',
             abstract: true
-        });
-    }]).constant('appNode', {
-    html5: true,
-    active: typeof require !== 'undefined',
-    ui: function () {
-        if (typeof require !== 'undefined') {
-            return require('nw.gui');
-        }
-        return undefined;
-    },
-    win: function () {
-        if (typeof require !== 'undefined') {
-            var gui = require('nw.gui');
-            var win = gui.Window.get();
-            if (win) {
-                return win;
+        }).state('default', {
+            url: '/',
+            views: {
+                'main@': {
+                    templateUrl: 'views/default.tpl.html',
+                    controller: 'CardViewCtrl',
+                    controllerAs: 'sliderCtrl'
+                }
             }
-        }
-        return undefined;
-    },
-    reload: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win) {
-            win.reloadIgnoringCache();
-        }
-    },
-    close: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win) {
-            win.close();
-        }
-    },
-    debug: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win.isDevToolsOpen()) {
-            win.closeDevTools();
-        } else {
-            win.showDevTools();
-        }
-    },
-    toggleFullscreen: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win) {
-            win.toggleFullscreen();
-        }
-    },
-    kiosMode: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win) {
-            win.toggleKioskMode();
-        }
-    }
-}).constant('appStatus', {
-    logs: [],
-    show: {
-        all: true,
-        log: false,
-        info: true,
-        warn: true,
-        error: true,
-        debug: false
-    }
-}).directive('appClean', [
-    '$rootScope', '$window', '$route', '$state', 'appNode', 'appStatus', function ($rootScope, $window, $route, $state, appNode, appStatus) {
+        });
+    }]).provider('appNode', [proto.ng.common.AppNodeProvider]).provider('appState', ['$stateProvider', 'appConfigProvider', 'appNodeProvider', proto.ng.common.AppStateProvider]).controller('CardViewCtrl', [
+    '$scope', 'appConfig', function ($scope, appConfig) {
+        // Make sure 'mySiteMap' exists
+        $scope.pages = appConfig.routers || [];
+
+        // initial image index
+        $scope._Index = 0;
+
+        $scope.count = function () {
+            return $scope.pages.length;
+        };
+
+        // if a current image is the same as requested image
+        $scope.isActive = function (index) {
+            return $scope._Index === index;
+        };
+
+        // show prev image
+        $scope.showPrev = function () {
+            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
+        };
+
+        // show next image
+        $scope.showNext = function () {
+            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
+        };
+
+        // show a certain image
+        $scope.showPhoto = function (index) {
+            $scope._Index = index;
+        };
+    }]).directive('appClean', [
+    '$rootScope', '$window', '$route', '$state', 'appNode', 'appState', function ($rootScope, $window, $route, $state, appNode, appState) {
         return function (scope, elem, attrs) {
             var keyCtrl = false;
             var keyShift = false;
@@ -1654,7 +1923,7 @@ angular.module('prototyped.ng', [
                 }
 
                 // Clear all previous status messages
-                appStatus.logs = [];
+                appState.logs = [];
                 console.clear();
             });
             scope.$on('$destroy', function () {
@@ -1768,6 +2037,8 @@ angular.module('prototyped.ng', [
 }).filter('typeCount', [function () {
         return function (input, type) {
             var count = 0;
+            if (!input)
+                return null;
             if (input.length > 0) {
                 input.forEach(function (itm) {
                     if (!itm)
@@ -1994,53 +2265,509 @@ angular.module('prototyped.ng', [
                 };
             }
         };
+    }]).directive('abnTree', [
+    '$timeout', function ($timeout) {
+        return {
+            restrict: 'E',
+            template: "<ul class=\"nav nav-list nav-pills nav-stacked abn-tree\">\n  <li ng-repeat=\"row in tree_rows | filter:{visible:true} track by row.branch.uid\" ng-animate=\"'abn-tree-animate'\" ng-class=\"'level-' + {{ row.level }} + (row.branch.selected ? ' active':'') + ' ' +row.classes.join(' ')\" class=\"abn-tree-row\"><a ng-click=\"user_clicks_branch(row.branch)\"><i ng-class=\"row.tree_icon\" ng-click=\"row.branch.expanded = !row.branch.expanded\" class=\"indented tree-icon\"> </i><span class=\"indented tree-label\">{{ row.label }} </span></a></li>\n</ul>",
+            replace: true,
+            scope: {
+                treeData: '=',
+                onSelect: '&',
+                initialSelection: '@',
+                treeControl: '='
+            },
+            link: function (scope, element, attrs) {
+                var error, expand_all_parents, expand_level, for_all_ancestors, for_each_branch, get_parent, n, on_treeData_change, select_branch, selected_branch, tree;
+                error = function (s) {
+                    console.log('ERROR:' + s);
+                    debugger;
+                    return void 0;
+                };
+                if (attrs.iconExpand == null) {
+                    attrs.iconExpand = 'icon-plus  glyphicon glyphicon-plus  fa fa-plus';
+                }
+                if (attrs.iconCollapse == null) {
+                    attrs.iconCollapse = 'icon-minus glyphicon glyphicon-minus fa fa-minus';
+                }
+                if (attrs.iconLeaf == null) {
+                    attrs.iconLeaf = 'icon-file  glyphicon glyphicon-file  fa fa-file';
+                }
+                if (attrs.expandLevel == null) {
+                    attrs.expandLevel = '3';
+                }
+                expand_level = parseInt(attrs.expandLevel, 10);
+                if (!scope.treeData) {
+                    alert('no treeData defined for the tree!');
+                    return;
+                }
+                if (scope.treeData.length == null) {
+                    if (scope.treeData.label != null) {
+                        scope.treeData = [scope.treeData];
+                    } else {
+                        alert('treeData should be an array of root branches');
+                        return;
+                    }
+                }
+                for_each_branch = function (f) {
+                    var do_f, root_branch, _i, _len, _ref, _results;
+                    do_f = function (branch, level) {
+                        var child, _i, _len, _ref, _results;
+                        f(branch, level);
+                        if (branch.children != null) {
+                            _ref = branch.children;
+                            _results = [];
+                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                child = _ref[_i];
+                                _results.push(do_f(child, level + 1));
+                            }
+                            return _results;
+                        }
+                    };
+                    _ref = scope.treeData;
+                    _results = [];
+                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                        root_branch = _ref[_i];
+                        _results.push(do_f(root_branch, 1));
+                    }
+                    return _results;
+                };
+                selected_branch = null;
+                select_branch = function (branch) {
+                    if (!branch) {
+                        if (selected_branch != null) {
+                            selected_branch.selected = false;
+                        }
+                        selected_branch = null;
+                        return;
+                    }
+                    if (branch !== selected_branch) {
+                        if (selected_branch != null) {
+                            selected_branch.selected = false;
+                        }
+                        branch.selected = true;
+                        selected_branch = branch;
+                        expand_all_parents(branch);
+                        if (branch.onSelect != null) {
+                            return $timeout(function () {
+                                return branch.onSelect(branch);
+                            });
+                        } else {
+                            if (scope.onSelect != null) {
+                                return $timeout(function () {
+                                    return scope.onSelect({
+                                        branch: branch
+                                    });
+                                });
+                            }
+                        }
+                    }
+                };
+                scope.user_clicks_branch = function (branch) {
+                    if (branch !== selected_branch) {
+                        return select_branch(branch);
+                    }
+                };
+                get_parent = function (child) {
+                    var parent;
+                    parent = void 0;
+                    if (child.parent_uid) {
+                        for_each_branch(function (b) {
+                            if (b.uid === child.parent_uid) {
+                                return parent = b;
+                            }
+                        });
+                    }
+                    return parent;
+                };
+                for_all_ancestors = function (child, fn) {
+                    var parent;
+                    parent = get_parent(child);
+                    if (parent != null) {
+                        fn(parent);
+                        return for_all_ancestors(parent, fn);
+                    }
+                };
+                expand_all_parents = function (child) {
+                    return for_all_ancestors(child, function (b) {
+                        return b.expanded = true;
+                    });
+                };
+                scope.tree_rows = [];
+                on_treeData_change = function () {
+                    var add_branch_to_list, root_branch, _i, _len, _ref, _results;
+                    for_each_branch(function (b, level) {
+                        if (!b.uid) {
+                            return b.uid = "" + Math.random();
+                        }
+                    });
+                    for_each_branch(function (b) {
+                        var child, _i, _len, _ref, _results;
+                        if (angular.isArray(b.children)) {
+                            _ref = b.children;
+                            _results = [];
+                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                child = _ref[_i];
+                                _results.push(child.parent_uid = b.uid);
+                            }
+                            return _results;
+                        }
+                    });
+                    scope.tree_rows = [];
+                    for_each_branch(function (branch) {
+                        var child, f;
+                        if (branch.children) {
+                            if (branch.children.length > 0) {
+                                f = function (e) {
+                                    if (typeof e === 'string') {
+                                        return {
+                                            label: e,
+                                            children: []
+                                        };
+                                    } else {
+                                        return e;
+                                    }
+                                };
+                                return branch.children = (function () {
+                                    var _i, _len, _ref, _results;
+                                    _ref = branch.children;
+                                    _results = [];
+                                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                        child = _ref[_i];
+                                        _results.push(f(child));
+                                    }
+                                    return _results;
+                                })();
+                            }
+                        } else {
+                            return branch.children = [];
+                        }
+                    });
+                    add_branch_to_list = function (level, branch, visible) {
+                        var child, child_visible, tree_icon, _i, _len, _ref, _results;
+                        if (branch.expanded == null) {
+                            branch.expanded = false;
+                        }
+                        if (branch.classes == null) {
+                            branch.classes = [];
+                        }
+                        if (!branch.noLeaf && (!branch.children || branch.children.length === 0)) {
+                            tree_icon = attrs.iconLeaf;
+                            if (branch.classes.indexOf("leaf") < 0) {
+                                branch.classes.push("leaf");
+                            }
+                        } else {
+                            if (branch.expanded) {
+                                tree_icon = attrs.iconCollapse;
+                            } else {
+                                tree_icon = attrs.iconExpand;
+                            }
+                        }
+                        scope.tree_rows.push({
+                            level: level,
+                            branch: branch,
+                            label: branch.label,
+                            classes: branch.classes,
+                            tree_icon: tree_icon,
+                            visible: visible
+                        });
+                        if (branch.children != null) {
+                            _ref = branch.children;
+                            _results = [];
+                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                child = _ref[_i];
+                                child_visible = visible && branch.expanded;
+                                _results.push(add_branch_to_list(level + 1, child, child_visible));
+                            }
+                            return _results;
+                        }
+                    };
+                    _ref = scope.treeData;
+                    _results = [];
+                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                        root_branch = _ref[_i];
+                        _results.push(add_branch_to_list(1, root_branch, true));
+                    }
+                    return _results;
+                };
+                scope.$watch('treeData', on_treeData_change, true);
+                if (attrs.initialSelection != null) {
+                    for_each_branch(function (b) {
+                        if (b.label === attrs.initialSelection) {
+                            return $timeout(function () {
+                                return select_branch(b);
+                            });
+                        }
+                    });
+                }
+                n = scope.treeData.length;
+                for_each_branch(function (b, level) {
+                    b.level = level;
+                    return b.expanded = b.level < expand_level;
+                });
+                if (scope.treeControl != null) {
+                    if (angular.isObject(scope.treeControl)) {
+                        tree = scope.treeControl;
+                        tree.expand_all = function () {
+                            return for_each_branch(function (b, level) {
+                                return b.expanded = true;
+                            });
+                        };
+                        tree.collapse_all = function () {
+                            return for_each_branch(function (b, level) {
+                                return b.expanded = false;
+                            });
+                        };
+                        tree.get_first_branch = function () {
+                            n = scope.treeData.length;
+                            if (n > 0) {
+                                return scope.treeData[0];
+                            }
+                        };
+                        tree.select_first_branch = function () {
+                            var b;
+                            b = tree.get_first_branch();
+                            return tree.select_branch(b);
+                        };
+                        tree.get_selected_branch = function () {
+                            return selected_branch;
+                        };
+                        tree.get_parent_branch = function (b) {
+                            return get_parent(b);
+                        };
+                        tree.select_branch = function (b) {
+                            select_branch(b);
+                            return b;
+                        };
+                        tree.get_children = function (b) {
+                            return b.children;
+                        };
+                        tree.select_parent_branch = function (b) {
+                            var p;
+                            if (b == null) {
+                                b = tree.get_selected_branch();
+                            }
+                            if (b != null) {
+                                p = tree.get_parent_branch(b);
+                                if (p != null) {
+                                    tree.select_branch(p);
+                                    return p;
+                                }
+                            }
+                        };
+                        tree.add_branch = function (parent, new_branch) {
+                            if (parent != null) {
+                                parent.children.push(new_branch);
+                                parent.expanded = true;
+                            } else {
+                                scope.treeData.push(new_branch);
+                            }
+                            return new_branch;
+                        };
+                        tree.add_root_branch = function (new_branch) {
+                            tree.add_branch(null, new_branch);
+                            return new_branch;
+                        };
+                        tree.expand_branch = function (b) {
+                            if (b == null) {
+                                b = tree.get_selected_branch();
+                            }
+                            if (b != null) {
+                                b.expanded = true;
+                                return b;
+                            }
+                        };
+                        tree.collapse_branch = function (b) {
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                b.expanded = false;
+                                return b;
+                            }
+                        };
+                        tree.get_siblings = function (b) {
+                            var p, siblings;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                p = tree.get_parent_branch(b);
+                                if (p) {
+                                    siblings = p.children;
+                                } else {
+                                    siblings = scope.treeData;
+                                }
+                                return siblings;
+                            }
+                        };
+                        tree.get_next_sibling = function (b) {
+                            var i, siblings;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                siblings = tree.get_siblings(b);
+                                n = siblings.length;
+                                i = siblings.indexOf(b);
+                                if (i < n) {
+                                    return siblings[i + 1];
+                                }
+                            }
+                        };
+                        tree.get_prev_sibling = function (b) {
+                            var i, siblings;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            siblings = tree.get_siblings(b);
+                            n = siblings.length;
+                            i = siblings.indexOf(b);
+                            if (i > 0) {
+                                return siblings[i - 1];
+                            }
+                        };
+                        tree.select_next_sibling = function (b) {
+                            var next;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                next = tree.get_next_sibling(b);
+                                if (next != null) {
+                                    return tree.select_branch(next);
+                                }
+                            }
+                        };
+                        tree.select_prev_sibling = function (b) {
+                            var prev;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                prev = tree.get_prev_sibling(b);
+                                if (prev != null) {
+                                    return tree.select_branch(prev);
+                                }
+                            }
+                        };
+                        tree.get_first_child = function (b) {
+                            var _ref;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                if (((_ref = b.children) != null ? _ref.length : void 0) > 0) {
+                                    return b.children[0];
+                                }
+                            }
+                        };
+                        tree.get_closest_ancestor_next_sibling = function (b) {
+                            var next, parent;
+                            next = tree.get_next_sibling(b);
+                            if (next != null) {
+                                return next;
+                            } else {
+                                parent = tree.get_parent_branch(b);
+                                return tree.get_closest_ancestor_next_sibling(parent);
+                            }
+                        };
+                        tree.get_next_branch = function (b) {
+                            var next;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                next = tree.get_first_child(b);
+                                if (next != null) {
+                                    return next;
+                                } else {
+                                    next = tree.get_closest_ancestor_next_sibling(b);
+                                    return next;
+                                }
+                            }
+                        };
+                        tree.select_next_branch = function (b) {
+                            var next;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                next = tree.get_next_branch(b);
+                                if (next != null) {
+                                    tree.select_branch(next);
+                                    return next;
+                                }
+                            }
+                        };
+                        tree.last_descendant = function (b) {
+                            var last_child;
+                            if (b == null) {
+                                debugger;
+                            }
+                            n = b.children.length;
+                            if (n === 0) {
+                                return b;
+                            } else {
+                                last_child = b.children[n - 1];
+                                return tree.last_descendant(last_child);
+                            }
+                        };
+                        tree.get_prev_branch = function (b) {
+                            var parent, prev_sibling;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                prev_sibling = tree.get_prev_sibling(b);
+                                if (prev_sibling != null) {
+                                    return tree.last_descendant(prev_sibling);
+                                } else {
+                                    parent = tree.get_parent_branch(b);
+                                    return parent;
+                                }
+                            }
+                        };
+                        return tree.select_prev_branch = function (b) {
+                            var prev;
+                            if (b == null) {
+                                b = selected_branch;
+                            }
+                            if (b != null) {
+                                prev = tree.get_prev_branch(b);
+                                if (prev != null) {
+                                    tree.select_branch(prev);
+                                    return prev;
+                                }
+                            }
+                        };
+                    }
+                }
+            }
+        };
     }]).run([
-    '$rootScope', '$state', '$filter', 'appConfig', 'appNode', 'appStatus', function ($rootScope, $state, $filter, appConfig, appNode, appStatus) {
+    '$rootScope', '$state', 'appConfig', 'appState', function ($rootScope, $state, appConfig, appState) {
         // Extend root scope with (global) vars
         angular.extend($rootScope, {
             appConfig: appConfig,
-            appNode: appNode,
-            status: appStatus,
+            appState: appState,
+            appNode: appState.node,
             startAt: Date.now(),
             state: $state
         });
 
-        // Hook extended function(s)
-        appStatus.getIcon = function () {
-            var match = /\/!(\w+)!/i.exec(appNode.proxy || '');
-            if (match && match.length > 1) {
-                switch (match[1]) {
-                    case 'test':
-                        return 'fa fa-puzzle-piece glow-blue animate-glow';
-                    case 'debug':
-                        return 'fa fa-bug glow-orange animate-glow';
-                }
+        $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
+            if (toState) {
+                appState.current.state = toState;
             }
-            return (appNode.active) ? 'fa-desktop' : 'fa-cube';
-        };
-        appStatus.getColor = function () {
-            var logs = appStatus.logs;
-            if ($filter('typeCount')(logs, 'error')) {
-                return 'glow-red';
-            }
-            if ($filter('typeCount')(logs, 'warn')) {
-                return 'glow-orange';
-            }
-            if ($filter('typeCount')(logs, 'info')) {
-                return 'glow-blue';
-            }
-            if (appNode.active > 0) {
-                return 'glow-green';
-            }
-            return '';
-        };
+        });
     }]).run([
     'appConfig', function (appConfig) {
         console.debug(' - Current Config: ', appConfig);
     }]);
 ;angular.module('prototyped.ng.views', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('modules/console/views/logs.tpl.html',
-    '<div class=container style=width:100%><span class=pull-right style="padding: 3px"><a href="" ng-click="">Refresh</a> | <a href="" ng-click="appStatus.logs = []">Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appStatus.logs.length><td colspan=3><em>No events have been logged...</em></td></tr><tr ng-repeat="row in appStatus.logs" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td class=ellipsis style="width: auto; overflow: hidden">{{ row.desc }}</td></tr></tbody></table></div>');
+    '<div class=container style=width:100%><span class=pull-right style="padding: 3px"><a href="" ng-click="">Refresh</a> | <a href="" ng-click="appState.logs = []">Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appState.logs.length><td colspan=3><em>No events have been logged...</em></td></tr><tr ng-repeat="row in appState.logs" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td class=ellipsis style="width: auto; overflow: hidden">{{ row.desc }}</td></tr></tbody></table></div>');
   $templateCache.put('modules/console/views/main.tpl.html',
     '<div class=console><style>.contents.docked {\n' +
     '            padding: 0 !important;\n' +
@@ -2192,7 +2919,7 @@ angular.module('prototyped.ng', [
   $templateCache.put('views/common/components/contents.tpl.html',
     '<div id=contents class=contents><div id=left class="ui-view-left ng-cloak" ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div><div id=main class=ui-view-main ui:view=main><em class=inactive-fill-text ng:if=false><i class="fa fa-spinner fa-spin"></i> Loading...</em> <b class="inactive-fill-text ng-cloak" ng:if="!(state.current.views[\'main\'] || state.current.views[\'main@\'])"><i class="fa fa-exclamation-triangle faa-flash glow-orange"></i> Page not found</b></div></div>');
   $templateCache.put('views/common/components/footer.tpl.html',
-    '<div class=footer><span class=pull-left><label class="log-group ng-cloak" ng:show="status.logs | typeCount:\'error\'"><i class="glyphicon glyphicon-exclamation-sign glow-red"></i> <a ui:sref=proto.logs class=ng-cloak>Errors ({{ status.logs | typeCount:\'error\' }})</a></label><label class="log-group ng-cloak" ng:show="status.logs | typeCount:\'warn\'"><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <a ui:sref=proto.logs class=ng-cloak>Warnings ({{ status.logs | typeCount:\'warn\' }})</a></label></span> <span ng:if=false><em><i class="fa fa-spinner fa-spin"></i> Loading...</em></span> <span ng:if=true class=ng-cloak>Client Version: <span app:version><em>Loading...</em></span> |</span> <span ui:view=foot>Powered by <a href="https://angularjs.org/">AngularJS</a> <span ng:if=appNode.active class=ng-cloak>&amp; <a href=https://github.com/rogerwang/node-webkit>Node Webkit</a></span></span> <span ng:if=startAt class=ng-cloak>| Started {{ startAt | fromNow }}</span></div>');
+    '<div class=footer><span class=pull-left><label class="log-group ng-cloak" ng:show="appState.logs | typeCount:\'error\'"><i class="glyphicon glyphicon-exclamation-sign glow-red"></i> <a ui:sref=proto.logs class=ng-cloak>Errors ({{ appState.logs | typeCount:\'error\' }})</a></label><label class="log-group ng-cloak" ng:show="appState.logs | typeCount:\'warn\'"><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <a ui:sref=proto.logs class=ng-cloak>Warnings ({{ appState.logs | typeCount:\'warn\' }})</a></label></span> <span ng:if=false><em><i class="fa fa-spinner fa-spin"></i> Loading...</em></span> <span ng:if=true class=ng-cloak>Client Version: <span app:version><em>Loading...</em></span> |</span> <span ui:view=foot>Powered by <a href="https://angularjs.org/">AngularJS</a> <span ng:if=appNode.active class=ng-cloak>&amp; <a href=https://github.com/rogerwang/node-webkit>Node Webkit</a></span></span> <span ng:if=startAt class=ng-cloak>| Started {{ startAt | fromNow }}</span></div>');
   $templateCache.put('views/common/components/left.tpl.html',
     '<div id=left ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div>');
   $templateCache.put('views/common/components/menu.tpl.html',
@@ -2202,13 +2929,17 @@ angular.module('prototyped.ng', [
   $templateCache.put('views/common/sandbox/footer.tpl.html',
     '<div class=bottom-spacer><div class=mask></div><div style="padding: 6px; text-align:center; z-index: 1000"><div dom:replace ng:include="\'views/common/components/footer.tpl.html\'"></div></div></div>');
   $templateCache.put('views/common/sandbox/menu.tpl.html',
-    '<div class="top-menu dragable"><div class="top-div pull-left"><div><div ui:view=menu><ul class="nav navbar-nav pull-right"><li ui:sref-active=hidden><a ui:sref=default><i class="fa fa-chevron-left"></i></a></li><li ui:sref-active=open ng:repeat="route in appConfig.routers | orderBy:\'(priority || 1)\'" ng:if="route.menuitem && (!route.visible || route.visible())"><a ng:if=route.menuitem.state ui:sref="{{ route.menuitem.state }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a> <a ng:if=!route.menuitem.state ng:href="{{ route.url }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a></li></ul></div></div></div><div class="top-div pull-right"><ul class="nav navbar-nav pull-left"><li ui:sref-active=open class=disabled><a ui:sref=settings ng:disabled>Settings</a></li></ul></div></div><div class=top-spacer><div class=mask></div><a class=top-spacer-icon href=""><i class="fa fa-2x" ng:class="status.getIcon() + \' \' + status.getColor()"></i></a></div>');
+    '<div class="top-menu dragable"><div class="top-div pull-left"><div><div ui:view=menu><ul class="nav navbar-nav pull-right"><li ui:sref-active=hidden><a ui:sref=default><i class="fa fa-chevron-left"></i></a></li><li ui:sref-active=open ng:repeat="route in appConfig.routers | orderBy:\'(priority || 1)\'" ng:if="route.menuitem && (!route.visible || route.visible())"><a ng:if=route.menuitem.state ui:sref="{{ route.menuitem.state }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a> <a ng:if=!route.menuitem.state ng:href="{{ route.url }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a></li></ul></div></div></div><div class="top-div pull-right"><ul class="nav navbar-nav pull-left"><li ui:sref-active=open class=disabled><a ui:sref=settings ng:disabled>Settings</a></li></ul></div></div><div class=top-spacer><div class=mask></div><a class=top-spacer-icon href=""><i class="fa fa-2x" ng:class="appState.getIcon() + \' \' + appState.getColor()"></i></a></div>');
   $templateCache.put('views/default.tpl.html',
     '<div id=cardViewer class="docked float-left card-view card-view-x"><style resx:import=assets/css/prototyped.min.css></style><style>.contents {\n' +
     '            margin: 0 !important;\n' +
     '            padding: 0 !important;\n' +
     '            background: #E0E0E0!important;\n' +
     '        }</style><div class="slider docked"><a class="arrow prev" href="" ng-show=false ng-click=showPrev()><i class="glyphicon glyphicon-chevron-left"></i></a> <a class="arrow next" href="" ng-show=false ng-click=showNext()><i class="glyphicon glyphicon-chevron-right"></i></a><div class=boxed><a class="card fixed-width slide" ng-class="{ \'inactive-gray-25\': route.cardview.ready === false }" ng-repeat="route in pages | orderBy:\'(priority || 1)\'" ng-if="route.cardview && (!route.visible || route.visible())" ng-href={{route.url}} ng-class="{ \'active\': isActive($index) }" ng-swipe-right=showPrev() ng-swipe-left=showNext()><div class=card-image ng-class=route.cardview.style><div class=banner></div><h2>{{route.cardview.title}}</h2></div><p>{{route.cardview.desc}}</p></a></div><ul class="small-only slider-nav"><li ng-repeat="page in pages" ng-class="{\'active\':isActive($index)}"><a href="" ng-click=showPhoto($index); title={{page.title}}><i class="glyphicon glyphicon-file"></i></a></li></ul></div></div>');
+  $templateCache.put('views/explore/left.tpl.html',
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-info-circle"></i>&nbsp; Site Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if=navigation.getTreeData()><abn:tree tree-data=navigation.getTreeData() icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
+  $templateCache.put('views/explore/main.tpl.html',
+    '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail ng-if=exploreCtrl.selected><br><br>{{ exploreCtrl.navigation.selected }}<div class=row><div class=col-md-9><form class=form-horizontal><div class=form-group><label for=inputState class="col-sm-2 control-label">State</label><div class=col-sm-10><input class=form-control id=inputState placeholder=empty ng-model=exploreCtrl.selected.name readonly></div></div><div class=form-group><label for=inputPath class="col-sm-2 control-label">Path</label><div class=col-sm-10><input class=form-control id=inputPath placeholder="not set" ng-model=exploreCtrl.selected.url readonly></div></div><div class=form-group><div class="col-sm-offset-2 col-sm-10"><div class=checkbox><label><input type=checkbox ng-model=exploreCtrl.selected.abstract> Abstract</label></div></div></div><div class=form-group ng-if=exploreCtrl.selected.name><div class="col-sm-offset-2 col-sm-10"><a class="btn btn-default" ng-class="{ \'btn-primary\': !exploreCtrl.selected.abstract }" ui-sref="{{ exploreCtrl.selected.name }}" ng-disabled=exploreCtrl.selected.abstract>Got to page</a></div></div></form></div><div class=col-md-3>{{ exploreCtrl.selection.views }}</div></div></div></div>');
 }]);
 ;angular.module('prototyped.ng.styles', []).run(['$templateCache', function($templateCache) { 
   'use strict';
@@ -2224,12 +2955,12 @@ angular.module('prototyped.ng', [
 
 
   $templateCache.put('assets/css/prototyped.min.css',
-    "body .docked{flex-grow:1;flex-shrink:1;display:flex;height:100%;overflow:none}body .dock-tight{flex-grow:0;flex-shrink:0}body .dock-fill{flex-grow:1;flex-shrink:1}body .ellipsis{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .dragable{-webkit-app-region:drag;-webkit-user-select:none}body .non-dragable{-webkit-app-region:no-drag;-webkit-user-select:auto}body .inactive-gray{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .inactive-gray:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-25{opacity:.25;filter:alpha(opacity=25);filter:grayscale(100%) opacity(0.25);-webkit-filter:grayscale(100%) opacity(0.25);-moz-filter:alpha(opacity=25);-o-filter:alpha(opacity=25)}body .inactive-gray-25:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-10{opacity:.1;filter:alpha(opacity=10);filter:grayscale(100%) opacity(0.1);-webkit-filter:grayscale(100%) opacity(0.1);-moz-filter:alpha(opacity=10);-o-filter:alpha(opacity=10)}body .inactive-gray-10:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-ctrl{opacity:.65;filter:alpha(opacity=65);filter:grayscale(100%) opacity(0.65);-webkit-filter:grayscale(100%) opacity(0.65);-moz-filter:alpha(opacity=65);-o-filter:alpha(opacity=65)}body .inactive-fill-text{width:100%;height:100%;display:block;padding:64px 0;font-size:14px;text-align:center;color:rgba(128,128,128,.75)}body .glow-green{color:#00b500!important;text-shadow:0 0 2px #00b500}body .glow-red{color:#D00!important;text-shadow:0 0 2px #D00}body .glow-orange{color:#ff8d00!important;text-shadow:0 0 2px #ff8d00}body .glow-blue{color:#0094ff!important;text-shadow:0 0 2px #0094ff}body .results{min-width:480px;display:flex}body .results .icon{margin:0 8px;font-size:128px;width:128px!important;height:128px!important;position:relative;flex-grow:0;flex-shrink:0}body .results .icon .sub-icon{font-size:64px!important;width:64px!important;height:64px!important;position:absolute;right:0;top:0;margin-top:100px}body .results .info{margin:0 16px;min-height:128px;min-width:300px;display:inline-block;flex-grow:1;flex-shrink:1}body .results .info h4{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .results .info h4 a{color:#000}body .info-row{display:flex}body .info-row-links{color:silver}body .info-row-links a{color:#4a4a4a;margin-left:8px}body .info-row-links a:hover{color:#000}body .info-col-primary{flex-grow:1;flex-shrink:1}body .info-col-secondary{flex-grow:0;flex-shrink:0}body .info-overview{vertical-align:top}body .info-overview .panel-icon-lg{width:128px;height:128px;padding:0;margin:0 auto 10px;display:block;position:relative;background-repeat:no-repeat;background-size:auto 128px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inner{width:92px;height:92px;margin:6px auto;background-repeat:no-repeat;background-size:auto 86px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-overlay{right:0;bottom:0;width:48px;height:48px;position:absolute;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inset{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-inset-bl{margin:0;position:absolute;background-repeat:no-repeat;background-position:center center;width:64px;height:64px;left:10px;bottom:10px;background-size:auto 64px}body .info-overview .panel-label{margin:6px auto;text-align:center;text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .info-overview .panel-mid{text-align:center}body .info-tabs .trim-top{padding:10px;border-top:none;min-height:380px;border-top-left-radius:0;border-top-right-radius:0}body .img-clipper{width:48px;height:48px;padding:0;margin:3px auto;text-align:center;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .app-info-aside{display:flex;margin-bottom:12px}body .app-info-aside .app-info-icon{flex-grow:0;flex-shrink:0;flex-basis:64px;vertical-align:top}body .app-info-aside .app-info-info{flex-grow:1;flex-shrink:1;text-align:left;vertical-align:top}body .app-info-aside .app-info-info p{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .app-info-aside.info-disabled .app-info-icon{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .app-info-aside.info-disabled .app-info-icon:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .app-aside-collapser a{margin:0;padding:0;display:block;color:silver;text-decoration:none}body .app-aside-collapser a:hover{color:gray}body .iframe-body,body .iframe-body iframe{margin:0;padding:0}body .alertify-hidden{display:none}body .console .cmd-output{padding:8px;font-size:10.5px;font-family:Courier New,Courier,monospace;color:#2f4f4f}body .console .cmd-line{padding:0;margin:0}body .console .cmd-time{color:silver}body .console .cmd-text{white-space:pre}@media screen and (max-width:640px) and (max-height:480px){body .console .cmd-output{padding:4px;font-size:10.4px}}body .card-view{margin:0 auto;padding:0;color:#333;height:100%;overflow:auto}body .card-view.float-left .card{float:left}body .card-view .multi-column{columns:300px 3;-webkit-columns:300px 3}body .card-view a{color:#4c4c4c;text-decoration:none}body .card-view .boxed{margin:0 auto 36px;max-width:1056px;display:inline-block}body .card-view .card{width:320px;height:200px;padding:0;margin:15px 15px 0;overflow:hidden;background:#fff;background:#ededed;background:-moz-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#ededed),color-stop(45%,#f6f6f6),color-stop(61%,#fff),color-stop(61%,#fff));background:-webkit-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-o-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-ms-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:linear-gradient(to bottom,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#ffffff', GradientType=0);border:1px solid #AAA;border-bottom:3px solid #BBB}body .card-view .card:hover{-webkit-box-shadow:0 0 10px 1px rgba(128,128,128,.75);-moz-box-shadow:0 0 10px 1px rgba(128,128,128,.75);box-shadow:0 0 10px 1px rgba(128,128,128,.75)}body .card-view .card p{background:#fff;margin:0;padding:10px}body .card-view .card-image{width:100%;height:140px;padding:0;margin:0;position:relative;overflow:hidden;background-position:center;background-repeat:no-repeat}body .card-view .card-image .banner{height:50px;width:50px;top:0;right:0;background-position:top right;background-repeat:no-repeat;position:absolute}body .card-view .card-image h1,body .card-view .card-image h2,body .card-view .card-image h3,body .card-view .card-image h4,body .card-view .card-image h5,body .card-view .card-image h6{position:absolute;bottom:0;left:0;width:100%;color:#fff;background:rgba(0,0,0,.65);margin:0;padding:6px 12px!important;border:none}body .card-view .small-only{display:none!important}body .card-view .leftColumn,body .card-view .rightColumn{display:inline-block;width:49%;vertical-align:top}body .card-view .column{display:inline-block;vertical-align:top}body .card-view .arrow{top:50%;width:50px;bottom:0;margin:auto 0;outline:medium none;position:absolute;font-size:40px;cursor:pointer;z-index:5}body .card-view .arrow i{top:-25px}body .card-view .arrow.prev{left:0;opacity:.2}body .card-view .arrow.prev:hover{opacity:1}body .card-view .arrow.next{right:0;opacity:.2;text-align:right}body .card-view .arrow.next:hover{opacity:1}body .card-view .img-default{background:#b3bead;background:-moz-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fcfff4),color-stop(40%,#dfe5d7),color-stop(100%,#b3bead));background:-webkit-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-o-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-ms-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:linear-gradient(to bottom,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fcfff4', endColorstr='#b3bead', GradientType=0)}body .card-view .img-explore{background-position:top left;background-image:url(https://farm6.staticflickr.com/5250/5279251697_3ab802e3ef.jpg)}body .card-view .img-editor{background-image:url(http://f.fastcompany.net/multisite_files/fastcompany/inline/2013/10/3020994-inline-d3-data-viz001.jpg);background-size:320px auto}body .card-view .img-console{background-image:url(http://shumakovich.com/uploads/useruploads/images/programming_256x256.png);background-size:auto auto;background-position:top}body .card-view .img-about{background-image:url(https://farm9.staticflickr.com/8282/7807659570_f5ba8dfc63.jpg);background-size:420px auto;background-position:center}body .card-view .img-sandbox{background-image:url(http://8020.photos.jpgmag.com/1727832_147374_5c80086d33_p.jpg);background-size:360px auto;background-position:top center}body .card-view .slider-nav{bottom:0;display:block;height:48px;left:0;margin:0 auto;padding:1em 0 .8em;position:absolute;right:0;text-align:center;width:100%;z-index:5}body .card-view .slider-nav li{margin:3px;padding:1px 3px;cursor:pointer;position:relative;display:inline-block;border:1px dotted #E0E0E0;background-color:rgba(255,255,255,.25)}body .card-view .slider-nav li a{color:rgba(128,128,128,.75)}body .card-view .slider-nav li.active{border:solid 1px #BBB;background-color:rgba(128,128,128,.25)}body .card-view .slider-nav li.active a{color:#000}body .card-view .slider{-webkit-perspective:1000px;-moz-perspective:1000px;-ms-perspective:1000px;-o-perspective:1000px;perspective:1000px;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d;-ms-transform-style:preserve-3d;-o-transform-style:preserve-3d;transform-style:preserve-3d}body .card-view .slide{-webkit-transition:1s linear all;-moz-transition:1s linear all;-o-transition:1s linear all;transition:1s linear all;opacity:1}body .card-view .slide.ng-hide-add{opacity:1}body .card-view .slide.ng-hide-add.ng-hide-add-active,body .card-view .slide.ng-hide-remove{opacity:0}body .card-view .slide.ng-hide-remove.ng-hide-remove-active{opacity:1}body .footer .log-group{padding:1px 6px}@media screen and (min-width:741px) and (max-width:1024px){#cardViewer .boxed{max-width:740px!important}}@media screen and (max-width:740px){#cardViewer .boxed{max-width:350px!important}#cardViewer .small-only{display:block!important}#cardViewer .card-view{height:100%;overflow:auto}#cardViewer .card-view .card{display:none}#cardViewer .card-view .card.active{display:block}}#fileExplorer{-webkit-user-select:none}#fileExplorer .folder-contents{padding:16px 8px;clear:both}#fileExplorer .file{color:#000;text-decoration:none}#fileExplorer .name{margin-top:6px;font-size:11px}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .file .icon img{width:48px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-large{display:block}#fileExplorer .view-large .files{padding:0;margin:0}#fileExplorer .view-large .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-large .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-large .file .name{width:100px;word-wrap:break-word}#fileExplorer .view-large .file.focus .name{color:#fff}#fileExplorer .view-large .file .icon{margin:0 auto;width:60px}#fileExplorer .view-large .file .icon img{width:60px;height:auto}#fileExplorer .view-large .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-med .files{padding:0;margin:0}#fileExplorer .view-med .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-med .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-med .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .view-med .file.focus .name{color:#fff}#fileExplorer .view-med .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .view-med .file .icon img{width:48px;height:auto}#fileExplorer .view-med .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-details{display:block}#fileExplorer .view-details .files{padding:0;margin:0}#fileExplorer .view-details .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .view-details .file.focus{-webkit-border-radius:0}#fileExplorer .view-details .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .view-details .file .icon{margin:0;width:24px;display:inline}#fileExplorer .view-details .file .icon img{width:24px;height:auto}@media screen and (max-width:640px) and (max-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .file.focus{-webkit-border-radius:0}#fileExplorer .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .file .icon{margin:0;width:24px;display:inline}#fileExplorer .file .icon img{width:24px;height:auto}#fileExplorer .name{padding:3px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}}@media screen and (min-width:1024px) and (min-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:100px;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;width:60px}#fileExplorer .file .icon img{width:60px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}}"
+    "body .docked{flex-grow:1;flex-shrink:1;display:flex;height:100%;overflow:none}body .dock-tight{flex-grow:0;flex-shrink:0}body .dock-fill{flex-grow:1;flex-shrink:1}body .ellipsis{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .dragable{-webkit-app-region:drag;-webkit-user-select:none}body .non-dragable{-webkit-app-region:no-drag;-webkit-user-select:auto}body .inactive-gray{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .inactive-gray:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-25{opacity:.25;filter:alpha(opacity=25);filter:grayscale(100%) opacity(0.25);-webkit-filter:grayscale(100%) opacity(0.25);-moz-filter:alpha(opacity=25);-o-filter:alpha(opacity=25)}body .inactive-gray-25:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-10{opacity:.1;filter:alpha(opacity=10);filter:grayscale(100%) opacity(0.1);-webkit-filter:grayscale(100%) opacity(0.1);-moz-filter:alpha(opacity=10);-o-filter:alpha(opacity=10)}body .inactive-gray-10:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-ctrl{opacity:.65;filter:alpha(opacity=65);filter:grayscale(100%) opacity(0.65);-webkit-filter:grayscale(100%) opacity(0.65);-moz-filter:alpha(opacity=65);-o-filter:alpha(opacity=65)}body .inactive-fill-text{width:100%;height:100%;display:block;padding:64px 0;font-size:14px;text-align:center;color:rgba(128,128,128,.75)}body .glow-green{color:#00b500!important;text-shadow:0 0 2px #00b500}body .glow-red{color:#D00!important;text-shadow:0 0 2px #D00}body .glow-orange{color:#ff8d00!important;text-shadow:0 0 2px #ff8d00}body .glow-blue{color:#0094ff!important;text-shadow:0 0 2px #0094ff}body .results{min-width:480px;display:flex}body .results .icon{margin:0 8px;font-size:128px;width:128px!important;height:128px!important;position:relative;flex-grow:0;flex-shrink:0}body .results .icon .sub-icon{font-size:64px!important;width:64px!important;height:64px!important;position:absolute;right:0;top:0;margin-top:100px}body .results .info{margin:0 16px;min-height:128px;min-width:300px;display:inline-block;flex-grow:1;flex-shrink:1}body .results .info h4{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .results .info h4 a{color:#000}body .info-row{display:flex}body .info-row-links{color:silver}body .info-row-links a{color:#4a4a4a;margin-left:8px}body .info-row-links a:hover{color:#000}body .info-col-primary{flex-grow:1;flex-shrink:1}body .info-col-secondary{flex-grow:0;flex-shrink:0}body .info-overview{vertical-align:top}body .info-overview .panel-icon-lg{width:128px;height:128px;padding:0;margin:0 auto 10px;display:block;position:relative;background-repeat:no-repeat;background-size:auto 128px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inner{width:92px;height:92px;margin:6px auto;background-repeat:no-repeat;background-size:auto 86px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-overlay{right:0;bottom:0;width:48px;height:48px;position:absolute;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inset{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-inset-bl{margin:0;position:absolute;background-repeat:no-repeat;background-position:center center;width:64px;height:64px;left:10px;bottom:10px;background-size:auto 64px}body .info-overview .panel-label{margin:6px auto;text-align:center;text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .info-overview .panel-mid{text-align:center}body .info-tabs .trim-top{padding:10px;border-top:none;min-height:380px;border-top-left-radius:0;border-top-right-radius:0}body .img-clipper{width:48px;height:48px;padding:0;margin:3px auto;text-align:center;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .app-info-aside{display:flex;margin-bottom:12px}body .app-info-aside .app-info-icon{flex-grow:0;flex-shrink:0;flex-basis:64px;vertical-align:top}body .app-info-aside .app-info-info{flex-grow:1;flex-shrink:1;text-align:left;vertical-align:top}body .app-info-aside .app-info-info p{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .app-info-aside.info-disabled .app-info-icon{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .app-info-aside.info-disabled .app-info-icon:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .app-aside-collapser a{margin:0;padding:0;display:block;color:silver;text-decoration:none}body .app-aside-collapser a:hover{color:gray}body .iframe-body,body .iframe-body iframe{margin:0;padding:0}body .alertify-hidden{display:none}body .console .cmd-output{padding:8px;font-size:10.5px;font-family:Courier New,Courier,monospace;color:#2f4f4f}body .console .cmd-line{padding:0;margin:0}body .console .cmd-time{color:silver}body .console .cmd-text{white-space:pre}@media screen and (max-width:640px) and (max-height:480px){body .console .cmd-output{padding:4px;font-size:10.4px}}body .card-view{margin:0 auto;padding:0;color:#333;height:100%;overflow:auto}body .card-view.float-left .card{float:left}body .card-view .multi-column{columns:300px 3;-webkit-columns:300px 3}body .card-view a{color:#4c4c4c;text-decoration:none}body .card-view .boxed{margin:0 auto 36px;max-width:1056px;display:inline-block}body .card-view .card{width:320px;height:200px;padding:0;margin:15px 15px 0;overflow:hidden;background:#fff;background:#ededed;background:-moz-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#ededed),color-stop(45%,#f6f6f6),color-stop(61%,#fff),color-stop(61%,#fff));background:-webkit-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-o-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-ms-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:linear-gradient(to bottom,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#ffffff', GradientType=0);border:1px solid #AAA;border-bottom:3px solid #BBB}body .card-view .card:hover{-webkit-box-shadow:0 0 10px 1px rgba(128,128,128,.75);-moz-box-shadow:0 0 10px 1px rgba(128,128,128,.75);box-shadow:0 0 10px 1px rgba(128,128,128,.75)}body .card-view .card p{background:#fff;margin:0;padding:10px}body .card-view .card-image{width:100%;height:140px;padding:0;margin:0;position:relative;overflow:hidden;background-position:center;background-repeat:no-repeat}body .card-view .card-image .banner{height:50px;width:50px;top:0;right:0;background-position:top right;background-repeat:no-repeat;position:absolute}body .card-view .card-image h1,body .card-view .card-image h2,body .card-view .card-image h3,body .card-view .card-image h4,body .card-view .card-image h5,body .card-view .card-image h6{position:absolute;bottom:0;left:0;width:100%;color:#fff;background:rgba(0,0,0,.65);margin:0;padding:6px 12px!important;border:none}body .card-view .small-only{display:none!important}body .card-view .leftColumn,body .card-view .rightColumn{display:inline-block;width:49%;vertical-align:top}body .card-view .column{display:inline-block;vertical-align:top}body .card-view .arrow{top:50%;width:50px;bottom:0;margin:auto 0;outline:medium none;position:absolute;font-size:40px;cursor:pointer;z-index:5}body .card-view .arrow i{top:-25px}body .card-view .arrow.prev{left:0;opacity:.2}body .card-view .arrow.prev:hover{opacity:1}body .card-view .arrow.next{right:0;opacity:.2;text-align:right}body .card-view .arrow.next:hover{opacity:1}body .card-view .img-default{background:#b3bead;background:-moz-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fcfff4),color-stop(40%,#dfe5d7),color-stop(100%,#b3bead));background:-webkit-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-o-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-ms-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:linear-gradient(to bottom,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fcfff4', endColorstr='#b3bead', GradientType=0)}body .card-view .img-explore{background-position:top left;background-image:url(https://farm6.staticflickr.com/5250/5279251697_3ab802e3ef.jpg)}body .card-view .img-editor{background-image:url(http://f.fastcompany.net/multisite_files/fastcompany/inline/2013/10/3020994-inline-d3-data-viz001.jpg);background-size:320px auto}body .card-view .img-console{background-image:url(http://shumakovich.com/uploads/useruploads/images/programming_256x256.png);background-size:auto auto;background-position:top}body .card-view .img-about{background-image:url(https://farm9.staticflickr.com/8282/7807659570_f5ba8dfc63.jpg);background-size:420px auto;background-position:center}body .card-view .img-sandbox{background-image:url(http://8020.photos.jpgmag.com/1727832_147374_5c80086d33_p.jpg);background-size:360px auto;background-position:top center}body .card-view .slider-nav{bottom:0;display:block;height:48px;left:0;margin:0 auto;padding:1em 0 .8em;position:absolute;right:0;text-align:center;width:100%;z-index:5}body .card-view .slider-nav li{margin:3px;padding:1px 3px;cursor:pointer;position:relative;display:inline-block;border:1px dotted #E0E0E0;background-color:rgba(255,255,255,.25)}body .card-view .slider-nav li a{color:rgba(128,128,128,.75)}body .card-view .slider-nav li.active{border:solid 1px #BBB;background-color:rgba(128,128,128,.25)}body .card-view .slider-nav li.active a{color:#000}body .card-view .slider{-webkit-perspective:1000px;-moz-perspective:1000px;-ms-perspective:1000px;-o-perspective:1000px;perspective:1000px;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d;-ms-transform-style:preserve-3d;-o-transform-style:preserve-3d;transform-style:preserve-3d}body .card-view .slide{-webkit-transition:1s linear all;-moz-transition:1s linear all;-o-transition:1s linear all;transition:1s linear all;opacity:1}body .card-view .slide.ng-hide-add{opacity:1}body .card-view .slide.ng-hide-add.ng-hide-add-active,body .card-view .slide.ng-hide-remove{opacity:0}body .card-view .slide.ng-hide-remove.ng-hide-remove-active{opacity:1}body .footer .log-group{padding:1px 6px}@media screen and (min-width:741px) and (max-width:1024px){#cardViewer .boxed{max-width:740px!important}}@media screen and (max-width:740px){#cardViewer .boxed{max-width:350px!important}#cardViewer .small-only{display:block!important}#cardViewer .card-view{height:100%;overflow:auto}#cardViewer .card-view .card{display:none}#cardViewer .card-view .card.active{display:block}}#fileExplorer{-webkit-user-select:none}#fileExplorer .folder-contents{padding:16px 8px;clear:both}#fileExplorer .file{color:#000;text-decoration:none}#fileExplorer .name{margin-top:6px;font-size:11px}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .file .icon img{width:48px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-large{display:block}#fileExplorer .view-large .files{padding:0;margin:0}#fileExplorer .view-large .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-large .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-large .file .name{width:100px;word-wrap:break-word}#fileExplorer .view-large .file.focus .name{color:#fff}#fileExplorer .view-large .file .icon{margin:0 auto;width:60px}#fileExplorer .view-large .file .icon img{width:60px;height:auto}#fileExplorer .view-large .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-med .files{padding:0;margin:0}#fileExplorer .view-med .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-med .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-med .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .view-med .file.focus .name{color:#fff}#fileExplorer .view-med .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .view-med .file .icon img{width:48px;height:auto}#fileExplorer .view-med .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-details{display:block}#fileExplorer .view-details .files{padding:0;margin:0}#fileExplorer .view-details .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .view-details .file.focus{-webkit-border-radius:0}#fileExplorer .view-details .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .view-details .file .icon{margin:0;width:24px;display:inline}#fileExplorer .view-details .file .icon img{width:24px;height:auto}@media screen and (max-width:640px) and (max-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .file.focus{-webkit-border-radius:0}#fileExplorer .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .file .icon{margin:0;width:24px;display:inline}#fileExplorer .file .icon img{width:24px;height:auto}#fileExplorer .name{padding:3px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}}@media screen and (min-width:1024px) and (min-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:100px;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;width:60px}#fileExplorer .file .icon img{width:60px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}}.abn-tree-animate-enter,li.abn-tree-row.ng-enter{transition:200ms linear all;position:relative;display:block;opacity:0;max-height:0}.abn-tree-animate-enter.abn-tree-animate-enter-active,li.abn-tree-row.ng-enter-active{opacity:1;max-height:30px}.abn-tree-animate-leave,li.abn-tree-row.ng-leave{transition:200ms linear all;position:relative;display:block;height:30px;max-height:30px;opacity:1}.abn-tree-animate-leave.abn-tree-animate-leave-active,li.abn-tree-row.ng-leave-active{height:0;max-height:0;opacity:0}ul.abn-tree li.abn-tree-row{padding:0;margin:0}ul.abn-tree li.abn-tree-row a{padding:3px 10px}ul.abn-tree i.indented{padding:2px 6px}.abn-tree{cursor:pointer}ul.nav.abn-tree .level-1 .indented{position:relative;left:0}ul.nav.abn-tree .level-2 .indented{position:relative;left:16px}ul.nav.abn-tree .level-3 .indented{position:relative;left:40px}ul.nav.abn-tree .level-4 .indented{position:relative;left:60px}ul.nav.abn-tree .level-5 .indented{position:relative;left:80px}ul.nav.abn-tree .level-6 .indented{position:relative;left:100px}ul.nav.nav-list.abn-tree .level-7 .indented{position:relative;left:120px}ul.nav.nav-list.abn-tree .level-8 .indented{position:relative;left:140px}ul.nav.nav-list.abn-tree .level-9 .indented{position:relative;left:160px}"
   );
 
 
   $templateCache.put('assets/css/sandbox.min.css',
-    "@import url(https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css);@import url(https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.2.0/animate.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css);body{color:#333;font-size:11px;font-family:Verdana,Geneva,Tahoma,sans-serif;display:flex;flex-direction:column}#menu{margin:6px;padding:3px;display:block}#menu ul{margin:0;padding:0}#menu ul li{margin:0;padding:0;display:inline;list-style:none}#menu ul li a{text-decoration:none}#contents{display:flex;flex-direction:row;min-height:520px}#left{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:210px}#main{margin:6px;padding:3px;flex-grow:1;flex-shrink:1}#main h2{margin:0;padding:3px 0;font-size:18px;font-weight:700}#main h5{margin:0 0 6px;padding:3px;border-bottom:solid 1px #f2f2f2;font-weight:bolder}#main h5 small{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#main hr{margin:8px 0}#main .centered{text-align:center}#footer{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:24px;border:dotted 1px gray}body .top-menu{top:0;left:0;right:0;position:absolute;max-height:32px;overflow:hidden;background-color:#FFF}body .top-menu a{padding:6px 12px}body .top-menu .top-div{width:50%;padding:0 32px;margin:0}body .top-menu .top-div .nav.navbar-nav{float:right}body .top-spacer{width:100%;margin:32px auto 0;position:absolute}body .top-spacer .mask{overflow:hidden;height:20px}body .top-spacer .mask:after{content:'';display:block;margin:-28px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}body .top-spacer .top-spacer-icon{width:50px;height:50px;position:absolute;bottom:100%;margin-bottom:-25px;left:50%;margin-left:-25px;border-radius:100%;box-shadow:0 2px 4px #999;background:#fff;z-index:200}body .top-spacer .top-spacer-icon i{position:absolute;top:4px;bottom:4px;left:4px;right:4px;border-radius:100%;border:1px dashed #aaa;text-align:center;line-height:40px;font-style:normal;color:#999;z-index:1000}body .main-view-area{position:absolute;top:32px;left:0;right:0;bottom:24px}body .main-view-area .contents{width:100%;height:100%}body .main-view-area .ui-view-left{border-right:dotted 1px #ddd}body .list-group-item.active{background-color:#d8e1e8}body .ui-view-main{overflow:auto}body .vertical-spacer{width:200px;left:0;top:32px;bottom:16px;position:absolute;display:block;overflow:auto}body .vertical-spacer .mask{overflow:hidden;width:20px;height:100%}body .vertical-spacer.left .mask:after{content:'';display:block;margin-left:-20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .vertical-spacer.right .mask{float:right}body .vertical-spacer.right .mask:before{content:'';display:block;margin-left:20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .main-contents{top:32px;left:200px;right:0;bottom:16px;position:absolute;z-index:100;overflow:auto}body .bottom-spacer{bottom:0;margin:0;padding:0;font-size:10px;color:gray;width:100%;height:24px;position:fixed;background-color:#FFF;z-index:200}body .bottom-spacer .mask{margin:0 auto;overflow:hidden;height:24px;width:100%;position:absolute}body .bottom-spacer .mask:after{content:'';display:block;margin:-25px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}"
+    "@import url(https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css);@import url(https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.2.0/animate.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css);body{color:#333;font-size:11px;font-family:Verdana,Geneva,Tahoma,sans-serif;display:flex;flex-direction:column}#menu{margin:6px;padding:3px;display:block}#menu ul{margin:0;padding:0}#menu ul li{margin:0;padding:0;display:inline;list-style:none}#menu ul li a{text-decoration:none}#contents{display:flex;flex-direction:row;min-height:520px}#left{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:210px}#main{margin:6px;padding:3px;flex-grow:1;flex-shrink:1}#main h2{margin:0;padding:3px 0;font-size:18px;font-weight:700}#main h5{margin:0 0 6px;padding:3px;border-bottom:solid 1px #f2f2f2;font-weight:bolder}#main h5 small{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#main hr{margin:8px 0}#main .centered{text-align:center}#footer{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:24px;border:dotted 1px gray}body .top-menu{top:0;left:0;right:0;position:absolute;max-height:32px;overflow:hidden;background-color:#FFF}body .top-menu a{padding:6px 12px;color:#000}body .top-menu .top-div{width:50%;padding:0 32px;margin:0}body .top-menu .top-div .nav.navbar-nav{float:right}body .top-spacer{width:100%;margin:32px auto 0;position:absolute}body .top-spacer .mask{overflow:hidden;height:20px}body .top-spacer .mask:after{content:'';display:block;margin:-28px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}body .top-spacer .top-spacer-icon{width:50px;height:50px;position:absolute;bottom:100%;margin-bottom:-25px;left:50%;margin-left:-25px;border-radius:100%;box-shadow:0 2px 4px #999;background:#fff;z-index:200}body .top-spacer .top-spacer-icon i{position:absolute;top:4px;bottom:4px;left:4px;right:4px;border-radius:100%;border:1px dashed #aaa;text-align:center;line-height:40px;font-style:normal;color:#999;z-index:1000}body .main-view-area{position:absolute;top:32px;left:0;right:0;bottom:24px}body .main-view-area .contents{width:100%;height:100%}body .main-view-area .ui-view-left{border-right:dotted 1px #ddd}body .ui-view-left .list-group-item.active{color:#000;background-color:#d8e1e8}body .ui-view-left .nav-pills>li.active>a,body .ui-view-left .nav-pills>li.active>a:focus,body .ui-view-left .nav-pills>li.active>a:hover{color:#000;background-color:#d8e1e8;border-radius:0}body .ui-view-main{overflow:auto}body .vertical-spacer{width:200px;left:0;top:32px;bottom:16px;position:absolute;display:block;overflow:auto}body .vertical-spacer .mask{overflow:hidden;width:20px;height:100%}body .vertical-spacer.left .mask:after{content:'';display:block;margin-left:-20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .vertical-spacer.right .mask{float:right}body .vertical-spacer.right .mask:before{content:'';display:block;margin-left:20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .main-contents{top:32px;left:200px;right:0;bottom:16px;position:absolute;z-index:100;overflow:auto}body .bottom-spacer{bottom:0;margin:0;padding:0;font-size:10px;color:gray;width:100%;height:24px;position:fixed;background-color:#FFF;z-index:200}body .bottom-spacer .mask{margin:0 auto;overflow:hidden;height:24px;width:100%;position:absolute}body .bottom-spacer .mask:after{content:'';display:block;margin:-25px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}"
   );
 
 

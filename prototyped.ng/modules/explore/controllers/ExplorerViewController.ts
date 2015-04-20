@@ -1,8 +1,12 @@
 ﻿module proto.ng.explorer {
 
     export class ExplorerViewController {
-        constructor(private $rootScope, private $scope, private $q) {
+
+        public selected: SiteNode;
+
+        constructor(private $rootScope, private $scope, private $q, public navigation: NavigationService) {
         }
+
     }
 
 } 

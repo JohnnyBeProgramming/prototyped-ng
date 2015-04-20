@@ -75,7 +75,6 @@ angular.module('prototyped.ng', [
 
     }])
     .config(['$urlRouterProvider', ($urlRouterProvider) => {
-
         // Define redirects
         $urlRouterProvider
             .when('/proto', '/proto/explore')
@@ -84,9 +83,12 @@ angular.module('prototyped.ng', [
 
     }])
     .config(['$stateProvider', ($stateProvider) => {
-
         // Set up routing...
         $stateProvider
+            .state('proto', {
+                url: '/proto',
+                abstract: true,
+            })
             .state('default', {
                 url: '/',
                 views: {
@@ -97,83 +99,11 @@ angular.module('prototyped.ng', [
                     },
                 }
             })
-            .state('proto', {
-                url: '/proto',
-                abstract: true,
-            })
-
     }])
 
-    .constant('appNode', {
-        html5: true,
-        active: typeof require !== 'undefined',
-        ui: function () {
-            if (typeof require !== 'undefined') {
-                return require('nw.gui');
-            }
-            return undefined;
-        },
-        win: function () {
-            if (typeof require !== 'undefined') {
-                var gui = require('nw.gui');
-                var win = gui.Window.get();
-                if (win) {
-                    return win;
-                }
-            }
-            return undefined;
-        },
-        reload: function () {
-            var gui = require('nw.gui');
-            var win = gui.Window.get();
-            if (win) {
-                win.reloadIgnoringCache();
-            }
-        },
-        close: function () {
-            var gui = require('nw.gui');
-            var win = gui.Window.get();
-            if (win) {
-                win.close();
-            }
-        },
-        debug: function () {
-            var gui = require('nw.gui');
-            var win = gui.Window.get();
-            if (win.isDevToolsOpen()) {
-                win.closeDevTools();
-            } else {
-                win.showDevTools()
-            }
-        },
-        toggleFullscreen: function () {
-            var gui = require('nw.gui');
-            var win = gui.Window.get();
-            if (win) {
-                win.toggleFullscreen();
-            }
-        },
-        kiosMode: function () {
-            var gui = require('nw.gui');
-            var win = gui.Window.get();
-            if (win) {
-                win.toggleKioskMode();
-            }
-        },
-    })
+    .provider('appNode', [proto.ng.common.AppNodeProvider])
 
-    .constant('appStatus', {
-        logs: [],
-        show: {
-            all: true,
-            log: false,
-            info: true,
-            warn: true,
-            error: true,
-            debug: false,
-        },
-    })
-
+    .provider('appState', ['$stateProvider', 'appConfigProvider', 'appNodeProvider', proto.ng.common.AppStateProvider])
 
     .controller('CardViewCtrl', ['$scope', 'appConfig', function ($scope, appConfig) {
         // Make sure 'mySiteMap' exists
@@ -208,7 +138,7 @@ angular.module('prototyped.ng', [
     }])
 
 
-    .directive('appClean', ['$rootScope', '$window', '$route', '$state', 'appNode', 'appStatus', function ($rootScope, $window, $route, $state, appNode, appStatus) {
+    .directive('appClean', ['$rootScope', '$window', '$route', '$state', 'appNode', 'appState', function ($rootScope, $window, $route, $state, appNode, appState) {
         return function (scope, elem, attrs) {
             var keyCtrl = false;
             var keyShift = false;
@@ -251,7 +181,7 @@ angular.module('prototyped.ng', [
                 }
 
                 // Clear all previous status messages
-                appStatus.logs = [];
+                appState.logs = [];
                 console.clear();
             });
             scope.$on('$destroy', function () {
@@ -370,6 +300,7 @@ angular.module('prototyped.ng', [
     .filter('typeCount', [() => {
         return function (input, type) {
             var count = 0;
+            if (!input) return null;
             if (input.length > 0) {
                 input.forEach(function (itm) {
                     if (!itm) return;
@@ -1073,46 +1004,23 @@ angular.module('prototyped.ng', [
         };
     }])
 
-    .run(['$rootScope', '$state', '$filter', 'appConfig', 'appNode', 'appStatus', function ($rootScope, $state, $filter, appConfig, appNode, appStatus) {
-
+    .run(['$rootScope', '$state', 'appConfig', 'appState', function ($rootScope, $state, appConfig, appState: proto.ng.common.AppState) {
         // Extend root scope with (global) vars
         angular.extend($rootScope, {
             appConfig: appConfig,
-            appNode: appNode,
-            status: appStatus,
+            appState: appState,
+            appNode: appState.node,
             startAt: Date.now(),
             state: $state,
         });
 
-        // Hook extended function(s)
-        appStatus.getIcon = function () {
-            var match = /\/!(\w+)!/i.exec(appNode.proxy || '');
-            if (match && match.length > 1) {
-                switch (match[1]) {
-                    case 'test': return 'fa fa-puzzle-piece glow-blue animate-glow';
-                    case 'debug': return 'fa fa-bug glow-orange animate-glow';
-                }
+        $rootScope.$on('$stateChangeSuccess', (event, toState, toParams, fromState, fromParams) => {
+            if (toState) {
+                appState.current.state = toState;
             }
-            return (appNode.active) ? 'fa-desktop' : 'fa-cube';
-        }
-        appStatus.getColor = function () {
-            var logs = appStatus.logs;
-            if ($filter('typeCount')(logs, 'error')) {
-                return 'glow-red';
-            }
-            if ($filter('typeCount')(logs, 'warn')) {
-                return 'glow-orange';
-            }
-            if ($filter('typeCount')(logs, 'info')) {
-                return 'glow-blue';
-            }
-            if (appNode.active > 0) {
-                return 'glow-green';
-            }
-            return '';
-        }
-
+        })
     }])
+
     .run(['appConfig', function (appConfig) {
         console.debug(' - Current Config: ', appConfig);
     }])

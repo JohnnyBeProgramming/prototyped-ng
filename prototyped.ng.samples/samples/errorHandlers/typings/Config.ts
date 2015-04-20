@@ -32,9 +32,9 @@ module proto.ng.samples.errorHandlers {
         $httpProvider.interceptors.push('errorHttpInterceptor');
 
         // Intercept all log messages
-        $provide.decorator('$log', ['$delegate', 'appStatus', function ($delegate, appStatus) {
+        $provide.decorator('$log', ['$delegate', 'appState', function ($delegate, appState) {
             // Define the interceptor
-            var interceptor = new proto.ng.samples.errorHandlers.LogInterceptor($delegate, appStatus);
+            var interceptor = new proto.ng.samples.errorHandlers.LogInterceptor($delegate, appState);
 
             // Return the original delegate
             return $delegate;

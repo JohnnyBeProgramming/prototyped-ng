@@ -1372,11 +1372,11 @@ var proto;
         (function (samples) {
             (function (errorHandlers) {
                 var SampleErrorService = (function () {
-                    function SampleErrorService($rootScope, $log, appConfig, appStatus, raven, google) {
+                    function SampleErrorService($rootScope, $log, appConfig, appState, raven, google) {
                         this.$rootScope = $rootScope;
                         this.$log = $log;
                         this.appConfig = appConfig;
-                        this.appStatus = appStatus;
+                        this.appState = appState;
                         this.raven = raven;
                         this.google = google;
                         this.busy = false;
@@ -1598,7 +1598,7 @@ var proto;
                     };
 
                     SampleErrorService.prototype.clear = function () {
-                        this.appStatus.logs = [];
+                        this.appState.logs = [];
                         this.appConfig['errorHandlers']['counts'] = {};
                     };
                     return SampleErrorService;
@@ -1617,15 +1617,15 @@ var proto;
         (function (samples) {
             (function (errorHandlers) {
                 var LogInterceptor = (function () {
-                    function LogInterceptor($delegate, appStatus) {
+                    function LogInterceptor($delegate, appState) {
                         this.$delegate = $delegate;
-                        this.appStatus = appStatus;
+                        this.appState = appState;
                         this.init();
                     }
                     LogInterceptor.prototype.init = function () {
                         var _this = this;
                         // Intercept messages
-                        var show = this.appStatus.config;
+                        var show = this.appState.config;
                         var $delegate = this.$delegate;
 
                         $delegate.debug = this.intercept($delegate.debug, function (msg) {
@@ -1666,7 +1666,7 @@ var proto;
                         if (msgExt) {
                             itm.ext = msgExt;
                         }
-                        this.appStatus.logs.push(itm);
+                        this.appState.logs.push(itm);
                     };
                     return LogInterceptor;
                 })();
@@ -1785,9 +1785,9 @@ var proto;
 
                     // Intercept all log messages
                     $provide.decorator('$log', [
-                        '$delegate', 'appStatus', function ($delegate, appStatus) {
+                        '$delegate', 'appState', function ($delegate, appState) {
                             // Define the interceptor
-                            var interceptor = new proto.ng.samples.errorHandlers.LogInterceptor($delegate, appStatus);
+                            var interceptor = new proto.ng.samples.errorHandlers.LogInterceptor($delegate, appState);
 
                             // Return the original delegate
                             return $delegate;
@@ -1833,10 +1833,9 @@ angular.module('prototyped.ng.samples.errorHandlers', [
     }]).factory('errorHttpInterceptor', [
     '$log', '$q', function ($log, $q) {
         return new proto.ng.samples.errorHandlers.ErrorHttpInterceptor($log, $q);
-    }]).service('ravenService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.raven.RavenService]).service('googleErrorService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.google.GoogleErrorService]).service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'appStatus', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService]).controller('errorHandlersController', [
-    '$rootScope', '$scope', 'appStatus', function ($rootScope, $scope, appStatus) {
-        $scope.appStatus = appStatus;
-        $scope.$watch('appStatus.logs.length', function () {
+    }]).service('ravenService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.raven.RavenService]).service('googleErrorService', ['$rootScope', '$log', 'appConfig', proto.ng.samples.errorHandlers.google.GoogleErrorService]).service('sampleErrorService', ['$rootScope', '$log', 'appConfig', 'appState', 'ravenService', 'googleErrorService', proto.ng.samples.errorHandlers.SampleErrorService]).controller('errorHandlersController', [
+    '$rootScope', '$scope', function ($rootScope, $scope) {
+        $scope.$watch('appState.logs.length', function () {
             $rootScope.$applyAsync(function () {
             });
         });
@@ -1864,9 +1863,8 @@ angular.module('prototyped.ng.samples.errorHandlers', [
             });
         });
     }]).run([
-    '$rootScope', 'appStatus', 'sampleErrorService', function ($rootScope, appStatus, sampleErrorService) {
+    '$rootScope', 'sampleErrorService', function ($rootScope, sampleErrorService) {
         angular.extend($rootScope, {
-            appStatus: appStatus,
             sampleErrors: sampleErrorService
         });
     }]);

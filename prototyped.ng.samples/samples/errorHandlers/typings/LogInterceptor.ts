@@ -2,13 +2,13 @@
 
     export class LogInterceptor {
 
-        constructor(private $delegate, private appStatus) {
+        constructor(private $delegate, private appState) {
             this.init();
         }
 
         public init() {
             // Intercept messages
-            var show = this.appStatus.config;
+            var show = this.appState.config;
             var $delegate = this.$delegate;
 
             $delegate.debug = this.intercept($delegate.debug, (msg) => { if (show.all || show.debug) this.attach('debug', msg) });
@@ -37,7 +37,7 @@
             if (msgExt) {
                 itm.ext = msgExt;
             }
-            this.appStatus.logs.push(itm);
+            this.appState.logs.push(itm);
         }
     }
 } 

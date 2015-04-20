@@ -114,12 +114,12 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-if="!appStatus.logs.length">
+                                <tr ng-if="!appState.logs.length">
                                     <td colspan="3">
                                         <em>No events have been logged...</em>
                                     </td>
                                 </tr>
-                                <tr ng-repeat="row in appStatus.logs"
+                                <tr ng-repeat="row in appState.logs"
                                     ng-class="{ 'text-info inactive-gray':row.type=='debug', 'text-info':row.type=='info', 'text-warning glow-orange':row.type=='warn', 'text-danger glow-red':row.type=='error' }">
                                     <td>{{ row.time | date:'hh:mm:ss' }}</td>
                                     <td>{{ row.type }}</td>
@@ -130,7 +130,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div ng-if="!appStatus.logs.length">
+                    <div ng-if="!appState.logs.length">
                         <h5>Inspired by these blogs:</h5>
                         <ul class="alert alert-info" style="list-style: none">
                             <li>

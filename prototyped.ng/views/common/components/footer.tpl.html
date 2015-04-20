@@ -1,12 +1,12 @@
 ﻿<div class="footer">
     <span class="pull-left">
-        <label class="log-group ng-cloak" ng:show="status.logs | typeCount:'error'">
+        <label class="log-group ng-cloak" ng:show="appState.logs | typeCount:'error'">
             <i class="glyphicon glyphicon-exclamation-sign glow-red"></i>
-            <a ui:sref="proto.logs" class="ng-cloak">Errors ({{ status.logs | typeCount:'error' }})</a>
+            <a ui:sref="proto.logs" class="ng-cloak">Errors ({{ appState.logs | typeCount:'error' }})</a>
         </label>
-        <label class="log-group ng-cloak" ng:show="status.logs | typeCount:'warn'">
+        <label class="log-group ng-cloak" ng:show="appState.logs | typeCount:'warn'">
             <i class="glyphicon glyphicon-warning-sign glow-orange"></i>
-            <a ui:sref="proto.logs" class="ng-cloak">Warnings ({{ status.logs | typeCount:'warn' }})</a>
+            <a ui:sref="proto.logs" class="ng-cloak">Warnings ({{ appState.logs | typeCount:'warn' }})</a>
         </label>
     </span>
     <span ng:if="false">

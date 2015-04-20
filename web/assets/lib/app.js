@@ -104,7 +104,8 @@ angular.module('myApp', [
 
     }])
 
-    .config(['$locationProvider', 'appNode', function ($locationProvider, appNode) {
+    .config(['$locationProvider', 'appStateProvider', function ($locationProvider, appStateProvider) {
+        var appState = appStateProvider.$get();
 
         // Try and figure out router mode from the initial url
         var pageLocation = typeof window !== 'undefined' ? window.location.href : '';
@@ -127,11 +128,12 @@ angular.module('myApp', [
             if (routePrefix) {
                 $locationProvider.hashPrefix(routePrefix);
             }
-            appNode.proxy = routePrefix;
-            appNode.html5 = !routePrefix;
+
+            appState.proxy = routePrefix;
+            appState.html5 = !routePrefix;
 
             // Show a hint message to the  user
-            var proxyName = appNode.proxy;
+            var proxyName = appState.proxy;
             if (proxyName) {
                 var checkName = /\/!(\w+)!/.exec(proxyName);
                 if (checkName) proxyName = checkName[1];
@@ -147,7 +149,7 @@ angular.module('myApp', [
         }
 
         // Configure the pretty urls for HTML5 mode
-        $locationProvider.html5Mode(appNode.html5);
+        $locationProvider.html5Mode(appState.html5);
 
     }])
 
@@ -261,7 +263,7 @@ angular.module('myApp', [
         };
     }])
 
-    .run(['$rootScope', '$state', '$window', '$filter', 'appStatus', 'appNode', function ($rootScope, $state, $window, $filter, appStatus, appNode) {
+    .run(['$rootScope', '$state', '$window', 'appNode', function ($rootScope, $state, $window, appNode) {
 
         angular.extend($rootScope, {
             state: $state,
@@ -280,33 +282,6 @@ angular.module('myApp', [
             });
         }
 
-        // Hook extended function(s)
-        appStatus.getIcon = function () {
-            var match = /\/!(\w+)!/i.exec(appNode.proxy || '');
-            if (match && match.length > 1) {
-                switch (match[1]) {
-                    case 'test': return 'fa fa-puzzle-piece glow-blue animate-glow';
-                    case 'debug': return 'fa fa-bug glow-orange animate-glow';
-                }
-            }
-            return (appNode.active) ? 'fa-desktop' : 'fa-cube';
-        }
-        appStatus.getColor = function () {
-            var logs = appStatus.logs;
-            if ($filter('typeCount')(logs, 'error')) {
-                return 'glow-red';
-            }
-            if ($filter('typeCount')(logs, 'warn')) {
-                return 'glow-orange';
-            }
-            if ($filter('typeCount')(logs, 'info')) {
-                return 'glow-blue';
-            }
-            if (appNode.active > 0) {
-                return 'glow-green';
-            }
-            return '';
-        }
 
     }]);
 

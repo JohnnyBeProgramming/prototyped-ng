@@ -469,6 +469,196 @@ angular.module('prototyped.about', [
             return info;
         };
     }]);
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (common) {
+            var AppNodeProvider = (function () {
+                function AppNodeProvider() {
+                    this.appNode = new AppNode();
+                }
+                AppNodeProvider.prototype.$get = function () {
+                    return this.appNode;
+                };
+                return AppNodeProvider;
+            })();
+            common.AppNodeProvider = AppNodeProvider;
+
+            var AppNode = (function () {
+                function AppNode() {
+                    this.active = typeof require !== 'undefined';
+                }
+                Object.defineProperty(AppNode.prototype, "gui", {
+                    get: function () {
+                        return this.active ? this.ui() : null;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(AppNode.prototype, "window", {
+                    get: function () {
+                        return this.active ? this.win() : null;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+
+                AppNode.prototype.ui = function () {
+                    if (this.active) {
+                        return require('nw.gui');
+                    }
+                    return null;
+                };
+
+                AppNode.prototype.win = function () {
+                    if (this.gui) {
+                        var win = this.gui.Window.get();
+                        return win;
+                    }
+                    return null;
+                };
+
+                AppNode.prototype.reload = function () {
+                    var win = this.window;
+                    if (win) {
+                        win.reloadIgnoringCache();
+                    }
+                };
+
+                AppNode.prototype.close = function () {
+                    var win = this.window;
+                    if (win) {
+                        win.close();
+                    }
+                };
+
+                AppNode.prototype.debug = function () {
+                    var win = this.window;
+                    if (win.isDevToolsOpen()) {
+                        win.closeDevTools();
+                    } else {
+                        win.showDevTools();
+                    }
+                };
+
+                AppNode.prototype.toggleFullscreen = function () {
+                    var win = this.window;
+                    if (win) {
+                        win.toggleFullscreen();
+                    }
+                };
+
+                AppNode.prototype.kiosMode = function () {
+                    var win = this.window;
+                    if (win) {
+                        win.toggleKioskMode();
+                    }
+                };
+                return AppNode;
+            })();
+            common.AppNode = AppNode;
+        })(ng.common || (ng.common = {}));
+        var common = ng.common;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (common) {
+            var AppStateProvider = (function () {
+                function AppStateProvider($stateProvider, appConfigProvider, appNodeProvider) {
+                    this.$stateProvider = $stateProvider;
+                    this.appConfigProvider = appConfigProvider;
+                    this.appNodeProvider = appNodeProvider;
+                    var appConfig = appConfigProvider.$get();
+                    this.appState = new AppState($stateProvider, appNodeProvider, appConfig);
+                    this.appState.debug = appConfig.debug || false;
+                }
+                AppStateProvider.prototype.$get = function () {
+                    return this.appState;
+                };
+                return AppStateProvider;
+            })();
+            common.AppStateProvider = AppStateProvider;
+
+            var AppState = (function () {
+                /*
+                public show: {
+                all: true,
+                log: false,
+                info: true,
+                warn: true,
+                error: true,
+                debug: false,
+                },
+                */
+                function AppState($stateProvider, appNodeProvider, appConfig) {
+                    this.$stateProvider = $stateProvider;
+                    this.appNodeProvider = appNodeProvider;
+                    this.appConfig = appConfig;
+                    this.logs = [];
+                    this.html5 = true;
+                    this.title = appConfig.title || 'Prototyped';
+                    this.version = appConfig.version || '1.0.0';
+                    this.node = appNodeProvider.$get();
+                    this.current = {
+                        state: null
+                    };
+                }
+                AppState.prototype.getIcon = function () {
+                    var icon = (this.node.active) ? 'fa fa-desktop' : 'fa fa-cube';
+                    var match = /\/!(\w+)!/i.exec(this.proxy || '');
+                    if (match && match.length > 1) {
+                        switch (match[1]) {
+                            case 'test':
+                                return 'fa fa-puzzle-piece glow-blue animate-glow';
+                            case 'debug':
+                                return 'fa fa-bug glow-orange animate-glow';
+                        }
+                    }
+
+                    if (this.current && this.current.state) {
+                        var currentState = this.current.state.name;
+                        this.appConfig.routers.forEach(function (itm, i) {
+                            if (itm.menuitem && itm.menuitem.state == currentState) {
+                                icon = itm.menuitem.icon;
+                            }
+                        });
+                    }
+                    return icon;
+                };
+
+                AppState.prototype.getColor = function () {
+                    var logs = this.logs;
+                    if (logs.some(function (val, i, array) {
+                        return val.type == 'error';
+                    })) {
+                        return 'glow-red';
+                    }
+                    if (logs.some(function (val, i, array) {
+                        return val.type == 'warn';
+                    })) {
+                        return 'glow-orange';
+                    }
+                    if (logs.some(function (val, i, array) {
+                        return val.type == 'info';
+                    })) {
+                        return 'glow-blue';
+                    }
+                    if (this.node.active) {
+                        return 'glow-green';
+                    }
+                    return '';
+                };
+                return AppState;
+            })();
+            common.AppState = AppState;
+        })(ng.common || (ng.common = {}));
+        var common = ng.common;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../imports.d.ts" />
 // Constant object with default values
 angular.module('prototyped.ng.config', []).constant('appDefaultConfig', {
@@ -1072,141 +1262,144 @@ angular.module('prototyped.editor', [
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
-    (function (explorer) {
-        var AddressBarController = (function () {
-            function AddressBarController($rootScope, $scope, $q) {
-                var _this = this;
-                this.$rootScope = $rootScope;
-                this.$scope = $scope;
-                this.$q = $q;
-                this.history = [];
-                $scope.busy = true;
-                try  {
-                    // Initialise the address bar
-                    var elem = $('#addressbar');
-                    if (elem) {
-                        this.init(elem);
+    (function (ng) {
+        (function (explorer) {
+            var AddressBarController = (function () {
+                function AddressBarController($rootScope, $scope, $q) {
+                    var _this = this;
+                    this.$rootScope = $rootScope;
+                    this.$scope = $scope;
+                    this.$q = $q;
+                    this.history = [];
+                    $scope.busy = true;
+                    try  {
+                        // Initialise the address bar
+                        var elem = $('#addressbar');
+                        if (elem) {
+                            this.init(elem);
 
-                        this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
-                            if (folder != _this.$scope.dir_path) {
-                                console.warn(' - Addressbar Navigate: ', folder);
-                                _this.$scope.dir_path = folder;
-                                _this.navigate(folder);
-                            }
-                        });
-                    } else {
-                        throw new Error('Element with id "addressbar" not found...');
-                    }
-                } catch (ex) {
-                    // Initialisation failed
-                    console.error(ex);
-                }
-                $scope.busy = false;
-            }
-            AddressBarController.prototype.init = function (element) {
-                // Set the target HTML element
-                this.element = element;
-
-                // Generate the current folder parts
-                this.generateOutput('./');
-            };
-
-            AddressBarController.prototype.openFolder = function (path) {
-                try  {
-                    var nwGui = 'nw.gui';
-                    var gui = require(nwGui);
-                    if (!$.isEmptyObject(gui)) {
-                        console.debug(' - Opening Folder: ' + path);
-                        gui.Shell.openItem(path + '/');
-                    }
-                } catch (ex) {
-                    console.error(ex);
-                }
-                this.generateOutput(path);
-            };
-
-            AddressBarController.prototype.navigate = function (path) {
-                this.generateOutput(path);
-            };
-
-            AddressBarController.prototype.select = function (file) {
-                console.info(' - select: ', file);
-                try  {
-                    var req = 'nw.gui';
-                    var gui = require(req);
-                    gui.Shell.openItem(file);
-                } catch (ex) {
-                    console.error(ex);
-                }
-            };
-
-            AddressBarController.prototype.back = function () {
-                var len = this.history ? this.history.length : -1;
-                if (len > 1) {
-                    var last = this.history[len - 2];
-                    this.history = this.history.splice(0, len - 2);
-                    this.generateOutput(last);
-                }
-            };
-
-            AddressBarController.prototype.hasHistory = function () {
-                var len = this.history ? this.history.length : -1;
-                return (len > 1);
-            };
-
-            AddressBarController.prototype.generateOutput = function (dir_path) {
-                // Set the current dir path
-                this.$scope.dir_path = dir_path;
-                this.$scope.dir_parts = this.generatePaths(dir_path);
-                this.history.push(dir_path);
-
-                // Breadcast event that path has changed
-                this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
-            };
-
-            AddressBarController.prototype.generatePaths = function (dir_path) {
-                try  {
-                    // Get dependecies
-                    var path = require('path');
-
-                    // Update current path
-                    this.$scope.dir_path = dir_path = path.resolve(dir_path);
-
-                    // Try and normalize the folder path
-                    var curr = path.normalize(dir_path);
-                    if (curr) {
-                        // Split path into separate elements
-                        var sequence = curr.split(path.sep);
-                        var result = [];
-
-                        var i = 0;
-                        for (; i < sequence.length; ++i) {
-                            result.push({
-                                name: sequence[i],
-                                path: sequence.slice(0, 1 + i).join(path.sep)
+                            this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                                if (folder != _this.$scope.dir_path) {
+                                    console.warn(' - Addressbar Navigate: ', folder);
+                                    _this.$scope.dir_path = folder;
+                                    _this.navigate(folder);
+                                }
                             });
+                        } else {
+                            throw new Error('Element with id "addressbar" not found...');
                         }
-
-                        // Add root for unix
-                        if (sequence[0] == '' && process.platform != 'win32') {
-                            result[0] = {
-                                name: 'root',
-                                path: '/'
-                            };
-                        }
-
-                        // Return thepath sequences
-                        return { sequence: result };
+                    } catch (ex) {
+                        // Initialisation failed
+                        console.error(ex);
                     }
-                } catch (ex) {
-                    console.error(ex);
+                    $scope.busy = false;
                 }
-            };
-            return AddressBarController;
-        })();
-        explorer.AddressBarController = AddressBarController;
-    })(proto.explorer || (proto.explorer = {}));
-    var explorer = proto.explorer;
+                AddressBarController.prototype.init = function (element) {
+                    // Set the target HTML element
+                    this.element = element;
+
+                    // Generate the current folder parts
+                    this.generateOutput('./');
+                };
+
+                AddressBarController.prototype.openFolder = function (path) {
+                    try  {
+                        var nwGui = 'nw.gui';
+                        var gui = require(nwGui);
+                        if (!$.isEmptyObject(gui)) {
+                            console.debug(' - Opening Folder: ' + path);
+                            gui.Shell.openItem(path + '/');
+                        }
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                    this.generateOutput(path);
+                };
+
+                AddressBarController.prototype.navigate = function (path) {
+                    this.generateOutput(path);
+                };
+
+                AddressBarController.prototype.select = function (file) {
+                    console.info(' - select: ', file);
+                    try  {
+                        var req = 'nw.gui';
+                        var gui = require(req);
+                        gui.Shell.openItem(file);
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                };
+
+                AddressBarController.prototype.back = function () {
+                    var len = this.history ? this.history.length : -1;
+                    if (len > 1) {
+                        var last = this.history[len - 2];
+                        this.history = this.history.splice(0, len - 2);
+                        this.generateOutput(last);
+                    }
+                };
+
+                AddressBarController.prototype.hasHistory = function () {
+                    var len = this.history ? this.history.length : -1;
+                    return (len > 1);
+                };
+
+                AddressBarController.prototype.generateOutput = function (dir_path) {
+                    // Set the current dir path
+                    this.$scope.dir_path = dir_path;
+                    this.$scope.dir_parts = this.generatePaths(dir_path);
+                    this.history.push(dir_path);
+
+                    // Breadcast event that path has changed
+                    this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
+                };
+
+                AddressBarController.prototype.generatePaths = function (dir_path) {
+                    try  {
+                        // Get dependecies
+                        var path = require('path');
+
+                        // Update current path
+                        this.$scope.dir_path = dir_path = path.resolve(dir_path);
+
+                        // Try and normalize the folder path
+                        var curr = path.normalize(dir_path);
+                        if (curr) {
+                            // Split path into separate elements
+                            var sequence = curr.split(path.sep);
+                            var result = [];
+
+                            var i = 0;
+                            for (; i < sequence.length; ++i) {
+                                result.push({
+                                    name: sequence[i],
+                                    path: sequence.slice(0, 1 + i).join(path.sep)
+                                });
+                            }
+
+                            // Add root for unix
+                            if (sequence[0] == '' && process.platform != 'win32') {
+                                result[0] = {
+                                    name: 'root',
+                                    path: '/'
+                                };
+                            }
+
+                            // Return thepath sequences
+                            return { sequence: result };
+                        }
+                    } catch (ex) {
+                        console.error(ex);
+                    }
+                };
+                return AddressBarController;
+            })();
+            explorer.AddressBarController = AddressBarController;
+        })(ng.explorer || (ng.explorer = {}));
+        var explorer = ng.explorer;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
 })(proto || (proto = {}));
 ///<reference path="../../../imports.d.ts"/>
 var proto;
@@ -1384,10 +1577,11 @@ var proto;
     (function (ng) {
         (function (explorer) {
             var ExplorerViewController = (function () {
-                function ExplorerViewController($rootScope, $scope, $q) {
+                function ExplorerViewController($rootScope, $scope, $q, navigation) {
                     this.$rootScope = $rootScope;
                     this.$scope = $scope;
                     this.$q = $q;
+                    this.navigation = navigation;
                 }
                 return ExplorerViewController;
             })();
@@ -1407,28 +1601,69 @@ var proto;
 (function (proto) {
     (function (ng) {
         (function (explorer) {
-            var SiteNode = (function () {
-                function SiteNode(nodeName) {
+            var TreeNode = (function () {
+                function TreeNode(nodeName) {
                     this.children = [];
                     this.classes = [];
                     this.label = nodeName;
                 }
-                return SiteNode;
+                return TreeNode;
             })();
+            explorer.TreeNode = TreeNode;
+
+            var SiteNode = (function (_super) {
+                __extends(SiteNode, _super);
+                function SiteNode(nodeName, state) {
+                    _super.call(this, nodeName);
+                    this.state = state;
+                    this.data = state;
+                }
+                SiteNode.prototype.onSelect = function (branch) {
+                    //this.$rootScope.$broadcast('nodeSelect', this);
+                };
+                return SiteNode;
+            })(TreeNode);
             explorer.SiteNode = SiteNode;
 
             var SiteNavigationRoot = (function (_super) {
                 __extends(SiteNavigationRoot, _super);
-                function SiteNavigationRoot($q, nodeName) {
-                    _super.call(this, nodeName);
-                    this.$q = $q;
+                function SiteNavigationRoot(nodeName, states) {
+                    _super.call(this, nodeName, null);
+                    this.states = states;
+                    this.stateCache = {};
                     this.init();
                 }
                 SiteNavigationRoot.prototype.init = function () {
+                    var _this = this;
                     this.children = [];
+                    this.states.forEach(function (state, i) {
+                        if (state.url == '^' || state.name == '') {
+                            _this.data = state; // Root node
+                        } else if (state.name.indexOf('.') < 0) {
+                            _this.addItem(_this, [state.name], state);
+                        } else {
+                            var parts = state.name.split('.');
+                            _this.addItem(_this, parts, state);
+                        }
+                    });
                 };
 
-                SiteNavigationRoot.prototype.onSelect = function () {
+                SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
+                    if (paths && paths.length) {
+                        var ident = paths[0];
+                        var parts = paths.splice(1);
+                        var node = this.stateCache[ident];
+                        if (!node) {
+                            node = new SiteNode(ident, null);
+                            this.stateCache[ident] = node;
+                            parentNode.children.push(node);
+                        }
+                        if (!parts.length) {
+                            node.data = state;
+                        } else {
+                            this.addItem(node, parts, state);
+                        }
+                    }
                 };
                 return SiteNavigationRoot;
             })(SiteNode);
@@ -1438,17 +1673,23 @@ var proto;
                 function NavigationService($state, $q) {
                     this.$state = $state;
                     this.$q = $q;
-                    this.TreeData = [];
+                    this._treeData = [];
                     this.init();
                 }
                 NavigationService.prototype.init = function () {
-                    this.TreeData = [
-                        new proto.ng.explorer.SiteNavigationRoot(this.$q, 'Home Page')
+                    this._treeData = [
+                        new proto.ng.explorer.SiteNavigationRoot('Home Page', this.$state.get())
                     ];
+                    /*
+                    this.$rootScope.$on('nodeSelect', function (data) {
+                    console.warn('nodeSelect', data);
+                    //this.selected = data;
+                    });
+                    */
                 };
 
                 NavigationService.prototype.getTreeData = function () {
-                    return this.TreeData;
+                    return this._treeData;
                 };
                 return NavigationService;
             })();
@@ -1485,12 +1726,12 @@ angular.module('prototyped.explorer', [
                 'left@': { templateUrl: 'views/explore/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/explore/views/index.tpl.html',
-                    controller: 'proto.explorer.ExplorerController',
+                    controller: 'proto.ng.explorer.ExplorerController',
                     controllerAs: 'ctrlExplorer'
                 }
             }
         });
-    }]).service('navigationService', ['$q', proto.ng.explorer.NavigationService]).directive('protoAddressBar', [
+    }]).service('navigationService', ['$state', '$q', proto.ng.explorer.NavigationService]).directive('protoAddressBar', [
     '$q', function ($q) {
         return {
             restrict: 'EA',
@@ -1499,15 +1740,15 @@ angular.module('prototyped.explorer', [
             },
             transclude: false,
             templateUrl: 'modules/explore/views/addressbar.tpl.html',
-            controller: 'proto.explorer.AddressBarController',
+            controller: 'proto.ng.explorer.AddressBarController',
             controllerAs: 'addrBar'
         };
-    }]).controller('proto.explorer.AddressBarController', [
+    }]).controller('proto.ng.explorer.AddressBarController', [
     '$rootScope',
     '$scope',
     '$q',
-    proto.explorer.AddressBarController
-]).controller('proto.explorer.ExplorerController', [
+    proto.ng.explorer.AddressBarController
+]).controller('proto.ng.explorer.ExplorerController', [
     '$rootScope',
     '$scope',
     '$q',
@@ -1516,6 +1757,7 @@ angular.module('prototyped.explorer', [
     '$rootScope',
     '$scope',
     '$q',
+    'navigationService',
     proto.ng.explorer.ExplorerViewController
 ]);
 /// <reference path="../imports.d.ts" />
@@ -1593,7 +1835,10 @@ angular.module('prototyped.ng', [
     }]).config([
     '$stateProvider', function ($stateProvider) {
         // Set up routing...
-        $stateProvider.state('default', {
+        $stateProvider.state('proto', {
+            url: '/proto',
+            abstract: true
+        }).state('default', {
             url: '/',
             views: {
                 'main@': {
@@ -1602,77 +1847,8 @@ angular.module('prototyped.ng', [
                     controllerAs: 'sliderCtrl'
                 }
             }
-        }).state('proto', {
-            url: '/proto',
-            abstract: true
         });
-    }]).constant('appNode', {
-    html5: true,
-    active: typeof require !== 'undefined',
-    ui: function () {
-        if (typeof require !== 'undefined') {
-            return require('nw.gui');
-        }
-        return undefined;
-    },
-    win: function () {
-        if (typeof require !== 'undefined') {
-            var gui = require('nw.gui');
-            var win = gui.Window.get();
-            if (win) {
-                return win;
-            }
-        }
-        return undefined;
-    },
-    reload: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win) {
-            win.reloadIgnoringCache();
-        }
-    },
-    close: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win) {
-            win.close();
-        }
-    },
-    debug: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win.isDevToolsOpen()) {
-            win.closeDevTools();
-        } else {
-            win.showDevTools();
-        }
-    },
-    toggleFullscreen: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win) {
-            win.toggleFullscreen();
-        }
-    },
-    kiosMode: function () {
-        var gui = require('nw.gui');
-        var win = gui.Window.get();
-        if (win) {
-            win.toggleKioskMode();
-        }
-    }
-}).constant('appStatus', {
-    logs: [],
-    show: {
-        all: true,
-        log: false,
-        info: true,
-        warn: true,
-        error: true,
-        debug: false
-    }
-}).controller('CardViewCtrl', [
+    }]).provider('appNode', [proto.ng.common.AppNodeProvider]).provider('appState', ['$stateProvider', 'appConfigProvider', 'appNodeProvider', proto.ng.common.AppStateProvider]).controller('CardViewCtrl', [
     '$scope', 'appConfig', function ($scope, appConfig) {
         // Make sure 'mySiteMap' exists
         $scope.pages = appConfig.routers || [];
@@ -1704,7 +1880,7 @@ angular.module('prototyped.ng', [
             $scope._Index = index;
         };
     }]).directive('appClean', [
-    '$rootScope', '$window', '$route', '$state', 'appNode', 'appStatus', function ($rootScope, $window, $route, $state, appNode, appStatus) {
+    '$rootScope', '$window', '$route', '$state', 'appNode', 'appState', function ($rootScope, $window, $route, $state, appNode, appState) {
         return function (scope, elem, attrs) {
             var keyCtrl = false;
             var keyShift = false;
@@ -1747,7 +1923,7 @@ angular.module('prototyped.ng', [
                 }
 
                 // Clear all previous status messages
-                appStatus.logs = [];
+                appState.logs = [];
                 console.clear();
             });
             scope.$on('$destroy', function () {
@@ -1861,6 +2037,8 @@ angular.module('prototyped.ng', [
 }).filter('typeCount', [function () {
         return function (input, type) {
             var count = 0;
+            if (!input)
+                return null;
             if (input.length > 0) {
                 input.forEach(function (itm) {
                     if (!itm)
@@ -2568,45 +2746,21 @@ angular.module('prototyped.ng', [
             }
         };
     }]).run([
-    '$rootScope', '$state', '$filter', 'appConfig', 'appNode', 'appStatus', function ($rootScope, $state, $filter, appConfig, appNode, appStatus) {
+    '$rootScope', '$state', 'appConfig', 'appState', function ($rootScope, $state, appConfig, appState) {
         // Extend root scope with (global) vars
         angular.extend($rootScope, {
             appConfig: appConfig,
-            appNode: appNode,
-            status: appStatus,
+            appState: appState,
+            appNode: appState.node,
             startAt: Date.now(),
             state: $state
         });
 
-        // Hook extended function(s)
-        appStatus.getIcon = function () {
-            var match = /\/!(\w+)!/i.exec(appNode.proxy || '');
-            if (match && match.length > 1) {
-                switch (match[1]) {
-                    case 'test':
-                        return 'fa fa-puzzle-piece glow-blue animate-glow';
-                    case 'debug':
-                        return 'fa fa-bug glow-orange animate-glow';
-                }
+        $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
+            if (toState) {
+                appState.current.state = toState;
             }
-            return (appNode.active) ? 'fa-desktop' : 'fa-cube';
-        };
-        appStatus.getColor = function () {
-            var logs = appStatus.logs;
-            if ($filter('typeCount')(logs, 'error')) {
-                return 'glow-red';
-            }
-            if ($filter('typeCount')(logs, 'warn')) {
-                return 'glow-orange';
-            }
-            if ($filter('typeCount')(logs, 'info')) {
-                return 'glow-blue';
-            }
-            if (appNode.active > 0) {
-                return 'glow-green';
-            }
-            return '';
-        };
+        });
     }]).run([
     'appConfig', function (appConfig) {
         console.debug(' - Current Config: ', appConfig);

@@ -29,7 +29,7 @@ angular.module('prototyped.explorer', [
                     'left@': { templateUrl: 'views/explore/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/explore/views/index.tpl.html',
-                        controller: 'proto.explorer.ExplorerController',
+                        controller: 'proto.ng.explorer.ExplorerController',
                         controllerAs: 'ctrlExplorer'
                     },
                 }
@@ -37,7 +37,7 @@ angular.module('prototyped.explorer', [
 
     }])
 
-    .service('navigationService', ['$q', proto.ng.explorer.NavigationService])
+    .service('navigationService', ['$state', '$q', proto.ng.explorer.NavigationService])
 
 
     .directive('protoAddressBar', ['$q', ($q) => {
@@ -48,18 +48,18 @@ angular.module('prototyped.explorer', [
             },
             transclude: false,
             templateUrl: 'modules/explore/views/addressbar.tpl.html',
-            controller: 'proto.explorer.AddressBarController',
+            controller: 'proto.ng.explorer.AddressBarController',
             controllerAs: 'addrBar'
         };
     }])
-    .controller('proto.explorer.AddressBarController', [
+    .controller('proto.ng.explorer.AddressBarController', [
         '$rootScope',
         '$scope',
         '$q',
-        proto.explorer.AddressBarController
+        proto.ng.explorer.AddressBarController
     ])
 
-    .controller('proto.explorer.ExplorerController', [
+    .controller('proto.ng.explorer.ExplorerController', [
         '$rootScope',
         '$scope',
         '$q',
@@ -70,6 +70,7 @@ angular.module('prototyped.explorer', [
         '$rootScope',
         '$scope',
         '$q',
+        'navigationService',
         proto.ng.explorer.ExplorerViewController
     ])
 
