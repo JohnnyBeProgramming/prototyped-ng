@@ -12,15 +12,14 @@ angular.module('prototyped.ng.samples.errorHandlers', [
 ])
     .config(['appConfigProvider', (appConfigProvider) => {
         // Configure module
-        appConfigProvider.set({
-            'errorHandlers': proto.ng.samples.errorHandlers.ErrorHandlers,
-            'googleConfig': {
+        appConfigProvider
+            .config('errorHandlers', proto.ng.samples.errorHandlers.ErrorHandlers)
+            .config('googleConfig', {
                 publicKey: 'UA-61791366-1',
-            },
-            'ravenConfig': {
+            })
+            .config('ravenConfig', {
                 publicKey: 'https://e94eaeaab36f4d14a99e0472e85ba289@app.getsentry.com/36391',
-            },
-        });
+            });
     }])
     .config(['$stateProvider', ($stateProvider) => {
         // Set up the states
@@ -54,7 +53,7 @@ angular.module('prototyped.ng.samples.errorHandlers', [
 
     .controller('errorHandlersController', ['$rootScope', '$scope', function ($rootScope, $scope) {
         $scope.$watch('appState.logs.length', function () {
-            $rootScope.$applyAsync(() => {});
+            $rootScope.$applyAsync(() => { });
         });
     }])
 

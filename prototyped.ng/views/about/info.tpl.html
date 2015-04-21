@@ -90,16 +90,16 @@
                             <span ng-if="info.about.server.active === false">
                                 <b class="text-danger glow-red">Offline</b>, faulty or disconnected.
                             </span>
-                            <span ng-if="info.about.server.active && appNode.active">
+                            <span ng-if="info.about.server.active && appState.node.active">
                                 Connected via <b class="text-warning glow-orange">web client</b>.
                             </span>
-                            <span ng-if="info.about.server.active && !appNode.active">
+                            <span ng-if="info.about.server.active && !appState.node.active">
                                 <b class="text-success glow-green">Online</b> and fully operational.
                             </span>
                         </small>
                     </h5>
                     <p class="ellipsis" ng:if="info.about.server.url">
-                        Server Url: <a target="_blank" ng-class="{ 'glow-green':appNode.active || info.about.protocol == 'https', 'glow-blue':!appNode.active && info.about.protocol == 'http', 'glow-red':info.about.protocol == 'file' }" ng-href="{{ info.about.server.url }}">{{ info.about.server.url }}</a>
+                        Server Url: <a target="_blank" ng-class="{ 'glow-green':appState.node.active || info.about.protocol == 'https', 'glow-blue':!appState.node.active && info.about.protocol == 'http', 'glow-red':info.about.protocol == 'file' }" ng-href="{{ info.about.server.url }}">{{ info.about.server.url }}</a>
                     </p>
                     <p>
                         <a href="" ng-click="tabOverviewMain = 0">Summary</a> |
@@ -239,7 +239,7 @@
                     </p>
                 </div>
             </div>
-            <div class="app-aside-collapser centered" ng-if="!appNode.active">
+            <div class="app-aside-collapser centered" ng-if="!appState.node.active">
                 <a href="" ng:show="!info.showUnavailable" ng-click="info.showUnavailable = !info.showUnavailable">
                     Show More
                 </a>

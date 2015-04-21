@@ -12,18 +12,18 @@ angular.module('prototyped.editor', [
             .state('proto.editor', {
                 url: '/editor',
                 views: {
-                    'left@': { templateUrl: 'views/left.tpl.html' },
+                    'left@': { templateUrl: 'views/common/components/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/editor/views/main.tpl.html',
-                        controller: 'proto.ng.editor.EditorController',
+                        controller: 'proto.ng.modules.editor.EditorController',
                     },
                 }
             })
 
     }])
 
-    .controller('proto.ng.editor.EditorController', [
+    .controller('proto.ng.modules.editor.EditorController', [
         '$scope',
         '$timeout',
-        proto.ng.editor.EditorController
+        proto.ng.modules.editor.EditorController
     ])

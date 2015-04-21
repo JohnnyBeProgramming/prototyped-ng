@@ -1,15 +1,27 @@
 ﻿/// <reference path="../../imports.d.ts" />
 angular.module('prototyped.about', [
+    'prototyped.ng.runtime',
     'prototyped.ng.views',
-    'prototyped.ng.styles',
-    'ui.router'
+    'prototyped.ng.styles'
 ]).config([
-    '$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
-        // Define redirects
-        $urlRouterProvider.when('/about', '/about/info');
-
-        // Define the UI states
-        $stateProvider.state('about', {
+    'appStateProvider', function (appStateProvider) {
+        // Define application state
+        appStateProvider.when('/about', '/about/info').define('/about', {
+            priority: 1000,
+            menuitem: {
+                label: 'About',
+                state: 'about.info',
+                icon: 'fa fa-info-circle'
+            },
+            cardview: {
+                style: 'img-about',
+                title: 'About this software',
+                desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
+            },
+            visible: function () {
+                return appStateProvider.appConfig.options.showAboutPage;
+            }
+        }).state('about', {
             url: '/about',
             abstract: true
         }).state('about.info', {
@@ -472,138 +484,150 @@ angular.module('prototyped.about', [
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (common) {
-            var AppConfig = (function () {
-                function AppConfig() {
-                    this.routers = [];
-                    this.options = new common.AppOptions();
-                }
-                return AppConfig;
-            })();
-            common.AppConfig = AppConfig;
-        })(ng.common || (ng.common = {}));
-        var common = ng.common;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (common) {
-            var AppNode = (function () {
-                function AppNode() {
-                    this.active = typeof require !== 'undefined';
-                }
-                Object.defineProperty(AppNode.prototype, "gui", {
-                    get: function () {
-                        return this.active ? this.ui() : null;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(AppNode.prototype, "window", {
-                    get: function () {
-                        return this.active ? this.win() : null;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-
-                AppNode.prototype.ui = function () {
-                    if (this.active) {
-                        return require('nw.gui');
+        (function (modules) {
+            (function (common) {
+                var AppConfig = (function () {
+                    function AppConfig() {
+                        this.modules = {};
+                        this.options = new common.AppOptions();
                     }
-                    return null;
-                };
-
-                AppNode.prototype.win = function () {
-                    if (this.gui) {
-                        var win = this.gui.Window.get();
-                        return win;
-                    }
-                    return null;
-                };
-
-                AppNode.prototype.reload = function () {
-                    var win = this.window;
-                    if (win) {
-                        win.reloadIgnoringCache();
-                    }
-                };
-
-                AppNode.prototype.close = function () {
-                    var win = this.window;
-                    if (win) {
-                        win.close();
-                    }
-                };
-
-                AppNode.prototype.debug = function () {
-                    var win = this.window;
-                    if (win.isDevToolsOpen()) {
-                        win.closeDevTools();
-                    } else {
-                        win.showDevTools();
-                    }
-                };
-
-                AppNode.prototype.toggleFullscreen = function () {
-                    var win = this.window;
-                    if (win) {
-                        win.toggleFullscreen();
-                    }
-                };
-
-                AppNode.prototype.kiosMode = function () {
-                    var win = this.window;
-                    if (win) {
-                        win.toggleKioskMode();
-                    }
-                };
-                return AppNode;
-            })();
-            common.AppNode = AppNode;
-        })(ng.common || (ng.common = {}));
-        var common = ng.common;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (common) {
-            var AppOptions = (function () {
-                function AppOptions() {
-                    this.showAboutPage = true;
-                    this.showDefaultItems = true;
-                }
-                return AppOptions;
-            })();
-            common.AppOptions = AppOptions;
-        })(ng.common || (ng.common = {}));
-        var common = ng.common;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (common) {
-            (function (providers) {
-                var AppNodeProvider = (function () {
-                    function AppNodeProvider() {
-                        this.appNode = new common.AppNode();
-                    }
-                    AppNodeProvider.prototype.$get = function () {
-                        return this.appNode;
-                    };
-                    return AppNodeProvider;
+                    return AppConfig;
                 })();
-                providers.AppNodeProvider = AppNodeProvider;
-            })(common.providers || (common.providers = {}));
-            var providers = common.providers;
-        })(ng.common || (ng.common = {}));
-        var common = ng.common;
+                common.AppConfig = AppConfig;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                var AppNode = (function () {
+                    function AppNode() {
+                        this.active = typeof require !== 'undefined';
+                    }
+                    Object.defineProperty(AppNode.prototype, "gui", {
+                        get: function () {
+                            return this.active ? this.ui() : null;
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
+                    Object.defineProperty(AppNode.prototype, "window", {
+                        get: function () {
+                            return this.active ? this.win() : null;
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
+
+                    AppNode.prototype.ui = function () {
+                        if (this.active) {
+                            return require('nw.gui');
+                        }
+                        return null;
+                    };
+
+                    AppNode.prototype.win = function () {
+                        if (this.gui) {
+                            var win = this.gui.Window.get();
+                            return win;
+                        }
+                        return null;
+                    };
+
+                    AppNode.prototype.reload = function () {
+                        var win = this.window;
+                        if (win) {
+                            win.reloadIgnoringCache();
+                        }
+                    };
+
+                    AppNode.prototype.close = function () {
+                        var win = this.window;
+                        if (win) {
+                            win.close();
+                        }
+                    };
+
+                    AppNode.prototype.debug = function () {
+                        var win = this.window;
+                        if (win.isDevToolsOpen()) {
+                            win.closeDevTools();
+                        } else {
+                            win.showDevTools();
+                        }
+                    };
+
+                    AppNode.prototype.toggleFullscreen = function () {
+                        var win = this.window;
+                        if (win) {
+                            win.toggleFullscreen();
+                        }
+                    };
+
+                    AppNode.prototype.kiosMode = function () {
+                        var win = this.window;
+                        if (win) {
+                            win.toggleKioskMode();
+                        }
+                    };
+                    return AppNode;
+                })();
+                common.AppNode = AppNode;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                var AppOptions = (function () {
+                    function AppOptions() {
+                        this.showAboutPage = true;
+                        this.showDefaultItems = true;
+                    }
+                    return AppOptions;
+                })();
+                common.AppOptions = AppOptions;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (providers) {
+                    var AppNodeProvider = (function () {
+                        function AppNodeProvider() {
+                            this.appNode = new common.AppNode();
+                        }
+                        AppNodeProvider.prototype.$get = function () {
+                            return this.appNode;
+                        };
+                        return AppNodeProvider;
+                    })();
+                    providers.AppNodeProvider = AppNodeProvider;
+                })(common.providers || (common.providers = {}));
+                var providers = common.providers;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
@@ -612,697 +636,1513 @@ var proto;
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (common) {
-            var AppState = (function () {
-                /*
-                public show: {
-                all: true,
-                log: false,
-                info: true,
-                warn: true,
-                error: true,
-                debug: false,
-                },
-                */
-                function AppState($stateProvider, appNodeProvider, appConfig) {
-                    this.$stateProvider = $stateProvider;
-                    this.appNodeProvider = appNodeProvider;
-                    this.appConfig = appConfig;
-                    this.logs = [];
-                    this.html5 = true;
-                    this.title = appConfig.title || 'Prototyped';
-                    this.version = appConfig.version || '1.0.0';
-                    this.node = appNodeProvider.$get();
-                    this.current = {
-                        state: null
-                    };
-                }
-                AppState.prototype.getIcon = function () {
-                    var icon = (this.node.active) ? 'fa fa-desktop' : 'fa fa-cube';
-                    var match = /\/!(\w+)!/i.exec(this.proxy || '');
-                    if (match && match.length > 1) {
-                        switch (match[1]) {
-                            case 'test':
-                                return 'fa fa-puzzle-piece glow-blue animate-glow';
-                            case 'debug':
-                                return 'fa fa-bug glow-orange animate-glow';
-                        }
-                    }
-
-                    if (this.current && this.current.state) {
-                        var currentState = this.current.state.name;
-                        this.appConfig.routers.forEach(function (itm, i) {
-                            if (itm.menuitem && itm.menuitem.state == currentState) {
-                                icon = itm.menuitem.icon;
-                            }
-                        });
-                    }
-                    return icon;
-                };
-
-                AppState.prototype.getColor = function () {
-                    var logs = this.logs;
-                    if (logs.some(function (val, i, array) {
-                        return val.type == 'error';
-                    })) {
-                        return 'glow-red';
-                    }
-                    if (logs.some(function (val, i, array) {
-                        return val.type == 'warn';
-                    })) {
-                        return 'glow-orange';
-                    }
-                    if (logs.some(function (val, i, array) {
-                        return val.type == 'info';
-                    })) {
-                        return 'glow-blue';
-                    }
-                    if (this.node.active) {
-                        return 'glow-green';
-                    }
-                    return '';
-                };
-                return AppState;
-            })();
-            common.AppState = AppState;
-        })(ng.common || (ng.common = {}));
-        var common = ng.common;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (common) {
-            (function (providers) {
-                var AppConfigProvider = (function () {
-                    function AppConfigProvider(defaultAppConfig) {
-                        this.defaultAppConfig = defaultAppConfig;
-                    }
-                    return AppConfigProvider;
-                })();
-                providers.AppConfigProvider = AppConfigProvider;
-            })(common.providers || (common.providers = {}));
-            var providers = common.providers;
-        })(ng.common || (ng.common = {}));
-        var common = ng.common;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (common) {
-            (function (providers) {
-                var AppStateProvider = (function () {
-                    function AppStateProvider($stateProvider, appConfigProvider, appNodeProvider) {
+        (function (modules) {
+            (function (common) {
+                var AppState = (function () {
+                    function AppState($stateProvider, appNodeProvider, appConfig) {
                         this.$stateProvider = $stateProvider;
-                        this.appConfigProvider = appConfigProvider;
                         this.appNodeProvider = appNodeProvider;
-                        var appConfig = appConfigProvider.$get();
-                        this.appState = new common.AppState($stateProvider, appNodeProvider, appConfig);
-                        this.appState.debug = appConfig.debug || false;
+                        this.appConfig = appConfig;
+                        this.logs = [];
+                        this.html5 = true;
+                        this.title = appConfig.title || 'Prototyped';
+                        this.version = appConfig.version || '1.0.0';
+                        this.node = appNodeProvider.$get();
+                        this.routers = [];
+                        this.current = {
+                            state: null
+                        };
                     }
-                    AppStateProvider.prototype.$get = function () {
-                        return this.appState;
+                    Object.defineProperty(AppState.prototype, "config", {
+                        /*
+                        public show: {
+                        all: true,
+                        log: false,
+                        info: true,
+                        warn: true,
+                        error: true,
+                        debug: false,
+                        },
+                        */
+                        get: function () {
+                            return this.appConfig;
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
+
+                    AppState.prototype.getIcon = function () {
+                        var icon = (this.node.active) ? 'fa fa-desktop' : 'fa fa-cube';
+                        var match = /\/!(\w+)!/i.exec(this.proxy || '');
+                        if (match && match.length > 1) {
+                            switch (match[1]) {
+                                case 'test':
+                                    return 'fa fa-puzzle-piece glow-blue animate-glow';
+                                case 'debug':
+                                    return 'fa fa-bug glow-orange animate-glow';
+                            }
+                        }
+
+                        if (this.current && this.current.state) {
+                            var currentState = this.current.state.name;
+                            this.routers.forEach(function (itm, i) {
+                                if (itm.menuitem && itm.menuitem.state == currentState) {
+                                    icon = itm.menuitem.icon;
+                                }
+                            });
+                        }
+                        return icon;
                     };
-                    return AppStateProvider;
+
+                    AppState.prototype.getColor = function () {
+                        var logs = this.logs;
+                        if (logs.some(function (val, i, array) {
+                            return val.type == 'error';
+                        })) {
+                            return 'glow-red';
+                        }
+                        if (logs.some(function (val, i, array) {
+                            return val.type == 'warn';
+                        })) {
+                            return 'glow-orange';
+                        }
+                        if (logs.some(function (val, i, array) {
+                            return val.type == 'info';
+                        })) {
+                            return 'glow-blue';
+                        }
+                        if (this.node.active) {
+                            return 'glow-green';
+                        }
+                        return '';
+                    };
+                    return AppState;
                 })();
-                providers.AppStateProvider = AppStateProvider;
-            })(common.providers || (common.providers = {}));
-            var providers = common.providers;
-        })(ng.common || (ng.common = {}));
-        var common = ng.common;
+                common.AppState = AppState;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (controllers) {
+                    var CardViewController = (function () {
+                        function CardViewController(appState) {
+                            this.appState = appState;
+                            this._index = 0;
+                        }
+                        Object.defineProperty(CardViewController.prototype, "pages", {
+                            get: function () {
+                                return this.appState.routers;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
+
+                        CardViewController.prototype.count = function () {
+                            return this.pages.length;
+                        };
+
+                        CardViewController.prototype.isActive = function (index) {
+                            return this._index === index;
+                        };
+
+                        CardViewController.prototype.showPrev = function () {
+                            this._index = (this._index > 0) ? --this._index : this.count() - 1;
+                        };
+
+                        CardViewController.prototype.showNext = function () {
+                            this._index = (this._index < this.count() - 1) ? ++this._index : 0;
+                        };
+
+                        CardViewController.prototype.showItem = function (index) {
+                            this._index = index;
+                        };
+                        return CardViewController;
+                    })();
+                    controllers.CardViewController = CardViewController;
+                })(common.controllers || (common.controllers = {}));
+                var controllers = common.controllers;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="../../../imports.d.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function AppCleanDirective($window, $route, $state, appState) {
+                        return function (scope, elem, attrs) {
+                            var keyCtrl = false;
+                            var keyShift = false;
+                            var keyEvent = $(document).on('keyup keydown', function (e) {
+                                // Update key states
+                                var hasChanges = false;
+                                if (keyCtrl != e.ctrlKey) {
+                                    hasChanges = true;
+                                    keyCtrl = e.ctrlKey;
+                                }
+                                if (keyShift != e.shiftKey) {
+                                    hasChanges = true;
+                                    keyShift = e.shiftKey;
+                                }
+                                if (hasChanges) {
+                                    $(elem).find('i').toggleClass('glow-blue', !keyShift && keyCtrl);
+                                    $(elem).find('i').toggleClass('glow-orange', keyShift);
+                                }
+                            });
+                            $(elem).attr('tooltip', 'Refresh');
+                            $(elem).attr('tooltip-placement', 'bottom');
+                            $(elem).click(function (e) {
+                                if (keyShift) {
+                                    // Full page reload
+                                    if (appState.node.active) {
+                                        console.debug(' - Reload Node Webkit...');
+                                        appState.node.reload();
+                                    } else {
+                                        console.debug(' - Reload page...');
+                                        $window.location.reload(true);
+                                    }
+                                } else if (keyCtrl) {
+                                    // Fast route reload
+                                    console.debug(' - Reload route...');
+                                    $route.reload();
+                                } else {
+                                    // Fast state reload
+                                    console.debug(' - Refresh state...');
+                                    $state.reload();
+                                }
+
+                                // Clear all previous status messages
+                                appState.logs = [];
+                                console.clear();
+                            });
+                            scope.$on('$destroy', function () {
+                                $(elem).off('click');
+                                keyEvent.off('keyup keydown');
+                            });
+                        };
+                    }
+                    directives.AppCleanDirective = AppCleanDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function AppCloseDirective(appNode) {
+                        return function (scope, elem, attrs) {
+                            // Only enable the button in a NodeJS context (extended functionality)
+                            $(elem).css('display', appNode.active ? '' : 'none');
+                            $(elem).click(function () {
+                                appNode.close();
+                            });
+                        };
+                    }
+                    directives.AppCloseDirective = AppCloseDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function AppDebugDirective(appNode) {
+                        return function (scope, elem, attrs) {
+                            // Only enable the button in a NodeJS context (extended functionality)
+                            $(elem).css('display', appNode.active ? '' : 'none');
+                            $(elem).click(function () {
+                                appNode.debug();
+                            });
+                        };
+                    }
+                    directives.AppDebugDirective = AppDebugDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function AppFullScreenDirective(appNode) {
+                        return function (scope, elem, attrs) {
+                            // Only enable the button in a NodeJS context (extended functionality)
+                            $(elem).css('display', appNode.active ? '' : 'none');
+                            $(elem).click(function () {
+                                appNode.toggleFullscreen();
+                            });
+                        };
+                    }
+                    directives.AppFullScreenDirective = AppFullScreenDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function AppKioskDirective(appNode) {
+                        return function (scope, elem, attrs) {
+                            // Only enable the button in a NodeJS context (extended functionality)
+                            $(elem).css('display', appNode.active ? '' : 'none');
+                            $(elem).click(function () {
+                                appNode.kiosMode();
+                            });
+                        };
+                    }
+                    directives.AppKioskDirective = AppKioskDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function AppVersionDirective(appState) {
+                        function getVersionInfo(ident) {
+                            try  {
+                                if (typeof process !== 'undefined' && process.versions) {
+                                    return process.versions[ident];
+                                }
+                            } catch (ex) {
+                            }
+                            return null;
+                        }
+
+                        return function (scope, elm, attrs) {
+                            var targ = attrs['appVersion'];
+                            var val = null;
+                            if (!targ) {
+                                val = appState.version;
+                            } else
+                                switch (targ) {
+                                    case 'angular':
+                                        val = angular.version.full;
+                                        break;
+                                    case 'nodeweb-kit':
+                                        val = getVersionInfo('node-webkit');
+                                        break;
+                                    case 'node':
+                                        val = getVersionInfo('node');
+                                        break;
+                                    default:
+                                        val = getVersionInfo(targ) || val;
+
+                                        break;
+                                }
+                            if (!val && attrs['defaultText']) {
+                                val = attrs['defaultText'];
+                            }
+                            if (val) {
+                                $(elm).text(val);
+                            }
+                        };
+                    }
+                    directives.AppVersionDirective = AppVersionDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function DomReplaceDirective() {
+                        return {
+                            restrict: 'A',
+                            require: 'ngInclude',
+                            link: function (scope, el, attrs) {
+                                el.replaceWith(el.children());
+                            }
+                        };
+                    }
+                    directives.DomReplaceDirective = DomReplaceDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function EatClickIfDirective($parse, $rootScope) {
+                        return {
+                            priority: 100,
+                            restrict: 'A',
+                            compile: function ($element, attr) {
+                                var fn = $parse(attr.eatClickIf);
+                                return {
+                                    pre: function link(scope, element) {
+                                        var eventName = 'click';
+                                        element.on(eventName, function (event) {
+                                            var callback = function () {
+                                                if (fn(scope, { $event: event })) {
+                                                    // prevents ng-click to be executed
+                                                    event.stopImmediatePropagation();
+
+                                                    // prevents href
+                                                    event.preventDefault();
+                                                    return false;
+                                                }
+                                            };
+                                            if ($rootScope.$$phase) {
+                                                scope.$evalAsync(callback);
+                                            } else {
+                                                scope.$apply(callback);
+                                            }
+                                        });
+                                    },
+                                    post: function () {
+                                    }
+                                };
+                            }
+                        };
+                    }
+                    directives.EatClickIfDirective = EatClickIfDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function ResxImportDirective($templateCache, $document) {
+                        return {
+                            priority: 100,
+                            restrict: 'A',
+                            compile: function ($element, attr) {
+                                var ident = attr.resxImport;
+                                var cache = $templateCache.get(ident);
+                                if ($('[resx-src="' + ident + '"]').length <= 0) {
+                                    var html = '';
+                                    if (/(.*)(\.css)/i.test(ident)) {
+                                        if (cache != null) {
+                                            html = '<style resx-src="' + ident + '">' + cache + '</style>';
+                                        } else {
+                                            html = '<link resx-src="' + ident + '" href="' + ident + '" rel="stylesheet" type="text/css" />';
+                                        }
+                                    } else if (/(.*)(\.js)/i.test(ident)) {
+                                        if (cache != null) {
+                                            html = '<script resx-src="' + ident + '">' + cache + '</script>';
+                                        } else {
+                                            html = '<script resx-src="' + ident + '" src="' + ident + '">' + cache + '</script>';
+                                        }
+                                    }
+                                    if (html) {
+                                        $element.replaceWith(html);
+                                    }
+                                }
+                                return {
+                                    pre: function (scope, element) {
+                                    },
+                                    post: function (scope, element) {
+                                    }
+                                };
+                            }
+                        };
+                    }
+                    directives.ResxImportDirective = ResxImportDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function ResxIncludeDirective($templateCache) {
+                        return {
+                            priority: 100,
+                            restrict: 'A',
+                            compile: function ($element, attr) {
+                                var ident = attr.resxInclude;
+                                var cache = $templateCache.get(ident);
+                                if (cache) {
+                                    $element.text(cache);
+                                    //$element.replaceWith(cache);
+                                }
+                                return {
+                                    pre: function (scope, element) {
+                                    },
+                                    post: function (scope, element) {
+                                    }
+                                };
+                            }
+                        };
+                    }
+                    directives.ResxIncludeDirective = ResxIncludeDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function ToHtmlDirective($sce, $filter) {
+                        function getHtml(obj) {
+                            try  {
+                                return 'toHtml:\'pre\' - ' + $filter('toXml')(obj, 'pre');
+                            } catch (ex) {
+                                return 'toHtml:error - ' + ex.message;
+                            }
+                        }
+                        return {
+                            restrict: 'EA',
+                            scope: {
+                                toHtml: '&'
+                            },
+                            transclude: false,
+                            controller: function ($scope, $sce) {
+                                var val = $scope.toHtml();
+                                var html = getHtml(val);
+                                $scope.myHtml = $sce.trustAsHtml(html);
+                            },
+                            template: '<div ng-bind-html="myHtml"></div>'
+                        };
+                    }
+                    directives.ToHtmlDirective = ToHtmlDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function FromNowFilter($filter) {
+                        return function (dateString, format) {
+                            try  {
+                                if (typeof moment !== 'undefined') {
+                                    return moment(dateString).fromNow(format);
+                                } else {
+                                    return ' at ' + $filter('date')(dateString, 'HH:mm:ss');
+                                }
+                            } catch (ex) {
+                                console.error(ex);
+                                return 'error';
+                            }
+                        };
+                    }
+                    filters.FromNowFilter = FromNowFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function InterpolateFilter(appState) {
+                        return function (text) {
+                            return String(text).replace(/\%VERSION\%/mg, appState.version);
+                        };
+                    }
+                    filters.InterpolateFilter = InterpolateFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function IsArrayFilter() {
+                        return function (input) {
+                            return angular.isArray(input);
+                        };
+                    }
+                    filters.IsArrayFilter = IsArrayFilter;
+
+                    function IsNotArrayFilter() {
+                        return function (input) {
+                            return angular.isArray(input);
+                        };
+                    }
+                    filters.IsNotArrayFilter = IsNotArrayFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function ListReverseFilter() {
+                        return function (input) {
+                            var result = [];
+                            var length = input.length;
+                            if (length) {
+                                for (var i = length - 1; i !== 0; i--) {
+                                    result.push(input[i]);
+                                }
+                            }
+                            return result;
+                        };
+                    }
+                    filters.ListReverseFilter = ListReverseFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function ParseBytesFilter() {
+                        return function (bytesDesc, precision) {
+                            var match = /(\d+) (\w+)/i.exec(bytesDesc);
+                            if (match && (match.length > 2)) {
+                                var bytes = match[1];
+                                var floatVal = parseFloat(bytes);
+                                if (isNaN(floatVal) || !isFinite(floatVal))
+                                    return '[?]';
+                                if (typeof precision === 'undefined')
+                                    precision = 1;
+                                var units = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'];
+                                var number = Math.floor(Math.log(floatVal) / Math.log(1024));
+                                var pow = -1;
+                                units.forEach(function (itm, i) {
+                                    if (itm && itm.toLowerCase().indexOf(match[2].toLowerCase()) >= 0)
+                                        pow = i;
+                                });
+                                if (pow > 0) {
+                                    var ret = (floatVal * Math.pow(1024, pow)).toFixed(precision);
+                                    return ret;
+                                }
+                            }
+                            return bytesDesc;
+                        };
+                    }
+                    filters.ParseBytesFilter = ParseBytesFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function ToByteFilter() {
+                        return function (bytes, precision) {
+                            if (isNaN(parseFloat(bytes)) || !isFinite(bytes))
+                                return '-';
+                            if (typeof precision === 'undefined')
+                                precision = 1;
+                            var units = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'], number = Math.floor(Math.log(bytes) / Math.log(1024));
+                            return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) + ' ' + units[number];
+                        };
+                    }
+                    filters.ToByteFilter = ToByteFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function ToXmlFilter($parse, $rootScope) {
+                        function toXmlString(name, input, expanded, childExpanded) {
+                            var val = '';
+                            var sep = '';
+                            var attr = '';
+                            if ($.isArray(input)) {
+                                if (expanded) {
+                                    for (var i = 0; i < input.length; i++) {
+                                        val += toXmlString(null, input[i], childExpanded);
+                                    }
+                                } else {
+                                    name = 'Array';
+                                    attr += sep + ' length="' + input.length + '"';
+                                    val = 'Array[' + input.length + ']';
+                                }
+                            } else if ($.isPlainObject(input)) {
+                                if (expanded) {
+                                    for (var id in input) {
+                                        if (input.hasOwnProperty(id)) {
+                                            var child = input[id];
+                                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                                val = toXmlString(id, child, childExpanded);
+                                            } else {
+                                                sep = ' ';
+                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    name = 'Object';
+                                    for (var id in input) {
+                                        if (input.hasOwnProperty(id)) {
+                                            var child = input[id];
+                                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                                val += toXmlString(id, child, childExpanded);
+                                            } else {
+                                                sep = ' ';
+                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                            }
+                                        }
+                                    }
+                                    //val = 'Object[ ' + JSON.stringify(input) + ' ]';
+                                }
+                            }
+                            if (name) {
+                                val = '<' + name + '' + attr + '>' + val + '</' + name + '>';
+                            }
+                            return val;
+                        }
+                        return function (input, rootName) {
+                            return toXmlString(rootName || 'xml', input, true);
+                        };
+                    }
+                    filters.ToXmlFilter = ToXmlFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function TypeCountFilter() {
+                        return function (input, type) {
+                            var count = 0;
+                            if (!input)
+                                return null;
+                            if (input.length > 0) {
+                                input.forEach(function (itm) {
+                                    if (!itm)
+                                        return;
+                                    if (!itm.type)
+                                        return;
+                                    if (itm.type == type)
+                                        count++;
+                                });
+                            }
+                            return count;
+                        };
+                    }
+                    filters.TypeCountFilter = TypeCountFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (providers) {
+                    var AppConfigLoader = (function () {
+                        function AppConfigLoader() {
+                        }
+                        AppConfigLoader.prototype.init = function (opts) {
+                            var configUrl = opts.path;
+                            var ngTargetApp = opts.name;
+                            var elem = opts.elem || document.body;
+                            var cfgModule = angular.module('prototyped.ng.config');
+                            var oldConfig = angular.injector(['prototyped.ng.config']).get('appConfig');
+                            if (opts.opts) {
+                                angular.extend(oldConfig.options, opts.opts);
+                            }
+                            if (configUrl) {
+                                var $http = angular.injector(['ng']).get('$http');
+                                $http({
+                                    method: 'GET',
+                                    url: configUrl
+                                }).success(function (data, status, headers, config) {
+                                    console.debug('Configuring ' + ngTargetApp + '...');
+                                    angular.extend(oldConfig, {
+                                        version: data.version || oldConfig.version
+                                    });
+                                    cfgModule.constant('appConfig', oldConfig);
+                                    angular.bootstrap(elem, [ngTargetApp]);
+                                }).error(function (ex) {
+                                    console.debug('Starting ' + ngTargetApp + ' with default config.');
+                                    angular.bootstrap(elem, [ngTargetApp]);
+                                });
+                            } else {
+                                console.debug('Starting app ' + ngTargetApp + '...');
+                                angular.bootstrap(elem, [ngTargetApp]);
+                            }
+                            return this;
+                        };
+                        return AppConfigLoader;
+                    })();
+                    providers.AppConfigLoader = AppConfigLoader;
+
+                    var AppConfigProvider = (function () {
+                        function AppConfigProvider(appConfig) {
+                            this.appConfig = appConfig;
+                        }
+                        Object.defineProperty(AppConfigProvider.prototype, "current", {
+                            get: function () {
+                                return this.appConfig;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
+
+                        AppConfigProvider.prototype.$get = function () {
+                            return this.appConfig;
+                        };
+
+                        AppConfigProvider.prototype.config = function (ident, options) {
+                            var target = (ident in this.current) ? this.current[ident] : {};
+                            angular.extend(target, options);
+                            this.current[ident] = target;
+                            return this;
+                        };
+
+                        AppConfigProvider.prototype.getPersisted = function (cname) {
+                            var name = cname + '=';
+                            var ca = document.cookie.split(';');
+                            for (var i = 0; i < ca.length; i++) {
+                                var c = ca[i];
+                                while (c.charAt(0) == ' ')
+                                    c = c.substring(1);
+                                if (c.indexOf(name) == 0)
+                                    return c.substring(name.length, c.length);
+                            }
+                            return '';
+                        };
+
+                        AppConfigProvider.prototype.setPersisted = function (cname, cvalue, exdays) {
+                            var d = new Date();
+                            d.setTime(d.getTime() + ((exdays || 7) * 24 * 60 * 60 * 1000));
+                            var expires = "expires=" + d.toUTCString();
+                            document.cookie = cname + "=" + cvalue + "; " + expires;
+                        };
+                        return AppConfigProvider;
+                    })();
+                    providers.AppConfigProvider = AppConfigProvider;
+                })(common.providers || (common.providers = {}));
+                var providers = common.providers;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (providers) {
+                    var AppStateProvider = (function () {
+                        function AppStateProvider($stateProvider, $urlRouterProvider, appConfigProvider, appNodeProvider) {
+                            this.$stateProvider = $stateProvider;
+                            this.$urlRouterProvider = $urlRouterProvider;
+                            this.appConfigProvider = appConfigProvider;
+                            this.appNodeProvider = appNodeProvider;
+                            var appConfig = appConfigProvider.$get();
+                            this.appState = new common.AppState($stateProvider, appNodeProvider, appConfig);
+                            this.appState.debug = false;
+                        }
+                        Object.defineProperty(AppStateProvider.prototype, "appConfig", {
+                            get: function () {
+                                return this.appConfigProvider.current;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
+
+                        AppStateProvider.prototype.$get = function () {
+                            return this.appState;
+                        };
+
+                        AppStateProvider.prototype.when = function (srcUrl, dstUrl) {
+                            this.$urlRouterProvider.when(srcUrl, dstUrl);
+                            return this;
+                        };
+
+                        AppStateProvider.prototype.config = function (ident, options) {
+                            this.appConfigProvider.config(ident, options);
+                            return this;
+                        };
+
+                        AppStateProvider.prototype.state = function (ident, options) {
+                            this.$stateProvider.state(ident, options);
+                            return this;
+                        };
+
+                        AppStateProvider.prototype.define = function (url, value) {
+                            if (!value.url)
+                                value.url = url;
+                            this.appState.routers.push(value);
+                            return this;
+                        };
+                        return AppStateProvider;
+                    })();
+                    providers.AppStateProvider = AppStateProvider;
+                })(common.providers || (common.providers = {}));
+                var providers = common.providers;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
 /// <reference path="../imports.d.ts" />
 // Constant object with default values
-angular.module('prototyped.ng.config', []).constant('appDefaultConfig', new proto.ng.common.AppConfig()).provider('appConfig', [
-    'appDefaultConfig', function (appDefaultConfig) {
-        var config = appDefaultConfig;
-        return {
-            $get: function () {
-                return config;
-            },
-            set: function (options) {
-                angular.extend(config, options);
-            },
-            clear: function () {
-                config = appDefaultConfig;
-            },
-            getPersisted: function (cname) {
-                var name = cname + '=';
-                var ca = document.cookie.split(';');
-                for (var i = 0; i < ca.length; i++) {
-                    var c = ca[i];
-                    while (c.charAt(0) == ' ')
-                        c = c.substring(1);
-                    if (c.indexOf(name) == 0)
-                        return c.substring(name.length, c.length);
-                }
-                return '';
-            },
-            setPersisted: function (cname, cvalue, exdays) {
-                var d = new Date();
-                d.setTime(d.getTime() + ((exdays || 7) * 24 * 60 * 60 * 1000));
-                var expires = "expires=" + d.toUTCString();
-                document.cookie = cname + "=" + cvalue + "; " + expires;
-            }
-        };
-    }]).constant('appConfigLoader', {
-    init: function (opts) {
-        var configUrl = opts.path;
-        var ngTargetApp = opts.name;
-        var elem = opts.elem || document.body;
-        var cfgModule = angular.module('prototyped.ng.config');
-        var oldConfig = angular.injector(['prototyped.ng.config']).get('appConfig');
-        if (opts.opts) {
-            angular.extend(oldConfig.options, opts.opts);
-        }
-        if (configUrl) {
-            var $http = angular.injector(['ng']).get('$http');
-            $http({
-                method: 'GET',
-                url: configUrl
-            }).success(function (data, status, headers, config) {
-                console.debug('Configuring ' + ngTargetApp + '...');
-                angular.extend(oldConfig, {
-                    version: data.version || oldConfig.version
-                });
-                cfgModule.constant('appConfig', oldConfig);
-                angular.bootstrap(elem, [ngTargetApp]);
-            }).error(function (ex) {
-                console.debug('Starting ' + ngTargetApp + ' with default config.');
-                angular.bootstrap(elem, [ngTargetApp]);
-            });
-        } else {
-            console.debug('Starting app ' + ngTargetApp + '...');
-            angular.bootstrap(elem, [ngTargetApp]);
-        }
-    }
-});
+angular.module('prototyped.ng.config', []).constant('appDefaultConfig', new proto.ng.modules.common.AppConfig()).constant('appConfigLoader', new proto.ng.modules.common.providers.AppConfigLoader()).provider('appConfig', ['appDefaultConfig', proto.ng.modules.common.providers.AppConfigProvider]);
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (commands) {
-            var ConsoleController = (function () {
-                function ConsoleController($scope, $log) {
-                    this.$scope = $scope;
-                    this.$log = $log;
-                    this._proxyList = [];
-                    try  {
-                        // Set the scope vars
-                        $scope.myConsole = this;
-                        $scope.lines = [];
+        (function (modules) {
+            (function (commands) {
+                var ConsoleController = (function () {
+                    function ConsoleController($scope, $log) {
+                        this.$scope = $scope;
+                        this.$log = $log;
+                        this._proxyList = [];
+                        try  {
+                            // Set the scope vars
+                            $scope.myConsole = this;
+                            $scope.lines = [];
 
-                        // Create the list proxies
-                        this._currentProxy = new BrowserConsole();
-                        this._proxyList.push(this._currentProxy);
+                            // Create the list proxies
+                            this._currentProxy = new BrowserConsole();
+                            this._proxyList.push(this._currentProxy);
 
-                        // Get the required libraries
-                        if (typeof require !== 'undefined') {
-                            var proc = require('child_process');
-                            if (!$.isEmptyObject(proc)) {
-                                this._currentProxy = new ProcessConsole(proc);
-                                this._proxyList.push(this._currentProxy);
+                            // Get the required libraries
+                            if (typeof require !== 'undefined') {
+                                var proc = require('child_process');
+                                if (!$.isEmptyObject(proc)) {
+                                    this._currentProxy = new ProcessConsole(proc);
+                                    this._proxyList.push(this._currentProxy);
+                                }
                             }
+                        } catch (ex) {
+                            // Could not load required libraries
+                            console.error(' - Warning: Console app failed to load required libraries.');
+                        } finally {
+                            // Initialise the controller
+                            this.init();
                         }
-                    } catch (ex) {
-                        // Could not load required libraries
-                        console.error(' - Warning: Console app failed to load required libraries.');
-                    } finally {
-                        // Initialise the controller
-                        this.init();
                     }
-                }
-                ConsoleController.prototype.init = function () {
-                    try  {
-                        // Check the command line status and give user some feedback
+                    ConsoleController.prototype.init = function () {
+                        try  {
+                            // Check the command line status and give user some feedback
+                            if (this._currentProxy) {
+                                this.success('Command line ready and active.');
+                            } else {
+                                this.warning('Cannot access the command line from the browser.');
+                            }
+                        } catch (ex) {
+                            console.error(ex);
+                        }
+                    };
+
+                    ConsoleController.prototype.clear = function () {
+                        // Clear cache
+                        this.$scope.lines = [];
+
+                        // Clear via proxy
                         if (this._currentProxy) {
-                            this.success('Command line ready and active.');
-                        } else {
-                            this.warning('Cannot access the command line from the browser.');
+                            this._currentProxy.clear();
                         }
-                    } catch (ex) {
-                        console.error(ex);
-                    }
-                };
+                    };
 
-                ConsoleController.prototype.clear = function () {
-                    // Clear cache
-                    this.$scope.lines = [];
-
-                    // Clear via proxy
-                    if (this._currentProxy) {
-                        this._currentProxy.clear();
-                    }
-                };
-
-                ConsoleController.prototype.getProxyName = function () {
-                    return (this._currentProxy) ? this._currentProxy.ProxyName : '';
-                };
-                ConsoleController.prototype.getProxies = function () {
-                    return this._proxyList;
-                };
-                ConsoleController.prototype.setProxy = function (name) {
-                    console.info(' - Switching Proxy: ' + name);
-                    for (var i = 0; i < this._proxyList.length; i++) {
-                        var itm = this._proxyList[i];
-                        if (itm.ProxyName == name) {
-                            this._currentProxy = itm;
-                            break;
-                        }
-                    }
-
-                    // Refresh UI if needed
-                    if (!this.$scope.$$phase)
-                        this.$scope.$apply();
-
-                    return this._currentProxy;
-                };
-
-                ConsoleController.prototype.command = function (text) {
-                    var _this = this;
-                    // Try and run the command
-                    this.info('' + text);
-                    this.$scope.txtInput = '';
-
-                    // Check if proxy exists
-                    if (this._currentProxy) {
-                        // Check for 'clear screen' command
-                        if (text == 'cls')
-                            return this.clear();
-
-                        // Run the command via proxy
-                        this._currentProxy.command(text, function (msg, tp) {
-                            switch (tp) {
-                                case 'debug':
-                                    _this.debug(msg);
-                                    break;
-                                case 'info':
-                                    _this.info(msg);
-                                    break;
-                                case 'warn':
-                                    _this.warning(msg);
-                                    break;
-                                case 'succcess':
-                                    _this.success(msg);
-                                    break;
-                                case 'error':
-                                    _this.error(msg);
-                                    break;
-                                default:
-                                    _this.debug(msg);
-                                    break;
+                    ConsoleController.prototype.getProxyName = function () {
+                        return (this._currentProxy) ? this._currentProxy.ProxyName : '';
+                    };
+                    ConsoleController.prototype.getProxies = function () {
+                        return this._proxyList;
+                    };
+                    ConsoleController.prototype.setProxy = function (name) {
+                        console.info(' - Switching Proxy: ' + name);
+                        for (var i = 0; i < this._proxyList.length; i++) {
+                            var itm = this._proxyList[i];
+                            if (itm.ProxyName == name) {
+                                this._currentProxy = itm;
+                                break;
                             }
+                        }
 
-                            // Refresh UI if needed
-                            if (!_this.$scope.$$phase)
-                                _this.$scope.$apply();
+                        // Refresh UI if needed
+                        if (!this.$scope.$$phase)
+                            this.$scope.$apply();
+
+                        return this._currentProxy;
+                    };
+
+                    ConsoleController.prototype.command = function (text) {
+                        var _this = this;
+                        // Try and run the command
+                        this.info('' + text);
+                        this.$scope.txtInput = '';
+
+                        // Check if proxy exists
+                        if (this._currentProxy) {
+                            // Check for 'clear screen' command
+                            if (text == 'cls')
+                                return this.clear();
+
+                            // Run the command via proxy
+                            this._currentProxy.command(text, function (msg, tp) {
+                                switch (tp) {
+                                    case 'debug':
+                                        _this.debug(msg);
+                                        break;
+                                    case 'info':
+                                        _this.info(msg);
+                                        break;
+                                    case 'warn':
+                                        _this.warning(msg);
+                                        break;
+                                    case 'succcess':
+                                        _this.success(msg);
+                                        break;
+                                    case 'error':
+                                        _this.error(msg);
+                                        break;
+                                    default:
+                                        _this.debug(msg);
+                                        break;
+                                }
+
+                                // Refresh UI if needed
+                                if (!_this.$scope.$$phase)
+                                    _this.$scope.$apply();
+                            });
+                        } else {
+                            this.error('Command line is not available...');
+                        }
+                    };
+
+                    ConsoleController.prototype.debug = function (msg) {
+                        this.$scope.lines.push({
+                            time: Date.now(),
+                            text: msg,
+                            type: 'debug'
                         });
-                    } else {
-                        this.error('Command line is not available...');
+                    };
+
+                    ConsoleController.prototype.info = function (msg) {
+                        this.$log.info(msg);
+                        this.$scope.lines.push({
+                            time: Date.now(),
+                            text: msg,
+                            type: 'info'
+                        });
+                    };
+
+                    ConsoleController.prototype.warning = function (msg) {
+                        this.$log.warn(msg);
+                        this.$scope.lines.push({
+                            time: Date.now(),
+                            text: msg,
+                            type: 'warning'
+                        });
+                    };
+
+                    ConsoleController.prototype.success = function (msg) {
+                        this.$log.info(msg);
+                        this.$scope.lines.push({
+                            time: Date.now(),
+                            text: msg,
+                            type: 'success'
+                        });
+                    };
+
+                    ConsoleController.prototype.error = function (msg) {
+                        this.$log.error(msg);
+                        this.$scope.lines.push({
+                            time: Date.now(),
+                            text: msg,
+                            type: 'error'
+                        });
+                    };
+                    return ConsoleController;
+                })();
+                commands.ConsoleController = ConsoleController;
+
+                var BrowserConsole = (function () {
+                    function BrowserConsole() {
+                        this.ProxyName = 'Browser';
                     }
-                };
-
-                ConsoleController.prototype.debug = function (msg) {
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'debug'
-                    });
-                };
-
-                ConsoleController.prototype.info = function (msg) {
-                    this.$log.info(msg);
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'info'
-                    });
-                };
-
-                ConsoleController.prototype.warning = function (msg) {
-                    this.$log.warn(msg);
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'warning'
-                    });
-                };
-
-                ConsoleController.prototype.success = function (msg) {
-                    this.$log.info(msg);
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'success'
-                    });
-                };
-
-                ConsoleController.prototype.error = function (msg) {
-                    this.$log.error(msg);
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'error'
-                    });
-                };
-                return ConsoleController;
-            })();
-            commands.ConsoleController = ConsoleController;
-
-            var BrowserConsole = (function () {
-                function BrowserConsole() {
-                    this.ProxyName = 'Browser';
-                }
-                BrowserConsole.prototype.command = function (text, callback) {
-                    try  {
-                        var result = eval(text);
-                        if (callback && result) {
-                            callback(result, 'info');
+                    BrowserConsole.prototype.command = function (text, callback) {
+                        try  {
+                            var result = eval(text);
+                            if (callback && result) {
+                                callback(result, 'info');
+                            }
+                            console.info(result);
+                        } catch (ex) {
+                            callback(ex, 'error');
+                            console.error(ex);
                         }
-                        console.info(result);
-                    } catch (ex) {
-                        callback(ex, 'error');
-                        console.error(ex);
+                    };
+
+                    BrowserConsole.prototype.clear = function () {
+                        console.clear();
+                    };
+                    BrowserConsole.prototype.debug = function (msg) {
+                        console.debug(msg);
+                    };
+                    BrowserConsole.prototype.info = function (msg) {
+                        console.info(msg);
+                    };
+                    BrowserConsole.prototype.warning = function (msg) {
+                        console.warn(msg);
+                    };
+                    BrowserConsole.prototype.success = function (msg) {
+                        console.info(msg);
+                    };
+                    BrowserConsole.prototype.error = function (msg) {
+                        console.error(msg);
+                    };
+                    return BrowserConsole;
+                })();
+                commands.BrowserConsole = BrowserConsole;
+
+                var ProcessConsole = (function () {
+                    function ProcessConsole(_proc) {
+                        this._proc = _proc;
+                        this.ProxyName = 'System';
                     }
-                };
+                    ProcessConsole.prototype.clear = function () {
+                    };
 
-                BrowserConsole.prototype.clear = function () {
-                    console.clear();
-                };
-                BrowserConsole.prototype.debug = function (msg) {
-                    console.debug(msg);
-                };
-                BrowserConsole.prototype.info = function (msg) {
-                    console.info(msg);
-                };
-                BrowserConsole.prototype.warning = function (msg) {
-                    console.warn(msg);
-                };
-                BrowserConsole.prototype.success = function (msg) {
-                    console.info(msg);
-                };
-                BrowserConsole.prototype.error = function (msg) {
-                    console.error(msg);
-                };
-                return BrowserConsole;
-            })();
-            commands.BrowserConsole = BrowserConsole;
-
-            var ProcessConsole = (function () {
-                function ProcessConsole(_proc) {
-                    this._proc = _proc;
-                    this.ProxyName = 'System';
-                }
-                ProcessConsole.prototype.clear = function () {
-                };
-
-                ProcessConsole.prototype.command = function (text, callback) {
-                    // Call the command line from a child process
-                    var proc = eval('process');
-                    var ls = this._proc.exec(text, function (error, stdout, stderr) {
-                        if (error) {
-                            console.groupCollapsed('Command Error: ' + text);
-                            console.error(error.stack);
-                            console.info(' - Signal received: ' + error.signal);
-                            console.info(' - Error code: ' + error.code);
-                            console.groupEnd();
-                        }
-                        if (stdout) {
-                            callback('' + stdout, 'info');
-                        }
-                        if (stderr) {
-                            callback('' + stderr, 'error');
-                        }
-                    }).on('exit', function (code) {
-                        //callback(' - Process returned: ' + code, 'debug');
-                    });
-                };
-                return ProcessConsole;
-            })();
-            commands.ProcessConsole = ProcessConsole;
-        })(ng.commands || (ng.commands = {}));
-        var commands = ng.commands;
+                    ProcessConsole.prototype.command = function (text, callback) {
+                        // Call the command line from a child process
+                        var proc = eval('process');
+                        var ls = this._proc.exec(text, function (error, stdout, stderr) {
+                            if (error) {
+                                console.groupCollapsed('Command Error: ' + text);
+                                console.error(error.stack);
+                                console.info(' - Signal received: ' + error.signal);
+                                console.info(' - Error code: ' + error.code);
+                                console.groupEnd();
+                            }
+                            if (stdout) {
+                                callback('' + stdout, 'info');
+                            }
+                            if (stderr) {
+                                callback('' + stderr, 'error');
+                            }
+                        }).on('exit', function (code) {
+                            //callback(' - Process returned: ' + code, 'debug');
+                        });
+                    };
+                    return ProcessConsole;
+                })();
+                commands.ProcessConsole = ProcessConsole;
+            })(modules.commands || (modules.commands = {}));
+            var commands = modules.commands;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 /// <reference path="controllers/ConsoleController.ts"/>
-angular.module('prototyped.console', [
-    'ui.router'
-]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Define the UI states
-        $stateProvider.state('proto.console', {
-            url: '/console',
+angular.module('prototyped.console', []).config([
+    'appStateProvider', function (appStateProvider) {
+        // Define module state
+        appStateProvider.state('proto.console', {
+            url: '^/console',
             views: {
-                //'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/console/views/main.tpl.html',
-                    controller: 'proto.ng.commands.ConsoleController'
+                    controller: 'proto.ng.modules.commands.ConsoleController'
                 }
             }
         }).state('proto.logs', {
             url: '/logs',
             views: {
-                //'left@': { templateUrl: 'views/left.tpl.html' },
+                //'left@': { templateUrl: 'views/common/components/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/console/views/logs.tpl.html'
                 }
             }
         });
-    }]).controller('proto.ng.commands.ConsoleController', [
+    }]).controller('proto.ng.modules.commands.ConsoleController', [
     '$scope',
     '$log',
-    proto.ng.commands.ConsoleController
+    proto.ng.modules.commands.ConsoleController
 ]);
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (editor) {
-            var EditorController = (function () {
-                function EditorController($scope, $timeout) {
-                    this.$scope = $scope;
-                    this.$timeout = $timeout;
-                    this.isActive = false;
-                    this.FileLocation = '';
-                    this.LastChanged = null;
-                    this.LastOnSaved = null;
-                    this.$scope.myWriter = this;
-                    try  {
-                        // Load file system
-                        this._path = require('path');
-                        this._fs = require('fs');
+        (function (modules) {
+            (function (editor) {
+                var EditorController = (function () {
+                    function EditorController($scope, $timeout) {
+                        this.$scope = $scope;
+                        this.$timeout = $timeout;
+                        this.isActive = false;
+                        this.FileLocation = '';
+                        this.LastChanged = null;
+                        this.LastOnSaved = null;
+                        this.$scope.myWriter = this;
+                        try  {
+                            // Load file system
+                            this._path = require('path');
+                            this._fs = require('fs');
 
-                        // Try  and load the node webkit
-                        var nwGui = 'nw.gui';
-                        this._gui = require(nwGui);
-                    } catch (ex) {
-                        console.warn(' - [ Editor ] Warning: Could not load all required modules');
-                    }
-                }
-                Object.defineProperty(EditorController.prototype, "FileContents", {
-                    get: function () {
-                        return this._buffer;
-                    },
-                    set: function (buffer) {
-                        this._buffer = buffer;
-                        this.LastChanged = Date.now();
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-
-                Object.defineProperty(EditorController.prototype, "HasChanges", {
-                    get: function () {
-                        return this.LastChanged != null && this.LastChanged > this.LastOnSaved;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(EditorController.prototype, "HasFileSys", {
-                    get: function () {
-                        return !$.isEmptyObject(this._gui);
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-
-                EditorController.prototype.init = function () {
-                    this.isActive = true;
-                };
-
-                EditorController.prototype.openFile = function () {
-                    var _this = this;
-                    if (this.checkUnsaved())
-                        return;
-
-                    if (!$.isEmptyObject(this._gui) && !$.isEmptyObject(this._fs)) {
-                        var chooser = $('#fileDialog');
-                        chooser.change(function (evt) {
-                            var filePath = chooser.val();
-                            if (filePath) {
-                                // Try and read the file
-                                _this._fs.readFile(filePath, 'UTF-8', function (err, data) {
-                                    if (err) {
-                                        throw new Error(err);
-                                    } else {
-                                        _this.setText(data);
-                                        _this.FileLocation = filePath;
-                                        _this.LastChanged = null;
-                                        _this.LastOnSaved = null;
-                                    }
-                                    _this.$scope.$apply();
-                                });
-                            }
-                        });
-                        chooser.trigger('click');
-                    } else {
-                        console.warn(' - [ Editor ] Warning: Shell not available.');
-                    }
-                };
-
-                EditorController.prototype.openFileLocation = function () {
-                    if (this._gui) {
-                        this._gui.Shell.openItem(this.FileLocation);
-                    } else {
-                        console.warn(' - [ Editor ] Warning: Shell not available.');
-                    }
-                };
-
-                EditorController.prototype.newFile = function () {
-                    if (this.checkUnsaved())
-                        return;
-
-                    // Clear prev. states
-                    this.FileLocation = null;
-                    this.LastChanged = null;
-                    this.LastOnSaved = null;
-
-                    // Set some intial text
-                    this.setText('Enter some text');
-                    this.LastChanged = Date.now();
-
-                    // Do post-new operations
-                    this.$timeout(function () {
-                        // Select file contents
-                        var elem = $('#FileContents');
-                        if (elem) {
-                            elem.select();
+                            // Try  and load the node webkit
+                            var nwGui = 'nw.gui';
+                            this._gui = require(nwGui);
+                        } catch (ex) {
+                            console.warn(' - [ Editor ] Warning: Could not load all required modules');
                         }
+                    }
+                    Object.defineProperty(EditorController.prototype, "FileContents", {
+                        get: function () {
+                            return this._buffer;
+                        },
+                        set: function (buffer) {
+                            this._buffer = buffer;
+                            this.LastChanged = Date.now();
+                        },
+                        enumerable: true,
+                        configurable: true
                     });
-                };
 
-                EditorController.prototype.saveFile = function (filePath) {
-                    var _this = this;
-                    if (!filePath)
-                        filePath = this.FileLocation;
-                    if (!filePath)
-                        return this.saveFileAs();
-                    if (!$.isEmptyObject(this._fs) && !$.isEmptyObject(this._path)) {
-                        var output = this._buffer;
-                        this._fs.writeFile(filePath, output, 'UTF-8', function (err) {
-                            if (err) {
-                                throw new Error(err);
-                            } else {
-                                // File has been saved
-                                _this.FileLocation = filePath;
-                                _this.LastOnSaved = Date.now();
-                            }
-                            _this.$scope.$apply();
-                        });
-                    } else {
-                        console.warn(' - [ Editor ] Warning: File system not available.');
-                    }
-                };
+                    Object.defineProperty(EditorController.prototype, "HasChanges", {
+                        get: function () {
+                            return this.LastChanged != null && this.LastChanged > this.LastOnSaved;
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
+                    Object.defineProperty(EditorController.prototype, "HasFileSys", {
+                        get: function () {
+                            return !$.isEmptyObject(this._gui);
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
 
-                EditorController.prototype.saveFileAs = function () {
-                    var _this = this;
-                    if (!$.isEmptyObject(this._gui)) {
-                        // Get the file name
-                        var filePath = this.FileLocation || 'Untitled.txt';
-                        var chooser = $('#saveDialog');
-                        chooser.change(function (evt) {
-                            var filePath = chooser.val();
-                            if (filePath) {
-                                // Save file in specified location
-                                _this.saveFile(filePath);
-                            }
-                        });
-                        chooser.trigger('click');
-                    } else {
-                        console.warn(' - [ Editor ] Warning: Shell not available.');
-                    }
-                };
+                    EditorController.prototype.init = function () {
+                        this.isActive = true;
+                    };
 
-                EditorController.prototype.setText = function (value) {
-                    this.FileContents = value;
+                    EditorController.prototype.openFile = function () {
+                        var _this = this;
+                        if (this.checkUnsaved())
+                            return;
 
-                    if (!this._textArea) {
-                        var myTextArea = $('#FileContents');
-                        if (myTextArea.length > 0) {
-                            this._textArea = CodeMirror.fromTextArea(myTextArea[0], {
-                                //mode: "javascript",
-                                autoClearEmptyLines: true,
-                                lineNumbers: true,
-                                indentUnit: 4
+                        if (!$.isEmptyObject(this._gui) && !$.isEmptyObject(this._fs)) {
+                            var chooser = $('#fileDialog');
+                            chooser.change(function (evt) {
+                                var filePath = chooser.val();
+                                if (filePath) {
+                                    // Try and read the file
+                                    _this._fs.readFile(filePath, 'UTF-8', function (err, data) {
+                                        if (err) {
+                                            throw new Error(err);
+                                        } else {
+                                            _this.setText(data);
+                                            _this.FileLocation = filePath;
+                                            _this.LastChanged = null;
+                                            _this.LastOnSaved = null;
+                                        }
+                                        _this.$scope.$apply();
+                                    });
+                                }
                             });
+                            chooser.trigger('click');
+                        } else {
+                            console.warn(' - [ Editor ] Warning: Shell not available.');
                         }
-                        this._textArea.setValue(value);
-                    } else {
-                        this._textArea.setValue(value);
-                    }
-                    /*
-                    var totalLines = this._textArea.lineCount();
-                    if (totalLines) {
-                    this._textArea.autoFormatRange({ line: 0, ch: 0 }, { line: totalLines });
-                    }
-                    */
-                };
+                    };
 
-                EditorController.prototype.test = function () {
-                    throw new Error('Lala');
-                    try  {
-                        var dir = './';
-                        var log = "Test.log";
+                    EditorController.prototype.openFileLocation = function () {
+                        if (this._gui) {
+                            this._gui.Shell.openItem(this.FileLocation);
+                        } else {
+                            console.warn(' - [ Editor ] Warning: Shell not available.');
+                        }
+                    };
+
+                    EditorController.prototype.newFile = function () {
+                        if (this.checkUnsaved())
+                            return;
+
+                        // Clear prev. states
+                        this.FileLocation = null;
+                        this.LastChanged = null;
+                        this.LastOnSaved = null;
+
+                        // Set some intial text
+                        this.setText('Enter some text');
+                        this.LastChanged = Date.now();
+
+                        // Do post-new operations
+                        this.$timeout(function () {
+                            // Select file contents
+                            var elem = $('#FileContents');
+                            if (elem) {
+                                elem.select();
+                            }
+                        });
+                    };
+
+                    EditorController.prototype.saveFile = function (filePath) {
+                        var _this = this;
+                        if (!filePath)
+                            filePath = this.FileLocation;
+                        if (!filePath)
+                            return this.saveFileAs();
                         if (!$.isEmptyObject(this._fs) && !$.isEmptyObject(this._path)) {
-                            var target = this._path.resolve(dir, log);
-                            this._fs.writeFile(log, "Hey there!", function (err) {
+                            var output = this._buffer;
+                            this._fs.writeFile(filePath, output, 'UTF-8', function (err) {
                                 if (err) {
                                     throw new Error(err);
                                 } else {
-                                    var nwGui = 'nw.gui';
-                                    var myGui = require(nwGui);
-                                    if (!$.isEmptyObject(myGui)) {
-                                        myGui.Shell.openItem(target);
-                                    } else {
-                                        throw new Error('Cannot open the item: ' + target);
-                                    }
+                                    // File has been saved
+                                    _this.FileLocation = filePath;
+                                    _this.LastOnSaved = Date.now();
                                 }
+                                _this.$scope.$apply();
                             });
                         } else {
-                            console.warn(' - Warning: File system not available...');
+                            console.warn(' - [ Editor ] Warning: File system not available.');
                         }
-                    } catch (ex) {
-                        console.error(ex);
-                    }
-                };
+                    };
 
-                EditorController.prototype.checkUnsaved = function (msg) {
-                    var msgCheck = msg || 'There are unsaved changes.\r\nAre you sure you want to continue?';
-                    var hasCheck = this.FileContents != null && this.HasChanges;
-                    return (hasCheck && confirm(msgCheck) == false);
-                };
-                return EditorController;
-            })();
-            editor.EditorController = EditorController;
-        })(ng.editor || (ng.editor = {}));
-        var editor = ng.editor;
+                    EditorController.prototype.saveFileAs = function () {
+                        var _this = this;
+                        if (!$.isEmptyObject(this._gui)) {
+                            // Get the file name
+                            var filePath = this.FileLocation || 'Untitled.txt';
+                            var chooser = $('#saveDialog');
+                            chooser.change(function (evt) {
+                                var filePath = chooser.val();
+                                if (filePath) {
+                                    // Save file in specified location
+                                    _this.saveFile(filePath);
+                                }
+                            });
+                            chooser.trigger('click');
+                        } else {
+                            console.warn(' - [ Editor ] Warning: Shell not available.');
+                        }
+                    };
+
+                    EditorController.prototype.setText = function (value) {
+                        this.FileContents = value;
+
+                        if (!this._textArea) {
+                            var myTextArea = $('#FileContents');
+                            if (myTextArea.length > 0) {
+                                this._textArea = CodeMirror.fromTextArea(myTextArea[0], {
+                                    //mode: "javascript",
+                                    autoClearEmptyLines: true,
+                                    lineNumbers: true,
+                                    indentUnit: 4
+                                });
+                            }
+                            this._textArea.setValue(value);
+                        } else {
+                            this._textArea.setValue(value);
+                        }
+                        /*
+                        var totalLines = this._textArea.lineCount();
+                        if (totalLines) {
+                        this._textArea.autoFormatRange({ line: 0, ch: 0 }, { line: totalLines });
+                        }
+                        */
+                    };
+
+                    EditorController.prototype.test = function () {
+                        throw new Error('Lala');
+                        try  {
+                            var dir = './';
+                            var log = "Test.log";
+                            if (!$.isEmptyObject(this._fs) && !$.isEmptyObject(this._path)) {
+                                var target = this._path.resolve(dir, log);
+                                this._fs.writeFile(log, "Hey there!", function (err) {
+                                    if (err) {
+                                        throw new Error(err);
+                                    } else {
+                                        var nwGui = 'nw.gui';
+                                        var myGui = require(nwGui);
+                                        if (!$.isEmptyObject(myGui)) {
+                                            myGui.Shell.openItem(target);
+                                        } else {
+                                            throw new Error('Cannot open the item: ' + target);
+                                        }
+                                    }
+                                });
+                            } else {
+                                console.warn(' - Warning: File system not available...');
+                            }
+                        } catch (ex) {
+                            console.error(ex);
+                        }
+                    };
+
+                    EditorController.prototype.checkUnsaved = function (msg) {
+                        var msgCheck = msg || 'There are unsaved changes.\r\nAre you sure you want to continue?';
+                        var hasCheck = this.FileContents != null && this.HasChanges;
+                        return (hasCheck && confirm(msgCheck) == false);
+                    };
+                    return EditorController;
+                })();
+                editor.EditorController = EditorController;
+            })(modules.editor || (modules.editor = {}));
+            var editor = modules.editor;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
@@ -1316,157 +2156,160 @@ angular.module('prototyped.editor', [
         $stateProvider.state('proto.editor', {
             url: '/editor',
             views: {
-                'left@': { templateUrl: 'views/left.tpl.html' },
+                'left@': { templateUrl: 'views/common/components/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/editor/views/main.tpl.html',
-                    controller: 'proto.ng.editor.EditorController'
+                    controller: 'proto.ng.modules.editor.EditorController'
                 }
             }
         });
-    }]).controller('proto.ng.editor.EditorController', [
+    }]).controller('proto.ng.modules.editor.EditorController', [
     '$scope',
     '$timeout',
-    proto.ng.editor.EditorController
+    proto.ng.modules.editor.EditorController
 ]);
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (explorer) {
-            var AddressBarController = (function () {
-                function AddressBarController($rootScope, $scope, $q) {
-                    var _this = this;
-                    this.$rootScope = $rootScope;
-                    this.$scope = $scope;
-                    this.$q = $q;
-                    this.history = [];
-                    $scope.busy = true;
-                    try  {
-                        // Initialise the address bar
-                        var elem = $('#addressbar');
-                        if (elem) {
-                            this.init(elem);
+        (function (modules) {
+            (function (explorer) {
+                var AddressBarController = (function () {
+                    function AddressBarController($rootScope, $scope, $q) {
+                        var _this = this;
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.$q = $q;
+                        this.history = [];
+                        $scope.busy = true;
+                        try  {
+                            // Initialise the address bar
+                            var elem = $('#addressbar');
+                            if (elem) {
+                                this.init(elem);
 
-                            this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
-                                if (folder != _this.$scope.dir_path) {
-                                    console.warn(' - Addressbar Navigate: ', folder);
-                                    _this.$scope.dir_path = folder;
-                                    _this.navigate(folder);
-                                }
-                            });
-                        } else {
-                            throw new Error('Element with id "addressbar" not found...');
-                        }
-                    } catch (ex) {
-                        // Initialisation failed
-                        console.error(ex);
-                    }
-                    $scope.busy = false;
-                }
-                AddressBarController.prototype.init = function (element) {
-                    // Set the target HTML element
-                    this.element = element;
-
-                    // Generate the current folder parts
-                    this.generateOutput('./');
-                };
-
-                AddressBarController.prototype.openFolder = function (path) {
-                    try  {
-                        var nwGui = 'nw.gui';
-                        var gui = require(nwGui);
-                        if (!$.isEmptyObject(gui)) {
-                            console.debug(' - Opening Folder: ' + path);
-                            gui.Shell.openItem(path + '/');
-                        }
-                    } catch (ex) {
-                        console.error(ex);
-                    }
-                    this.generateOutput(path);
-                };
-
-                AddressBarController.prototype.navigate = function (path) {
-                    this.generateOutput(path);
-                };
-
-                AddressBarController.prototype.select = function (file) {
-                    console.info(' - select: ', file);
-                    try  {
-                        var req = 'nw.gui';
-                        var gui = require(req);
-                        gui.Shell.openItem(file);
-                    } catch (ex) {
-                        console.error(ex);
-                    }
-                };
-
-                AddressBarController.prototype.back = function () {
-                    var len = this.history ? this.history.length : -1;
-                    if (len > 1) {
-                        var last = this.history[len - 2];
-                        this.history = this.history.splice(0, len - 2);
-                        this.generateOutput(last);
-                    }
-                };
-
-                AddressBarController.prototype.hasHistory = function () {
-                    var len = this.history ? this.history.length : -1;
-                    return (len > 1);
-                };
-
-                AddressBarController.prototype.generateOutput = function (dir_path) {
-                    // Set the current dir path
-                    this.$scope.dir_path = dir_path;
-                    this.$scope.dir_parts = this.generatePaths(dir_path);
-                    this.history.push(dir_path);
-
-                    // Breadcast event that path has changed
-                    this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
-                };
-
-                AddressBarController.prototype.generatePaths = function (dir_path) {
-                    try  {
-                        // Get dependecies
-                        var path = require('path');
-
-                        // Update current path
-                        this.$scope.dir_path = dir_path = path.resolve(dir_path);
-
-                        // Try and normalize the folder path
-                        var curr = path.normalize(dir_path);
-                        if (curr) {
-                            // Split path into separate elements
-                            var sequence = curr.split(path.sep);
-                            var result = [];
-
-                            var i = 0;
-                            for (; i < sequence.length; ++i) {
-                                result.push({
-                                    name: sequence[i],
-                                    path: sequence.slice(0, 1 + i).join(path.sep)
+                                this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                                    if (folder != _this.$scope.dir_path) {
+                                        console.warn(' - Addressbar Navigate: ', folder);
+                                        _this.$scope.dir_path = folder;
+                                        _this.navigate(folder);
+                                    }
                                 });
+                            } else {
+                                throw new Error('Element with id "addressbar" not found...');
                             }
-
-                            // Add root for unix
-                            if (sequence[0] == '' && process.platform != 'win32') {
-                                result[0] = {
-                                    name: 'root',
-                                    path: '/'
-                                };
-                            }
-
-                            // Return thepath sequences
-                            return { sequence: result };
+                        } catch (ex) {
+                            // Initialisation failed
+                            console.error(ex);
                         }
-                    } catch (ex) {
-                        console.error(ex);
+                        $scope.busy = false;
                     }
-                };
-                return AddressBarController;
-            })();
-            explorer.AddressBarController = AddressBarController;
-        })(ng.explorer || (ng.explorer = {}));
-        var explorer = ng.explorer;
+                    AddressBarController.prototype.init = function (element) {
+                        // Set the target HTML element
+                        this.element = element;
+
+                        // Generate the current folder parts
+                        this.generateOutput('./');
+                    };
+
+                    AddressBarController.prototype.openFolder = function (path) {
+                        try  {
+                            var nwGui = 'nw.gui';
+                            var gui = require(nwGui);
+                            if (!$.isEmptyObject(gui)) {
+                                console.debug(' - Opening Folder: ' + path);
+                                gui.Shell.openItem(path + '/');
+                            }
+                        } catch (ex) {
+                            console.error(ex);
+                        }
+                        this.generateOutput(path);
+                    };
+
+                    AddressBarController.prototype.navigate = function (path) {
+                        this.generateOutput(path);
+                    };
+
+                    AddressBarController.prototype.select = function (file) {
+                        console.info(' - select: ', file);
+                        try  {
+                            var req = 'nw.gui';
+                            var gui = require(req);
+                            gui.Shell.openItem(file);
+                        } catch (ex) {
+                            console.error(ex);
+                        }
+                    };
+
+                    AddressBarController.prototype.back = function () {
+                        var len = this.history ? this.history.length : -1;
+                        if (len > 1) {
+                            var last = this.history[len - 2];
+                            this.history = this.history.splice(0, len - 2);
+                            this.generateOutput(last);
+                        }
+                    };
+
+                    AddressBarController.prototype.hasHistory = function () {
+                        var len = this.history ? this.history.length : -1;
+                        return (len > 1);
+                    };
+
+                    AddressBarController.prototype.generateOutput = function (dir_path) {
+                        // Set the current dir path
+                        this.$scope.dir_path = dir_path;
+                        this.$scope.dir_parts = this.generatePaths(dir_path);
+                        this.history.push(dir_path);
+
+                        // Breadcast event that path has changed
+                        this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
+                    };
+
+                    AddressBarController.prototype.generatePaths = function (dir_path) {
+                        try  {
+                            // Get dependecies
+                            var path = require('path');
+
+                            // Update current path
+                            this.$scope.dir_path = dir_path = path.resolve(dir_path);
+
+                            // Try and normalize the folder path
+                            var curr = path.normalize(dir_path);
+                            if (curr) {
+                                // Split path into separate elements
+                                var sequence = curr.split(path.sep);
+                                var result = [];
+
+                                var i = 0;
+                                for (; i < sequence.length; ++i) {
+                                    result.push({
+                                        name: sequence[i],
+                                        path: sequence.slice(0, 1 + i).join(path.sep)
+                                    });
+                                }
+
+                                // Add root for unix
+                                if (sequence[0] == '' && process.platform != 'win32') {
+                                    result[0] = {
+                                        name: 'root',
+                                        path: '/'
+                                    };
+                                }
+
+                                // Return thepath sequences
+                                return { sequence: result };
+                            }
+                        } catch (ex) {
+                            console.error(ex);
+                        }
+                    };
+                    return AddressBarController;
+                })();
+                explorer.AddressBarController = AddressBarController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
@@ -1474,189 +2317,195 @@ var proto;
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (explorer) {
-            var ExplorerController = (function () {
-                function ExplorerController($rootScope, $scope, $q) {
-                    var _this = this;
-                    this.$rootScope = $rootScope;
-                    this.$scope = $scope;
-                    this.$q = $q;
-                    var dir = './';
-                    try  {
-                        // Hook up to the current scope
-                        this.$scope.isBusy = true;
+        (function (modules) {
+            (function (explorer) {
+                var ExplorerController = (function () {
+                    function ExplorerController($rootScope, $scope, $q) {
+                        var _this = this;
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.$q = $q;
+                        var dir = './';
+                        try  {
+                            // Hook up to the current scope
+                            this.$scope.isBusy = true;
 
-                        // Initialize the cotroller
-                        this.init(dir);
+                            // Initialize the cotroller
+                            this.init(dir);
 
-                        // Hook event for when folder path changes
-                        this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
-                            if (folder != _this.$scope.dir_path) {
-                                console.warn(' - Explorer Navigate: ', folder);
-                                _this.$scope.dir_path = folder;
-                                _this.navigate(folder);
-                            }
-                        });
-                    } catch (ex) {
-                        console.error(ex);
-                    }
-                }
-                ExplorerController.prototype.init = function (dir) {
-                    // Resolve the initial folder path
-                    this.navigate(dir);
-                };
-
-                ExplorerController.prototype.navigate = function (dir_path) {
-                    var _this = this;
-                    var deferred = this.$q.defer();
-                    try  {
-                        // Set busy flag
-                        this.$scope.isBusy = true;
-                        this.$scope.error = null;
-
-                        // Resolve the full path
-                        var path = require('path');
-                        dir_path = path.resolve(dir_path);
-
-                        // Read the folder contents (async)
-                        var fs = require('fs');
-                        fs.readdir(dir_path, function (error, files) {
-                            if (error) {
-                                deferred.reject(error);
-                                return;
-                            }
-
-                            // Split and sort results
-                            var folders = [];
-                            var lsFiles = [];
-                            for (var i = 0; i < files.sort().length; ++i) {
-                                var targ = path.join(dir_path, files[i]);
-                                var stat = _this.mimeType(targ);
-                                if (stat.type == 'folder') {
-                                    folders.push(stat);
-                                } else {
-                                    lsFiles.push(stat);
+                            // Hook event for when folder path changes
+                            this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                                if (folder != _this.$scope.dir_path) {
+                                    console.warn(' - Explorer Navigate: ', folder);
+                                    _this.$scope.dir_path = folder;
+                                    _this.navigate(folder);
                                 }
-                            }
-
-                            // Generate the contents
-                            var result = {
-                                path: dir_path,
-                                folders: folders,
-                                files: lsFiles
-                            };
-
-                            // Mark promise as resolved
-                            deferred.resolve(result);
-                        });
-                    } catch (ex) {
-                        // Mark promise and rejected
-                        deferred.reject(ex);
+                            });
+                        } catch (ex) {
+                            console.error(ex);
+                        }
                     }
-
-                    // Handle the result and error conditions
-                    deferred.promise.then(function (result) {
-                        // Clear busy flag
-                        _this.$scope.isBusy = false;
-                        _this.$scope.dir_path = result.path;
-                        _this.$scope.files = result.files;
-                        _this.$scope.folders = result.folders;
-
-                        // Breadcast event that path has changed
-                        _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
-                    }, function (error) {
-                        // Clear busy flag
-                        _this.$scope.isBusy = false;
-                        _this.$scope.error = error;
-                    });
-
-                    return deferred.promise;
-                };
-
-                ExplorerController.prototype.select = function (filePath) {
-                    this.$scope.selected = filePath;
-                };
-
-                ExplorerController.prototype.open = function (filePath) {
-                    var req = 'nw.gui';
-                    var gui = require(req);
-                    if (gui)
-                        gui.Shell.openItem(filePath);
-                };
-
-                ExplorerController.prototype.mimeType = function (filepath) {
-                    var map = {
-                        'compressed': ['zip', 'rar', 'gz', '7z'],
-                        'text': ['txt', 'md', ''],
-                        'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
-                        'pdf': ['pdf'],
-                        'css': ['css'],
-                        'excel': ['csv', 'xls', 'xlsx'],
-                        'html': ['html'],
-                        'word': ['doc', 'docx'],
-                        'powerpoint': ['ppt', 'pptx'],
-                        'movie': ['mkv', 'avi', 'rmvb']
-                    };
-                    var cached = {};
-
-                    var fs = require('fs');
-                    var path = require('path');
-                    var result = {
-                        name: path.basename(filepath),
-                        path: filepath,
-                        type: null
+                    ExplorerController.prototype.init = function (dir) {
+                        // Resolve the initial folder path
+                        this.navigate(dir);
                     };
 
-                    try  {
-                        var stat = fs.statSync(filepath);
-                        if (stat.isDirectory()) {
-                            result.type = 'folder';
-                        } else {
-                            var ext = path.extname(filepath).substr(1);
-                            result.type = cached[ext];
-                            if (!result.type) {
-                                for (var key in map) {
-                                    var arr = map[key];
-                                    if (arr.length > 0 && arr.indexOf(ext) >= 0) {
-                                        cached[ext] = result.type = key;
-                                        break;
+                    ExplorerController.prototype.navigate = function (dir_path) {
+                        var _this = this;
+                        var deferred = this.$q.defer();
+                        try  {
+                            // Set busy flag
+                            this.$scope.isBusy = true;
+                            this.$scope.error = null;
+
+                            // Resolve the full path
+                            var path = require('path');
+                            dir_path = path.resolve(dir_path);
+
+                            // Read the folder contents (async)
+                            var fs = require('fs');
+                            fs.readdir(dir_path, function (error, files) {
+                                if (error) {
+                                    deferred.reject(error);
+                                    return;
+                                }
+
+                                // Split and sort results
+                                var folders = [];
+                                var lsFiles = [];
+                                for (var i = 0; i < files.sort().length; ++i) {
+                                    var targ = path.join(dir_path, files[i]);
+                                    var stat = _this.mimeType(targ);
+                                    if (stat.type == 'folder') {
+                                        folders.push(stat);
+                                    } else {
+                                        lsFiles.push(stat);
                                     }
                                 }
 
-                                if (!result.type)
-                                    result.type = 'blank';
-                            }
-                        }
-                    } catch (e) {
-                        console.error(e);
-                    }
+                                // Generate the contents
+                                var result = {
+                                    path: dir_path,
+                                    folders: folders,
+                                    files: lsFiles
+                                };
 
-                    return result;
-                };
-                return ExplorerController;
-            })();
-            explorer.ExplorerController = ExplorerController;
-        })(ng.explorer || (ng.explorer = {}));
-        var explorer = ng.explorer;
+                                // Mark promise as resolved
+                                deferred.resolve(result);
+                            });
+                        } catch (ex) {
+                            // Mark promise and rejected
+                            deferred.reject(ex);
+                        }
+
+                        // Handle the result and error conditions
+                        deferred.promise.then(function (result) {
+                            // Clear busy flag
+                            _this.$scope.isBusy = false;
+                            _this.$scope.dir_path = result.path;
+                            _this.$scope.files = result.files;
+                            _this.$scope.folders = result.folders;
+
+                            // Breadcast event that path has changed
+                            _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
+                        }, function (error) {
+                            // Clear busy flag
+                            _this.$scope.isBusy = false;
+                            _this.$scope.error = error;
+                        });
+
+                        return deferred.promise;
+                    };
+
+                    ExplorerController.prototype.select = function (filePath) {
+                        this.$scope.selected = filePath;
+                    };
+
+                    ExplorerController.prototype.open = function (filePath) {
+                        var req = 'nw.gui';
+                        var gui = require(req);
+                        if (gui)
+                            gui.Shell.openItem(filePath);
+                    };
+
+                    ExplorerController.prototype.mimeType = function (filepath) {
+                        var map = {
+                            'compressed': ['zip', 'rar', 'gz', '7z'],
+                            'text': ['txt', 'md', ''],
+                            'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
+                            'pdf': ['pdf'],
+                            'css': ['css'],
+                            'excel': ['csv', 'xls', 'xlsx'],
+                            'html': ['html'],
+                            'word': ['doc', 'docx'],
+                            'powerpoint': ['ppt', 'pptx'],
+                            'movie': ['mkv', 'avi', 'rmvb']
+                        };
+                        var cached = {};
+
+                        var fs = require('fs');
+                        var path = require('path');
+                        var result = {
+                            name: path.basename(filepath),
+                            path: filepath,
+                            type: null
+                        };
+
+                        try  {
+                            var stat = fs.statSync(filepath);
+                            if (stat.isDirectory()) {
+                                result.type = 'folder';
+                            } else {
+                                var ext = path.extname(filepath).substr(1);
+                                result.type = cached[ext];
+                                if (!result.type) {
+                                    for (var key in map) {
+                                        var arr = map[key];
+                                        if (arr.length > 0 && arr.indexOf(ext) >= 0) {
+                                            cached[ext] = result.type = key;
+                                            break;
+                                        }
+                                    }
+
+                                    if (!result.type)
+                                        result.type = 'blank';
+                                }
+                            }
+                        } catch (e) {
+                            console.error(e);
+                        }
+
+                        return result;
+                    };
+                    return ExplorerController;
+                })();
+                explorer.ExplorerController = ExplorerController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (explorer) {
-            var ExplorerViewController = (function () {
-                function ExplorerViewController($rootScope, $scope, $q, navigation) {
-                    this.$rootScope = $rootScope;
-                    this.$scope = $scope;
-                    this.$q = $q;
-                    this.navigation = navigation;
-                }
-                return ExplorerViewController;
-            })();
-            explorer.ExplorerViewController = ExplorerViewController;
-        })(ng.explorer || (ng.explorer = {}));
-        var explorer = ng.explorer;
+        (function (modules) {
+            (function (explorer) {
+                var ExplorerViewController = (function () {
+                    function ExplorerViewController($rootScope, $scope, $q, navigation) {
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.$q = $q;
+                        this.navigation = navigation;
+                    }
+                    return ExplorerViewController;
+                })();
+                explorer.ExplorerViewController = ExplorerViewController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
@@ -1669,111 +2518,132 @@ var __extends = this.__extends || function (d, b) {
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (explorer) {
-            var TreeNode = (function () {
-                function TreeNode(nodeName) {
-                    this.children = [];
-                    this.classes = [];
-                    this.label = nodeName;
-                }
-                return TreeNode;
-            })();
-            explorer.TreeNode = TreeNode;
-
-            var SiteNode = (function (_super) {
-                __extends(SiteNode, _super);
-                function SiteNode(nodeName, state) {
-                    _super.call(this, nodeName);
-                    this.state = state;
-                    this.data = state;
-                }
-                SiteNode.prototype.onSelect = function (branch) {
-                    //this.$rootScope.$broadcast('nodeSelect', this);
-                };
-                return SiteNode;
-            })(TreeNode);
-            explorer.SiteNode = SiteNode;
-
-            var SiteNavigationRoot = (function (_super) {
-                __extends(SiteNavigationRoot, _super);
-                function SiteNavigationRoot(nodeName, states) {
-                    _super.call(this, nodeName, null);
-                    this.states = states;
-                    this.stateCache = {};
-                    this.init();
-                }
-                SiteNavigationRoot.prototype.init = function () {
-                    var _this = this;
-                    this.children = [];
-                    this.states.forEach(function (state, i) {
-                        if (state.url == '^' || state.name == '') {
-                            _this.data = state; // Root node
-                        } else if (state.name.indexOf('.') < 0) {
-                            _this.addItem(_this, [state.name], state);
-                        } else {
-                            var parts = state.name.split('.');
-                            _this.addItem(_this, parts, state);
-                        }
-                    });
-                };
-
-                SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
-                    if (paths && paths.length) {
-                        var ident = paths[0];
-                        var parts = paths.splice(1);
-                        var node = this.stateCache[ident];
-                        if (!node) {
-                            node = new SiteNode(ident, null);
-                            this.stateCache[ident] = node;
-                            parentNode.children.push(node);
-                        }
-                        if (!parts.length) {
-                            node.data = state;
-                        } else {
-                            this.addItem(node, parts, state);
-                        }
+        (function (modules) {
+            (function (explorer) {
+                var TreeNode = (function () {
+                    function TreeNode(nodeName) {
+                        this.children = [];
+                        this.classes = [];
+                        this.label = nodeName;
                     }
-                };
-                return SiteNavigationRoot;
-            })(SiteNode);
-            explorer.SiteNavigationRoot = SiteNavigationRoot;
+                    return TreeNode;
+                })();
+                explorer.TreeNode = TreeNode;
 
-            var NavigationService = (function () {
-                function NavigationService($state, $q) {
-                    this.$state = $state;
-                    this.$q = $q;
-                    this._treeData = [];
-                    this.init();
-                }
-                NavigationService.prototype.init = function () {
-                    this._treeData = [
-                        new proto.ng.explorer.SiteNavigationRoot('Home Page', this.$state.get())
-                    ];
-                    /*
-                    this.$rootScope.$on('nodeSelect', function (data) {
-                    console.warn('nodeSelect', data);
-                    //this.selected = data;
-                    });
-                    */
-                };
+                var SiteNode = (function (_super) {
+                    __extends(SiteNode, _super);
+                    function SiteNode(nodeName, state) {
+                        _super.call(this, nodeName);
+                        this.state = state;
+                        this.data = state;
+                    }
+                    SiteNode.prototype.onSelect = function (branch) {
+                        //this.$rootScope.$broadcast('nodeSelect', this);
+                    };
+                    return SiteNode;
+                })(TreeNode);
+                explorer.SiteNode = SiteNode;
 
-                NavigationService.prototype.getTreeData = function () {
-                    return this._treeData;
-                };
-                return NavigationService;
-            })();
-            explorer.NavigationService = NavigationService;
-        })(ng.explorer || (ng.explorer = {}));
-        var explorer = ng.explorer;
+                var SiteNavigationRoot = (function (_super) {
+                    __extends(SiteNavigationRoot, _super);
+                    function SiteNavigationRoot(nodeName, states) {
+                        _super.call(this, nodeName, null);
+                        this.states = states;
+                        this.stateCache = {};
+                        this.init();
+                    }
+                    SiteNavigationRoot.prototype.init = function () {
+                        var _this = this;
+                        this.children = [];
+                        this.states.forEach(function (state, i) {
+                            if (state.url == '^' || state.name == '') {
+                                _this.data = state; // Root node
+                            } else if (state.name.indexOf('.') < 0) {
+                                _this.addItem(_this, [state.name], state);
+                            } else {
+                                var parts = state.name.split('.');
+                                _this.addItem(_this, parts, state);
+                            }
+                        });
+                    };
+
+                    SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
+                        if (paths && paths.length) {
+                            var ident = paths[0];
+                            var parts = paths.splice(1);
+                            var node = this.stateCache[ident];
+                            if (!node) {
+                                node = new SiteNode(ident, null);
+                                this.stateCache[ident] = node;
+                                parentNode.children.push(node);
+                            }
+                            if (!parts.length) {
+                                node.data = state;
+                            } else {
+                                this.addItem(node, parts, state);
+                            }
+                        }
+                    };
+                    return SiteNavigationRoot;
+                })(SiteNode);
+                explorer.SiteNavigationRoot = SiteNavigationRoot;
+
+                var NavigationService = (function () {
+                    function NavigationService($state, $q) {
+                        this.$state = $state;
+                        this.$q = $q;
+                        this._treeData = [];
+                        this.init();
+                    }
+                    NavigationService.prototype.init = function () {
+                        this._treeData = [
+                            new proto.ng.modules.explorer.SiteNavigationRoot('Home Page', this.$state.get())
+                        ];
+                        /*
+                        this.$rootScope.$on('nodeSelect', function (data) {
+                        console.warn('nodeSelect', data);
+                        //this.selected = data;
+                        });
+                        */
+                    };
+
+                    NavigationService.prototype.getTreeData = function () {
+                        return this._treeData;
+                    };
+                    return NavigationService;
+                })();
+                explorer.NavigationService = NavigationService;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.explorer', [
+    'prototyped.ng.runtime',
     'ui.router'
 ]).config([
-    '$stateProvider', function ($stateProvider) {
-        $stateProvider.state('proto.explore', {
+    'appStateProvider', function (appStateProvider) {
+        // Define application state
+        appStateProvider.define('/explore', {
+            priority: 0,
+            state: {},
+            menuitem: {
+                label: 'Explore',
+                state: 'proto.explore',
+                icon: 'fa fa-cubes'
+            },
+            cardview: {
+                style: 'img-explore',
+                title: 'Explore Features & Options',
+                desc: 'You can explore locally installed features and find your way around the site by clicking on this card...'
+            },
+            visible: function () {
+                return appStateProvider.appConfig.options.showDefaultItems;
+            }
+        }).state('proto.explore', {
             url: '^/explore',
             views: {
                 'left@': {
@@ -1795,12 +2665,12 @@ angular.module('prototyped.explorer', [
                 'left@': { templateUrl: 'views/explore/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/explore/views/index.tpl.html',
-                    controller: 'proto.ng.explorer.ExplorerController',
+                    controller: 'proto.ng.modules.explorer.ExplorerController',
                     controllerAs: 'ctrlExplorer'
                 }
             }
         });
-    }]).service('navigationService', ['$state', '$q', proto.ng.explorer.NavigationService]).directive('protoAddressBar', [
+    }]).service('navigationService', ['$state', '$q', proto.ng.modules.explorer.NavigationService]).directive('protoAddressBar', [
     '$q', function ($q) {
         return {
             restrict: 'EA',
@@ -1809,102 +2679,45 @@ angular.module('prototyped.explorer', [
             },
             transclude: false,
             templateUrl: 'modules/explore/views/addressbar.tpl.html',
-            controller: 'proto.ng.explorer.AddressBarController',
+            controller: 'proto.ng.modules.explorer.AddressBarController',
             controllerAs: 'addrBar'
         };
-    }]).controller('proto.ng.explorer.AddressBarController', [
+    }]).controller('proto.ng.modules.explorer.AddressBarController', [
     '$rootScope',
     '$scope',
     '$q',
-    proto.ng.explorer.AddressBarController
-]).controller('proto.ng.explorer.ExplorerController', [
+    proto.ng.modules.explorer.AddressBarController
+]).controller('proto.ng.modules.explorer.ExplorerController', [
     '$rootScope',
     '$scope',
     '$q',
-    proto.ng.explorer.ExplorerController
+    proto.ng.modules.explorer.ExplorerController
 ]).controller('ExplorerViewController', [
     '$rootScope',
     '$scope',
     '$q',
     'navigationService',
-    proto.ng.explorer.ExplorerViewController
+    proto.ng.modules.explorer.ExplorerViewController
 ]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
 // Define main module with all dependencies
 angular.module('prototyped.ng', [
+    'prototyped.ng.runtime',
     'prototyped.ng.config',
     'prototyped.ng.views',
     'prototyped.ng.styles',
-    'prototyped.about',
-    'prototyped.editor',
     'prototyped.explorer',
-    'prototyped.console'
+    'prototyped.console',
+    'prototyped.editor',
+    'prototyped.about'
 ]).config([
-    'appConfigProvider', function (appConfigProvider) {
-        // Define module configuration
-        appConfigProvider.set({
-            'prototyped.ng': {
-                active: true
-            }
-        });
-
-        // Define the routing components (menus, card views etc...)
-        var appConfig = appConfigProvider.$get();
-        if (appConfig) {
-            // Define module routes
-            appConfig.routers.push({
-                url: '/explore',
-                abstract: true,
-                priority: 0,
-                menuitem: {
-                    label: 'Explore',
-                    state: 'proto.explore',
-                    icon: 'fa fa-cubes'
-                },
-                cardview: {
-                    style: 'img-explore',
-                    title: 'Explore Features & Options',
-                    desc: 'You can explore locally installed features and find your way around the site by clicking on this card...'
-                },
-                visible: function () {
-                    return appConfig.options.showDefaultItems;
-                },
-                children: [
-                    { label: 'Discovery', icon: 'fa fa-refresh', state: 'modules.discover' },
-                    { label: 'Connnect', icon: 'fa fa-gears', state: 'modules.connect' },
-                    { divider: true },
-                    { label: 'Clean & Exit', icon: 'fa fa-recycle', state: 'modules.clear' }
-                ]
-            });
-            appConfig.routers.push({
-                url: '/about',
-                abstract: true,
-                priority: 1000,
-                menuitem: {
-                    label: 'About',
-                    state: 'about.info',
-                    icon: 'fa fa-info-circle'
-                },
-                cardview: {
-                    style: 'img-about',
-                    title: 'About this software',
-                    desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
-                },
-                visible: function () {
-                    return appConfig.options.showAboutPage;
-                }
-            });
-        }
-    }]).config([
-    '$urlRouterProvider', function ($urlRouterProvider) {
-        // Define redirects
-        $urlRouterProvider.when('/proto', '/proto/explore').when('/sandbox', '/samples').when('/imports', '/edge');
-    }]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Set up routing...
-        $stateProvider.state('proto', {
+    'appStateProvider', function (appStateProvider) {
+        // Configure module state
+        appStateProvider.config('prototyped.ng', {
+            active: true
+        }).when('/proto', '/proto/explore').when('/sandbox', '/samples').when('/imports', '/edge').state('proto', {
             url: '/proto',
             abstract: true
         }).state('default', {
@@ -1912,429 +2725,18 @@ angular.module('prototyped.ng', [
             views: {
                 'main@': {
                     templateUrl: 'views/default.tpl.html',
-                    controller: 'CardViewCtrl',
-                    controllerAs: 'sliderCtrl'
+                    controller: 'CardViewController',
+                    controllerAs: 'cardView'
                 }
             }
         });
-    }]).provider('appNode', [proto.ng.common.providers.AppNodeProvider]).provider('appState', ['$stateProvider', 'appConfigProvider', 'appNodeProvider', proto.ng.common.providers.AppStateProvider]).controller('CardViewCtrl', [
-    '$scope', 'appConfig', function ($scope, appConfig) {
-        // Make sure 'mySiteMap' exists
-        $scope.pages = appConfig.routers || [];
-
-        // initial image index
-        $scope._Index = 0;
-
-        $scope.count = function () {
-            return $scope.pages.length;
-        };
-
-        // if a current image is the same as requested image
-        $scope.isActive = function (index) {
-            return $scope._Index === index;
-        };
-
-        // show prev image
-        $scope.showPrev = function () {
-            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
-        };
-
-        // show next image
-        $scope.showNext = function () {
-            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
-        };
-
-        // show a certain image
-        $scope.showPhoto = function (index) {
-            $scope._Index = index;
-        };
-    }]).directive('appClean', [
-    '$rootScope', '$window', '$route', '$state', 'appNode', 'appState', function ($rootScope, $window, $route, $state, appNode, appState) {
-        return function (scope, elem, attrs) {
-            var keyCtrl = false;
-            var keyShift = false;
-            var keyEvent = $(document).on('keyup keydown', function (e) {
-                // Update key states
-                var hasChanges = false;
-                if (keyCtrl != e.ctrlKey) {
-                    hasChanges = true;
-                    keyCtrl = e.ctrlKey;
-                }
-                if (keyShift != e.shiftKey) {
-                    hasChanges = true;
-                    keyShift = e.shiftKey;
-                }
-                if (hasChanges) {
-                    $(elem).find('i').toggleClass('glow-blue', !keyShift && keyCtrl);
-                    $(elem).find('i').toggleClass('glow-orange', keyShift);
-                }
-            });
-            $(elem).attr('tooltip', 'Refresh');
-            $(elem).attr('tooltip-placement', 'bottom');
-            $(elem).click(function (e) {
-                if (keyShift) {
-                    // Full page reload
-                    if (appNode.active) {
-                        console.debug(' - Reload Node Webkit...');
-                        appNode.reload();
-                    } else {
-                        console.debug(' - Reload page...');
-                        $window.location.reload(true);
-                    }
-                } else if (keyCtrl) {
-                    // Fast route reload
-                    console.debug(' - Reload route...');
-                    $route.reload();
-                } else {
-                    // Fast state reload
-                    console.debug(' - Refresh state...');
-                    $state.reload();
-                }
-
-                // Clear all previous status messages
-                appState.logs = [];
-                console.clear();
-            });
-            scope.$on('$destroy', function () {
-                $(elem).off('click');
-                keyEvent.off('keyup keydown');
-            });
-        };
-    }]).directive('appClose', [
-    'appNode', function (appNode) {
-        return function (scope, elem, attrs) {
-            // Only enable the button in a NodeJS context (extended functionality)
-            $(elem).css('display', appNode.active ? '' : 'none');
-            $(elem).click(function () {
-                appNode.close();
-            });
-        };
-    }]).directive('appDebug', [
-    'appNode', function (appNode) {
-        return function (scope, elem, attrs) {
-            // Only enable the button in a NodeJS context (extended functionality)
-            $(elem).css('display', appNode.active ? '' : 'none');
-            $(elem).click(function () {
-                appNode.debug();
-            });
-        };
-    }]).directive('appKiosk', [
-    'appNode', function (appNode) {
-        return function (scope, elem, attrs) {
-            // Only enable the button in a NodeJS context (extended functionality)
-            $(elem).css('display', appNode.active ? '' : 'none');
-            $(elem).click(function () {
-                appNode.kiosMode();
-            });
-        };
-    }]).directive('appFullscreen', [
-    'appNode', function (appNode) {
-        return function (scope, elem, attrs) {
-            // Only enable the button in a NodeJS context (extended functionality)
-            $(elem).css('display', appNode.active ? '' : 'none');
-            $(elem).click(function () {
-                appNode.toggleFullscreen();
-            });
-        };
-    }]).directive('appVersion', [
-    'appState', function (appState) {
-        function getVersionInfo(ident) {
-            try  {
-                if (typeof process !== 'undefined' && process.versions) {
-                    return process.versions[ident];
-                }
-            } catch (ex) {
-            }
-            return null;
-        }
-
-        return function (scope, elm, attrs) {
-            var targ = attrs['appVersion'];
-            var val = null;
-            if (!targ) {
-                val = appState.version;
-            } else
-                switch (targ) {
-                    case 'angular':
-                        val = angular.version.full;
-                        break;
-                    case 'nodeweb-kit':
-                        val = getVersionInfo('node-webkit');
-                        break;
-                    case 'node':
-                        val = getVersionInfo('node');
-                        break;
-                    default:
-                        val = getVersionInfo(targ) || val;
-
-                        break;
-                }
-            if (!val && attrs['defaultText']) {
-                val = attrs['defaultText'];
-            }
-            if (val) {
-                $(elm).text(val);
-            }
-        };
-    }]).filter('interpolate', [
-    'appState', function (appState) {
-        return function (text) {
-            return String(text).replace(/\%VERSION\%/mg, appState.version);
-        };
-    }]).filter('fromNow', [
-    '$filter', function ($filter) {
-        return function (dateString, format) {
-            try  {
-                if (typeof moment !== 'undefined') {
-                    return moment(dateString).fromNow(format);
-                } else {
-                    return ' at ' + $filter('date')(dateString, 'HH:mm:ss');
-                }
-            } catch (ex) {
-                console.error(ex);
-                return 'error';
-            }
-        };
-    }]).filter('isArray', function () {
-    return function (input) {
-        return angular.isArray(input);
-    };
-}).filter('isNotArray', function () {
-    return function (input) {
-        return !angular.isArray(input);
-    };
-}).filter('typeCount', [function () {
-        return function (input, type) {
-            var count = 0;
-            if (!input)
-                return null;
-            if (input.length > 0) {
-                input.forEach(function (itm) {
-                    if (!itm)
-                        return;
-                    if (!itm.type)
-                        return;
-                    if (itm.type == type)
-                        count++;
-                });
-            }
-            return count;
-        };
-    }]).filter('listReverse', function () {
-    return function (input) {
-        var result = [];
-        var length = input.length;
-        if (length) {
-            for (var i = length - 1; i !== 0; i--) {
-                result.push(input[i]);
-            }
-        }
-        return result;
-    };
-}).filter('toBytes', function () {
-    return function (bytes, precision) {
-        if (isNaN(parseFloat(bytes)) || !isFinite(bytes))
-            return '-';
-        if (typeof precision === 'undefined')
-            precision = 1;
-        var units = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'], number = Math.floor(Math.log(bytes) / Math.log(1024));
-        return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) + ' ' + units[number];
-    };
-}).filter('parseBytes', function () {
-    return function (bytesDesc, precision) {
-        var match = /(\d+) (\w+)/i.exec(bytesDesc);
-        if (match && (match.length > 2)) {
-            var bytes = match[1];
-            var floatVal = parseFloat(bytes);
-            if (isNaN(floatVal) || !isFinite(floatVal))
-                return '[?]';
-            if (typeof precision === 'undefined')
-                precision = 1;
-            var units = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'];
-            var number = Math.floor(Math.log(floatVal) / Math.log(1024));
-            var pow = -1;
-            units.forEach(function (itm, i) {
-                if (itm && itm.toLowerCase().indexOf(match[2].toLowerCase()) >= 0)
-                    pow = i;
-            });
-            if (pow > 0) {
-                var ret = (floatVal * Math.pow(1024, pow)).toFixed(precision);
-                return ret;
-            }
-        }
-        return bytesDesc;
-    };
-}).directive('eatClickIf', [
-    '$parse', '$rootScope', function ($parse, $rootScope) {
-        return {
-            priority: 100,
-            restrict: 'A',
-            compile: function ($element, attr) {
-                var fn = $parse(attr.eatClickIf);
-                return {
-                    pre: function link(scope, element) {
-                        var eventName = 'click';
-                        element.on(eventName, function (event) {
-                            var callback = function () {
-                                if (fn(scope, { $event: event })) {
-                                    // prevents ng-click to be executed
-                                    event.stopImmediatePropagation();
-
-                                    // prevents href
-                                    event.preventDefault();
-                                    return false;
-                                }
-                            };
-                            if ($rootScope.$$phase) {
-                                scope.$evalAsync(callback);
-                            } else {
-                                scope.$apply(callback);
-                            }
-                        });
-                    },
-                    post: function () {
-                    }
-                };
-            }
-        };
-    }]).directive('toHtml', [
-    '$sce', '$filter', function ($sce, $filter) {
-        function getHtml(obj) {
-            try  {
-                return 'toHtml:\'pre\' - ' + $filter('toXml')(obj, 'pre');
-            } catch (ex) {
-                return 'toHtml:error - ' + ex.message;
-            }
-        }
-        return {
-            restrict: 'EA',
-            scope: {
-                toHtml: '&'
-            },
-            transclude: false,
-            controller: function ($scope, $sce) {
-                var val = $scope.toHtml();
-                var html = getHtml(val);
-                $scope.myHtml = $sce.trustAsHtml(html);
-            },
-            template: '<div ng-bind-html="myHtml"></div>'
-        };
-    }]).filter('toXml', [function () {
-        function toXmlString(name, input, expanded, childExpanded) {
-            var val = '';
-            var sep = '';
-            var attr = '';
-            if ($.isArray(input)) {
-                if (expanded) {
-                    for (var i = 0; i < input.length; i++) {
-                        val += toXmlString(null, input[i], childExpanded);
-                    }
-                } else {
-                    name = 'Array';
-                    attr += sep + ' length="' + input.length + '"';
-                    val = 'Array[' + input.length + ']';
-                }
-            } else if ($.isPlainObject(input)) {
-                if (expanded) {
-                    for (var id in input) {
-                        if (input.hasOwnProperty(id)) {
-                            var child = input[id];
-                            if ($.isArray(child) || $.isPlainObject(child)) {
-                                val = toXmlString(id, child, childExpanded);
-                            } else {
-                                sep = ' ';
-                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
-                            }
-                        }
-                    }
-                } else {
-                    name = 'Object';
-                    for (var id in input) {
-                        if (input.hasOwnProperty(id)) {
-                            var child = input[id];
-                            if ($.isArray(child) || $.isPlainObject(child)) {
-                                val += toXmlString(id, child, childExpanded);
-                            } else {
-                                sep = ' ';
-                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
-                            }
-                        }
-                    }
-                    //val = 'Object[ ' + JSON.stringify(input) + ' ]';
-                }
-            }
-            if (name) {
-                val = '<' + name + '' + attr + '>' + val + '</' + name + '>';
-            }
-            return val;
-        }
-        return function (input, rootName) {
-            return toXmlString(rootName || 'xml', input, true);
-        };
-    }]).directive('domReplace', function () {
-    return {
-        restrict: 'A',
-        require: 'ngInclude',
-        link: function (scope, el, attrs) {
-            el.replaceWith(el.children());
-        }
-    };
-}).directive('resxInclude', [
-    '$templateCache', function ($templateCache) {
-        return {
-            priority: 100,
-            restrict: 'A',
-            compile: function ($element, attr) {
-                var ident = attr.resxInclude;
-                var cache = $templateCache.get(ident);
-                if (cache) {
-                    $element.text(cache);
-                    //$element.replaceWith(cache);
-                }
-                return {
-                    pre: function (scope, element) {
-                    },
-                    post: function (scope, element) {
-                    }
-                };
-            }
-        };
-    }]).directive('resxImport', [
-    '$templateCache', '$document', function ($templateCache, $document) {
-        return {
-            priority: 100,
-            restrict: 'A',
-            compile: function ($element, attr) {
-                var ident = attr.resxImport;
-                var cache = $templateCache.get(ident);
-                if ($('[resx-src="' + ident + '"]').length <= 0) {
-                    var html = '';
-                    if (/(.*)(\.css)/i.test(ident)) {
-                        if (cache != null) {
-                            html = '<style resx-src="' + ident + '">' + cache + '</style>';
-                        } else {
-                            html = '<link resx-src="' + ident + '" href="' + ident + '" rel="stylesheet" type="text/css" />';
-                        }
-                    } else if (/(.*)(\.js)/i.test(ident)) {
-                        if (cache != null) {
-                            html = '<script resx-src="' + ident + '">' + cache + '</script>';
-                        } else {
-                            html = '<script resx-src="' + ident + '" src="' + ident + '">' + cache + '</script>';
-                        }
-                    }
-                    if (html) {
-                        $element.replaceWith(html);
-                    }
-                }
-                return {
-                    pre: function (scope, element) {
-                    },
-                    post: function (scope, element) {
-                    }
-                };
-            }
-        };
-    }]).directive('abnTree', [
+    }]).controller('CardViewController', ['appState', proto.ng.modules.common.controllers.CardViewController]).directive('appClean', [
+    '$window',
+    '$route',
+    '$state',
+    'appState',
+    proto.ng.modules.common.directives.AppCleanDirective
+]).directive('appClose', ['appNode', proto.ng.modules.common.directives.AppCloseDirective]).directive('appDebug', ['appNode', proto.ng.modules.common.directives.AppDebugDirective]).directive('appKiosk', ['appNode', proto.ng.modules.common.directives.AppKioskDirective]).directive('appFullscreen', ['appNode', proto.ng.modules.common.directives.AppFullScreenDirective]).directive('appVersion', ['appState', proto.ng.modules.common.directives.AppVersionDirective]).directive('eatClickIf', ['$parse', '$rootScope', proto.ng.modules.common.directives.EatClickIfDirective]).directive('toHtml', ['$sce', '$filter', proto.ng.modules.common.directives.ToHtmlDirective]).directive('domReplace', [proto.ng.modules.common.directives.DomReplaceDirective]).directive('resxInclude', ['$templateCache', proto.ng.modules.common.directives.ResxIncludeDirective]).directive('resxImport', ['$templateCache', '$document', proto.ng.modules.common.directives.ResxImportDirective]).filter('toXml', [proto.ng.modules.common.filters.ToXmlFilter]).filter('interpolate', ['appState', proto.ng.modules.common.filters.InterpolateFilter]).filter('fromNow', ['$filter', proto.ng.modules.common.filters.FromNowFilter]).filter('isArray', [proto.ng.modules.common.filters.IsArrayFilter]).filter('isNotArray', [proto.ng.modules.common.filters.IsNotArrayFilter]).filter('typeCount', [proto.ng.modules.common.filters.TypeCountFilter]).filter('listReverse', [proto.ng.modules.common.filters.ListReverseFilter]).filter('toBytes', [proto.ng.modules.common.filters.ToByteFilter]).filter('parseBytes', [proto.ng.modules.common.filters.ParseBytesFilter]).directive('abnTree', [
     '$timeout', function ($timeout) {
         return {
             restrict: 'E',
@@ -2816,7 +3218,7 @@ angular.module('prototyped.ng', [
         };
     }]).run([
     '$rootScope', '$state', 'appConfig', 'appState', function ($rootScope, $state, appConfig, appState) {
-        // Extend root scope with (global) vars
+        // Extend root scope with (global) contexts
         angular.extend($rootScope, {
             appConfig: appConfig,
             appState: appState,
@@ -2825,12 +3227,27 @@ angular.module('prototyped.ng', [
             state: $state
         });
 
+        // Watch for navigation changes
         $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
             if (toState) {
                 appState.current.state = toState;
             }
         });
-    }]).run([
-    'appConfig', function (appConfig) {
+
         console.debug(' - Current Config: ', appConfig);
     }]);
+/// <reference path="../imports.d.ts" />
+/// <reference path="config.ng.ts" />
+// Define common runtime modules (shared)
+angular.module('prototyped.ng.runtime', [
+    'prototyped.ng.config',
+    'ui.router'
+]).provider('appNode', [
+    proto.ng.modules.common.providers.AppNodeProvider
+]).provider('appState', [
+    '$stateProvider',
+    '$urlRouterProvider',
+    'appConfigProvider',
+    'appNodeProvider',
+    proto.ng.modules.common.providers.AppStateProvider
+]);

@@ -1,7 +1,16 @@
 ﻿/// <reference path="../../imports.d.ts" />
 /// <reference path="providers/AppNodeProvider.ts" />
 
-module proto.ng.common {
+module proto.ng.modules.common {
+
+    export interface IAppRoute {
+        url?: string;
+        state?: any;
+        menuitem?: any;
+        cardview?: any;
+        children?: IAppRoute[];
+        visible?: () => boolean;
+    }
 
     export class AppState {
         public debug: boolean;
@@ -15,6 +24,7 @@ module proto.ng.common {
         };
         public proxy: string;
         public node: AppNode;
+        public routers: IAppRoute[];
         public logs: any[];
         /*
         public show: {
@@ -27,12 +37,15 @@ module proto.ng.common {
         },
         */
 
-        constructor(private $stateProvider, private appNodeProvider: proto.ng.common.providers.AppNodeProvider, private appConfig) {
+        public get config() { return this.appConfig; }
+
+        constructor(private $stateProvider, private appNodeProvider: proto.ng.modules.common.providers.AppNodeProvider, private appConfig) {
             this.logs = [];
             this.html5 = true;
             this.title = appConfig.title || 'Prototyped';
             this.version = appConfig.version || '1.0.0';
             this.node = appNodeProvider.$get();
+            this.routers = [];            
             this.current = {
                 state: null
             };
@@ -50,7 +63,7 @@ module proto.ng.common {
 
             if (this.current && this.current.state) {
                 var currentState = this.current.state.name;
-                this.appConfig.routers.forEach((itm, i) => {
+                this.routers.forEach((itm, i) => {
                     if (itm.menuitem && itm.menuitem.state == currentState) {
                         icon = itm.menuitem.icon;
                     }

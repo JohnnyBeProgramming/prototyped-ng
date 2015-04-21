@@ -11,19 +11,19 @@
     <!-- slider container -->
     <div class="slider docked">
         <!-- prev / next controls -->
-        <a class="arrow prev" href="" ng-show="false" ng-click="showPrev()"><i class="glyphicon glyphicon-chevron-left"></i></a>
-        <a class="arrow next" href="" ng-show="false" ng-click="showNext()"><i class="glyphicon glyphicon-chevron-right"></i></a>
+        <a class="arrow prev" href="" ng-show="false" ng-click="cardView.showPrev()"><i class="glyphicon glyphicon-chevron-left"></i></a>
+        <a class="arrow next" href="" ng-show="false" ng-click="cardView.showNext()"><i class="glyphicon glyphicon-chevron-right"></i></a>
 
         <div class="boxed">
             <!-- enumerate all photos -->
             <a class="card fixed-width slide"
                ng-class="{ 'inactive-gray-25': route.cardview.ready === false }"
-               ng-repeat="route in pages | orderBy:'(priority || 1)'"
+               ng-repeat="route in cardView.pages | orderBy:'(priority || 1)'"
                ng-if="route.cardview && (!route.visible || route.visible())"
                ng-href="{{route.url}}"
-               ng-class="{ 'active': isActive($index) }"
-               ng-swipe-right="showPrev()"
-               ng-swipe-left="showNext()">
+               ng-class="{ 'active': cardView.isActive($index) }"
+               ng-swipe-right="cardView.showPrev()"
+               ng-swipe-left="cardView.showNext()">
                 <div class="card-image" ng-class="route.cardview.style">
                     <div class="banner"></div>
                     <h2>{{route.cardview.title}}</h2>
@@ -34,8 +34,8 @@
 
         <!-- extra navigation controls -->
         <ul class="small-only slider-nav">
-            <li ng-repeat="page in pages" ng-class="{'active':isActive($index)}">
-                <a href="" ng-click="showPhoto($index);" title="{{page.title}}"><i class="glyphicon glyphicon-file"></i></a>
+            <li ng-repeat="page in cardView.pages" ng-class="{'active':isActive($index)}">
+                <a href="" ng-click="cardView.showItem($index);" title="{{page.title}}"><i class="glyphicon glyphicon-file"></i></a>
             </li>
         </ul>
     </div>

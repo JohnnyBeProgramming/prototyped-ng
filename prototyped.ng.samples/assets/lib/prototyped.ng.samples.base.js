@@ -922,13 +922,11 @@ var proto;
 /// <reference path="typings/HttpInterceptorService.ts" />
 angular.module('prototyped.ng.samples.decorators', []).config([
     'appConfigProvider', function (appConfigProvider) {
-        appConfigProvider.set({
-            'decorators': {
-                debug: false,
-                promptme: null,
-                enabled: appConfigProvider.getPersisted('decorators.enabled') == '1',
-                filters: proto.ng.samples.decorators.StackTraceUtils.filters
-            }
+        appConfigProvider.config('decorators', {
+            debug: false,
+            promptme: null,
+            enabled: appConfigProvider.getPersisted('decorators.enabled') == '1',
+            filters: proto.ng.samples.decorators.StackTraceUtils.filters
         });
     }]).config([
     '$stateProvider', function ($stateProvider) {
@@ -1789,14 +1787,10 @@ angular.module('prototyped.ng.samples.errorHandlers', [
 ]).config([
     'appConfigProvider', function (appConfigProvider) {
         // Configure module
-        appConfigProvider.set({
-            'errorHandlers': proto.ng.samples.errorHandlers.ErrorHandlers,
-            'googleConfig': {
-                publicKey: 'UA-61791366-1'
-            },
-            'ravenConfig': {
-                publicKey: 'https://e94eaeaab36f4d14a99e0472e85ba289@app.getsentry.com/36391'
-            }
+        appConfigProvider.config('errorHandlers', proto.ng.samples.errorHandlers.ErrorHandlers).config('googleConfig', {
+            publicKey: 'UA-61791366-1'
+        }).config('ravenConfig', {
+            publicKey: 'https://e94eaeaab36f4d14a99e0472e85ba289@app.getsentry.com/36391'
         });
     }]).config([
     '$stateProvider', function ($stateProvider) {
@@ -3243,30 +3237,25 @@ angular.module('prototyped.ng.samples', [
     'prototyped.ng.samples.compression',
     'prototyped.ng.samples.styles3d'
 ]).config([
-    'appConfigProvider', function (appConfigProvider) {
+    'appConfigProvider', 'appStateProvider', function (appConfigProvider, appStateProvider) {
         // Define module configuration
-        appConfigProvider.set({
-            'prototyped.ng.samples': {
-                active: true
+        appConfigProvider.config('prototyped.ng.samples', {
+            active: true
+        });
+
+        // Define module routes
+        appStateProvider.define('/samples', {
+            menuitem: {
+                label: 'Samples',
+                icon: 'fa fa-share-alt',
+                state: 'samples.info'
+            },
+            cardview: {
+                style: 'img-sandbox',
+                title: 'Prototyped Sample Code',
+                desc: 'A selection of samples to test, play and learn about web technologies.'
             }
         });
-        var appConfig = appConfigProvider.$get();
-        if (appConfig) {
-            // Define module routes
-            appConfig.routers.push({
-                url: '/samples',
-                menuitem: {
-                    label: 'Samples',
-                    icon: 'fa fa-share-alt',
-                    state: 'samples.info'
-                },
-                cardview: {
-                    style: 'img-sandbox',
-                    title: 'Prototyped Sample Code',
-                    desc: 'A selection of samples to test, play and learn about web technologies.'
-                }
-            });
-        }
     }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states

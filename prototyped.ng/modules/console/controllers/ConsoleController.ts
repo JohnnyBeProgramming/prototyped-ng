@@ -1,6 +1,6 @@
 ﻿///<reference path="../../../imports.d.ts"/>
 
-module proto.ng.commands {
+module proto.ng.modules.commands {
 
     export class ConsoleController {
 

@@ -1,6 +1,6 @@
 ﻿///<reference path="../../../imports.d.ts"/>
 
-module proto.ng.explorer {
+module proto.ng.modules.explorer {
 
     export class AddressBarController {
 

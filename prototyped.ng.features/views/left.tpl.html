@@ -1,36 +1,36 @@
 ﻿<ul class="list-group">
     <li class="list-group-item" ui:sref-active="active">
         <a app:nav-link ui:sref="proto.cmd">
-            <i class="fa" ng-class="{ 'fa-refresh glow-blue': cmd.busy, 'fa-desktop glow-green': !cmd.busy && appNode.active, 'fa-warning glow-orange': !cmd.busy && !appNode.active }"></i>&nbsp;
+            <i class="fa" ng-class="{ 'fa-refresh glow-blue': cmd.busy, 'fa-desktop glow-green': !cmd.busy && appState.node.active, 'fa-warning glow-orange': !cmd.busy && !appState.node.active }"></i>&nbsp;
             Explore All Features
         </a>        
     </li>
-    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appNode.active }">
-        <a app:nav-link ui:sref="proto.explore" data:eat-click-if="!appNode.active">
+    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appState.node.active }">
+        <a app:nav-link ui:sref="proto.explore" data:eat-click-if="!appState.node.active">
             <i class="fa fa-folder"></i> Local Filesystem Viewer
         </a>
     </li>
-    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appNode.active }">
-        <a app:nav-link ui:sref="sqlcmd.connect" data:eat-click-if="!appNode.active">
+    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appState.node.active }">
+        <a app:nav-link ui:sref="sqlcmd.connect" data:eat-click-if="!appState.node.active">
             <i class="fa fa-database"></i> Connect to Data Source
         </a>
     </li>
-    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appNode.active }">
-        <a app:nav-link ui:sref="certs.info" data:eat-click-if="!appNode.active">
+    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appState.node.active }">
+        <a app:nav-link ui:sref="certs.info" data:eat-click-if="!appState.node.active">
             <i class="fa fa-certificate"></i> Check Certificates
         </a>
     </li>
-    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appNode.active }">
-        <a app:nav-link ui:sref="proto.edge" data:eat-click-if="!appNode.active">
+    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appState.node.active }">
+        <a app:nav-link ui:sref="proto.edge" data:eat-click-if="!appState.node.active">
             <i class="fa fa-magic"></i> Interop with C#.net
         </a>
     </li>
-    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appNode.active }">
+    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appState.node.active }">
         <a app:nav-link ui:sref="proto.editor">
             <i class="fa fa-edit"></i>&nbsp; File &amp; Text Editor
         </a>
     </li>
-    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appNode.active }">
+    <li class="list-group-item" ui:sref-active="active" ng-class="{ 'disabled': !appState.node.active }">
         <a app:nav-link ui:sref="proto.console">
             <i class="fa fa-terminal"></i>&nbsp; Console Application
         </a>

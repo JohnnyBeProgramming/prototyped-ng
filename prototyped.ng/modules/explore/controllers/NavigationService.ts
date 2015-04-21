@@ -1,5 +1,5 @@
 ﻿
-module proto.ng.explorer {
+module proto.ng.modules.explorer {
 
     export class TreeNode {
         public label: string;
@@ -74,12 +74,12 @@ module proto.ng.explorer {
         private _treeData: any = [];
 
         constructor(private $state, private $q) {
-            this.init();
+            this.init();            
         }
 
         public init() {
             this._treeData = [
-                new proto.ng.explorer.SiteNavigationRoot('Home Page', this.$state.get()),
+                new proto.ng.modules.explorer.SiteNavigationRoot('Home Page', this.$state.get()),
             ];
             /*
             this.$rootScope.$on('nodeSelect', function (data) {

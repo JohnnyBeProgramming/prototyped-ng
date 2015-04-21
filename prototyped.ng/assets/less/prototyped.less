@@ -1,11 +1,39 @@
 ﻿body {
 
+    .glow-green {
+        color: #00b500 !important;
+        text-shadow: 0 0 2px #00b500;
+    }
+
+    .glow-red {
+        color: #D00 !important;
+        text-shadow: 0 0 2px #D00;
+    }
+
+    .glow-orange {
+        color: #ff8d00 !important;
+        text-shadow: 0 0 2px #ff8d00;
+    }
+
+    .glow-blue {
+        color: #0094ff !important;
+        text-shadow: 0 0 2px #0094ff;
+    }
+
+    .input-group-xs > .form-control,
+    .input-group-xs > .input-group-addon,
+    .input-group-xs > .input-group-btn > .btn {
+        height: 22px;
+        padding: 1px 5px;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
     .docked {
         flex-grow: 1;
         flex-shrink: 1;
         display: flex;
-        height: 100%;
-        overflow: none;
+        overflow: auto;
     }
 
     .dock-tight {
@@ -106,26 +134,6 @@
         font-size: 14px;
         text-align: center;
         color: rgba(128,128,128,0.75);
-    }
-
-    .glow-green {
-        color: #00b500!important;
-        text-shadow: 0 0 2px #00b500;
-    }
-
-    .glow-red {
-        color: #D00!important;
-        text-shadow: 0 0 2px #D00;
-    }
-
-    .glow-orange {
-        color: #ff8d00!important;
-        text-shadow: 0 0 2px #ff8d00;
-    }
-
-    .glow-blue {
-        color: #0094ff!important;
-        text-shadow: 0 0 2px #0094ff;
     }
 
     .results {
@@ -364,14 +372,10 @@
 
     .console {
 
-        .cmd-input {
-        }
-
         .cmd-output {
-            padding: 8px;
-            font-size: 10.5px;
+            padding: 3px;
             font-family: Courier New, Courier, monospace;
-            color: darkslategray;
+            color: #808080;
         }
 
         .cmd-line {
@@ -895,32 +899,34 @@ The second selector is for Angular 1.2.0
 */
 .abn-tree-animate-enter,
 li.abn-tree-row.ng-enter {
-  transition: 200ms linear all;
-  position: relative;
-  display: block;
-  opacity: 0;
-  max-height:0px;
+    transition: 200ms linear all;
+    position: relative;
+    display: block;
+    opacity: 0;
+    max-height: 0px;
 }
+
 .abn-tree-animate-enter.abn-tree-animate-enter-active,
-li.abn-tree-row.ng-enter-active{
-  opacity: 1;
-  max-height:30px;
+li.abn-tree-row.ng-enter-active {
+    opacity: 1;
+    max-height: 30px;
 }
 
 .abn-tree-animate-leave,
 li.abn-tree-row.ng-leave {
-  transition: 200ms linear all;
-  position: relative;
-  display: block;
-  height:30px;
-  max-height: 30px;
-  opacity: 1;
+    transition: 200ms linear all;
+    position: relative;
+    display: block;
+    height: 30px;
+    max-height: 30px;
+    opacity: 1;
 }
+
 .abn-tree-animate-leave.abn-tree-animate-leave-active,
-li.abn-tree-row.ng-leave-active {  
-  height: 0px;
-  max-height:0px;
-  opacity: 0;
+li.abn-tree-row.ng-leave-active {
+    height: 0px;
+    max-height: 0px;
+    opacity: 0;
 }
 
 
@@ -928,66 +934,74 @@ li.abn-tree-row.ng-leave-active {
 ------------------------------------------
 Angular 1.2.0 Animation 
 */
-.abn-tree-animate.ng-enter{
-
+.abn-tree-animate.ng-enter {
 }
-.abn-tree-animate.ng-enter{
 
+.abn-tree-animate.ng-enter {
 }
 /*
    end animation stuff
 -----------------------------------------
    begin normal css stuff
 */
-ul.abn-tree li.abn-tree-row {  
-  padding: 0px;
-  margin:0px;
+ul.abn-tree li.abn-tree-row {
+    padding: 0px;
+    margin: 0px;
 }
 
 ul.abn-tree li.abn-tree-row a {
-  padding: 3px 10px;
+    padding: 3px 10px;
 }
 
 ul.abn-tree i.indented {
-  padding: 2px 6px;
+    padding: 2px 6px;
 }
 
 .abn-tree {
-  cursor: pointer;
+    cursor: pointer;
 }
+
 ul.nav.abn-tree .level-1 .indented {
-  position: relative;
-  left: 0;
+    position: relative;
+    left: 0;
 }
+
 ul.nav.abn-tree .level-2 .indented {
-  position: relative;
-  left: 16px;
+    position: relative;
+    left: 16px;
 }
+
 ul.nav.abn-tree .level-3 .indented {
-  position: relative;
-  left: 40px;
+    position: relative;
+    left: 40px;
 }
+
 ul.nav.abn-tree .level-4 .indented {
-  position: relative;
-  left: 60px;
+    position: relative;
+    left: 60px;
 }
+
 ul.nav.abn-tree .level-5 .indented {
-  position: relative;
-  left: 80px;
+    position: relative;
+    left: 80px;
 }
+
 ul.nav.abn-tree .level-6 .indented {
-  position: relative;
-  left: 100px;
+    position: relative;
+    left: 100px;
 }
+
 ul.nav.nav-list.abn-tree .level-7 .indented {
-  position: relative;
-  left: 120px;
+    position: relative;
+    left: 120px;
 }
+
 ul.nav.nav-list.abn-tree .level-8 .indented {
-  position: relative;
-  left: 140px;
+    position: relative;
+    left: 140px;
 }
+
 ul.nav.nav-list.abn-tree .level-9 .indented {
-  position: relative;
-  left: 160px;
+    position: relative;
+    left: 160px;
 }

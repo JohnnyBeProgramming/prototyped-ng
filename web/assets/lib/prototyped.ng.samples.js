@@ -922,13 +922,11 @@ var proto;
 /// <reference path="typings/HttpInterceptorService.ts" />
 angular.module('prototyped.ng.samples.decorators', []).config([
     'appConfigProvider', function (appConfigProvider) {
-        appConfigProvider.set({
-            'decorators': {
-                debug: false,
-                promptme: null,
-                enabled: appConfigProvider.getPersisted('decorators.enabled') == '1',
-                filters: proto.ng.samples.decorators.StackTraceUtils.filters
-            }
+        appConfigProvider.config('decorators', {
+            debug: false,
+            promptme: null,
+            enabled: appConfigProvider.getPersisted('decorators.enabled') == '1',
+            filters: proto.ng.samples.decorators.StackTraceUtils.filters
         });
     }]).config([
     '$stateProvider', function ($stateProvider) {
@@ -1753,32 +1751,7 @@ var proto;
 (function (proto) {
     (function (ng) {
         (function (samples) {
-            (function (_errorHandlers) {
-                function ConfigureErrorHandlers(appConfigProvider) {
-                    appConfigProvider.set({
-                        'errorHandlers': proto.ng.samples.errorHandlers.ErrorHandlers
-                    });
-                }
-                _errorHandlers.ConfigureErrorHandlers = ConfigureErrorHandlers;
-
-                function ConfigureGoogle(appConfigProvider) {
-                    appConfigProvider.set({
-                        'googleConfig': {
-                            publicKey: 'UA-61791366-1'
-                        }
-                    });
-                }
-                _errorHandlers.ConfigureGoogle = ConfigureGoogle;
-
-                function ConfigureRaven(appConfigProvider) {
-                    appConfigProvider.set({
-                        'ravenConfig': {
-                            publicKey: 'https://e94eaeaab36f4d14a99e0472e85ba289@app.getsentry.com/36391'
-                        }
-                    });
-                }
-                _errorHandlers.ConfigureRaven = ConfigureRaven;
-
+            (function (errorHandlers) {
                 function ConfigureProviders($provide, $httpProvider) {
                     // Register http error handler
                     $httpProvider.interceptors.push('errorHttpInterceptor');
@@ -1793,7 +1766,7 @@ var proto;
                             return $delegate;
                         }]);
                 }
-                _errorHandlers.ConfigureProviders = ConfigureProviders;
+                errorHandlers.ConfigureProviders = ConfigureProviders;
             })(samples.errorHandlers || (samples.errorHandlers = {}));
             var errorHandlers = samples.errorHandlers;
         })(ng.samples || (ng.samples = {}));
@@ -1811,7 +1784,15 @@ var proto;
 /// <reference path="typings/config.ts" />
 angular.module('prototyped.ng.samples.errorHandlers', [
     'prototyped.ng.config'
-]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureErrorHandlers]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureGoogle]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureRaven]).config(['$provide', '$httpProvider', proto.ng.samples.errorHandlers.ConfigureProviders]).config([
+]).config([
+    'appConfigProvider', function (appConfigProvider) {
+        // Configure module
+        appConfigProvider.config('errorHandlers', proto.ng.samples.errorHandlers.ErrorHandlers).config('googleConfig', {
+            publicKey: 'UA-61791366-1'
+        }).config('ravenConfig', {
+            publicKey: 'https://e94eaeaab36f4d14a99e0472e85ba289@app.getsentry.com/36391'
+        });
+    }]).config([
     '$stateProvider', function ($stateProvider) {
         // Set up the states
         $stateProvider.state('samples.errors', {
@@ -1824,7 +1805,7 @@ angular.module('prototyped.ng.samples.errorHandlers', [
                 }
             }
         });
-    }]).factory('$exceptionHandler', [
+    }]).config(['$provide', '$httpProvider', proto.ng.samples.errorHandlers.ConfigureProviders]).factory('$exceptionHandler', [
     '$log', 'appNode', function ($log, appNode) {
         var instance = new proto.ng.samples.errorHandlers.ExceptionHandlerFactory($log, appNode);
         return function (exception, cause) {
@@ -3256,30 +3237,25 @@ angular.module('prototyped.ng.samples', [
     'prototyped.ng.samples.compression',
     'prototyped.ng.samples.styles3d'
 ]).config([
-    'appConfigProvider', function (appConfigProvider) {
+    'appConfigProvider', 'appStateProvider', function (appConfigProvider, appStateProvider) {
         // Define module configuration
-        appConfigProvider.set({
-            'prototyped.ng.samples': {
-                active: true
+        appConfigProvider.config('prototyped.ng.samples', {
+            active: true
+        });
+
+        // Define module routes
+        appStateProvider.define('/samples', {
+            menuitem: {
+                label: 'Samples',
+                icon: 'fa fa-share-alt',
+                state: 'samples.info'
+            },
+            cardview: {
+                style: 'img-sandbox',
+                title: 'Prototyped Sample Code',
+                desc: 'A selection of samples to test, play and learn about web technologies.'
             }
         });
-        var appConfig = appConfigProvider.$get();
-        if (appConfig) {
-            // Define module routes
-            appConfig.routers.push({
-                url: '/samples',
-                menuitem: {
-                    label: 'Samples',
-                    icon: 'fa fa-share-alt',
-                    state: 'samples.info'
-                },
-                cardview: {
-                    style: 'img-sandbox',
-                    title: 'Prototyped Sample Code',
-                    desc: 'A selection of samples to test, play and learn about web technologies.'
-                }
-            });
-        }
     }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states

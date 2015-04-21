@@ -1176,56 +1176,47 @@ angular.module('prototyped.ng.features', [
     'prototyped.cli',
     'prototyped.edge'
 ]).config([
-    'appConfigProvider', function (appConfigProvider) {
+    'appConfigProvider', 'appStateProvider', function (appConfigProvider, appStateProvider) {
         // Define module configuration
-        appConfigProvider.set({
-            'prototyped.ng.features': {
-                active: true,
-                hideInBrowserMode: true
-            }
+        appConfigProvider.config('prototyped.ng.features', {
+            active: true,
+            hideInBrowserMode: true
         });
 
-        var appConfig = appConfigProvider.$get();
-        if (appConfig) {
-            // Define module routes
-            appConfig.routers.push({
-                url: '/proto/explore',
-                priority: 100,
-                menuitem: {
-                    label: 'Features',
-                    icon: 'fa fa-flask',
-                    state: 'proto.cmd'
-                },
-                cardview: {
-                    style: typeof require !== 'undefined' ? 'img-advanced' : 'img-advanced-restricted',
-                    title: 'Advanced Feature Detection',
-                    desc: 'Samples based on feature detection. Some may not be available for your browser or operating system.'
-                },
-                visible: function () {
-                    var opts = appConfig['prototyped.ng.features'];
-                    return opts && opts.hideInBrowserMode ? typeof require !== 'undefined' : appConfig.options.showDefaultItems || !opts.hideInBrowserMode;
-                }
-            });
-            appConfig.routers.push({
-                url: '/imports',
-                abstract: true,
-                priority: 100,
-                menuitem: {
-                    label: 'Imports',
-                    icon: 'fa fa-cloud-download',
-                    state: 'proto.edge'
-                },
-                cardview: {
-                    style: 'img-editor',
-                    title: 'Import Additional Modules',
-                    desc: 'Load from external sources, modify and/or export to an online repository.'
-                },
-                visible: function () {
-                    var opts = appConfig['prototyped.ng.features'];
-                    return opts && opts.hideInBrowserMode;
-                }
-            });
-        }
+        // Define module routes
+        var opts = appConfigProvider.current.modules['prototyped.ng.features'];
+        appStateProvider.define('/proto/explore', {
+            priority: 100,
+            menuitem: {
+                label: 'Features',
+                icon: 'fa fa-flask',
+                state: 'proto.cmd'
+            },
+            cardview: {
+                style: typeof require !== 'undefined' ? 'img-advanced' : 'img-advanced-restricted',
+                title: 'Advanced Feature Detection',
+                desc: 'Samples based on feature detection. Some may not be available for your browser or operating system.'
+            },
+            visible: function () {
+                return opts && opts.hideInBrowserMode ? typeof require !== 'undefined' : appConfigProvider.current.options.showDefaultItems || !opts.hideInBrowserMode;
+            }
+        }).define('/imports', {
+            abstract: true,
+            priority: 100,
+            menuitem: {
+                label: 'Imports',
+                icon: 'fa fa-cloud-download',
+                state: 'proto.edge'
+            },
+            cardview: {
+                style: 'img-editor',
+                title: 'Import Additional Modules',
+                desc: 'Load from external sources, modify and/or export to an online repository.'
+            },
+            visible: function () {
+                return opts && opts.hideInBrowserMode;
+            }
+        });
     }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states

@@ -32,17 +32,15 @@
                     startAt: Date.now(),
                 });
             }],
-            setRoutes: ['$locationProvider', '$urlRouterProvider', '$stateProvider', 'appConfigProvider', function ($locationProvider, $urlRouterProvider, $stateProvider, appConfigProvider) {
-                var appConfig = appConfigProvider.$get();
-                if (appConfig) {
-                    appConfig.routers.push({
-                        url: '/extend-init',
+            setRoutes: ['$locationProvider', '$urlRouterProvider', '$stateProvider', 'appStateProvider', function ($locationProvider, $urlRouterProvider, $stateProvider, appStateProvider) {
+                appStateProvider
+                    .define('/extend-init', {
                         priority: 99999999,
                         cardview: {
                             ready: false,
                             style: 'img-extended',
                             title: 'Extend the Current App',
-                            desc: 'Dynamically load and extended features. Inject new modules into the current runtime.',                                
+                            desc: 'Dynamically load and extended features. Inject new modules into the current runtime.',
                         },
                         visible: function () {
                             try {
@@ -54,35 +52,35 @@
                         },
                     });
 
-                    $stateProvider
-                        .state('extend_init', {
-                            url: '/extend-init',
-                            views: {
-                                'main@': {
-                                    controller: function ($http, $state, $injector) {
-                                        var modExtend = 'prototyped.ng.extended';
-                                        var urlExtend = 'assets/lib/' + modExtend + '.js';
-                                        if (!$('head > script[src="' + urlExtend + '"]').length) {
+                $stateProvider
+                    .state('extend_init', {
+                        url: '/extend-init',
+                        views: {
+                            'main@': {
+                                controller: function ($http, $state, $injector) {
+                                    var modExtend = 'prototyped.ng.extended';
+                                    var urlExtend = 'assets/lib/' + modExtend + '.js';
+                                    if (!$('head > script[src="' + urlExtend + '"]').length) {
 
-                                            // Try to load the module (async, after bootstrap)
-                                            console.log(' - Loading: ' + urlExtend);
-                                            $.getScript(urlExtend, function (data, textStatus, jqxhr) {
-                                                console.debug(' - Loaded: ' + urlExtend + '...');
-                                                $state.go('default');
-                                            });
-                                        }
-                                    },
+                                        // Try to load the module (async, after bootstrap)
+                                        console.log(' - Loading: ' + urlExtend);
+                                        $.getScript(urlExtend, function (data, textStatus, jqxhr) {
+                                            console.debug(' - Loaded: ' + urlExtend + '...');
+                                            $state.go('default');
+                                        });
+                                    }
                                 },
                             },
-                        })
+                        },
+                    })
 
-                }			
+            }
                 $locationProvider.html5Mode(true); // Configure HTML5 mode
-                $urlRouterProvider // Set up default routes
-                    .when('', '/')
-                    .when('/', '/default')
-                    .when('/index.html', '/')
-            }],
+        $urlRouterProvider // Set up default routes
+            .when('', '/')
+            .when('/', '/default')
+            .when('/index.html', '/')
+        }],
         };
     </script>
 </head>
@@ -111,7 +109,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css" />
     <!--<![endif]-->
-
     <!-- Load this module's libraries -->
     <script src="assets/lib/prototyped.ng.js"></script>
     <script src="assets/lib/prototyped.ng.extended.base.js"></script>

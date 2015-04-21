@@ -3,14 +3,13 @@
 
 angular.module('prototyped.ng.samples.decorators', [])
     .config(['appConfigProvider', function (appConfigProvider) {
-        appConfigProvider.set({
-            'decorators': {
+        appConfigProvider
+            .config('decorators', {
                 debug: false,
                 promptme: null,
                 enabled: appConfigProvider.getPersisted('decorators.enabled') == '1',
                 filters: proto.ng.samples.decorators.StackTraceUtils.filters,
-            },
-        });
+            });
     }])
     .config(['$stateProvider', function ($stateProvider) {
         $stateProvider

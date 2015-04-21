@@ -22,23 +22,21 @@ angular.module('prototyped.ng.samples', [
 ])
 
 // Extend appConfig with module config
-    .config(['appConfigProvider', function (appConfigProvider) {
+    .config(['appConfigProvider', 'appStateProvider', function (appConfigProvider, appStateProvider) {
 
         // Define module configuration
-        appConfigProvider.set({
-            'prototyped.ng.samples': {
+        appConfigProvider
+            .config('prototyped.ng.samples', {
                 active: true,
-            }
-        });
-        var appConfig = appConfigProvider.$get();
-        if (appConfig) {
-            // Define module routes
-            appConfig.routers.push({
-                url: '/samples',
+            });
+
+        // Define module routes
+        appStateProvider
+            .define('/samples', {
                 menuitem: {
                     label: 'Samples',
-                    icon: 'fa fa-share-alt',     
-                    state: 'samples.info',           
+                    icon: 'fa fa-share-alt',
+                    state: 'samples.info',
                 },
                 cardview: {
                     style: 'img-sandbox',
@@ -46,7 +44,6 @@ angular.module('prototyped.ng.samples', [
                     desc: 'A selection of samples to test, play and learn about web technologies.'
                 },
             });
-        }
     }])
 
     .config(['$stateProvider', function ($stateProvider) {
@@ -116,7 +113,7 @@ angular.module('prototyped.ng.samples', [
         return {
             restrict: 'A',
             require: 'ngModel',
-            link: function link(scope: any, element: any, attrs : any, controller: any) {
+            link: function link(scope: any, element: any, attrs: any, controller: any) {
                 var isInit = false;
 
                 /**

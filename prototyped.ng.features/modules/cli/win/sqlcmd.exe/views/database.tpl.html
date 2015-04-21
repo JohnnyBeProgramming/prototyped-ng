@@ -28,7 +28,7 @@
             ...
         </p>
         <div ng:if="!sqlCmd.busy">
-            <div ng:if="!appNode.active" class="alert alert-warning">
+            <div ng:if="!appState.node.active" class="alert alert-warning">
                 <i class="fa fa-warning"></i> <b>Not Available:</b>
                 Application requires a NodeJS (or CommonJS) runtime. Web browsers do not have access to these advanced features...
             </div>

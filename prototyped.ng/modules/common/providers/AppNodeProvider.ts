@@ -1,4 +1,4 @@
-﻿module proto.ng.common.providers {
+﻿module proto.ng.modules.common.providers {
 
     export class AppNodeProvider {
         public appNode: AppNode;

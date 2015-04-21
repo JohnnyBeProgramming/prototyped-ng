@@ -1,15 +1,27 @@
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.about', [
+    'prototyped.ng.runtime',
     'prototyped.ng.views',
-    'prototyped.ng.styles',
-    'ui.router'
+    'prototyped.ng.styles'
 ]).config([
-    '$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
-        // Define redirects
-        $urlRouterProvider.when('/about', '/about/info');
-
-        // Define the UI states
-        $stateProvider.state('about', {
+    'appStateProvider', function (appStateProvider) {
+        // Define application state
+        appStateProvider.when('/about', '/about/info').define('/about', {
+            priority: 1000,
+            menuitem: {
+                label: 'About',
+                state: 'about.info',
+                icon: 'fa fa-info-circle'
+            },
+            cardview: {
+                style: 'img-about',
+                title: 'About this software',
+                desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
+            },
+            visible: function () {
+                return appStateProvider.appConfig.options.showAboutPage;
+            }
+        }).state('about', {
             url: '/about',
             abstract: true
         }).state('about.info', {
@@ -472,768 +484,1665 @@ angular.module('prototyped.about', [
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (common) {
-            var AppNodeProvider = (function () {
-                function AppNodeProvider() {
-                    this.appNode = new AppNode();
-                }
-                AppNodeProvider.prototype.$get = function () {
-                    return this.appNode;
-                };
-                return AppNodeProvider;
-            })();
-            common.AppNodeProvider = AppNodeProvider;
-
-            var AppNode = (function () {
-                function AppNode() {
-                    this.active = typeof require !== 'undefined';
-                }
-                Object.defineProperty(AppNode.prototype, "gui", {
-                    get: function () {
-                        return this.active ? this.ui() : null;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(AppNode.prototype, "window", {
-                    get: function () {
-                        return this.active ? this.win() : null;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-
-                AppNode.prototype.ui = function () {
-                    if (this.active) {
-                        return require('nw.gui');
+        (function (modules) {
+            (function (common) {
+                var AppConfig = (function () {
+                    function AppConfig() {
+                        this.modules = {};
+                        this.options = new common.AppOptions();
                     }
-                    return null;
-                };
-
-                AppNode.prototype.win = function () {
-                    if (this.gui) {
-                        var win = this.gui.Window.get();
-                        return win;
-                    }
-                    return null;
-                };
-
-                AppNode.prototype.reload = function () {
-                    var win = this.window;
-                    if (win) {
-                        win.reloadIgnoringCache();
-                    }
-                };
-
-                AppNode.prototype.close = function () {
-                    var win = this.window;
-                    if (win) {
-                        win.close();
-                    }
-                };
-
-                AppNode.prototype.debug = function () {
-                    var win = this.window;
-                    if (win.isDevToolsOpen()) {
-                        win.closeDevTools();
-                    } else {
-                        win.showDevTools();
-                    }
-                };
-
-                AppNode.prototype.toggleFullscreen = function () {
-                    var win = this.window;
-                    if (win) {
-                        win.toggleFullscreen();
-                    }
-                };
-
-                AppNode.prototype.kiosMode = function () {
-                    var win = this.window;
-                    if (win) {
-                        win.toggleKioskMode();
-                    }
-                };
-                return AppNode;
-            })();
-            common.AppNode = AppNode;
-        })(ng.common || (ng.common = {}));
-        var common = ng.common;
+                    return AppConfig;
+                })();
+                common.AppConfig = AppConfig;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (common) {
-            var AppStateProvider = (function () {
-                function AppStateProvider($stateProvider, appConfigProvider, appNodeProvider) {
-                    this.$stateProvider = $stateProvider;
-                    this.appConfigProvider = appConfigProvider;
-                    this.appNodeProvider = appNodeProvider;
-                    var appConfig = appConfigProvider.$get();
-                    this.appState = new AppState($stateProvider, appNodeProvider, appConfig);
-                    this.appState.debug = appConfig.debug || false;
-                }
-                AppStateProvider.prototype.$get = function () {
-                    return this.appState;
-                };
-                return AppStateProvider;
-            })();
-            common.AppStateProvider = AppStateProvider;
+        (function (modules) {
+            (function (common) {
+                var AppNode = (function () {
+                    function AppNode() {
+                        this.active = typeof require !== 'undefined';
+                    }
+                    Object.defineProperty(AppNode.prototype, "gui", {
+                        get: function () {
+                            return this.active ? this.ui() : null;
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
+                    Object.defineProperty(AppNode.prototype, "window", {
+                        get: function () {
+                            return this.active ? this.win() : null;
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
 
-            var AppState = (function () {
-                /*
-                public show: {
-                all: true,
-                log: false,
-                info: true,
-                warn: true,
-                error: true,
-                debug: false,
-                },
-                */
-                function AppState($stateProvider, appNodeProvider, appConfig) {
-                    this.$stateProvider = $stateProvider;
-                    this.appNodeProvider = appNodeProvider;
-                    this.appConfig = appConfig;
-                    this.logs = [];
-                    this.html5 = true;
-                    this.title = appConfig.title || 'Prototyped';
-                    this.version = appConfig.version || '1.0.0';
-                    this.node = appNodeProvider.$get();
-                    this.current = {
-                        state: null
-                    };
-                }
-                AppState.prototype.getIcon = function () {
-                    var icon = (this.node.active) ? 'fa fa-desktop' : 'fa fa-cube';
-                    var match = /\/!(\w+)!/i.exec(this.proxy || '');
-                    if (match && match.length > 1) {
-                        switch (match[1]) {
-                            case 'test':
-                                return 'fa fa-puzzle-piece glow-blue animate-glow';
-                            case 'debug':
-                                return 'fa fa-bug glow-orange animate-glow';
+                    AppNode.prototype.ui = function () {
+                        if (this.active) {
+                            return require('nw.gui');
                         }
-                    }
+                        return null;
+                    };
 
-                    if (this.current && this.current.state) {
-                        var currentState = this.current.state.name;
-                        this.appConfig.routers.forEach(function (itm, i) {
-                            if (itm.menuitem && itm.menuitem.state == currentState) {
-                                icon = itm.menuitem.icon;
+                    AppNode.prototype.win = function () {
+                        if (this.gui) {
+                            var win = this.gui.Window.get();
+                            return win;
+                        }
+                        return null;
+                    };
+
+                    AppNode.prototype.reload = function () {
+                        var win = this.window;
+                        if (win) {
+                            win.reloadIgnoringCache();
+                        }
+                    };
+
+                    AppNode.prototype.close = function () {
+                        var win = this.window;
+                        if (win) {
+                            win.close();
+                        }
+                    };
+
+                    AppNode.prototype.debug = function () {
+                        var win = this.window;
+                        if (win.isDevToolsOpen()) {
+                            win.closeDevTools();
+                        } else {
+                            win.showDevTools();
+                        }
+                    };
+
+                    AppNode.prototype.toggleFullscreen = function () {
+                        var win = this.window;
+                        if (win) {
+                            win.toggleFullscreen();
+                        }
+                    };
+
+                    AppNode.prototype.kiosMode = function () {
+                        var win = this.window;
+                        if (win) {
+                            win.toggleKioskMode();
+                        }
+                    };
+                    return AppNode;
+                })();
+                common.AppNode = AppNode;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                var AppOptions = (function () {
+                    function AppOptions() {
+                        this.showAboutPage = true;
+                        this.showDefaultItems = true;
+                    }
+                    return AppOptions;
+                })();
+                common.AppOptions = AppOptions;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (providers) {
+                    var AppNodeProvider = (function () {
+                        function AppNodeProvider() {
+                            this.appNode = new common.AppNode();
+                        }
+                        AppNodeProvider.prototype.$get = function () {
+                            return this.appNode;
+                        };
+                        return AppNodeProvider;
+                    })();
+                    providers.AppNodeProvider = AppNodeProvider;
+                })(common.providers || (common.providers = {}));
+                var providers = common.providers;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="../../imports.d.ts" />
+/// <reference path="providers/AppNodeProvider.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                var AppState = (function () {
+                    function AppState($stateProvider, appNodeProvider, appConfig) {
+                        this.$stateProvider = $stateProvider;
+                        this.appNodeProvider = appNodeProvider;
+                        this.appConfig = appConfig;
+                        this.logs = [];
+                        this.html5 = true;
+                        this.title = appConfig.title || 'Prototyped';
+                        this.version = appConfig.version || '1.0.0';
+                        this.node = appNodeProvider.$get();
+                        this.routers = [];
+                        this.current = {
+                            state: null
+                        };
+                    }
+                    Object.defineProperty(AppState.prototype, "config", {
+                        /*
+                        public show: {
+                        all: true,
+                        log: false,
+                        info: true,
+                        warn: true,
+                        error: true,
+                        debug: false,
+                        },
+                        */
+                        get: function () {
+                            return this.appConfig;
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
+
+                    AppState.prototype.getIcon = function () {
+                        var icon = (this.node.active) ? 'fa fa-desktop' : 'fa fa-cube';
+                        var match = /\/!(\w+)!/i.exec(this.proxy || '');
+                        if (match && match.length > 1) {
+                            switch (match[1]) {
+                                case 'test':
+                                    return 'fa fa-puzzle-piece glow-blue animate-glow';
+                                case 'debug':
+                                    return 'fa fa-bug glow-orange animate-glow';
                             }
-                        });
-                    }
-                    return icon;
-                };
+                        }
 
-                AppState.prototype.getColor = function () {
-                    var logs = this.logs;
-                    if (logs.some(function (val, i, array) {
-                        return val.type == 'error';
-                    })) {
-                        return 'glow-red';
+                        if (this.current && this.current.state) {
+                            var currentState = this.current.state.name;
+                            this.routers.forEach(function (itm, i) {
+                                if (itm.menuitem && itm.menuitem.state == currentState) {
+                                    icon = itm.menuitem.icon;
+                                }
+                            });
+                        }
+                        return icon;
+                    };
+
+                    AppState.prototype.getColor = function () {
+                        var logs = this.logs;
+                        if (logs.some(function (val, i, array) {
+                            return val.type == 'error';
+                        })) {
+                            return 'glow-red';
+                        }
+                        if (logs.some(function (val, i, array) {
+                            return val.type == 'warn';
+                        })) {
+                            return 'glow-orange';
+                        }
+                        if (logs.some(function (val, i, array) {
+                            return val.type == 'info';
+                        })) {
+                            return 'glow-blue';
+                        }
+                        if (this.node.active) {
+                            return 'glow-green';
+                        }
+                        return '';
+                    };
+                    return AppState;
+                })();
+                common.AppState = AppState;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (controllers) {
+                    var CardViewController = (function () {
+                        function CardViewController(appState) {
+                            this.appState = appState;
+                            this._index = 0;
+                        }
+                        Object.defineProperty(CardViewController.prototype, "pages", {
+                            get: function () {
+                                return this.appState.routers;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
+
+                        CardViewController.prototype.count = function () {
+                            return this.pages.length;
+                        };
+
+                        CardViewController.prototype.isActive = function (index) {
+                            return this._index === index;
+                        };
+
+                        CardViewController.prototype.showPrev = function () {
+                            this._index = (this._index > 0) ? --this._index : this.count() - 1;
+                        };
+
+                        CardViewController.prototype.showNext = function () {
+                            this._index = (this._index < this.count() - 1) ? ++this._index : 0;
+                        };
+
+                        CardViewController.prototype.showItem = function (index) {
+                            this._index = index;
+                        };
+                        return CardViewController;
+                    })();
+                    controllers.CardViewController = CardViewController;
+                })(common.controllers || (common.controllers = {}));
+                var controllers = common.controllers;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="../../../imports.d.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function AppCleanDirective($window, $route, $state, appState) {
+                        return function (scope, elem, attrs) {
+                            var keyCtrl = false;
+                            var keyShift = false;
+                            var keyEvent = $(document).on('keyup keydown', function (e) {
+                                // Update key states
+                                var hasChanges = false;
+                                if (keyCtrl != e.ctrlKey) {
+                                    hasChanges = true;
+                                    keyCtrl = e.ctrlKey;
+                                }
+                                if (keyShift != e.shiftKey) {
+                                    hasChanges = true;
+                                    keyShift = e.shiftKey;
+                                }
+                                if (hasChanges) {
+                                    $(elem).find('i').toggleClass('glow-blue', !keyShift && keyCtrl);
+                                    $(elem).find('i').toggleClass('glow-orange', keyShift);
+                                }
+                            });
+                            $(elem).attr('tooltip', 'Refresh');
+                            $(elem).attr('tooltip-placement', 'bottom');
+                            $(elem).click(function (e) {
+                                if (keyShift) {
+                                    // Full page reload
+                                    if (appState.node.active) {
+                                        console.debug(' - Reload Node Webkit...');
+                                        appState.node.reload();
+                                    } else {
+                                        console.debug(' - Reload page...');
+                                        $window.location.reload(true);
+                                    }
+                                } else if (keyCtrl) {
+                                    // Fast route reload
+                                    console.debug(' - Reload route...');
+                                    $route.reload();
+                                } else {
+                                    // Fast state reload
+                                    console.debug(' - Refresh state...');
+                                    $state.reload();
+                                }
+
+                                // Clear all previous status messages
+                                appState.logs = [];
+                                console.clear();
+                            });
+                            scope.$on('$destroy', function () {
+                                $(elem).off('click');
+                                keyEvent.off('keyup keydown');
+                            });
+                        };
                     }
-                    if (logs.some(function (val, i, array) {
-                        return val.type == 'warn';
-                    })) {
-                        return 'glow-orange';
+                    directives.AppCleanDirective = AppCleanDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function AppCloseDirective(appNode) {
+                        return function (scope, elem, attrs) {
+                            // Only enable the button in a NodeJS context (extended functionality)
+                            $(elem).css('display', appNode.active ? '' : 'none');
+                            $(elem).click(function () {
+                                appNode.close();
+                            });
+                        };
                     }
-                    if (logs.some(function (val, i, array) {
-                        return val.type == 'info';
-                    })) {
-                        return 'glow-blue';
+                    directives.AppCloseDirective = AppCloseDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function AppDebugDirective(appNode) {
+                        return function (scope, elem, attrs) {
+                            // Only enable the button in a NodeJS context (extended functionality)
+                            $(elem).css('display', appNode.active ? '' : 'none');
+                            $(elem).click(function () {
+                                appNode.debug();
+                            });
+                        };
                     }
-                    if (this.node.active) {
-                        return 'glow-green';
+                    directives.AppDebugDirective = AppDebugDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function AppFullScreenDirective(appNode) {
+                        return function (scope, elem, attrs) {
+                            // Only enable the button in a NodeJS context (extended functionality)
+                            $(elem).css('display', appNode.active ? '' : 'none');
+                            $(elem).click(function () {
+                                appNode.toggleFullscreen();
+                            });
+                        };
                     }
-                    return '';
-                };
-                return AppState;
-            })();
-            common.AppState = AppState;
-        })(ng.common || (ng.common = {}));
-        var common = ng.common;
+                    directives.AppFullScreenDirective = AppFullScreenDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function AppKioskDirective(appNode) {
+                        return function (scope, elem, attrs) {
+                            // Only enable the button in a NodeJS context (extended functionality)
+                            $(elem).css('display', appNode.active ? '' : 'none');
+                            $(elem).click(function () {
+                                appNode.kiosMode();
+                            });
+                        };
+                    }
+                    directives.AppKioskDirective = AppKioskDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function AppVersionDirective(appState) {
+                        function getVersionInfo(ident) {
+                            try  {
+                                if (typeof process !== 'undefined' && process.versions) {
+                                    return process.versions[ident];
+                                }
+                            } catch (ex) {
+                            }
+                            return null;
+                        }
+
+                        return function (scope, elm, attrs) {
+                            var targ = attrs['appVersion'];
+                            var val = null;
+                            if (!targ) {
+                                val = appState.version;
+                            } else
+                                switch (targ) {
+                                    case 'angular':
+                                        val = angular.version.full;
+                                        break;
+                                    case 'nodeweb-kit':
+                                        val = getVersionInfo('node-webkit');
+                                        break;
+                                    case 'node':
+                                        val = getVersionInfo('node');
+                                        break;
+                                    default:
+                                        val = getVersionInfo(targ) || val;
+
+                                        break;
+                                }
+                            if (!val && attrs['defaultText']) {
+                                val = attrs['defaultText'];
+                            }
+                            if (val) {
+                                $(elm).text(val);
+                            }
+                        };
+                    }
+                    directives.AppVersionDirective = AppVersionDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function DomReplaceDirective() {
+                        return {
+                            restrict: 'A',
+                            require: 'ngInclude',
+                            link: function (scope, el, attrs) {
+                                el.replaceWith(el.children());
+                            }
+                        };
+                    }
+                    directives.DomReplaceDirective = DomReplaceDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function EatClickIfDirective($parse, $rootScope) {
+                        return {
+                            priority: 100,
+                            restrict: 'A',
+                            compile: function ($element, attr) {
+                                var fn = $parse(attr.eatClickIf);
+                                return {
+                                    pre: function link(scope, element) {
+                                        var eventName = 'click';
+                                        element.on(eventName, function (event) {
+                                            var callback = function () {
+                                                if (fn(scope, { $event: event })) {
+                                                    // prevents ng-click to be executed
+                                                    event.stopImmediatePropagation();
+
+                                                    // prevents href
+                                                    event.preventDefault();
+                                                    return false;
+                                                }
+                                            };
+                                            if ($rootScope.$$phase) {
+                                                scope.$evalAsync(callback);
+                                            } else {
+                                                scope.$apply(callback);
+                                            }
+                                        });
+                                    },
+                                    post: function () {
+                                    }
+                                };
+                            }
+                        };
+                    }
+                    directives.EatClickIfDirective = EatClickIfDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function ResxImportDirective($templateCache, $document) {
+                        return {
+                            priority: 100,
+                            restrict: 'A',
+                            compile: function ($element, attr) {
+                                var ident = attr.resxImport;
+                                var cache = $templateCache.get(ident);
+                                if ($('[resx-src="' + ident + '"]').length <= 0) {
+                                    var html = '';
+                                    if (/(.*)(\.css)/i.test(ident)) {
+                                        if (cache != null) {
+                                            html = '<style resx-src="' + ident + '">' + cache + '</style>';
+                                        } else {
+                                            html = '<link resx-src="' + ident + '" href="' + ident + '" rel="stylesheet" type="text/css" />';
+                                        }
+                                    } else if (/(.*)(\.js)/i.test(ident)) {
+                                        if (cache != null) {
+                                            html = '<script resx-src="' + ident + '">' + cache + '</script>';
+                                        } else {
+                                            html = '<script resx-src="' + ident + '" src="' + ident + '">' + cache + '</script>';
+                                        }
+                                    }
+                                    if (html) {
+                                        $element.replaceWith(html);
+                                    }
+                                }
+                                return {
+                                    pre: function (scope, element) {
+                                    },
+                                    post: function (scope, element) {
+                                    }
+                                };
+                            }
+                        };
+                    }
+                    directives.ResxImportDirective = ResxImportDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function ResxIncludeDirective($templateCache) {
+                        return {
+                            priority: 100,
+                            restrict: 'A',
+                            compile: function ($element, attr) {
+                                var ident = attr.resxInclude;
+                                var cache = $templateCache.get(ident);
+                                if (cache) {
+                                    $element.text(cache);
+                                    //$element.replaceWith(cache);
+                                }
+                                return {
+                                    pre: function (scope, element) {
+                                    },
+                                    post: function (scope, element) {
+                                    }
+                                };
+                            }
+                        };
+                    }
+                    directives.ResxIncludeDirective = ResxIncludeDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (directives) {
+                    function ToHtmlDirective($sce, $filter) {
+                        function getHtml(obj) {
+                            try  {
+                                return 'toHtml:\'pre\' - ' + $filter('toXml')(obj, 'pre');
+                            } catch (ex) {
+                                return 'toHtml:error - ' + ex.message;
+                            }
+                        }
+                        return {
+                            restrict: 'EA',
+                            scope: {
+                                toHtml: '&'
+                            },
+                            transclude: false,
+                            controller: function ($scope, $sce) {
+                                var val = $scope.toHtml();
+                                var html = getHtml(val);
+                                $scope.myHtml = $sce.trustAsHtml(html);
+                            },
+                            template: '<div ng-bind-html="myHtml"></div>'
+                        };
+                    }
+                    directives.ToHtmlDirective = ToHtmlDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function FromNowFilter($filter) {
+                        return function (dateString, format) {
+                            try  {
+                                if (typeof moment !== 'undefined') {
+                                    return moment(dateString).fromNow(format);
+                                } else {
+                                    return ' at ' + $filter('date')(dateString, 'HH:mm:ss');
+                                }
+                            } catch (ex) {
+                                console.error(ex);
+                                return 'error';
+                            }
+                        };
+                    }
+                    filters.FromNowFilter = FromNowFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function InterpolateFilter(appState) {
+                        return function (text) {
+                            return String(text).replace(/\%VERSION\%/mg, appState.version);
+                        };
+                    }
+                    filters.InterpolateFilter = InterpolateFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function IsArrayFilter() {
+                        return function (input) {
+                            return angular.isArray(input);
+                        };
+                    }
+                    filters.IsArrayFilter = IsArrayFilter;
+
+                    function IsNotArrayFilter() {
+                        return function (input) {
+                            return angular.isArray(input);
+                        };
+                    }
+                    filters.IsNotArrayFilter = IsNotArrayFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function ListReverseFilter() {
+                        return function (input) {
+                            var result = [];
+                            var length = input.length;
+                            if (length) {
+                                for (var i = length - 1; i !== 0; i--) {
+                                    result.push(input[i]);
+                                }
+                            }
+                            return result;
+                        };
+                    }
+                    filters.ListReverseFilter = ListReverseFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function ParseBytesFilter() {
+                        return function (bytesDesc, precision) {
+                            var match = /(\d+) (\w+)/i.exec(bytesDesc);
+                            if (match && (match.length > 2)) {
+                                var bytes = match[1];
+                                var floatVal = parseFloat(bytes);
+                                if (isNaN(floatVal) || !isFinite(floatVal))
+                                    return '[?]';
+                                if (typeof precision === 'undefined')
+                                    precision = 1;
+                                var units = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'];
+                                var number = Math.floor(Math.log(floatVal) / Math.log(1024));
+                                var pow = -1;
+                                units.forEach(function (itm, i) {
+                                    if (itm && itm.toLowerCase().indexOf(match[2].toLowerCase()) >= 0)
+                                        pow = i;
+                                });
+                                if (pow > 0) {
+                                    var ret = (floatVal * Math.pow(1024, pow)).toFixed(precision);
+                                    return ret;
+                                }
+                            }
+                            return bytesDesc;
+                        };
+                    }
+                    filters.ParseBytesFilter = ParseBytesFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function ToByteFilter() {
+                        return function (bytes, precision) {
+                            if (isNaN(parseFloat(bytes)) || !isFinite(bytes))
+                                return '-';
+                            if (typeof precision === 'undefined')
+                                precision = 1;
+                            var units = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'], number = Math.floor(Math.log(bytes) / Math.log(1024));
+                            return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) + ' ' + units[number];
+                        };
+                    }
+                    filters.ToByteFilter = ToByteFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function ToXmlFilter($parse, $rootScope) {
+                        function toXmlString(name, input, expanded, childExpanded) {
+                            var val = '';
+                            var sep = '';
+                            var attr = '';
+                            if ($.isArray(input)) {
+                                if (expanded) {
+                                    for (var i = 0; i < input.length; i++) {
+                                        val += toXmlString(null, input[i], childExpanded);
+                                    }
+                                } else {
+                                    name = 'Array';
+                                    attr += sep + ' length="' + input.length + '"';
+                                    val = 'Array[' + input.length + ']';
+                                }
+                            } else if ($.isPlainObject(input)) {
+                                if (expanded) {
+                                    for (var id in input) {
+                                        if (input.hasOwnProperty(id)) {
+                                            var child = input[id];
+                                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                                val = toXmlString(id, child, childExpanded);
+                                            } else {
+                                                sep = ' ';
+                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    name = 'Object';
+                                    for (var id in input) {
+                                        if (input.hasOwnProperty(id)) {
+                                            var child = input[id];
+                                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                                val += toXmlString(id, child, childExpanded);
+                                            } else {
+                                                sep = ' ';
+                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                            }
+                                        }
+                                    }
+                                    //val = 'Object[ ' + JSON.stringify(input) + ' ]';
+                                }
+                            }
+                            if (name) {
+                                val = '<' + name + '' + attr + '>' + val + '</' + name + '>';
+                            }
+                            return val;
+                        }
+                        return function (input, rootName) {
+                            return toXmlString(rootName || 'xml', input, true);
+                        };
+                    }
+                    filters.ToXmlFilter = ToXmlFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function TypeCountFilter() {
+                        return function (input, type) {
+                            var count = 0;
+                            if (!input)
+                                return null;
+                            if (input.length > 0) {
+                                input.forEach(function (itm) {
+                                    if (!itm)
+                                        return;
+                                    if (!itm.type)
+                                        return;
+                                    if (itm.type == type)
+                                        count++;
+                                });
+                            }
+                            return count;
+                        };
+                    }
+                    filters.TypeCountFilter = TypeCountFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (providers) {
+                    var AppConfigLoader = (function () {
+                        function AppConfigLoader() {
+                        }
+                        AppConfigLoader.prototype.init = function (opts) {
+                            var configUrl = opts.path;
+                            var ngTargetApp = opts.name;
+                            var elem = opts.elem || document.body;
+                            var cfgModule = angular.module('prototyped.ng.config');
+                            var oldConfig = angular.injector(['prototyped.ng.config']).get('appConfig');
+                            if (opts.opts) {
+                                angular.extend(oldConfig.options, opts.opts);
+                            }
+                            if (configUrl) {
+                                var $http = angular.injector(['ng']).get('$http');
+                                $http({
+                                    method: 'GET',
+                                    url: configUrl
+                                }).success(function (data, status, headers, config) {
+                                    console.debug('Configuring ' + ngTargetApp + '...');
+                                    angular.extend(oldConfig, {
+                                        version: data.version || oldConfig.version
+                                    });
+                                    cfgModule.constant('appConfig', oldConfig);
+                                    angular.bootstrap(elem, [ngTargetApp]);
+                                }).error(function (ex) {
+                                    console.debug('Starting ' + ngTargetApp + ' with default config.');
+                                    angular.bootstrap(elem, [ngTargetApp]);
+                                });
+                            } else {
+                                console.debug('Starting app ' + ngTargetApp + '...');
+                                angular.bootstrap(elem, [ngTargetApp]);
+                            }
+                            return this;
+                        };
+                        return AppConfigLoader;
+                    })();
+                    providers.AppConfigLoader = AppConfigLoader;
+
+                    var AppConfigProvider = (function () {
+                        function AppConfigProvider(appConfig) {
+                            this.appConfig = appConfig;
+                        }
+                        Object.defineProperty(AppConfigProvider.prototype, "current", {
+                            get: function () {
+                                return this.appConfig;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
+
+                        AppConfigProvider.prototype.$get = function () {
+                            return this.appConfig;
+                        };
+
+                        AppConfigProvider.prototype.config = function (ident, options) {
+                            var target = (ident in this.current) ? this.current[ident] : {};
+                            angular.extend(target, options);
+                            this.current[ident] = target;
+                            return this;
+                        };
+
+                        AppConfigProvider.prototype.getPersisted = function (cname) {
+                            var name = cname + '=';
+                            var ca = document.cookie.split(';');
+                            for (var i = 0; i < ca.length; i++) {
+                                var c = ca[i];
+                                while (c.charAt(0) == ' ')
+                                    c = c.substring(1);
+                                if (c.indexOf(name) == 0)
+                                    return c.substring(name.length, c.length);
+                            }
+                            return '';
+                        };
+
+                        AppConfigProvider.prototype.setPersisted = function (cname, cvalue, exdays) {
+                            var d = new Date();
+                            d.setTime(d.getTime() + ((exdays || 7) * 24 * 60 * 60 * 1000));
+                            var expires = "expires=" + d.toUTCString();
+                            document.cookie = cname + "=" + cvalue + "; " + expires;
+                        };
+                        return AppConfigProvider;
+                    })();
+                    providers.AppConfigProvider = AppConfigProvider;
+                })(common.providers || (common.providers = {}));
+                var providers = common.providers;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (providers) {
+                    var AppStateProvider = (function () {
+                        function AppStateProvider($stateProvider, $urlRouterProvider, appConfigProvider, appNodeProvider) {
+                            this.$stateProvider = $stateProvider;
+                            this.$urlRouterProvider = $urlRouterProvider;
+                            this.appConfigProvider = appConfigProvider;
+                            this.appNodeProvider = appNodeProvider;
+                            var appConfig = appConfigProvider.$get();
+                            this.appState = new common.AppState($stateProvider, appNodeProvider, appConfig);
+                            this.appState.debug = false;
+                        }
+                        Object.defineProperty(AppStateProvider.prototype, "appConfig", {
+                            get: function () {
+                                return this.appConfigProvider.current;
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
+
+                        AppStateProvider.prototype.$get = function () {
+                            return this.appState;
+                        };
+
+                        AppStateProvider.prototype.when = function (srcUrl, dstUrl) {
+                            this.$urlRouterProvider.when(srcUrl, dstUrl);
+                            return this;
+                        };
+
+                        AppStateProvider.prototype.config = function (ident, options) {
+                            this.appConfigProvider.config(ident, options);
+                            return this;
+                        };
+
+                        AppStateProvider.prototype.state = function (ident, options) {
+                            this.$stateProvider.state(ident, options);
+                            return this;
+                        };
+
+                        AppStateProvider.prototype.define = function (url, value) {
+                            if (!value.url)
+                                value.url = url;
+                            this.appState.routers.push(value);
+                            return this;
+                        };
+                        return AppStateProvider;
+                    })();
+                    providers.AppStateProvider = AppStateProvider;
+                })(common.providers || (common.providers = {}));
+                var providers = common.providers;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
 /// <reference path="../imports.d.ts" />
 // Constant object with default values
-angular.module('prototyped.ng.config', []).constant('appDefaultConfig', {
-    version: '0.0.1',
-    routers: [],
-    options: {
-        debug: false,
-        showAboutPage: true,
-        showDefaultItems: true
-    }
-}).provider('appConfig', [
-    'appDefaultConfig', function (appDefaultConfig) {
-        var config = appDefaultConfig;
-        return {
-            $get: function () {
-                return config;
-            },
-            set: function (options) {
-                angular.extend(config, options);
-            },
-            clear: function () {
-                config = appDefaultConfig;
-            },
-            getPersisted: function (cname) {
-                var name = cname + '=';
-                var ca = document.cookie.split(';');
-                for (var i = 0; i < ca.length; i++) {
-                    var c = ca[i];
-                    while (c.charAt(0) == ' ')
-                        c = c.substring(1);
-                    if (c.indexOf(name) == 0)
-                        return c.substring(name.length, c.length);
-                }
-                return '';
-            },
-            setPersisted: function (cname, cvalue, exdays) {
-                var d = new Date();
-                d.setTime(d.getTime() + ((exdays || 7) * 24 * 60 * 60 * 1000));
-                var expires = "expires=" + d.toUTCString();
-                document.cookie = cname + "=" + cvalue + "; " + expires;
-            }
-        };
-    }]).constant('appConfigLoader', {
-    init: function (opts) {
-        var configUrl = opts.path;
-        var ngTargetApp = opts.name;
-        var elem = opts.elem || document.body;
-        var cfgModule = angular.module('prototyped.ng.config');
-        var oldConfig = angular.injector(['prototyped.ng.config']).get('appConfig');
-        if (opts.opts) {
-            angular.extend(oldConfig.options, opts.opts);
-        }
-        if (configUrl) {
-            var $http = angular.injector(['ng']).get('$http');
-            $http({
-                method: 'GET',
-                url: configUrl
-            }).success(function (data, status, headers, config) {
-                console.debug('Configuring ' + ngTargetApp + '...');
-                angular.extend(oldConfig, {
-                    version: data.version || oldConfig.version
-                });
-                cfgModule.constant('appConfig', oldConfig);
-                angular.bootstrap(elem, [ngTargetApp]);
-            }).error(function (ex) {
-                console.debug('Starting ' + ngTargetApp + ' with default config.');
-                angular.bootstrap(elem, [ngTargetApp]);
-            });
-        } else {
-            console.debug('Starting app ' + ngTargetApp + '...');
-            angular.bootstrap(elem, [ngTargetApp]);
-        }
-    }
-});
+angular.module('prototyped.ng.config', []).constant('appDefaultConfig', new proto.ng.modules.common.AppConfig()).constant('appConfigLoader', new proto.ng.modules.common.providers.AppConfigLoader()).provider('appConfig', ['appDefaultConfig', proto.ng.modules.common.providers.AppConfigProvider]);
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (commands) {
-            var ConsoleController = (function () {
-                function ConsoleController($scope, $log) {
-                    this.$scope = $scope;
-                    this.$log = $log;
-                    this._proxyList = [];
-                    try  {
-                        // Set the scope vars
-                        $scope.myConsole = this;
-                        $scope.lines = [];
+        (function (modules) {
+            (function (commands) {
+                var ConsoleController = (function () {
+                    function ConsoleController($scope, $log) {
+                        this.$scope = $scope;
+                        this.$log = $log;
+                        this._proxyList = [];
+                        try  {
+                            // Set the scope vars
+                            $scope.myConsole = this;
+                            $scope.lines = [];
 
-                        // Create the list proxies
-                        this._currentProxy = new BrowserConsole();
-                        this._proxyList.push(this._currentProxy);
+                            // Create the list proxies
+                            this._currentProxy = new BrowserConsole();
+                            this._proxyList.push(this._currentProxy);
 
-                        // Get the required libraries
-                        if (typeof require !== 'undefined') {
-                            var proc = require('child_process');
-                            if (!$.isEmptyObject(proc)) {
-                                this._currentProxy = new ProcessConsole(proc);
-                                this._proxyList.push(this._currentProxy);
+                            // Get the required libraries
+                            if (typeof require !== 'undefined') {
+                                var proc = require('child_process');
+                                if (!$.isEmptyObject(proc)) {
+                                    this._currentProxy = new ProcessConsole(proc);
+                                    this._proxyList.push(this._currentProxy);
+                                }
                             }
+                        } catch (ex) {
+                            // Could not load required libraries
+                            console.error(' - Warning: Console app failed to load required libraries.');
+                        } finally {
+                            // Initialise the controller
+                            this.init();
                         }
-                    } catch (ex) {
-                        // Could not load required libraries
-                        console.error(' - Warning: Console app failed to load required libraries.');
-                    } finally {
-                        // Initialise the controller
-                        this.init();
                     }
-                }
-                ConsoleController.prototype.init = function () {
-                    try  {
-                        // Check the command line status and give user some feedback
+                    ConsoleController.prototype.init = function () {
+                        try  {
+                            // Check the command line status and give user some feedback
+                            if (this._currentProxy) {
+                                this.success('Command line ready and active.');
+                            } else {
+                                this.warning('Cannot access the command line from the browser.');
+                            }
+                        } catch (ex) {
+                            console.error(ex);
+                        }
+                    };
+
+                    ConsoleController.prototype.clear = function () {
+                        // Clear cache
+                        this.$scope.lines = [];
+
+                        // Clear via proxy
                         if (this._currentProxy) {
-                            this.success('Command line ready and active.');
-                        } else {
-                            this.warning('Cannot access the command line from the browser.');
+                            this._currentProxy.clear();
                         }
-                    } catch (ex) {
-                        console.error(ex);
-                    }
-                };
+                    };
 
-                ConsoleController.prototype.clear = function () {
-                    // Clear cache
-                    this.$scope.lines = [];
-
-                    // Clear via proxy
-                    if (this._currentProxy) {
-                        this._currentProxy.clear();
-                    }
-                };
-
-                ConsoleController.prototype.getProxyName = function () {
-                    return (this._currentProxy) ? this._currentProxy.ProxyName : '';
-                };
-                ConsoleController.prototype.getProxies = function () {
-                    return this._proxyList;
-                };
-                ConsoleController.prototype.setProxy = function (name) {
-                    console.info(' - Switching Proxy: ' + name);
-                    for (var i = 0; i < this._proxyList.length; i++) {
-                        var itm = this._proxyList[i];
-                        if (itm.ProxyName == name) {
-                            this._currentProxy = itm;
-                            break;
-                        }
-                    }
-
-                    // Refresh UI if needed
-                    if (!this.$scope.$$phase)
-                        this.$scope.$apply();
-
-                    return this._currentProxy;
-                };
-
-                ConsoleController.prototype.command = function (text) {
-                    var _this = this;
-                    // Try and run the command
-                    this.info('' + text);
-                    this.$scope.txtInput = '';
-
-                    // Check if proxy exists
-                    if (this._currentProxy) {
-                        // Check for 'clear screen' command
-                        if (text == 'cls')
-                            return this.clear();
-
-                        // Run the command via proxy
-                        this._currentProxy.command(text, function (msg, tp) {
-                            switch (tp) {
-                                case 'debug':
-                                    _this.debug(msg);
-                                    break;
-                                case 'info':
-                                    _this.info(msg);
-                                    break;
-                                case 'warn':
-                                    _this.warning(msg);
-                                    break;
-                                case 'succcess':
-                                    _this.success(msg);
-                                    break;
-                                case 'error':
-                                    _this.error(msg);
-                                    break;
-                                default:
-                                    _this.debug(msg);
-                                    break;
+                    ConsoleController.prototype.getProxyName = function () {
+                        return (this._currentProxy) ? this._currentProxy.ProxyName : '';
+                    };
+                    ConsoleController.prototype.getProxies = function () {
+                        return this._proxyList;
+                    };
+                    ConsoleController.prototype.setProxy = function (name) {
+                        console.info(' - Switching Proxy: ' + name);
+                        for (var i = 0; i < this._proxyList.length; i++) {
+                            var itm = this._proxyList[i];
+                            if (itm.ProxyName == name) {
+                                this._currentProxy = itm;
+                                break;
                             }
+                        }
 
-                            // Refresh UI if needed
-                            if (!_this.$scope.$$phase)
-                                _this.$scope.$apply();
+                        // Refresh UI if needed
+                        if (!this.$scope.$$phase)
+                            this.$scope.$apply();
+
+                        return this._currentProxy;
+                    };
+
+                    ConsoleController.prototype.command = function (text) {
+                        var _this = this;
+                        // Try and run the command
+                        this.info('' + text);
+                        this.$scope.txtInput = '';
+
+                        // Check if proxy exists
+                        if (this._currentProxy) {
+                            // Check for 'clear screen' command
+                            if (text == 'cls')
+                                return this.clear();
+
+                            // Run the command via proxy
+                            this._currentProxy.command(text, function (msg, tp) {
+                                switch (tp) {
+                                    case 'debug':
+                                        _this.debug(msg);
+                                        break;
+                                    case 'info':
+                                        _this.info(msg);
+                                        break;
+                                    case 'warn':
+                                        _this.warning(msg);
+                                        break;
+                                    case 'succcess':
+                                        _this.success(msg);
+                                        break;
+                                    case 'error':
+                                        _this.error(msg);
+                                        break;
+                                    default:
+                                        _this.debug(msg);
+                                        break;
+                                }
+
+                                // Refresh UI if needed
+                                if (!_this.$scope.$$phase)
+                                    _this.$scope.$apply();
+                            });
+                        } else {
+                            this.error('Command line is not available...');
+                        }
+                    };
+
+                    ConsoleController.prototype.debug = function (msg) {
+                        this.$scope.lines.push({
+                            time: Date.now(),
+                            text: msg,
+                            type: 'debug'
                         });
-                    } else {
-                        this.error('Command line is not available...');
+                    };
+
+                    ConsoleController.prototype.info = function (msg) {
+                        this.$log.info(msg);
+                        this.$scope.lines.push({
+                            time: Date.now(),
+                            text: msg,
+                            type: 'info'
+                        });
+                    };
+
+                    ConsoleController.prototype.warning = function (msg) {
+                        this.$log.warn(msg);
+                        this.$scope.lines.push({
+                            time: Date.now(),
+                            text: msg,
+                            type: 'warning'
+                        });
+                    };
+
+                    ConsoleController.prototype.success = function (msg) {
+                        this.$log.info(msg);
+                        this.$scope.lines.push({
+                            time: Date.now(),
+                            text: msg,
+                            type: 'success'
+                        });
+                    };
+
+                    ConsoleController.prototype.error = function (msg) {
+                        this.$log.error(msg);
+                        this.$scope.lines.push({
+                            time: Date.now(),
+                            text: msg,
+                            type: 'error'
+                        });
+                    };
+                    return ConsoleController;
+                })();
+                commands.ConsoleController = ConsoleController;
+
+                var BrowserConsole = (function () {
+                    function BrowserConsole() {
+                        this.ProxyName = 'Browser';
                     }
-                };
-
-                ConsoleController.prototype.debug = function (msg) {
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'debug'
-                    });
-                };
-
-                ConsoleController.prototype.info = function (msg) {
-                    this.$log.info(msg);
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'info'
-                    });
-                };
-
-                ConsoleController.prototype.warning = function (msg) {
-                    this.$log.warn(msg);
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'warning'
-                    });
-                };
-
-                ConsoleController.prototype.success = function (msg) {
-                    this.$log.info(msg);
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'success'
-                    });
-                };
-
-                ConsoleController.prototype.error = function (msg) {
-                    this.$log.error(msg);
-                    this.$scope.lines.push({
-                        time: Date.now(),
-                        text: msg,
-                        type: 'error'
-                    });
-                };
-                return ConsoleController;
-            })();
-            commands.ConsoleController = ConsoleController;
-
-            var BrowserConsole = (function () {
-                function BrowserConsole() {
-                    this.ProxyName = 'Browser';
-                }
-                BrowserConsole.prototype.command = function (text, callback) {
-                    try  {
-                        var result = eval(text);
-                        if (callback && result) {
-                            callback(result, 'info');
+                    BrowserConsole.prototype.command = function (text, callback) {
+                        try  {
+                            var result = eval(text);
+                            if (callback && result) {
+                                callback(result, 'info');
+                            }
+                            console.info(result);
+                        } catch (ex) {
+                            callback(ex, 'error');
+                            console.error(ex);
                         }
-                        console.info(result);
-                    } catch (ex) {
-                        callback(ex, 'error');
-                        console.error(ex);
+                    };
+
+                    BrowserConsole.prototype.clear = function () {
+                        console.clear();
+                    };
+                    BrowserConsole.prototype.debug = function (msg) {
+                        console.debug(msg);
+                    };
+                    BrowserConsole.prototype.info = function (msg) {
+                        console.info(msg);
+                    };
+                    BrowserConsole.prototype.warning = function (msg) {
+                        console.warn(msg);
+                    };
+                    BrowserConsole.prototype.success = function (msg) {
+                        console.info(msg);
+                    };
+                    BrowserConsole.prototype.error = function (msg) {
+                        console.error(msg);
+                    };
+                    return BrowserConsole;
+                })();
+                commands.BrowserConsole = BrowserConsole;
+
+                var ProcessConsole = (function () {
+                    function ProcessConsole(_proc) {
+                        this._proc = _proc;
+                        this.ProxyName = 'System';
                     }
-                };
+                    ProcessConsole.prototype.clear = function () {
+                    };
 
-                BrowserConsole.prototype.clear = function () {
-                    console.clear();
-                };
-                BrowserConsole.prototype.debug = function (msg) {
-                    console.debug(msg);
-                };
-                BrowserConsole.prototype.info = function (msg) {
-                    console.info(msg);
-                };
-                BrowserConsole.prototype.warning = function (msg) {
-                    console.warn(msg);
-                };
-                BrowserConsole.prototype.success = function (msg) {
-                    console.info(msg);
-                };
-                BrowserConsole.prototype.error = function (msg) {
-                    console.error(msg);
-                };
-                return BrowserConsole;
-            })();
-            commands.BrowserConsole = BrowserConsole;
-
-            var ProcessConsole = (function () {
-                function ProcessConsole(_proc) {
-                    this._proc = _proc;
-                    this.ProxyName = 'System';
-                }
-                ProcessConsole.prototype.clear = function () {
-                };
-
-                ProcessConsole.prototype.command = function (text, callback) {
-                    // Call the command line from a child process
-                    var proc = eval('process');
-                    var ls = this._proc.exec(text, function (error, stdout, stderr) {
-                        if (error) {
-                            console.groupCollapsed('Command Error: ' + text);
-                            console.error(error.stack);
-                            console.info(' - Signal received: ' + error.signal);
-                            console.info(' - Error code: ' + error.code);
-                            console.groupEnd();
-                        }
-                        if (stdout) {
-                            callback('' + stdout, 'info');
-                        }
-                        if (stderr) {
-                            callback('' + stderr, 'error');
-                        }
-                    }).on('exit', function (code) {
-                        //callback(' - Process returned: ' + code, 'debug');
-                    });
-                };
-                return ProcessConsole;
-            })();
-            commands.ProcessConsole = ProcessConsole;
-        })(ng.commands || (ng.commands = {}));
-        var commands = ng.commands;
+                    ProcessConsole.prototype.command = function (text, callback) {
+                        // Call the command line from a child process
+                        var proc = eval('process');
+                        var ls = this._proc.exec(text, function (error, stdout, stderr) {
+                            if (error) {
+                                console.groupCollapsed('Command Error: ' + text);
+                                console.error(error.stack);
+                                console.info(' - Signal received: ' + error.signal);
+                                console.info(' - Error code: ' + error.code);
+                                console.groupEnd();
+                            }
+                            if (stdout) {
+                                callback('' + stdout, 'info');
+                            }
+                            if (stderr) {
+                                callback('' + stderr, 'error');
+                            }
+                        }).on('exit', function (code) {
+                            //callback(' - Process returned: ' + code, 'debug');
+                        });
+                    };
+                    return ProcessConsole;
+                })();
+                commands.ProcessConsole = ProcessConsole;
+            })(modules.commands || (modules.commands = {}));
+            var commands = modules.commands;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 /// <reference path="controllers/ConsoleController.ts"/>
-angular.module('prototyped.console', [
-    'ui.router'
-]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Define the UI states
-        $stateProvider.state('proto.console', {
-            url: '/console',
+angular.module('prototyped.console', []).config([
+    'appStateProvider', function (appStateProvider) {
+        // Define module state
+        appStateProvider.state('proto.console', {
+            url: '^/console',
             views: {
-                //'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/console/views/main.tpl.html',
-                    controller: 'proto.ng.commands.ConsoleController'
+                    controller: 'proto.ng.modules.commands.ConsoleController'
                 }
             }
         }).state('proto.logs', {
             url: '/logs',
             views: {
-                //'left@': { templateUrl: 'views/left.tpl.html' },
+                //'left@': { templateUrl: 'views/common/components/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/console/views/logs.tpl.html'
                 }
             }
         });
-    }]).controller('proto.ng.commands.ConsoleController', [
+    }]).controller('proto.ng.modules.commands.ConsoleController', [
     '$scope',
     '$log',
-    proto.ng.commands.ConsoleController
+    proto.ng.modules.commands.ConsoleController
 ]);
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (editor) {
-            var EditorController = (function () {
-                function EditorController($scope, $timeout) {
-                    this.$scope = $scope;
-                    this.$timeout = $timeout;
-                    this.isActive = false;
-                    this.FileLocation = '';
-                    this.LastChanged = null;
-                    this.LastOnSaved = null;
-                    this.$scope.myWriter = this;
-                    try  {
-                        // Load file system
-                        this._path = require('path');
-                        this._fs = require('fs');
+        (function (modules) {
+            (function (editor) {
+                var EditorController = (function () {
+                    function EditorController($scope, $timeout) {
+                        this.$scope = $scope;
+                        this.$timeout = $timeout;
+                        this.isActive = false;
+                        this.FileLocation = '';
+                        this.LastChanged = null;
+                        this.LastOnSaved = null;
+                        this.$scope.myWriter = this;
+                        try  {
+                            // Load file system
+                            this._path = require('path');
+                            this._fs = require('fs');
 
-                        // Try  and load the node webkit
-                        var nwGui = 'nw.gui';
-                        this._gui = require(nwGui);
-                    } catch (ex) {
-                        console.warn(' - [ Editor ] Warning: Could not load all required modules');
-                    }
-                }
-                Object.defineProperty(EditorController.prototype, "FileContents", {
-                    get: function () {
-                        return this._buffer;
-                    },
-                    set: function (buffer) {
-                        this._buffer = buffer;
-                        this.LastChanged = Date.now();
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-
-                Object.defineProperty(EditorController.prototype, "HasChanges", {
-                    get: function () {
-                        return this.LastChanged != null && this.LastChanged > this.LastOnSaved;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(EditorController.prototype, "HasFileSys", {
-                    get: function () {
-                        return !$.isEmptyObject(this._gui);
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-
-                EditorController.prototype.init = function () {
-                    this.isActive = true;
-                };
-
-                EditorController.prototype.openFile = function () {
-                    var _this = this;
-                    if (this.checkUnsaved())
-                        return;
-
-                    if (!$.isEmptyObject(this._gui) && !$.isEmptyObject(this._fs)) {
-                        var chooser = $('#fileDialog');
-                        chooser.change(function (evt) {
-                            var filePath = chooser.val();
-                            if (filePath) {
-                                // Try and read the file
-                                _this._fs.readFile(filePath, 'UTF-8', function (err, data) {
-                                    if (err) {
-                                        throw new Error(err);
-                                    } else {
-                                        _this.setText(data);
-                                        _this.FileLocation = filePath;
-                                        _this.LastChanged = null;
-                                        _this.LastOnSaved = null;
-                                    }
-                                    _this.$scope.$apply();
-                                });
-                            }
-                        });
-                        chooser.trigger('click');
-                    } else {
-                        console.warn(' - [ Editor ] Warning: Shell not available.');
-                    }
-                };
-
-                EditorController.prototype.openFileLocation = function () {
-                    if (this._gui) {
-                        this._gui.Shell.openItem(this.FileLocation);
-                    } else {
-                        console.warn(' - [ Editor ] Warning: Shell not available.');
-                    }
-                };
-
-                EditorController.prototype.newFile = function () {
-                    if (this.checkUnsaved())
-                        return;
-
-                    // Clear prev. states
-                    this.FileLocation = null;
-                    this.LastChanged = null;
-                    this.LastOnSaved = null;
-
-                    // Set some intial text
-                    this.setText('Enter some text');
-                    this.LastChanged = Date.now();
-
-                    // Do post-new operations
-                    this.$timeout(function () {
-                        // Select file contents
-                        var elem = $('#FileContents');
-                        if (elem) {
-                            elem.select();
+                            // Try  and load the node webkit
+                            var nwGui = 'nw.gui';
+                            this._gui = require(nwGui);
+                        } catch (ex) {
+                            console.warn(' - [ Editor ] Warning: Could not load all required modules');
                         }
+                    }
+                    Object.defineProperty(EditorController.prototype, "FileContents", {
+                        get: function () {
+                            return this._buffer;
+                        },
+                        set: function (buffer) {
+                            this._buffer = buffer;
+                            this.LastChanged = Date.now();
+                        },
+                        enumerable: true,
+                        configurable: true
                     });
-                };
 
-                EditorController.prototype.saveFile = function (filePath) {
-                    var _this = this;
-                    if (!filePath)
-                        filePath = this.FileLocation;
-                    if (!filePath)
-                        return this.saveFileAs();
-                    if (!$.isEmptyObject(this._fs) && !$.isEmptyObject(this._path)) {
-                        var output = this._buffer;
-                        this._fs.writeFile(filePath, output, 'UTF-8', function (err) {
-                            if (err) {
-                                throw new Error(err);
-                            } else {
-                                // File has been saved
-                                _this.FileLocation = filePath;
-                                _this.LastOnSaved = Date.now();
-                            }
-                            _this.$scope.$apply();
-                        });
-                    } else {
-                        console.warn(' - [ Editor ] Warning: File system not available.');
-                    }
-                };
+                    Object.defineProperty(EditorController.prototype, "HasChanges", {
+                        get: function () {
+                            return this.LastChanged != null && this.LastChanged > this.LastOnSaved;
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
+                    Object.defineProperty(EditorController.prototype, "HasFileSys", {
+                        get: function () {
+                            return !$.isEmptyObject(this._gui);
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
 
-                EditorController.prototype.saveFileAs = function () {
-                    var _this = this;
-                    if (!$.isEmptyObject(this._gui)) {
-                        // Get the file name
-                        var filePath = this.FileLocation || 'Untitled.txt';
-                        var chooser = $('#saveDialog');
-                        chooser.change(function (evt) {
-                            var filePath = chooser.val();
-                            if (filePath) {
-                                // Save file in specified location
-                                _this.saveFile(filePath);
-                            }
-                        });
-                        chooser.trigger('click');
-                    } else {
-                        console.warn(' - [ Editor ] Warning: Shell not available.');
-                    }
-                };
+                    EditorController.prototype.init = function () {
+                        this.isActive = true;
+                    };
 
-                EditorController.prototype.setText = function (value) {
-                    this.FileContents = value;
+                    EditorController.prototype.openFile = function () {
+                        var _this = this;
+                        if (this.checkUnsaved())
+                            return;
 
-                    if (!this._textArea) {
-                        var myTextArea = $('#FileContents');
-                        if (myTextArea.length > 0) {
-                            this._textArea = CodeMirror.fromTextArea(myTextArea[0], {
-                                //mode: "javascript",
-                                autoClearEmptyLines: true,
-                                lineNumbers: true,
-                                indentUnit: 4
+                        if (!$.isEmptyObject(this._gui) && !$.isEmptyObject(this._fs)) {
+                            var chooser = $('#fileDialog');
+                            chooser.change(function (evt) {
+                                var filePath = chooser.val();
+                                if (filePath) {
+                                    // Try and read the file
+                                    _this._fs.readFile(filePath, 'UTF-8', function (err, data) {
+                                        if (err) {
+                                            throw new Error(err);
+                                        } else {
+                                            _this.setText(data);
+                                            _this.FileLocation = filePath;
+                                            _this.LastChanged = null;
+                                            _this.LastOnSaved = null;
+                                        }
+                                        _this.$scope.$apply();
+                                    });
+                                }
                             });
+                            chooser.trigger('click');
+                        } else {
+                            console.warn(' - [ Editor ] Warning: Shell not available.');
                         }
-                        this._textArea.setValue(value);
-                    } else {
-                        this._textArea.setValue(value);
-                    }
-                    /*
-                    var totalLines = this._textArea.lineCount();
-                    if (totalLines) {
-                    this._textArea.autoFormatRange({ line: 0, ch: 0 }, { line: totalLines });
-                    }
-                    */
-                };
+                    };
 
-                EditorController.prototype.test = function () {
-                    throw new Error('Lala');
-                    try  {
-                        var dir = './';
-                        var log = "Test.log";
+                    EditorController.prototype.openFileLocation = function () {
+                        if (this._gui) {
+                            this._gui.Shell.openItem(this.FileLocation);
+                        } else {
+                            console.warn(' - [ Editor ] Warning: Shell not available.');
+                        }
+                    };
+
+                    EditorController.prototype.newFile = function () {
+                        if (this.checkUnsaved())
+                            return;
+
+                        // Clear prev. states
+                        this.FileLocation = null;
+                        this.LastChanged = null;
+                        this.LastOnSaved = null;
+
+                        // Set some intial text
+                        this.setText('Enter some text');
+                        this.LastChanged = Date.now();
+
+                        // Do post-new operations
+                        this.$timeout(function () {
+                            // Select file contents
+                            var elem = $('#FileContents');
+                            if (elem) {
+                                elem.select();
+                            }
+                        });
+                    };
+
+                    EditorController.prototype.saveFile = function (filePath) {
+                        var _this = this;
+                        if (!filePath)
+                            filePath = this.FileLocation;
+                        if (!filePath)
+                            return this.saveFileAs();
                         if (!$.isEmptyObject(this._fs) && !$.isEmptyObject(this._path)) {
-                            var target = this._path.resolve(dir, log);
-                            this._fs.writeFile(log, "Hey there!", function (err) {
+                            var output = this._buffer;
+                            this._fs.writeFile(filePath, output, 'UTF-8', function (err) {
                                 if (err) {
                                     throw new Error(err);
                                 } else {
-                                    var nwGui = 'nw.gui';
-                                    var myGui = require(nwGui);
-                                    if (!$.isEmptyObject(myGui)) {
-                                        myGui.Shell.openItem(target);
-                                    } else {
-                                        throw new Error('Cannot open the item: ' + target);
-                                    }
+                                    // File has been saved
+                                    _this.FileLocation = filePath;
+                                    _this.LastOnSaved = Date.now();
                                 }
+                                _this.$scope.$apply();
                             });
                         } else {
-                            console.warn(' - Warning: File system not available...');
+                            console.warn(' - [ Editor ] Warning: File system not available.');
                         }
-                    } catch (ex) {
-                        console.error(ex);
-                    }
-                };
+                    };
 
-                EditorController.prototype.checkUnsaved = function (msg) {
-                    var msgCheck = msg || 'There are unsaved changes.\r\nAre you sure you want to continue?';
-                    var hasCheck = this.FileContents != null && this.HasChanges;
-                    return (hasCheck && confirm(msgCheck) == false);
-                };
-                return EditorController;
-            })();
-            editor.EditorController = EditorController;
-        })(ng.editor || (ng.editor = {}));
-        var editor = ng.editor;
+                    EditorController.prototype.saveFileAs = function () {
+                        var _this = this;
+                        if (!$.isEmptyObject(this._gui)) {
+                            // Get the file name
+                            var filePath = this.FileLocation || 'Untitled.txt';
+                            var chooser = $('#saveDialog');
+                            chooser.change(function (evt) {
+                                var filePath = chooser.val();
+                                if (filePath) {
+                                    // Save file in specified location
+                                    _this.saveFile(filePath);
+                                }
+                            });
+                            chooser.trigger('click');
+                        } else {
+                            console.warn(' - [ Editor ] Warning: Shell not available.');
+                        }
+                    };
+
+                    EditorController.prototype.setText = function (value) {
+                        this.FileContents = value;
+
+                        if (!this._textArea) {
+                            var myTextArea = $('#FileContents');
+                            if (myTextArea.length > 0) {
+                                this._textArea = CodeMirror.fromTextArea(myTextArea[0], {
+                                    //mode: "javascript",
+                                    autoClearEmptyLines: true,
+                                    lineNumbers: true,
+                                    indentUnit: 4
+                                });
+                            }
+                            this._textArea.setValue(value);
+                        } else {
+                            this._textArea.setValue(value);
+                        }
+                        /*
+                        var totalLines = this._textArea.lineCount();
+                        if (totalLines) {
+                        this._textArea.autoFormatRange({ line: 0, ch: 0 }, { line: totalLines });
+                        }
+                        */
+                    };
+
+                    EditorController.prototype.test = function () {
+                        throw new Error('Lala');
+                        try  {
+                            var dir = './';
+                            var log = "Test.log";
+                            if (!$.isEmptyObject(this._fs) && !$.isEmptyObject(this._path)) {
+                                var target = this._path.resolve(dir, log);
+                                this._fs.writeFile(log, "Hey there!", function (err) {
+                                    if (err) {
+                                        throw new Error(err);
+                                    } else {
+                                        var nwGui = 'nw.gui';
+                                        var myGui = require(nwGui);
+                                        if (!$.isEmptyObject(myGui)) {
+                                            myGui.Shell.openItem(target);
+                                        } else {
+                                            throw new Error('Cannot open the item: ' + target);
+                                        }
+                                    }
+                                });
+                            } else {
+                                console.warn(' - Warning: File system not available...');
+                            }
+                        } catch (ex) {
+                            console.error(ex);
+                        }
+                    };
+
+                    EditorController.prototype.checkUnsaved = function (msg) {
+                        var msgCheck = msg || 'There are unsaved changes.\r\nAre you sure you want to continue?';
+                        var hasCheck = this.FileContents != null && this.HasChanges;
+                        return (hasCheck && confirm(msgCheck) == false);
+                    };
+                    return EditorController;
+                })();
+                editor.EditorController = EditorController;
+            })(modules.editor || (modules.editor = {}));
+            var editor = modules.editor;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
@@ -1247,157 +2156,160 @@ angular.module('prototyped.editor', [
         $stateProvider.state('proto.editor', {
             url: '/editor',
             views: {
-                'left@': { templateUrl: 'views/left.tpl.html' },
+                'left@': { templateUrl: 'views/common/components/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/editor/views/main.tpl.html',
-                    controller: 'proto.ng.editor.EditorController'
+                    controller: 'proto.ng.modules.editor.EditorController'
                 }
             }
         });
-    }]).controller('proto.ng.editor.EditorController', [
+    }]).controller('proto.ng.modules.editor.EditorController', [
     '$scope',
     '$timeout',
-    proto.ng.editor.EditorController
+    proto.ng.modules.editor.EditorController
 ]);
 ///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (explorer) {
-            var AddressBarController = (function () {
-                function AddressBarController($rootScope, $scope, $q) {
-                    var _this = this;
-                    this.$rootScope = $rootScope;
-                    this.$scope = $scope;
-                    this.$q = $q;
-                    this.history = [];
-                    $scope.busy = true;
-                    try  {
-                        // Initialise the address bar
-                        var elem = $('#addressbar');
-                        if (elem) {
-                            this.init(elem);
+        (function (modules) {
+            (function (explorer) {
+                var AddressBarController = (function () {
+                    function AddressBarController($rootScope, $scope, $q) {
+                        var _this = this;
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.$q = $q;
+                        this.history = [];
+                        $scope.busy = true;
+                        try  {
+                            // Initialise the address bar
+                            var elem = $('#addressbar');
+                            if (elem) {
+                                this.init(elem);
 
-                            this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
-                                if (folder != _this.$scope.dir_path) {
-                                    console.warn(' - Addressbar Navigate: ', folder);
-                                    _this.$scope.dir_path = folder;
-                                    _this.navigate(folder);
-                                }
-                            });
-                        } else {
-                            throw new Error('Element with id "addressbar" not found...');
-                        }
-                    } catch (ex) {
-                        // Initialisation failed
-                        console.error(ex);
-                    }
-                    $scope.busy = false;
-                }
-                AddressBarController.prototype.init = function (element) {
-                    // Set the target HTML element
-                    this.element = element;
-
-                    // Generate the current folder parts
-                    this.generateOutput('./');
-                };
-
-                AddressBarController.prototype.openFolder = function (path) {
-                    try  {
-                        var nwGui = 'nw.gui';
-                        var gui = require(nwGui);
-                        if (!$.isEmptyObject(gui)) {
-                            console.debug(' - Opening Folder: ' + path);
-                            gui.Shell.openItem(path + '/');
-                        }
-                    } catch (ex) {
-                        console.error(ex);
-                    }
-                    this.generateOutput(path);
-                };
-
-                AddressBarController.prototype.navigate = function (path) {
-                    this.generateOutput(path);
-                };
-
-                AddressBarController.prototype.select = function (file) {
-                    console.info(' - select: ', file);
-                    try  {
-                        var req = 'nw.gui';
-                        var gui = require(req);
-                        gui.Shell.openItem(file);
-                    } catch (ex) {
-                        console.error(ex);
-                    }
-                };
-
-                AddressBarController.prototype.back = function () {
-                    var len = this.history ? this.history.length : -1;
-                    if (len > 1) {
-                        var last = this.history[len - 2];
-                        this.history = this.history.splice(0, len - 2);
-                        this.generateOutput(last);
-                    }
-                };
-
-                AddressBarController.prototype.hasHistory = function () {
-                    var len = this.history ? this.history.length : -1;
-                    return (len > 1);
-                };
-
-                AddressBarController.prototype.generateOutput = function (dir_path) {
-                    // Set the current dir path
-                    this.$scope.dir_path = dir_path;
-                    this.$scope.dir_parts = this.generatePaths(dir_path);
-                    this.history.push(dir_path);
-
-                    // Breadcast event that path has changed
-                    this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
-                };
-
-                AddressBarController.prototype.generatePaths = function (dir_path) {
-                    try  {
-                        // Get dependecies
-                        var path = require('path');
-
-                        // Update current path
-                        this.$scope.dir_path = dir_path = path.resolve(dir_path);
-
-                        // Try and normalize the folder path
-                        var curr = path.normalize(dir_path);
-                        if (curr) {
-                            // Split path into separate elements
-                            var sequence = curr.split(path.sep);
-                            var result = [];
-
-                            var i = 0;
-                            for (; i < sequence.length; ++i) {
-                                result.push({
-                                    name: sequence[i],
-                                    path: sequence.slice(0, 1 + i).join(path.sep)
+                                this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                                    if (folder != _this.$scope.dir_path) {
+                                        console.warn(' - Addressbar Navigate: ', folder);
+                                        _this.$scope.dir_path = folder;
+                                        _this.navigate(folder);
+                                    }
                                 });
+                            } else {
+                                throw new Error('Element with id "addressbar" not found...');
                             }
-
-                            // Add root for unix
-                            if (sequence[0] == '' && process.platform != 'win32') {
-                                result[0] = {
-                                    name: 'root',
-                                    path: '/'
-                                };
-                            }
-
-                            // Return thepath sequences
-                            return { sequence: result };
+                        } catch (ex) {
+                            // Initialisation failed
+                            console.error(ex);
                         }
-                    } catch (ex) {
-                        console.error(ex);
+                        $scope.busy = false;
                     }
-                };
-                return AddressBarController;
-            })();
-            explorer.AddressBarController = AddressBarController;
-        })(ng.explorer || (ng.explorer = {}));
-        var explorer = ng.explorer;
+                    AddressBarController.prototype.init = function (element) {
+                        // Set the target HTML element
+                        this.element = element;
+
+                        // Generate the current folder parts
+                        this.generateOutput('./');
+                    };
+
+                    AddressBarController.prototype.openFolder = function (path) {
+                        try  {
+                            var nwGui = 'nw.gui';
+                            var gui = require(nwGui);
+                            if (!$.isEmptyObject(gui)) {
+                                console.debug(' - Opening Folder: ' + path);
+                                gui.Shell.openItem(path + '/');
+                            }
+                        } catch (ex) {
+                            console.error(ex);
+                        }
+                        this.generateOutput(path);
+                    };
+
+                    AddressBarController.prototype.navigate = function (path) {
+                        this.generateOutput(path);
+                    };
+
+                    AddressBarController.prototype.select = function (file) {
+                        console.info(' - select: ', file);
+                        try  {
+                            var req = 'nw.gui';
+                            var gui = require(req);
+                            gui.Shell.openItem(file);
+                        } catch (ex) {
+                            console.error(ex);
+                        }
+                    };
+
+                    AddressBarController.prototype.back = function () {
+                        var len = this.history ? this.history.length : -1;
+                        if (len > 1) {
+                            var last = this.history[len - 2];
+                            this.history = this.history.splice(0, len - 2);
+                            this.generateOutput(last);
+                        }
+                    };
+
+                    AddressBarController.prototype.hasHistory = function () {
+                        var len = this.history ? this.history.length : -1;
+                        return (len > 1);
+                    };
+
+                    AddressBarController.prototype.generateOutput = function (dir_path) {
+                        // Set the current dir path
+                        this.$scope.dir_path = dir_path;
+                        this.$scope.dir_parts = this.generatePaths(dir_path);
+                        this.history.push(dir_path);
+
+                        // Breadcast event that path has changed
+                        this.$rootScope.$broadcast('event:folder-path:changed', this.$scope.dir_path);
+                    };
+
+                    AddressBarController.prototype.generatePaths = function (dir_path) {
+                        try  {
+                            // Get dependecies
+                            var path = require('path');
+
+                            // Update current path
+                            this.$scope.dir_path = dir_path = path.resolve(dir_path);
+
+                            // Try and normalize the folder path
+                            var curr = path.normalize(dir_path);
+                            if (curr) {
+                                // Split path into separate elements
+                                var sequence = curr.split(path.sep);
+                                var result = [];
+
+                                var i = 0;
+                                for (; i < sequence.length; ++i) {
+                                    result.push({
+                                        name: sequence[i],
+                                        path: sequence.slice(0, 1 + i).join(path.sep)
+                                    });
+                                }
+
+                                // Add root for unix
+                                if (sequence[0] == '' && process.platform != 'win32') {
+                                    result[0] = {
+                                        name: 'root',
+                                        path: '/'
+                                    };
+                                }
+
+                                // Return thepath sequences
+                                return { sequence: result };
+                            }
+                        } catch (ex) {
+                            console.error(ex);
+                        }
+                    };
+                    return AddressBarController;
+                })();
+                explorer.AddressBarController = AddressBarController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
@@ -1405,189 +2317,195 @@ var proto;
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (explorer) {
-            var ExplorerController = (function () {
-                function ExplorerController($rootScope, $scope, $q) {
-                    var _this = this;
-                    this.$rootScope = $rootScope;
-                    this.$scope = $scope;
-                    this.$q = $q;
-                    var dir = './';
-                    try  {
-                        // Hook up to the current scope
-                        this.$scope.isBusy = true;
+        (function (modules) {
+            (function (explorer) {
+                var ExplorerController = (function () {
+                    function ExplorerController($rootScope, $scope, $q) {
+                        var _this = this;
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.$q = $q;
+                        var dir = './';
+                        try  {
+                            // Hook up to the current scope
+                            this.$scope.isBusy = true;
 
-                        // Initialize the cotroller
-                        this.init(dir);
+                            // Initialize the cotroller
+                            this.init(dir);
 
-                        // Hook event for when folder path changes
-                        this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
-                            if (folder != _this.$scope.dir_path) {
-                                console.warn(' - Explorer Navigate: ', folder);
-                                _this.$scope.dir_path = folder;
-                                _this.navigate(folder);
-                            }
-                        });
-                    } catch (ex) {
-                        console.error(ex);
-                    }
-                }
-                ExplorerController.prototype.init = function (dir) {
-                    // Resolve the initial folder path
-                    this.navigate(dir);
-                };
-
-                ExplorerController.prototype.navigate = function (dir_path) {
-                    var _this = this;
-                    var deferred = this.$q.defer();
-                    try  {
-                        // Set busy flag
-                        this.$scope.isBusy = true;
-                        this.$scope.error = null;
-
-                        // Resolve the full path
-                        var path = require('path');
-                        dir_path = path.resolve(dir_path);
-
-                        // Read the folder contents (async)
-                        var fs = require('fs');
-                        fs.readdir(dir_path, function (error, files) {
-                            if (error) {
-                                deferred.reject(error);
-                                return;
-                            }
-
-                            // Split and sort results
-                            var folders = [];
-                            var lsFiles = [];
-                            for (var i = 0; i < files.sort().length; ++i) {
-                                var targ = path.join(dir_path, files[i]);
-                                var stat = _this.mimeType(targ);
-                                if (stat.type == 'folder') {
-                                    folders.push(stat);
-                                } else {
-                                    lsFiles.push(stat);
+                            // Hook event for when folder path changes
+                            this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                                if (folder != _this.$scope.dir_path) {
+                                    console.warn(' - Explorer Navigate: ', folder);
+                                    _this.$scope.dir_path = folder;
+                                    _this.navigate(folder);
                                 }
-                            }
-
-                            // Generate the contents
-                            var result = {
-                                path: dir_path,
-                                folders: folders,
-                                files: lsFiles
-                            };
-
-                            // Mark promise as resolved
-                            deferred.resolve(result);
-                        });
-                    } catch (ex) {
-                        // Mark promise and rejected
-                        deferred.reject(ex);
+                            });
+                        } catch (ex) {
+                            console.error(ex);
+                        }
                     }
-
-                    // Handle the result and error conditions
-                    deferred.promise.then(function (result) {
-                        // Clear busy flag
-                        _this.$scope.isBusy = false;
-                        _this.$scope.dir_path = result.path;
-                        _this.$scope.files = result.files;
-                        _this.$scope.folders = result.folders;
-
-                        // Breadcast event that path has changed
-                        _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
-                    }, function (error) {
-                        // Clear busy flag
-                        _this.$scope.isBusy = false;
-                        _this.$scope.error = error;
-                    });
-
-                    return deferred.promise;
-                };
-
-                ExplorerController.prototype.select = function (filePath) {
-                    this.$scope.selected = filePath;
-                };
-
-                ExplorerController.prototype.open = function (filePath) {
-                    var req = 'nw.gui';
-                    var gui = require(req);
-                    if (gui)
-                        gui.Shell.openItem(filePath);
-                };
-
-                ExplorerController.prototype.mimeType = function (filepath) {
-                    var map = {
-                        'compressed': ['zip', 'rar', 'gz', '7z'],
-                        'text': ['txt', 'md', ''],
-                        'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
-                        'pdf': ['pdf'],
-                        'css': ['css'],
-                        'excel': ['csv', 'xls', 'xlsx'],
-                        'html': ['html'],
-                        'word': ['doc', 'docx'],
-                        'powerpoint': ['ppt', 'pptx'],
-                        'movie': ['mkv', 'avi', 'rmvb']
-                    };
-                    var cached = {};
-
-                    var fs = require('fs');
-                    var path = require('path');
-                    var result = {
-                        name: path.basename(filepath),
-                        path: filepath,
-                        type: null
+                    ExplorerController.prototype.init = function (dir) {
+                        // Resolve the initial folder path
+                        this.navigate(dir);
                     };
 
-                    try  {
-                        var stat = fs.statSync(filepath);
-                        if (stat.isDirectory()) {
-                            result.type = 'folder';
-                        } else {
-                            var ext = path.extname(filepath).substr(1);
-                            result.type = cached[ext];
-                            if (!result.type) {
-                                for (var key in map) {
-                                    var arr = map[key];
-                                    if (arr.length > 0 && arr.indexOf(ext) >= 0) {
-                                        cached[ext] = result.type = key;
-                                        break;
+                    ExplorerController.prototype.navigate = function (dir_path) {
+                        var _this = this;
+                        var deferred = this.$q.defer();
+                        try  {
+                            // Set busy flag
+                            this.$scope.isBusy = true;
+                            this.$scope.error = null;
+
+                            // Resolve the full path
+                            var path = require('path');
+                            dir_path = path.resolve(dir_path);
+
+                            // Read the folder contents (async)
+                            var fs = require('fs');
+                            fs.readdir(dir_path, function (error, files) {
+                                if (error) {
+                                    deferred.reject(error);
+                                    return;
+                                }
+
+                                // Split and sort results
+                                var folders = [];
+                                var lsFiles = [];
+                                for (var i = 0; i < files.sort().length; ++i) {
+                                    var targ = path.join(dir_path, files[i]);
+                                    var stat = _this.mimeType(targ);
+                                    if (stat.type == 'folder') {
+                                        folders.push(stat);
+                                    } else {
+                                        lsFiles.push(stat);
                                     }
                                 }
 
-                                if (!result.type)
-                                    result.type = 'blank';
-                            }
-                        }
-                    } catch (e) {
-                        console.error(e);
-                    }
+                                // Generate the contents
+                                var result = {
+                                    path: dir_path,
+                                    folders: folders,
+                                    files: lsFiles
+                                };
 
-                    return result;
-                };
-                return ExplorerController;
-            })();
-            explorer.ExplorerController = ExplorerController;
-        })(ng.explorer || (ng.explorer = {}));
-        var explorer = ng.explorer;
+                                // Mark promise as resolved
+                                deferred.resolve(result);
+                            });
+                        } catch (ex) {
+                            // Mark promise and rejected
+                            deferred.reject(ex);
+                        }
+
+                        // Handle the result and error conditions
+                        deferred.promise.then(function (result) {
+                            // Clear busy flag
+                            _this.$scope.isBusy = false;
+                            _this.$scope.dir_path = result.path;
+                            _this.$scope.files = result.files;
+                            _this.$scope.folders = result.folders;
+
+                            // Breadcast event that path has changed
+                            _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
+                        }, function (error) {
+                            // Clear busy flag
+                            _this.$scope.isBusy = false;
+                            _this.$scope.error = error;
+                        });
+
+                        return deferred.promise;
+                    };
+
+                    ExplorerController.prototype.select = function (filePath) {
+                        this.$scope.selected = filePath;
+                    };
+
+                    ExplorerController.prototype.open = function (filePath) {
+                        var req = 'nw.gui';
+                        var gui = require(req);
+                        if (gui)
+                            gui.Shell.openItem(filePath);
+                    };
+
+                    ExplorerController.prototype.mimeType = function (filepath) {
+                        var map = {
+                            'compressed': ['zip', 'rar', 'gz', '7z'],
+                            'text': ['txt', 'md', ''],
+                            'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
+                            'pdf': ['pdf'],
+                            'css': ['css'],
+                            'excel': ['csv', 'xls', 'xlsx'],
+                            'html': ['html'],
+                            'word': ['doc', 'docx'],
+                            'powerpoint': ['ppt', 'pptx'],
+                            'movie': ['mkv', 'avi', 'rmvb']
+                        };
+                        var cached = {};
+
+                        var fs = require('fs');
+                        var path = require('path');
+                        var result = {
+                            name: path.basename(filepath),
+                            path: filepath,
+                            type: null
+                        };
+
+                        try  {
+                            var stat = fs.statSync(filepath);
+                            if (stat.isDirectory()) {
+                                result.type = 'folder';
+                            } else {
+                                var ext = path.extname(filepath).substr(1);
+                                result.type = cached[ext];
+                                if (!result.type) {
+                                    for (var key in map) {
+                                        var arr = map[key];
+                                        if (arr.length > 0 && arr.indexOf(ext) >= 0) {
+                                            cached[ext] = result.type = key;
+                                            break;
+                                        }
+                                    }
+
+                                    if (!result.type)
+                                        result.type = 'blank';
+                                }
+                            }
+                        } catch (e) {
+                            console.error(e);
+                        }
+
+                        return result;
+                    };
+                    return ExplorerController;
+                })();
+                explorer.ExplorerController = ExplorerController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (explorer) {
-            var ExplorerViewController = (function () {
-                function ExplorerViewController($rootScope, $scope, $q, navigation) {
-                    this.$rootScope = $rootScope;
-                    this.$scope = $scope;
-                    this.$q = $q;
-                    this.navigation = navigation;
-                }
-                return ExplorerViewController;
-            })();
-            explorer.ExplorerViewController = ExplorerViewController;
-        })(ng.explorer || (ng.explorer = {}));
-        var explorer = ng.explorer;
+        (function (modules) {
+            (function (explorer) {
+                var ExplorerViewController = (function () {
+                    function ExplorerViewController($rootScope, $scope, $q, navigation) {
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.$q = $q;
+                        this.navigation = navigation;
+                    }
+                    return ExplorerViewController;
+                })();
+                explorer.ExplorerViewController = ExplorerViewController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
@@ -1600,111 +2518,132 @@ var __extends = this.__extends || function (d, b) {
 var proto;
 (function (proto) {
     (function (ng) {
-        (function (explorer) {
-            var TreeNode = (function () {
-                function TreeNode(nodeName) {
-                    this.children = [];
-                    this.classes = [];
-                    this.label = nodeName;
-                }
-                return TreeNode;
-            })();
-            explorer.TreeNode = TreeNode;
-
-            var SiteNode = (function (_super) {
-                __extends(SiteNode, _super);
-                function SiteNode(nodeName, state) {
-                    _super.call(this, nodeName);
-                    this.state = state;
-                    this.data = state;
-                }
-                SiteNode.prototype.onSelect = function (branch) {
-                    //this.$rootScope.$broadcast('nodeSelect', this);
-                };
-                return SiteNode;
-            })(TreeNode);
-            explorer.SiteNode = SiteNode;
-
-            var SiteNavigationRoot = (function (_super) {
-                __extends(SiteNavigationRoot, _super);
-                function SiteNavigationRoot(nodeName, states) {
-                    _super.call(this, nodeName, null);
-                    this.states = states;
-                    this.stateCache = {};
-                    this.init();
-                }
-                SiteNavigationRoot.prototype.init = function () {
-                    var _this = this;
-                    this.children = [];
-                    this.states.forEach(function (state, i) {
-                        if (state.url == '^' || state.name == '') {
-                            _this.data = state; // Root node
-                        } else if (state.name.indexOf('.') < 0) {
-                            _this.addItem(_this, [state.name], state);
-                        } else {
-                            var parts = state.name.split('.');
-                            _this.addItem(_this, parts, state);
-                        }
-                    });
-                };
-
-                SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
-                    if (paths && paths.length) {
-                        var ident = paths[0];
-                        var parts = paths.splice(1);
-                        var node = this.stateCache[ident];
-                        if (!node) {
-                            node = new SiteNode(ident, null);
-                            this.stateCache[ident] = node;
-                            parentNode.children.push(node);
-                        }
-                        if (!parts.length) {
-                            node.data = state;
-                        } else {
-                            this.addItem(node, parts, state);
-                        }
+        (function (modules) {
+            (function (explorer) {
+                var TreeNode = (function () {
+                    function TreeNode(nodeName) {
+                        this.children = [];
+                        this.classes = [];
+                        this.label = nodeName;
                     }
-                };
-                return SiteNavigationRoot;
-            })(SiteNode);
-            explorer.SiteNavigationRoot = SiteNavigationRoot;
+                    return TreeNode;
+                })();
+                explorer.TreeNode = TreeNode;
 
-            var NavigationService = (function () {
-                function NavigationService($state, $q) {
-                    this.$state = $state;
-                    this.$q = $q;
-                    this._treeData = [];
-                    this.init();
-                }
-                NavigationService.prototype.init = function () {
-                    this._treeData = [
-                        new proto.ng.explorer.SiteNavigationRoot('Home Page', this.$state.get())
-                    ];
-                    /*
-                    this.$rootScope.$on('nodeSelect', function (data) {
-                    console.warn('nodeSelect', data);
-                    //this.selected = data;
-                    });
-                    */
-                };
+                var SiteNode = (function (_super) {
+                    __extends(SiteNode, _super);
+                    function SiteNode(nodeName, state) {
+                        _super.call(this, nodeName);
+                        this.state = state;
+                        this.data = state;
+                    }
+                    SiteNode.prototype.onSelect = function (branch) {
+                        //this.$rootScope.$broadcast('nodeSelect', this);
+                    };
+                    return SiteNode;
+                })(TreeNode);
+                explorer.SiteNode = SiteNode;
 
-                NavigationService.prototype.getTreeData = function () {
-                    return this._treeData;
-                };
-                return NavigationService;
-            })();
-            explorer.NavigationService = NavigationService;
-        })(ng.explorer || (ng.explorer = {}));
-        var explorer = ng.explorer;
+                var SiteNavigationRoot = (function (_super) {
+                    __extends(SiteNavigationRoot, _super);
+                    function SiteNavigationRoot(nodeName, states) {
+                        _super.call(this, nodeName, null);
+                        this.states = states;
+                        this.stateCache = {};
+                        this.init();
+                    }
+                    SiteNavigationRoot.prototype.init = function () {
+                        var _this = this;
+                        this.children = [];
+                        this.states.forEach(function (state, i) {
+                            if (state.url == '^' || state.name == '') {
+                                _this.data = state; // Root node
+                            } else if (state.name.indexOf('.') < 0) {
+                                _this.addItem(_this, [state.name], state);
+                            } else {
+                                var parts = state.name.split('.');
+                                _this.addItem(_this, parts, state);
+                            }
+                        });
+                    };
+
+                    SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
+                        if (paths && paths.length) {
+                            var ident = paths[0];
+                            var parts = paths.splice(1);
+                            var node = this.stateCache[ident];
+                            if (!node) {
+                                node = new SiteNode(ident, null);
+                                this.stateCache[ident] = node;
+                                parentNode.children.push(node);
+                            }
+                            if (!parts.length) {
+                                node.data = state;
+                            } else {
+                                this.addItem(node, parts, state);
+                            }
+                        }
+                    };
+                    return SiteNavigationRoot;
+                })(SiteNode);
+                explorer.SiteNavigationRoot = SiteNavigationRoot;
+
+                var NavigationService = (function () {
+                    function NavigationService($state, $q) {
+                        this.$state = $state;
+                        this.$q = $q;
+                        this._treeData = [];
+                        this.init();
+                    }
+                    NavigationService.prototype.init = function () {
+                        this._treeData = [
+                            new proto.ng.modules.explorer.SiteNavigationRoot('Home Page', this.$state.get())
+                        ];
+                        /*
+                        this.$rootScope.$on('nodeSelect', function (data) {
+                        console.warn('nodeSelect', data);
+                        //this.selected = data;
+                        });
+                        */
+                    };
+
+                    NavigationService.prototype.getTreeData = function () {
+                        return this._treeData;
+                    };
+                    return NavigationService;
+                })();
+                explorer.NavigationService = NavigationService;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 angular.module('prototyped.explorer', [
+    'prototyped.ng.runtime',
     'ui.router'
 ]).config([
-    '$stateProvider', function ($stateProvider) {
-        $stateProvider.state('proto.explore', {
+    'appStateProvider', function (appStateProvider) {
+        // Define application state
+        appStateProvider.define('/explore', {
+            priority: 0,
+            state: {},
+            menuitem: {
+                label: 'Explore',
+                state: 'proto.explore',
+                icon: 'fa fa-cubes'
+            },
+            cardview: {
+                style: 'img-explore',
+                title: 'Explore Features & Options',
+                desc: 'You can explore locally installed features and find your way around the site by clicking on this card...'
+            },
+            visible: function () {
+                return appStateProvider.appConfig.options.showDefaultItems;
+            }
+        }).state('proto.explore', {
             url: '^/explore',
             views: {
                 'left@': {
@@ -1726,12 +2665,12 @@ angular.module('prototyped.explorer', [
                 'left@': { templateUrl: 'views/explore/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/explore/views/index.tpl.html',
-                    controller: 'proto.ng.explorer.ExplorerController',
+                    controller: 'proto.ng.modules.explorer.ExplorerController',
                     controllerAs: 'ctrlExplorer'
                 }
             }
         });
-    }]).service('navigationService', ['$state', '$q', proto.ng.explorer.NavigationService]).directive('protoAddressBar', [
+    }]).service('navigationService', ['$state', '$q', proto.ng.modules.explorer.NavigationService]).directive('protoAddressBar', [
     '$q', function ($q) {
         return {
             restrict: 'EA',
@@ -1740,102 +2679,45 @@ angular.module('prototyped.explorer', [
             },
             transclude: false,
             templateUrl: 'modules/explore/views/addressbar.tpl.html',
-            controller: 'proto.ng.explorer.AddressBarController',
+            controller: 'proto.ng.modules.explorer.AddressBarController',
             controllerAs: 'addrBar'
         };
-    }]).controller('proto.ng.explorer.AddressBarController', [
+    }]).controller('proto.ng.modules.explorer.AddressBarController', [
     '$rootScope',
     '$scope',
     '$q',
-    proto.ng.explorer.AddressBarController
-]).controller('proto.ng.explorer.ExplorerController', [
+    proto.ng.modules.explorer.AddressBarController
+]).controller('proto.ng.modules.explorer.ExplorerController', [
     '$rootScope',
     '$scope',
     '$q',
-    proto.ng.explorer.ExplorerController
+    proto.ng.modules.explorer.ExplorerController
 ]).controller('ExplorerViewController', [
     '$rootScope',
     '$scope',
     '$q',
     'navigationService',
-    proto.ng.explorer.ExplorerViewController
+    proto.ng.modules.explorer.ExplorerViewController
 ]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
 // Define main module with all dependencies
 angular.module('prototyped.ng', [
+    'prototyped.ng.runtime',
     'prototyped.ng.config',
     'prototyped.ng.views',
     'prototyped.ng.styles',
-    'prototyped.about',
-    'prototyped.editor',
     'prototyped.explorer',
-    'prototyped.console'
+    'prototyped.console',
+    'prototyped.editor',
+    'prototyped.about'
 ]).config([
-    'appConfigProvider', function (appConfigProvider) {
-        // Define module configuration
-        appConfigProvider.set({
-            'prototyped.ng': {
-                active: true
-            }
-        });
-
-        // Define the routing components (menus, card views etc...)
-        var appConfig = appConfigProvider.$get();
-        if (appConfig) {
-            // Define module routes
-            appConfig.routers.push({
-                url: '/explore',
-                abstract: true,
-                priority: 0,
-                menuitem: {
-                    label: 'Explore',
-                    state: 'proto.explore',
-                    icon: 'fa fa-cubes'
-                },
-                cardview: {
-                    style: 'img-explore',
-                    title: 'Explore Features & Options',
-                    desc: 'You can explore locally installed features and find your way around the site by clicking on this card...'
-                },
-                visible: function () {
-                    return appConfig.options.showDefaultItems;
-                },
-                children: [
-                    { label: 'Discovery', icon: 'fa fa-refresh', state: 'modules.discover' },
-                    { label: 'Connnect', icon: 'fa fa-gears', state: 'modules.connect' },
-                    { divider: true },
-                    { label: 'Clean & Exit', icon: 'fa fa-recycle', state: 'modules.clear' }
-                ]
-            });
-            appConfig.routers.push({
-                url: '/about',
-                abstract: true,
-                priority: 1000,
-                menuitem: {
-                    label: 'About',
-                    state: 'about.info',
-                    icon: 'fa fa-info-circle'
-                },
-                cardview: {
-                    style: 'img-about',
-                    title: 'About this software',
-                    desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
-                },
-                visible: function () {
-                    return appConfig.options.showAboutPage;
-                }
-            });
-        }
-    }]).config([
-    '$urlRouterProvider', function ($urlRouterProvider) {
-        // Define redirects
-        $urlRouterProvider.when('/proto', '/proto/explore').when('/sandbox', '/samples').when('/imports', '/edge');
-    }]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Set up routing...
-        $stateProvider.state('proto', {
+    'appStateProvider', function (appStateProvider) {
+        // Configure module state
+        appStateProvider.config('prototyped.ng', {
+            active: true
+        }).when('/proto', '/proto/explore').when('/sandbox', '/samples').when('/imports', '/edge').state('proto', {
             url: '/proto',
             abstract: true
         }).state('default', {
@@ -1843,429 +2725,18 @@ angular.module('prototyped.ng', [
             views: {
                 'main@': {
                     templateUrl: 'views/default.tpl.html',
-                    controller: 'CardViewCtrl',
-                    controllerAs: 'sliderCtrl'
+                    controller: 'CardViewController',
+                    controllerAs: 'cardView'
                 }
             }
         });
-    }]).provider('appNode', [proto.ng.common.AppNodeProvider]).provider('appState', ['$stateProvider', 'appConfigProvider', 'appNodeProvider', proto.ng.common.AppStateProvider]).controller('CardViewCtrl', [
-    '$scope', 'appConfig', function ($scope, appConfig) {
-        // Make sure 'mySiteMap' exists
-        $scope.pages = appConfig.routers || [];
-
-        // initial image index
-        $scope._Index = 0;
-
-        $scope.count = function () {
-            return $scope.pages.length;
-        };
-
-        // if a current image is the same as requested image
-        $scope.isActive = function (index) {
-            return $scope._Index === index;
-        };
-
-        // show prev image
-        $scope.showPrev = function () {
-            $scope._Index = ($scope._Index > 0) ? --$scope._Index : $scope.count() - 1;
-        };
-
-        // show next image
-        $scope.showNext = function () {
-            $scope._Index = ($scope._Index < $scope.count() - 1) ? ++$scope._Index : 0;
-        };
-
-        // show a certain image
-        $scope.showPhoto = function (index) {
-            $scope._Index = index;
-        };
-    }]).directive('appClean', [
-    '$rootScope', '$window', '$route', '$state', 'appNode', 'appState', function ($rootScope, $window, $route, $state, appNode, appState) {
-        return function (scope, elem, attrs) {
-            var keyCtrl = false;
-            var keyShift = false;
-            var keyEvent = $(document).on('keyup keydown', function (e) {
-                // Update key states
-                var hasChanges = false;
-                if (keyCtrl != e.ctrlKey) {
-                    hasChanges = true;
-                    keyCtrl = e.ctrlKey;
-                }
-                if (keyShift != e.shiftKey) {
-                    hasChanges = true;
-                    keyShift = e.shiftKey;
-                }
-                if (hasChanges) {
-                    $(elem).find('i').toggleClass('glow-blue', !keyShift && keyCtrl);
-                    $(elem).find('i').toggleClass('glow-orange', keyShift);
-                }
-            });
-            $(elem).attr('tooltip', 'Refresh');
-            $(elem).attr('tooltip-placement', 'bottom');
-            $(elem).click(function (e) {
-                if (keyShift) {
-                    // Full page reload
-                    if (appNode.active) {
-                        console.debug(' - Reload Node Webkit...');
-                        appNode.reload();
-                    } else {
-                        console.debug(' - Reload page...');
-                        $window.location.reload(true);
-                    }
-                } else if (keyCtrl) {
-                    // Fast route reload
-                    console.debug(' - Reload route...');
-                    $route.reload();
-                } else {
-                    // Fast state reload
-                    console.debug(' - Refresh state...');
-                    $state.reload();
-                }
-
-                // Clear all previous status messages
-                appState.logs = [];
-                console.clear();
-            });
-            scope.$on('$destroy', function () {
-                $(elem).off('click');
-                keyEvent.off('keyup keydown');
-            });
-        };
-    }]).directive('appClose', [
-    'appNode', function (appNode) {
-        return function (scope, elem, attrs) {
-            // Only enable the button in a NodeJS context (extended functionality)
-            $(elem).css('display', appNode.active ? '' : 'none');
-            $(elem).click(function () {
-                appNode.close();
-            });
-        };
-    }]).directive('appDebug', [
-    'appNode', function (appNode) {
-        return function (scope, elem, attrs) {
-            // Only enable the button in a NodeJS context (extended functionality)
-            $(elem).css('display', appNode.active ? '' : 'none');
-            $(elem).click(function () {
-                appNode.debug();
-            });
-        };
-    }]).directive('appKiosk', [
-    'appNode', function (appNode) {
-        return function (scope, elem, attrs) {
-            // Only enable the button in a NodeJS context (extended functionality)
-            $(elem).css('display', appNode.active ? '' : 'none');
-            $(elem).click(function () {
-                appNode.kiosMode();
-            });
-        };
-    }]).directive('appFullscreen', [
-    'appNode', function (appNode) {
-        return function (scope, elem, attrs) {
-            // Only enable the button in a NodeJS context (extended functionality)
-            $(elem).css('display', appNode.active ? '' : 'none');
-            $(elem).click(function () {
-                appNode.toggleFullscreen();
-            });
-        };
-    }]).directive('appVersion', [
-    'appConfig', 'appNode', function (appConfig, appNode) {
-        function getVersionInfo(ident) {
-            try  {
-                if (typeof process !== 'undefined' && process.versions) {
-                    return process.versions[ident];
-                }
-            } catch (ex) {
-            }
-            return null;
-        }
-
-        return function (scope, elm, attrs) {
-            var targ = attrs['appVersion'];
-            var val = null;
-            if (!targ) {
-                val = appConfig.version;
-            } else
-                switch (targ) {
-                    case 'angular':
-                        val = angular.version.full;
-                        break;
-                    case 'nodeweb-kit':
-                        val = getVersionInfo('node-webkit');
-                        break;
-                    case 'node':
-                        val = getVersionInfo('node');
-                        break;
-                    default:
-                        val = getVersionInfo(targ) || val;
-
-                        break;
-                }
-            if (!val && attrs['defaultText']) {
-                val = attrs['defaultText'];
-            }
-            if (val) {
-                $(elm).text(val);
-            }
-        };
-    }]).filter('interpolate', [
-    'appNode', function (appNode) {
-        return function (text) {
-            return String(text).replace(/\%VERSION\%/mg, appNode.version);
-        };
-    }]).filter('fromNow', [
-    '$filter', function ($filter) {
-        return function (dateString, format) {
-            try  {
-                if (typeof moment !== 'undefined') {
-                    return moment(dateString).fromNow(format);
-                } else {
-                    return ' at ' + $filter('date')(dateString, 'HH:mm:ss');
-                }
-            } catch (ex) {
-                console.error(ex);
-                return 'error';
-            }
-        };
-    }]).filter('isArray', function () {
-    return function (input) {
-        return angular.isArray(input);
-    };
-}).filter('isNotArray', function () {
-    return function (input) {
-        return !angular.isArray(input);
-    };
-}).filter('typeCount', [function () {
-        return function (input, type) {
-            var count = 0;
-            if (!input)
-                return null;
-            if (input.length > 0) {
-                input.forEach(function (itm) {
-                    if (!itm)
-                        return;
-                    if (!itm.type)
-                        return;
-                    if (itm.type == type)
-                        count++;
-                });
-            }
-            return count;
-        };
-    }]).filter('listReverse', function () {
-    return function (input) {
-        var result = [];
-        var length = input.length;
-        if (length) {
-            for (var i = length - 1; i !== 0; i--) {
-                result.push(input[i]);
-            }
-        }
-        return result;
-    };
-}).filter('toBytes', function () {
-    return function (bytes, precision) {
-        if (isNaN(parseFloat(bytes)) || !isFinite(bytes))
-            return '-';
-        if (typeof precision === 'undefined')
-            precision = 1;
-        var units = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'], number = Math.floor(Math.log(bytes) / Math.log(1024));
-        return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) + ' ' + units[number];
-    };
-}).filter('parseBytes', function () {
-    return function (bytesDesc, precision) {
-        var match = /(\d+) (\w+)/i.exec(bytesDesc);
-        if (match && (match.length > 2)) {
-            var bytes = match[1];
-            var floatVal = parseFloat(bytes);
-            if (isNaN(floatVal) || !isFinite(floatVal))
-                return '[?]';
-            if (typeof precision === 'undefined')
-                precision = 1;
-            var units = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'];
-            var number = Math.floor(Math.log(floatVal) / Math.log(1024));
-            var pow = -1;
-            units.forEach(function (itm, i) {
-                if (itm && itm.toLowerCase().indexOf(match[2].toLowerCase()) >= 0)
-                    pow = i;
-            });
-            if (pow > 0) {
-                var ret = (floatVal * Math.pow(1024, pow)).toFixed(precision);
-                return ret;
-            }
-        }
-        return bytesDesc;
-    };
-}).directive('eatClickIf', [
-    '$parse', '$rootScope', function ($parse, $rootScope) {
-        return {
-            priority: 100,
-            restrict: 'A',
-            compile: function ($element, attr) {
-                var fn = $parse(attr.eatClickIf);
-                return {
-                    pre: function link(scope, element) {
-                        var eventName = 'click';
-                        element.on(eventName, function (event) {
-                            var callback = function () {
-                                if (fn(scope, { $event: event })) {
-                                    // prevents ng-click to be executed
-                                    event.stopImmediatePropagation();
-
-                                    // prevents href
-                                    event.preventDefault();
-                                    return false;
-                                }
-                            };
-                            if ($rootScope.$$phase) {
-                                scope.$evalAsync(callback);
-                            } else {
-                                scope.$apply(callback);
-                            }
-                        });
-                    },
-                    post: function () {
-                    }
-                };
-            }
-        };
-    }]).directive('toHtml', [
-    '$sce', '$filter', function ($sce, $filter) {
-        function getHtml(obj) {
-            try  {
-                return 'toHtml:\'pre\' - ' + $filter('toXml')(obj, 'pre');
-            } catch (ex) {
-                return 'toHtml:error - ' + ex.message;
-            }
-        }
-        return {
-            restrict: 'EA',
-            scope: {
-                toHtml: '&'
-            },
-            transclude: false,
-            controller: function ($scope, $sce) {
-                var val = $scope.toHtml();
-                var html = getHtml(val);
-                $scope.myHtml = $sce.trustAsHtml(html);
-            },
-            template: '<div ng-bind-html="myHtml"></div>'
-        };
-    }]).filter('toXml', [function () {
-        function toXmlString(name, input, expanded, childExpanded) {
-            var val = '';
-            var sep = '';
-            var attr = '';
-            if ($.isArray(input)) {
-                if (expanded) {
-                    for (var i = 0; i < input.length; i++) {
-                        val += toXmlString(null, input[i], childExpanded);
-                    }
-                } else {
-                    name = 'Array';
-                    attr += sep + ' length="' + input.length + '"';
-                    val = 'Array[' + input.length + ']';
-                }
-            } else if ($.isPlainObject(input)) {
-                if (expanded) {
-                    for (var id in input) {
-                        if (input.hasOwnProperty(id)) {
-                            var child = input[id];
-                            if ($.isArray(child) || $.isPlainObject(child)) {
-                                val = toXmlString(id, child, childExpanded);
-                            } else {
-                                sep = ' ';
-                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
-                            }
-                        }
-                    }
-                } else {
-                    name = 'Object';
-                    for (var id in input) {
-                        if (input.hasOwnProperty(id)) {
-                            var child = input[id];
-                            if ($.isArray(child) || $.isPlainObject(child)) {
-                                val += toXmlString(id, child, childExpanded);
-                            } else {
-                                sep = ' ';
-                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
-                            }
-                        }
-                    }
-                    //val = 'Object[ ' + JSON.stringify(input) + ' ]';
-                }
-            }
-            if (name) {
-                val = '<' + name + '' + attr + '>' + val + '</' + name + '>';
-            }
-            return val;
-        }
-        return function (input, rootName) {
-            return toXmlString(rootName || 'xml', input, true);
-        };
-    }]).directive('domReplace', function () {
-    return {
-        restrict: 'A',
-        require: 'ngInclude',
-        link: function (scope, el, attrs) {
-            el.replaceWith(el.children());
-        }
-    };
-}).directive('resxInclude', [
-    '$templateCache', function ($templateCache) {
-        return {
-            priority: 100,
-            restrict: 'A',
-            compile: function ($element, attr) {
-                var ident = attr.resxInclude;
-                var cache = $templateCache.get(ident);
-                if (cache) {
-                    $element.text(cache);
-                    //$element.replaceWith(cache);
-                }
-                return {
-                    pre: function (scope, element) {
-                    },
-                    post: function (scope, element) {
-                    }
-                };
-            }
-        };
-    }]).directive('resxImport', [
-    '$templateCache', '$document', function ($templateCache, $document) {
-        return {
-            priority: 100,
-            restrict: 'A',
-            compile: function ($element, attr) {
-                var ident = attr.resxImport;
-                var cache = $templateCache.get(ident);
-                if ($('[resx-src="' + ident + '"]').length <= 0) {
-                    var html = '';
-                    if (/(.*)(\.css)/i.test(ident)) {
-                        if (cache != null) {
-                            html = '<style resx-src="' + ident + '">' + cache + '</style>';
-                        } else {
-                            html = '<link resx-src="' + ident + '" href="' + ident + '" rel="stylesheet" type="text/css" />';
-                        }
-                    } else if (/(.*)(\.js)/i.test(ident)) {
-                        if (cache != null) {
-                            html = '<script resx-src="' + ident + '">' + cache + '</script>';
-                        } else {
-                            html = '<script resx-src="' + ident + '" src="' + ident + '">' + cache + '</script>';
-                        }
-                    }
-                    if (html) {
-                        $element.replaceWith(html);
-                    }
-                }
-                return {
-                    pre: function (scope, element) {
-                    },
-                    post: function (scope, element) {
-                    }
-                };
-            }
-        };
-    }]).directive('abnTree', [
+    }]).controller('CardViewController', ['appState', proto.ng.modules.common.controllers.CardViewController]).directive('appClean', [
+    '$window',
+    '$route',
+    '$state',
+    'appState',
+    proto.ng.modules.common.directives.AppCleanDirective
+]).directive('appClose', ['appNode', proto.ng.modules.common.directives.AppCloseDirective]).directive('appDebug', ['appNode', proto.ng.modules.common.directives.AppDebugDirective]).directive('appKiosk', ['appNode', proto.ng.modules.common.directives.AppKioskDirective]).directive('appFullscreen', ['appNode', proto.ng.modules.common.directives.AppFullScreenDirective]).directive('appVersion', ['appState', proto.ng.modules.common.directives.AppVersionDirective]).directive('eatClickIf', ['$parse', '$rootScope', proto.ng.modules.common.directives.EatClickIfDirective]).directive('toHtml', ['$sce', '$filter', proto.ng.modules.common.directives.ToHtmlDirective]).directive('domReplace', [proto.ng.modules.common.directives.DomReplaceDirective]).directive('resxInclude', ['$templateCache', proto.ng.modules.common.directives.ResxIncludeDirective]).directive('resxImport', ['$templateCache', '$document', proto.ng.modules.common.directives.ResxImportDirective]).filter('toXml', [proto.ng.modules.common.filters.ToXmlFilter]).filter('interpolate', ['appState', proto.ng.modules.common.filters.InterpolateFilter]).filter('fromNow', ['$filter', proto.ng.modules.common.filters.FromNowFilter]).filter('isArray', [proto.ng.modules.common.filters.IsArrayFilter]).filter('isNotArray', [proto.ng.modules.common.filters.IsNotArrayFilter]).filter('typeCount', [proto.ng.modules.common.filters.TypeCountFilter]).filter('listReverse', [proto.ng.modules.common.filters.ListReverseFilter]).filter('toBytes', [proto.ng.modules.common.filters.ToByteFilter]).filter('parseBytes', [proto.ng.modules.common.filters.ParseBytesFilter]).directive('abnTree', [
     '$timeout', function ($timeout) {
         return {
             restrict: 'E',
@@ -2747,7 +3218,7 @@ angular.module('prototyped.ng', [
         };
     }]).run([
     '$rootScope', '$state', 'appConfig', 'appState', function ($rootScope, $state, appConfig, appState) {
-        // Extend root scope with (global) vars
+        // Extend root scope with (global) contexts
         angular.extend($rootScope, {
             appConfig: appConfig,
             appState: appState,
@@ -2756,20 +3227,35 @@ angular.module('prototyped.ng', [
             state: $state
         });
 
+        // Watch for navigation changes
         $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
             if (toState) {
                 appState.current.state = toState;
             }
         });
-    }]).run([
-    'appConfig', function (appConfig) {
+
         console.debug(' - Current Config: ', appConfig);
     }]);
+/// <reference path="../imports.d.ts" />
+/// <reference path="config.ng.ts" />
+// Define common runtime modules (shared)
+angular.module('prototyped.ng.runtime', [
+    'prototyped.ng.config',
+    'ui.router'
+]).provider('appNode', [
+    proto.ng.modules.common.providers.AppNodeProvider
+]).provider('appState', [
+    '$stateProvider',
+    '$urlRouterProvider',
+    'appConfigProvider',
+    'appNodeProvider',
+    proto.ng.modules.common.providers.AppStateProvider
+]);
 ;angular.module('prototyped.ng.views', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('modules/console/views/logs.tpl.html',
     '<div class=container style=width:100%><span class=pull-right style="padding: 3px"><a href="" ng-click="">Refresh</a> | <a href="" ng-click="appState.logs = []">Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appState.logs.length><td colspan=3><em>No events have been logged...</em></td></tr><tr ng-repeat="row in appState.logs" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td class=ellipsis style="width: auto; overflow: hidden">{{ row.desc }}</td></tr></tbody></table></div>');
   $templateCache.put('modules/console/views/main.tpl.html',
-    '<div class=console><style>.contents.docked {\n' +
+    '<div class=console><style>.contents {\n' +
     '            padding: 0 !important;\n' +
     '            margin: 0 !important;\n' +
     '        }\n' +
@@ -2783,7 +3269,7 @@ angular.module('prototyped.ng', [
     '        .cmd-output {\n' +
     '            width: 100%;\n' +
     '            padding: 6px;\n' +
-    '        }</style><div class="dock-tight btn-group btn-group-sm"><a href=./index.html class="btn btn-default pull-left"><i class="glyphicon glyphicon-chevron-left"></i></a><div class="btn-group btn-group-sm pull-right"><a href="" class="btn btn-default dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-chevron-right"></i> <span class=caret></span></a><ul class=dropdown-menu role=menu><li ng-repeat="itm in myConsole.getProxies()"><a href="" ng-click=myConsole.setProxy(itm.ProxyName)>Switch to {{ itm.ProxyName }}</a></li></ul></div><a href="" class="btn btn-default pull-right" ng-click=myConsole.clear()><i class="glyphicon glyphicon-trash"></i></a><div class="input-group input-group-sm"><label for=txtInput class=input-group-addon>{{ myConsole.getProxyName() }}:</label><input id=txtInput class="cmd-input form-control" tabindex=1 ng-model=txtInput ng-keypress="($event.which === 13)?myConsole.command(txtInput):0" placeholder="Enter Command Here"></div></div><div class="cmd-output dock-fill"><div class=cmd-line ng-repeat="ln in lines"><span class=text-{{ln.type}}><i class=glyphicon title="{{ln.time | date:\'hh:mm:ss\'}}" ng-class="{ \'glyphicon-chevron-right\':ln.type==\'info\', \'glyphicon-ok-sign\':ln.type==\'success\', \'glyphicon-warning-sign\':ln.type==\'warning\', \'glyphicon-exclamation-sign\':ln.type==\'error\' }"></i> <span class=cmd-text>{{ln.text}}</span></span></div></div></div>');
+    '        }</style><div class="cmd-output dock-fill"><div class=cmd-line ng-repeat="ln in lines"><span class=text-{{ln.type}}><i class=glyphicon title="{{ln.time | date:\'hh:mm:ss\'}}" ng-class="{ \'glyphicon-chevron-right\':ln.type==\'info\', \'glyphicon-ok-sign\':ln.type==\'success\', \'glyphicon-warning-sign\':ln.type==\'warning\', \'glyphicon-exclamation-sign\':ln.type==\'error\' }"></i> <span class=cmd-text>{{ln.text}}</span></span></div></div><div class="btn-group btn-group-xs" style="position: absolute; bottom: 0; left: 0; right: 0"><div class="btn-group btn-group-xs pull-left dropup"><a href="" class="btn btn-primary dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-chevron-right"></i> {{ myConsole.getProxyName() }}</a><ul class="dropdown-menu dropup" role=menu><li ng-repeat="itm in myConsole.getProxies()"><a href="" ng-click=myConsole.setProxy(itm.ProxyName)>Switch to {{ itm.ProxyName }}</a></li></ul></div><div class="input-group input-group-xs"><input id=txtInput tabindex=1 class=form-control ng-model=txtInput ng-keypress="($event.which === 13)?myConsole.command(txtInput):0" placeholder="Enter Command Here"> <a href="" class="input-group-addon btn btn-default" ng-click=myConsole.clear()><i class="glyphicon glyphicon-trash"></i></a></div></div></div>');
   $templateCache.put('modules/editor/views/main.tpl.html',
     '<div class=text-editor ng-init=myWriter.init()><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/codemirror.min.js></script><link href=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/codemirror.min.css rel=stylesheet><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/xml/xml.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/css/css.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/javascript/javascript.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/htmlmixed/htmlmixed.min.js></script><style resx:import=modules/editor/styles/css/editor.min.css></style><div class="btn-group btn-group-sm dock-tight"><a ng-href="/" ng-click="myWriter.checkUnsaved() && $event.preventDefault()" class="btn btn-default pull-left"><i class="glyphicon glyphicon-chevron-left"></i></a> <a href="" class="btn btn-default pull-left" ng-click=myWriter.newFile()><i class="glyphicon glyphicon-file"></i></a> <a href="" class="btn btn-default pull-left" ng-click=myWriter.openFile() ng-disabled=!myWriter.HasFileSys><i class="glyphicon glyphicon-folder-open"></i></a><div class="btn-group btn-group-sm pull-right"><a href="" ng-disabled=!myWriter.FileLocation class="btn btn-default dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-save"></i> <span class=caret></span></a><ul class=dropdown-menu role=menu><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileContents}"><a href="" ng-click=myWriter.saveFileAs()><i class="glyphicon glyphicon-floppy-disk"></i> Save file as...</a></li><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileLocation}"><a href="" ng-click=myWriter.openFileLocation() ng-disabled="!myWriter.HasFileSys || !myWriter.FileLocation"><i class="glyphicon glyphicon-save"></i>Open file...</a></li></ul></div><a href="" class="btn btn-default pull-right" ng-click=myWriter.saveFile() ng-disabled="!(myWriter.HasFileSys && myWriter.HasChanges)"><i class="glyphicon glyphicon-floppy-disk"></i></a><div class="input-group input-group-sm"><label for=txtFileName class=input-group-addon>File:</label><input id=txtFileName class="cmd-input form-control" tabindex=1 value={{myWriter.FileLocation}} placeholder="{{ myWriter.FileLocation || \'Create new or open existing...\' }}" ng-readonly="true"></div></div><textarea id=FileContents class="text-area dock-fill" ng-disabled="myWriter.FileContents == null" ng-model=myWriter.FileContents></textarea><input style=display:none id=fileDialog type=file accept=".txt,.json"> <input style=display:none id=saveDialog type=file accept=.txt nwsaveas></div>');
   $templateCache.put('modules/explore/views/addressbar.tpl.html',
@@ -2913,33 +3399,33 @@ angular.module('prototyped.ng', [
   $templateCache.put('views/about/contact.tpl.html',
     '<div style="width: 100%"><h4>About <small>Contact Us Online</small></h4><hr><div><i class="fa fa-home"></i> Visit our home page - <a href=http://www.prototyped.info>www.prototyped.info</a></div><hr></div>');
   $templateCache.put('views/about/info.tpl.html',
-    '<div id=about-info class=container style="width: 100%"><style resx:import=assets/css/images.min.css></style><div class=row><div class="col-lg-8 col-md-12 info-overview"><h4>About <small>your current status and application architecture</small></h4><hr><div class=row><div class="col-md-3 panel-left"><h5><i class="fa fa-gear"></i> My Client <small><span ng-if=true class=ng-cloak><b app:version ng-class="{ \'text-success glow-green\': appInfo.version }">loading...</b></span> <span ng-if=false><b class="text-danger glow-red"><i class="glyphicon glyphicon-remove"></i> Offline</b></span></small></h5><div ng:if=true><a class="panel-icon-lg img-terminal"><div ng:if="info.about.browser.name == \'Chrome\'" class="panel-icon-inner img-chrome"></div><div ng:if="info.about.browser.name == \'Chromium\'" class="panel-icon-inner img-chromium"></div><div ng:if="info.about.browser.name == \'Firefox\'" class="panel-icon-inner img-firefox"></div><div ng:if="info.about.browser.name == \'Internet Explorer\'" class="panel-icon-inner img-iexplore"></div><div ng:if="info.about.browser.name == \'Opera\'" class="panel-icon-inner img-opera"></div><div ng:if="info.about.browser.name == \'Safari\'" class="panel-icon-inner img-safari"></div><div ng:if="info.about.browser.name == \'SeaMonkey\'" class="panel-icon-inner img-seamonkey"></div><div ng:if="info.about.browser.name == \'Spartan\'" class="panel-icon-inner img-spartan"></div><div ng:if="info.about.os.name == \'Windows\'" class="panel-icon-overlay img-windows"></div><div ng:if="info.about.os.name == \'MacOS\'" class="panel-icon-overlay img-mac-os"></div><div ng:if="info.about.os.name == \'Apple\'" class="panel-icon-overlay img-apple"></div><div ng:if="info.about.os.name == \'UNIX\'" class="panel-icon-overlay img-unix"></div><div ng:if="info.about.os.name == \'Linux\'" class="panel-icon-overlay img-linux"></div><div ng:if="info.about.os.name == \'Ubuntu\'" class="panel-icon-overlay img-ubuntu"></div></a><p class=panel-label title="{{ info.about.os.name }} @ {{ info.about.os.version.alias }}">Host System: <b ng:if=info.about.os.name>{{ info.about.os.name }}</b> <em ng:if=!info.about.os.name>checking...</em> <span ng:if=info.about.os.version.alias>@ {{ info.about.os.version.alias }}</span></p><p class=panel-label title="{{ info.about.browser.name }} @ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? \'.\' + info.about.browser.version.build : \'\' }}">User Agent: <b ng:if=info.about.browser.name>{{ info.about.browser.name }}</b> <em ng:if=!info.about.browser.name>detecting...</em> <span ng:if=info.about.browser.version>@ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? \'.\' + info.about.browser.version.build : \'\' }}</span></p></div><div ng-switch=info.about.hdd.type class=panel-icon-lg><a ng-switch-default class="panel-icon-lg inactive-gray img-drive"></a> <a ng-switch-when=true class="panel-icon-lg img-drive-default"></a> <a ng-switch-when=onl class="panel-icon-lg img-drive-onl"></a> <a ng-switch-when=usb class="panel-icon-lg img-drive-usb"></a> <a ng-switch-when=ssd class="panel-icon-lg img-drive-ssd"></a> <a ng-switch-when=web class="panel-icon-lg img-drive-web"></a> <a ng-switch-when=mac class="panel-icon-lg img-drive-mac"></a> <a ng-switch-when=warn class="panel-icon-lg img-drive-warn"></a> <a ng-switch-when=hist class="panel-icon-lg img-drive-hist"></a> <a ng-switch-when=wifi class="panel-icon-lg img-drive-wifi"></a><div ng:if=info.about.webdb.active class="panel-icon-inset-bl img-webdb"></div></div><p ng:if=info.about.webdb.active class="panel-label ellipsis">Local databsse is <b class=glow-green>Online</b></p><p ng:if=!info.about.webdb.active class="panel-label text-muted ellipsis"><em>No local storage found</em></p><p ng:if=!info.about.webdb.active class="panel-label text-muted"><div class=progress ng-style="{ height: \'10px\' }" title="{{(100 * progA) + \'%\'}} ( {{info.about.webdb.used}} / {{info.about.webdb.size}} )"><div ng:init="progA = (info.about.webdb.size > 0) ? (info.about.webdb.used||0)/info.about.webdb.size : 0" class=progress-bar ng-class="\'progress-bar-info\'" role=progressbar aria-valuenow="{{ progA }}" aria-valuemin=0 aria-valuemax=100 ng-style="{width: (100 * progA) + \'%\'}" aria-valuetext="{{ (100.0 * progA) + \' %\' }}%"></div></div></p></div><div ng-init="tabOverviewMain = 0" ng-switch=tabOverviewMain class="col-md-6 panel-mid"><h5><span ng-if="info.about.server.active == undefined">Checking...</span> <span ng-if="info.about.server.active != undefined">Current Status</span> <small><span ng-if=!info.about.server><em class=text-muted>checking...</em></span> <span ng-if="info.about.server.active === false"><b class="text-danger glow-red">Offline</b>, faulty or disconnected.</span> <span ng-if="info.about.server.active && appNode.active">Connected via <b class="text-warning glow-orange">web client</b>.</span> <span ng-if="info.about.server.active && !appNode.active"><b class="text-success glow-green">Online</b> and fully operational.</span></small></h5><p class=ellipsis ng:if=info.about.server.url>Server Url: <a target=_blank ng-class="{ \'glow-green\':appNode.active || info.about.protocol == \'https\', \'glow-blue\':!appNode.active && info.about.protocol == \'http\', \'glow-red\':info.about.protocol == \'file\' }" ng-href="{{ info.about.server.url }}">{{ info.about.server.url }}</a></p><p><a href="" ng-click="tabOverviewMain = 0">Summary</a> | <a href="" ng-click="tabOverviewMain = 1">Details</a></p><div><div ng-switch-default><em>Loading...</em></div><div ng-switch-when=0><p>...</p></div><div ng-switch-when=1><pre>OS: {{ info.about.os }}</pre><pre>Browser: {{ info.about.browser }}</pre><pre>Server: {{ info.about.server }}</pre><pre>WebDB: {{ info.about.webdb }}</pre><pre>HDD: {{ info.about.hdd }}</pre></div></div></div><div class="col-md-3 panel-right"><h5><i class="fa fa-gear"></i> Web Server <small><span class=ng-cloak><b ng-class="{ \'text-success glow-green\': info.about.server.active, \'text-danger glow-red\': info.about.server.active == false }" app:version=server default-text="{{ info.about.server.active ? (info.about.server.active ? \'Online\' : \'Offline\') : \'n.a.\' }}">requesting...</b></span></small></h5><div ng:if=info.about.server.local><a class="panel-icon-lg img-server-local"></a></div><div ng:if=!info.about.server.local ng-class="{ \'inactive-gray\': true || info.versions.jqry }"><a class="panel-icon-lg img-server"><div ng:if="info.about.server.type == \'iis\'" class="panel-icon-inset img-iis"></div><div ng:if="info.about.server.type == \'node\'" class="panel-icon-inset img-node"></div><div ng:if="info.about.server.type == \'apache\'" class="panel-icon-inset img-apache"></div><div ng:if="info.about.server.name == \'Windows\'" class="panel-icon-overlay img-windows"></div><div ng:if="info.about.server.name == \'MacOS\'" class="panel-icon-overlay img-mac-os"></div><div ng:if="info.about.server.name == \'Apple\'" class="panel-icon-overlay img-apple"></div><div ng:if="info.about.server.name == \'UNIX\'" class="panel-icon-overlay img-unix"></div><div ng:if="info.about.server.name == \'Linux\'" class="panel-icon-overlay img-linux"></div></a><div ng:if=info.about.sql class="panel-icon-lg img-sqldb"></div></div></div></div><hr></div><div class="col-lg-4 hidden-md" ng:init="info.showUnavailable = false"><h4>Inspirations <small>come from great ideas</small></h4><hr><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.ng }" ng:hide="!info.showUnavailable && !info.versions.ng"><a class=app-info-icon target=_blank href="https://angularjs.org/"><div ng:if=true class="img-clipper img-angular"></div></a><div class=app-info-info><h5>Angular JS <small><span ng:if=info.versions.ng>@ v{{info.versions.ng}}</span> <span ng:if=!info.versions.ng><em>not found</em></span></small></h5><p ng:if=!info.versions.ng class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href="https://angularjs.org//">angularjs.org</a> for more info.</p><p ng:if=info.detects.ngUiUtils class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Utils found.</p><p ng:if=info.detects.ngUiRouter class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Router found.</p><p ng:if=info.detects.ngUiBootstrap class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Bootrap found.</p><p ng:if=info.detects.ngAnimate class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular Animations active.</p></div></div><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.nw }" ng:hide="!info.showUnavailable && !info.versions.nw"><a class=app-info-icon target=_blank href="http://nwjs.io/"><div ng:if=true class="img-clipper img-nodewebkit"></div></a><div class=app-info-info><h5>Node Webkit <small><span ng:if=info.versions.nw>@ v{{info.versions.nw}}</span> <span ng:if=!info.versions.nw><em>not available</em></span></small></h5><p ng:if=!info.versions.nw class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href="http://nwjs.io/">nwjs.io</a> for more info.</p><p ng:if=info.versions.nw class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are connected to node webkit.</p><p ng:if=info.versions.chromium class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running Chromium @ {{ info.versions.chromium }}.</p></div></div><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.njs }" ng:hide="!info.showUnavailable && !info.versions.njs"><a class=app-info-icon target=_blank href=http://www.nodejs.org><div ng:if=true class="img-clipper img-nodejs"></div></a><div class=app-info-info><h5>Node JS <small><span ng:if=info.versions.njs>@ v{{info.versions.njs}}</span> <span ng:if=!info.versions.njs><em>not available</em></span></small></h5><p ng:if=!info.versions.njs class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href=http://www.nodejs.org>NodeJS.org</a> for more info.</p><p ng:if=info.versions.njs class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are inside a node js runtime.</p><p ng:if=info.versions.v8 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running V8 @ {{ info.versions.v8 }}.</p><p ng:if=info.versions.openssl class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running OpenSSL @ {{ info.versions.openssl }}.</p></div></div><div class="app-aside-collapser centered" ng-if=!appNode.active><a href="" ng:show=!info.showUnavailable ng-click="info.showUnavailable = !info.showUnavailable">Show More</a> <a href="" ng:show=info.showUnavailable ng-click="info.showUnavailable = !info.showUnavailable">Hide Inactive</a></div><hr><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.html }"><div class=app-info-icon><div ng:if="info.about.browser.name != \'Internet Explorer\'" class="img-clipper img-html5"></div><div ng:if="info.about.browser.name == \'Internet Explorer\'" class="img-clipper img-html5-ie"></div></div><div class=app-info-info><h5>HTML Rendering Mode <small><span ng-if=info.versions.html>@ v{{ info.versions.html }}</span> <span ng-if=!info.versions.html><em>unknown</em></span></small></h5><p ng:if="info.versions.html >= \'5.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running a modern browser.</p><p ng:if="info.versions.html < \'5.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> Your browser is out of date. Try upgrading.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.js }"><div class=app-info-icon><div ng:if=!info.versions.v8 class="img-clipper img-js-default"></div><div ng:if=info.versions.v8 class="img-clipper img-js-v8"></div></div><div class=app-info-info><h5>Javascript Engine<small><span ng:if=info.versions.js>@ v{{ info.versions.js }}</span> <span ng:if=!info.versions.js><em>not found</em></span></small></h5><p ng:if="info.versions.js >= \'5.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You have a modern javascript engine.</p><p ng:if="info.versions.js < \'5.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> Javascript is out of date or unavailable.</p><p ng:if=info.versions.v8 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Javascript V8 engine, build v{{info.versions.v8}}.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.css }"><div class=app-info-icon><div ng:if=true class="img-clipper img-css3"></div></div><div class=app-info-info><h5>Cascading Styles <small><span ng:if=info.versions.css>@ v{{ info.versions.css }}</span> <span ng:if=!info.versions.css><em class=text-muted>not found</em></span></small></h5><p ng:if="info.versions.css >= \'3.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>You have an up-to-date style engine.</span></p><p ng:if="info.versions.css < \'3.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <span>CSS out of date. Styling might be broken.</span></p><p ng:if=info.css.boostrap2 class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <span>Bootstrap 2 is depricated. Upgrade to 3.x.</span></p><p ng:if=info.css.boostrap3 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>Bootstrap and/or UI componets found.</span></p><p ng:if=info.detects.less class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>Support for LESS has been detected.</span></p><p ng:if=info.detects.bootstrap class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Bootstrap and/or UI Componets found.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.jqry }"><div class=app-info-icon><div ng:if=true class="img-clipper img-jquery"></div></div><div class=app-info-info><h5>jQuery <small><span ng:if=info.versions.jqry>@ v{{ info.versions.jqry }}</span> <span ng:if=!info.versions.jqry><em>not found</em></span></small></h5><p ng:if=info.versions.jqry class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> jQuery or jqLite is loaded.</p><p ng:if="info.versions.jqry < \'1.10\'" class=text-danger><i class="glyphicon glyphicon-warning-sign glow-orange"></i> jQuery is out of date!</p></div></div><hr></div></div></div>');
+    '<div id=about-info class=container style="width: 100%"><style resx:import=assets/css/images.min.css></style><div class=row><div class="col-lg-8 col-md-12 info-overview"><h4>About <small>your current status and application architecture</small></h4><hr><div class=row><div class="col-md-3 panel-left"><h5><i class="fa fa-gear"></i> My Client <small><span ng-if=true class=ng-cloak><b app:version ng-class="{ \'text-success glow-green\': appInfo.version }">loading...</b></span> <span ng-if=false><b class="text-danger glow-red"><i class="glyphicon glyphicon-remove"></i> Offline</b></span></small></h5><div ng:if=true><a class="panel-icon-lg img-terminal"><div ng:if="info.about.browser.name == \'Chrome\'" class="panel-icon-inner img-chrome"></div><div ng:if="info.about.browser.name == \'Chromium\'" class="panel-icon-inner img-chromium"></div><div ng:if="info.about.browser.name == \'Firefox\'" class="panel-icon-inner img-firefox"></div><div ng:if="info.about.browser.name == \'Internet Explorer\'" class="panel-icon-inner img-iexplore"></div><div ng:if="info.about.browser.name == \'Opera\'" class="panel-icon-inner img-opera"></div><div ng:if="info.about.browser.name == \'Safari\'" class="panel-icon-inner img-safari"></div><div ng:if="info.about.browser.name == \'SeaMonkey\'" class="panel-icon-inner img-seamonkey"></div><div ng:if="info.about.browser.name == \'Spartan\'" class="panel-icon-inner img-spartan"></div><div ng:if="info.about.os.name == \'Windows\'" class="panel-icon-overlay img-windows"></div><div ng:if="info.about.os.name == \'MacOS\'" class="panel-icon-overlay img-mac-os"></div><div ng:if="info.about.os.name == \'Apple\'" class="panel-icon-overlay img-apple"></div><div ng:if="info.about.os.name == \'UNIX\'" class="panel-icon-overlay img-unix"></div><div ng:if="info.about.os.name == \'Linux\'" class="panel-icon-overlay img-linux"></div><div ng:if="info.about.os.name == \'Ubuntu\'" class="panel-icon-overlay img-ubuntu"></div></a><p class=panel-label title="{{ info.about.os.name }} @ {{ info.about.os.version.alias }}">Host System: <b ng:if=info.about.os.name>{{ info.about.os.name }}</b> <em ng:if=!info.about.os.name>checking...</em> <span ng:if=info.about.os.version.alias>@ {{ info.about.os.version.alias }}</span></p><p class=panel-label title="{{ info.about.browser.name }} @ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? \'.\' + info.about.browser.version.build : \'\' }}">User Agent: <b ng:if=info.about.browser.name>{{ info.about.browser.name }}</b> <em ng:if=!info.about.browser.name>detecting...</em> <span ng:if=info.about.browser.version>@ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? \'.\' + info.about.browser.version.build : \'\' }}</span></p></div><div ng-switch=info.about.hdd.type class=panel-icon-lg><a ng-switch-default class="panel-icon-lg inactive-gray img-drive"></a> <a ng-switch-when=true class="panel-icon-lg img-drive-default"></a> <a ng-switch-when=onl class="panel-icon-lg img-drive-onl"></a> <a ng-switch-when=usb class="panel-icon-lg img-drive-usb"></a> <a ng-switch-when=ssd class="panel-icon-lg img-drive-ssd"></a> <a ng-switch-when=web class="panel-icon-lg img-drive-web"></a> <a ng-switch-when=mac class="panel-icon-lg img-drive-mac"></a> <a ng-switch-when=warn class="panel-icon-lg img-drive-warn"></a> <a ng-switch-when=hist class="panel-icon-lg img-drive-hist"></a> <a ng-switch-when=wifi class="panel-icon-lg img-drive-wifi"></a><div ng:if=info.about.webdb.active class="panel-icon-inset-bl img-webdb"></div></div><p ng:if=info.about.webdb.active class="panel-label ellipsis">Local databsse is <b class=glow-green>Online</b></p><p ng:if=!info.about.webdb.active class="panel-label text-muted ellipsis"><em>No local storage found</em></p><p ng:if=!info.about.webdb.active class="panel-label text-muted"><div class=progress ng-style="{ height: \'10px\' }" title="{{(100 * progA) + \'%\'}} ( {{info.about.webdb.used}} / {{info.about.webdb.size}} )"><div ng:init="progA = (info.about.webdb.size > 0) ? (info.about.webdb.used||0)/info.about.webdb.size : 0" class=progress-bar ng-class="\'progress-bar-info\'" role=progressbar aria-valuenow="{{ progA }}" aria-valuemin=0 aria-valuemax=100 ng-style="{width: (100 * progA) + \'%\'}" aria-valuetext="{{ (100.0 * progA) + \' %\' }}%"></div></div></p></div><div ng-init="tabOverviewMain = 0" ng-switch=tabOverviewMain class="col-md-6 panel-mid"><h5><span ng-if="info.about.server.active == undefined">Checking...</span> <span ng-if="info.about.server.active != undefined">Current Status</span> <small><span ng-if=!info.about.server><em class=text-muted>checking...</em></span> <span ng-if="info.about.server.active === false"><b class="text-danger glow-red">Offline</b>, faulty or disconnected.</span> <span ng-if="info.about.server.active && appState.node.active">Connected via <b class="text-warning glow-orange">web client</b>.</span> <span ng-if="info.about.server.active && !appState.node.active"><b class="text-success glow-green">Online</b> and fully operational.</span></small></h5><p class=ellipsis ng:if=info.about.server.url>Server Url: <a target=_blank ng-class="{ \'glow-green\':appState.node.active || info.about.protocol == \'https\', \'glow-blue\':!appState.node.active && info.about.protocol == \'http\', \'glow-red\':info.about.protocol == \'file\' }" ng-href="{{ info.about.server.url }}">{{ info.about.server.url }}</a></p><p><a href="" ng-click="tabOverviewMain = 0">Summary</a> | <a href="" ng-click="tabOverviewMain = 1">Details</a></p><div><div ng-switch-default><em>Loading...</em></div><div ng-switch-when=0><p>...</p></div><div ng-switch-when=1><pre>OS: {{ info.about.os }}</pre><pre>Browser: {{ info.about.browser }}</pre><pre>Server: {{ info.about.server }}</pre><pre>WebDB: {{ info.about.webdb }}</pre><pre>HDD: {{ info.about.hdd }}</pre></div></div></div><div class="col-md-3 panel-right"><h5><i class="fa fa-gear"></i> Web Server <small><span class=ng-cloak><b ng-class="{ \'text-success glow-green\': info.about.server.active, \'text-danger glow-red\': info.about.server.active == false }" app:version=server default-text="{{ info.about.server.active ? (info.about.server.active ? \'Online\' : \'Offline\') : \'n.a.\' }}">requesting...</b></span></small></h5><div ng:if=info.about.server.local><a class="panel-icon-lg img-server-local"></a></div><div ng:if=!info.about.server.local ng-class="{ \'inactive-gray\': true || info.versions.jqry }"><a class="panel-icon-lg img-server"><div ng:if="info.about.server.type == \'iis\'" class="panel-icon-inset img-iis"></div><div ng:if="info.about.server.type == \'node\'" class="panel-icon-inset img-node"></div><div ng:if="info.about.server.type == \'apache\'" class="panel-icon-inset img-apache"></div><div ng:if="info.about.server.name == \'Windows\'" class="panel-icon-overlay img-windows"></div><div ng:if="info.about.server.name == \'MacOS\'" class="panel-icon-overlay img-mac-os"></div><div ng:if="info.about.server.name == \'Apple\'" class="panel-icon-overlay img-apple"></div><div ng:if="info.about.server.name == \'UNIX\'" class="panel-icon-overlay img-unix"></div><div ng:if="info.about.server.name == \'Linux\'" class="panel-icon-overlay img-linux"></div></a><div ng:if=info.about.sql class="panel-icon-lg img-sqldb"></div></div></div></div><hr></div><div class="col-lg-4 hidden-md" ng:init="info.showUnavailable = false"><h4>Inspirations <small>come from great ideas</small></h4><hr><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.ng }" ng:hide="!info.showUnavailable && !info.versions.ng"><a class=app-info-icon target=_blank href="https://angularjs.org/"><div ng:if=true class="img-clipper img-angular"></div></a><div class=app-info-info><h5>Angular JS <small><span ng:if=info.versions.ng>@ v{{info.versions.ng}}</span> <span ng:if=!info.versions.ng><em>not found</em></span></small></h5><p ng:if=!info.versions.ng class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href="https://angularjs.org//">angularjs.org</a> for more info.</p><p ng:if=info.detects.ngUiUtils class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Utils found.</p><p ng:if=info.detects.ngUiRouter class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Router found.</p><p ng:if=info.detects.ngUiBootstrap class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Bootrap found.</p><p ng:if=info.detects.ngAnimate class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular Animations active.</p></div></div><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.nw }" ng:hide="!info.showUnavailable && !info.versions.nw"><a class=app-info-icon target=_blank href="http://nwjs.io/"><div ng:if=true class="img-clipper img-nodewebkit"></div></a><div class=app-info-info><h5>Node Webkit <small><span ng:if=info.versions.nw>@ v{{info.versions.nw}}</span> <span ng:if=!info.versions.nw><em>not available</em></span></small></h5><p ng:if=!info.versions.nw class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href="http://nwjs.io/">nwjs.io</a> for more info.</p><p ng:if=info.versions.nw class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are connected to node webkit.</p><p ng:if=info.versions.chromium class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running Chromium @ {{ info.versions.chromium }}.</p></div></div><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.njs }" ng:hide="!info.showUnavailable && !info.versions.njs"><a class=app-info-icon target=_blank href=http://www.nodejs.org><div ng:if=true class="img-clipper img-nodejs"></div></a><div class=app-info-info><h5>Node JS <small><span ng:if=info.versions.njs>@ v{{info.versions.njs}}</span> <span ng:if=!info.versions.njs><em>not available</em></span></small></h5><p ng:if=!info.versions.njs class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href=http://www.nodejs.org>NodeJS.org</a> for more info.</p><p ng:if=info.versions.njs class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are inside a node js runtime.</p><p ng:if=info.versions.v8 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running V8 @ {{ info.versions.v8 }}.</p><p ng:if=info.versions.openssl class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running OpenSSL @ {{ info.versions.openssl }}.</p></div></div><div class="app-aside-collapser centered" ng-if=!appState.node.active><a href="" ng:show=!info.showUnavailable ng-click="info.showUnavailable = !info.showUnavailable">Show More</a> <a href="" ng:show=info.showUnavailable ng-click="info.showUnavailable = !info.showUnavailable">Hide Inactive</a></div><hr><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.html }"><div class=app-info-icon><div ng:if="info.about.browser.name != \'Internet Explorer\'" class="img-clipper img-html5"></div><div ng:if="info.about.browser.name == \'Internet Explorer\'" class="img-clipper img-html5-ie"></div></div><div class=app-info-info><h5>HTML Rendering Mode <small><span ng-if=info.versions.html>@ v{{ info.versions.html }}</span> <span ng-if=!info.versions.html><em>unknown</em></span></small></h5><p ng:if="info.versions.html >= \'5.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running a modern browser.</p><p ng:if="info.versions.html < \'5.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> Your browser is out of date. Try upgrading.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.js }"><div class=app-info-icon><div ng:if=!info.versions.v8 class="img-clipper img-js-default"></div><div ng:if=info.versions.v8 class="img-clipper img-js-v8"></div></div><div class=app-info-info><h5>Javascript Engine<small><span ng:if=info.versions.js>@ v{{ info.versions.js }}</span> <span ng:if=!info.versions.js><em>not found</em></span></small></h5><p ng:if="info.versions.js >= \'5.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You have a modern javascript engine.</p><p ng:if="info.versions.js < \'5.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> Javascript is out of date or unavailable.</p><p ng:if=info.versions.v8 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Javascript V8 engine, build v{{info.versions.v8}}.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.css }"><div class=app-info-icon><div ng:if=true class="img-clipper img-css3"></div></div><div class=app-info-info><h5>Cascading Styles <small><span ng:if=info.versions.css>@ v{{ info.versions.css }}</span> <span ng:if=!info.versions.css><em class=text-muted>not found</em></span></small></h5><p ng:if="info.versions.css >= \'3.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>You have an up-to-date style engine.</span></p><p ng:if="info.versions.css < \'3.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <span>CSS out of date. Styling might be broken.</span></p><p ng:if=info.css.boostrap2 class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <span>Bootstrap 2 is depricated. Upgrade to 3.x.</span></p><p ng:if=info.css.boostrap3 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>Bootstrap and/or UI componets found.</span></p><p ng:if=info.detects.less class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>Support for LESS has been detected.</span></p><p ng:if=info.detects.bootstrap class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Bootstrap and/or UI Componets found.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.jqry }"><div class=app-info-icon><div ng:if=true class="img-clipper img-jquery"></div></div><div class=app-info-info><h5>jQuery <small><span ng:if=info.versions.jqry>@ v{{ info.versions.jqry }}</span> <span ng:if=!info.versions.jqry><em>not found</em></span></small></h5><p ng:if=info.versions.jqry class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> jQuery or jqLite is loaded.</p><p ng:if="info.versions.jqry < \'1.10\'" class=text-danger><i class="glyphicon glyphicon-warning-sign glow-orange"></i> jQuery is out of date!</p></div></div><hr></div></div></div>');
   $templateCache.put('views/about/left.tpl.html',
     '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.info><i class="fa fa-info-circle"></i>&nbsp; About this app</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.online><i class="fa fa-globe"></i>&nbsp; Visit us online</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.conection><i class="fa fa-plug"></i>&nbsp; Check Connectivity</a></li></ul>');
   $templateCache.put('views/common/components/contents.tpl.html',
     '<div id=contents class=contents><div id=left class="ui-view-left ng-cloak" ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div><div id=main class=ui-view-main ui:view=main><em class=inactive-fill-text ng:if=false><i class="fa fa-spinner fa-spin"></i> Loading...</em> <b class="inactive-fill-text ng-cloak" ng:if="!(state.current.views[\'main\'] || state.current.views[\'main@\'])"><i class="fa fa-exclamation-triangle faa-flash glow-orange"></i> Page not found</b></div></div>');
   $templateCache.put('views/common/components/footer.tpl.html',
-    '<div class=footer><span class=pull-left><label class="log-group ng-cloak" ng:show="appState.logs | typeCount:\'error\'"><i class="glyphicon glyphicon-exclamation-sign glow-red"></i> <a ui:sref=proto.logs class=ng-cloak>Errors ({{ appState.logs | typeCount:\'error\' }})</a></label><label class="log-group ng-cloak" ng:show="appState.logs | typeCount:\'warn\'"><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <a ui:sref=proto.logs class=ng-cloak>Warnings ({{ appState.logs | typeCount:\'warn\' }})</a></label></span> <span ng:if=false><em><i class="fa fa-spinner fa-spin"></i> Loading...</em></span> <span ng:if=true class=ng-cloak>Client Version: <span app:version><em>Loading...</em></span> |</span> <span ui:view=foot>Powered by <a href="https://angularjs.org/">AngularJS</a> <span ng:if=appNode.active class=ng-cloak>&amp; <a href=https://github.com/rogerwang/node-webkit>Node Webkit</a></span></span> <span ng:if=startAt class=ng-cloak>| Started {{ startAt | fromNow }}</span></div>');
+    '<div class=footer><span class=pull-left><label class="log-group ng-cloak" ng:show="appState.logs | typeCount:\'error\'"><i class="glyphicon glyphicon-exclamation-sign glow-red"></i> <a ui:sref=proto.logs class=ng-cloak>Errors ({{ appState.logs | typeCount:\'error\' }})</a></label><label class="log-group ng-cloak" ng:show="appState.logs | typeCount:\'warn\'"><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <a ui:sref=proto.logs class=ng-cloak>Warnings ({{ appState.logs | typeCount:\'warn\' }})</a></label></span> <span ng:if=false><em><i class="fa fa-spinner fa-spin"></i> Loading...</em></span> <span ng:if=true class=ng-cloak>Client Version: <span app:version><em>Loading...</em></span> |</span> <span ui:view=foot>Powered by <a href="https://angularjs.org/">AngularJS</a> <span ng:if=appState.node.active class=ng-cloak>&amp; <a href=https://github.com/rogerwang/node-webkit>Node Webkit</a></span></span> <span ng:if=startAt class=ng-cloak>| Started {{ startAt | fromNow }}</span></div>');
   $templateCache.put('views/common/components/left.tpl.html',
     '<div id=left ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div>');
   $templateCache.put('views/common/components/menu.tpl.html',
-    '<div id=menu class=dragable><div ui:view=menu><ul class="nav navbar-nav"><li ui:sref-active=open><a ui:sref=default>Default</a></li><li ui:sref-active=open ng:repeat="route in appConfig.routers | orderBy:\'(priority || 1)\'" ng:if="route.menuitem && (!route.visible || route.visible())"><a ng:if=route.menuitem.state ui:sref="{{ route.menuitem.state }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a> <a ng:if=!route.menuitem.state ng:href="{{ route.url }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a></li></ul></div></div>');
+    '<div id=menu class=dragable><div ui:view=menu><ul class="nav navbar-nav"><li ui:sref-active=open><a ui:sref=default>Default</a></li><li ui:sref-active=open ng:repeat="route in appState.routers | orderBy:\'(priority || 1)\'" ng:if="route.menuitem && (!route.visible || route.visible())"><a ng:if=route.menuitem.state ui:sref="{{ route.menuitem.state }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a> <a ng:if=!route.menuitem.state ng:href="{{ route.url }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a></li></ul></div></div>');
   $templateCache.put('views/common/sandbox/contents.tpl.html',
     '<div class=main-view-area><div dom:replace ng:include="\'views/common/components/contents.tpl.html\'"></div></div>');
   $templateCache.put('views/common/sandbox/footer.tpl.html',
     '<div class=bottom-spacer><div class=mask></div><div style="padding: 6px; text-align:center; z-index: 1000"><div dom:replace ng:include="\'views/common/components/footer.tpl.html\'"></div></div></div>');
   $templateCache.put('views/common/sandbox/menu.tpl.html',
-    '<div class="top-menu dragable"><div class="top-div pull-left"><div><div ui:view=menu><ul class="nav navbar-nav pull-right"><li ui:sref-active=hidden><a ui:sref=default><i class="fa fa-chevron-left"></i></a></li><li ui:sref-active=open ng:repeat="route in appConfig.routers | orderBy:\'(priority || 1)\'" ng:if="route.menuitem && (!route.visible || route.visible())"><a ng:if=route.menuitem.state ui:sref="{{ route.menuitem.state }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a> <a ng:if=!route.menuitem.state ng:href="{{ route.url }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a></li></ul></div></div></div><div class="top-div pull-right"><ul class="nav navbar-nav pull-left"><li ui:sref-active=open class=disabled><a ui:sref=settings ng:disabled>Settings</a></li></ul></div></div><div class=top-spacer><div class=mask></div><a class=top-spacer-icon href=""><i class="fa fa-2x" ng:class="appState.getIcon() + \' \' + appState.getColor()"></i></a></div>');
+    '<div class="top-menu dragable"><div class="top-div pull-left"><div><div ui:view=menu><ul class="nav navbar-nav pull-right"><li ui:sref-active=hidden><a ui:sref=default><i class="fa fa-chevron-left"></i></a></li><li ui:sref-active=open ng:repeat="route in appState.routers | orderBy:\'(priority || 1)\'" ng:if="route.menuitem && (!route.visible || route.visible())"><a ng:if=route.menuitem.state ui:sref="{{ route.menuitem.state }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a> <a ng:if=!route.menuitem.state ng:href="{{ route.url }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a></li></ul></div></div></div><div class="top-div pull-right"><ul class="nav navbar-nav pull-left"><li ui:sref-active=open class=disabled><a ui:sref=settings ng:disabled>Settings</a></li></ul></div></div><div class=top-spacer><div class=mask></div><a class=top-spacer-icon href=""><i class="fa fa-2x" ng:class="appState.getIcon() + \' \' + appState.getColor()"></i></a></div>');
   $templateCache.put('views/default.tpl.html',
     '<div id=cardViewer class="docked float-left card-view card-view-x"><style resx:import=assets/css/prototyped.min.css></style><style>.contents {\n' +
     '            margin: 0 !important;\n' +
     '            padding: 0 !important;\n' +
     '            background: #E0E0E0!important;\n' +
-    '        }</style><div class="slider docked"><a class="arrow prev" href="" ng-show=false ng-click=showPrev()><i class="glyphicon glyphicon-chevron-left"></i></a> <a class="arrow next" href="" ng-show=false ng-click=showNext()><i class="glyphicon glyphicon-chevron-right"></i></a><div class=boxed><a class="card fixed-width slide" ng-class="{ \'inactive-gray-25\': route.cardview.ready === false }" ng-repeat="route in pages | orderBy:\'(priority || 1)\'" ng-if="route.cardview && (!route.visible || route.visible())" ng-href={{route.url}} ng-class="{ \'active\': isActive($index) }" ng-swipe-right=showPrev() ng-swipe-left=showNext()><div class=card-image ng-class=route.cardview.style><div class=banner></div><h2>{{route.cardview.title}}</h2></div><p>{{route.cardview.desc}}</p></a></div><ul class="small-only slider-nav"><li ng-repeat="page in pages" ng-class="{\'active\':isActive($index)}"><a href="" ng-click=showPhoto($index); title={{page.title}}><i class="glyphicon glyphicon-file"></i></a></li></ul></div></div>');
+    '        }</style><div class="slider docked"><a class="arrow prev" href="" ng-show=false ng-click=cardView.showPrev()><i class="glyphicon glyphicon-chevron-left"></i></a> <a class="arrow next" href="" ng-show=false ng-click=cardView.showNext()><i class="glyphicon glyphicon-chevron-right"></i></a><div class=boxed><a class="card fixed-width slide" ng-class="{ \'inactive-gray-25\': route.cardview.ready === false }" ng-repeat="route in cardView.pages | orderBy:\'(priority || 1)\'" ng-if="route.cardview && (!route.visible || route.visible())" ng-href={{route.url}} ng-class="{ \'active\': cardView.isActive($index) }" ng-swipe-right=cardView.showPrev() ng-swipe-left=cardView.showNext()><div class=card-image ng-class=route.cardview.style><div class=banner></div><h2>{{route.cardview.title}}</h2></div><p>{{route.cardview.desc}}</p></a></div><ul class="small-only slider-nav"><li ng-repeat="page in cardView.pages" ng-class="{\'active\':isActive($index)}"><a href="" ng-click=cardView.showItem($index); title={{page.title}}><i class="glyphicon glyphicon-file"></i></a></li></ul></div></div>');
   $templateCache.put('views/explore/left.tpl.html',
     '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-info-circle"></i>&nbsp; Site Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if=navigation.getTreeData()><abn:tree tree-data=navigation.getTreeData() icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
   $templateCache.put('views/explore/main.tpl.html',
-    '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail ng-if=exploreCtrl.selected><br><br>{{ exploreCtrl.navigation.selected }}<div class=row><div class=col-md-9><form class=form-horizontal><div class=form-group><label for=inputState class="col-sm-2 control-label">State</label><div class=col-sm-10><input class=form-control id=inputState placeholder=empty ng-model=exploreCtrl.selected.name readonly></div></div><div class=form-group><label for=inputPath class="col-sm-2 control-label">Path</label><div class=col-sm-10><input class=form-control id=inputPath placeholder="not set" ng-model=exploreCtrl.selected.url readonly></div></div><div class=form-group><div class="col-sm-offset-2 col-sm-10"><div class=checkbox><label><input type=checkbox ng-model=exploreCtrl.selected.abstract> Abstract</label></div></div></div><div class=form-group ng-if=exploreCtrl.selected.name><div class="col-sm-offset-2 col-sm-10"><a class="btn btn-default" ng-class="{ \'btn-primary\': !exploreCtrl.selected.abstract }" ui-sref="{{ exploreCtrl.selected.name }}" ng-disabled=exploreCtrl.selected.abstract>Got to page</a></div></div></form></div><div class=col-md-3>{{ exploreCtrl.selection.views }}</div></div></div></div>');
+    '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail ng-if=exploreCtrl.selected><br><br><div class=row><div class=col-md-9><form class=form-horizontal><div class=form-group><label for=inputState class="col-sm-2 control-label">State</label><div class=col-sm-10><input class=form-control id=inputState placeholder=empty ng-model=exploreCtrl.selected.name readonly></div></div><div class=form-group><label for=inputPath class="col-sm-2 control-label">Path</label><div class=col-sm-10><input class=form-control id=inputPath placeholder="not set" ng-model=exploreCtrl.selected.url readonly></div></div><div class=form-group><div class="col-sm-offset-2 col-sm-10"><div class=checkbox><label><input type=checkbox ng-model=exploreCtrl.selected.abstract> Abstract</label></div></div></div><div class=form-group ng-if=exploreCtrl.selected.name><div class="col-sm-offset-2 col-sm-10"><a class="btn btn-default" ng-class="{ \'btn-primary\': !exploreCtrl.selected.abstract }" ui-sref="{{ exploreCtrl.selected.name }}" ng-disabled=exploreCtrl.selected.abstract>Got to page</a></div></div></form></div><div class=col-md-3>{{ exploreCtrl.selection.views }}</div></div></div></div>');
 }]);
 ;angular.module('prototyped.ng.styles', []).run(['$templateCache', function($templateCache) { 
   'use strict';
@@ -2955,12 +3441,267 @@ angular.module('prototyped.ng', [
 
 
   $templateCache.put('assets/css/prototyped.min.css',
-    "body .docked{flex-grow:1;flex-shrink:1;display:flex;height:100%;overflow:none}body .dock-tight{flex-grow:0;flex-shrink:0}body .dock-fill{flex-grow:1;flex-shrink:1}body .ellipsis{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .dragable{-webkit-app-region:drag;-webkit-user-select:none}body .non-dragable{-webkit-app-region:no-drag;-webkit-user-select:auto}body .inactive-gray{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .inactive-gray:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-25{opacity:.25;filter:alpha(opacity=25);filter:grayscale(100%) opacity(0.25);-webkit-filter:grayscale(100%) opacity(0.25);-moz-filter:alpha(opacity=25);-o-filter:alpha(opacity=25)}body .inactive-gray-25:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-10{opacity:.1;filter:alpha(opacity=10);filter:grayscale(100%) opacity(0.1);-webkit-filter:grayscale(100%) opacity(0.1);-moz-filter:alpha(opacity=10);-o-filter:alpha(opacity=10)}body .inactive-gray-10:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-ctrl{opacity:.65;filter:alpha(opacity=65);filter:grayscale(100%) opacity(0.65);-webkit-filter:grayscale(100%) opacity(0.65);-moz-filter:alpha(opacity=65);-o-filter:alpha(opacity=65)}body .inactive-fill-text{width:100%;height:100%;display:block;padding:64px 0;font-size:14px;text-align:center;color:rgba(128,128,128,.75)}body .glow-green{color:#00b500!important;text-shadow:0 0 2px #00b500}body .glow-red{color:#D00!important;text-shadow:0 0 2px #D00}body .glow-orange{color:#ff8d00!important;text-shadow:0 0 2px #ff8d00}body .glow-blue{color:#0094ff!important;text-shadow:0 0 2px #0094ff}body .results{min-width:480px;display:flex}body .results .icon{margin:0 8px;font-size:128px;width:128px!important;height:128px!important;position:relative;flex-grow:0;flex-shrink:0}body .results .icon .sub-icon{font-size:64px!important;width:64px!important;height:64px!important;position:absolute;right:0;top:0;margin-top:100px}body .results .info{margin:0 16px;min-height:128px;min-width:300px;display:inline-block;flex-grow:1;flex-shrink:1}body .results .info h4{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .results .info h4 a{color:#000}body .info-row{display:flex}body .info-row-links{color:silver}body .info-row-links a{color:#4a4a4a;margin-left:8px}body .info-row-links a:hover{color:#000}body .info-col-primary{flex-grow:1;flex-shrink:1}body .info-col-secondary{flex-grow:0;flex-shrink:0}body .info-overview{vertical-align:top}body .info-overview .panel-icon-lg{width:128px;height:128px;padding:0;margin:0 auto 10px;display:block;position:relative;background-repeat:no-repeat;background-size:auto 128px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inner{width:92px;height:92px;margin:6px auto;background-repeat:no-repeat;background-size:auto 86px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-overlay{right:0;bottom:0;width:48px;height:48px;position:absolute;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inset{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-inset-bl{margin:0;position:absolute;background-repeat:no-repeat;background-position:center center;width:64px;height:64px;left:10px;bottom:10px;background-size:auto 64px}body .info-overview .panel-label{margin:6px auto;text-align:center;text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .info-overview .panel-mid{text-align:center}body .info-tabs .trim-top{padding:10px;border-top:none;min-height:380px;border-top-left-radius:0;border-top-right-radius:0}body .img-clipper{width:48px;height:48px;padding:0;margin:3px auto;text-align:center;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .app-info-aside{display:flex;margin-bottom:12px}body .app-info-aside .app-info-icon{flex-grow:0;flex-shrink:0;flex-basis:64px;vertical-align:top}body .app-info-aside .app-info-info{flex-grow:1;flex-shrink:1;text-align:left;vertical-align:top}body .app-info-aside .app-info-info p{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .app-info-aside.info-disabled .app-info-icon{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .app-info-aside.info-disabled .app-info-icon:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .app-aside-collapser a{margin:0;padding:0;display:block;color:silver;text-decoration:none}body .app-aside-collapser a:hover{color:gray}body .iframe-body,body .iframe-body iframe{margin:0;padding:0}body .alertify-hidden{display:none}body .console .cmd-output{padding:8px;font-size:10.5px;font-family:Courier New,Courier,monospace;color:#2f4f4f}body .console .cmd-line{padding:0;margin:0}body .console .cmd-time{color:silver}body .console .cmd-text{white-space:pre}@media screen and (max-width:640px) and (max-height:480px){body .console .cmd-output{padding:4px;font-size:10.4px}}body .card-view{margin:0 auto;padding:0;color:#333;height:100%;overflow:auto}body .card-view.float-left .card{float:left}body .card-view .multi-column{columns:300px 3;-webkit-columns:300px 3}body .card-view a{color:#4c4c4c;text-decoration:none}body .card-view .boxed{margin:0 auto 36px;max-width:1056px;display:inline-block}body .card-view .card{width:320px;height:200px;padding:0;margin:15px 15px 0;overflow:hidden;background:#fff;background:#ededed;background:-moz-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#ededed),color-stop(45%,#f6f6f6),color-stop(61%,#fff),color-stop(61%,#fff));background:-webkit-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-o-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-ms-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:linear-gradient(to bottom,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#ffffff', GradientType=0);border:1px solid #AAA;border-bottom:3px solid #BBB}body .card-view .card:hover{-webkit-box-shadow:0 0 10px 1px rgba(128,128,128,.75);-moz-box-shadow:0 0 10px 1px rgba(128,128,128,.75);box-shadow:0 0 10px 1px rgba(128,128,128,.75)}body .card-view .card p{background:#fff;margin:0;padding:10px}body .card-view .card-image{width:100%;height:140px;padding:0;margin:0;position:relative;overflow:hidden;background-position:center;background-repeat:no-repeat}body .card-view .card-image .banner{height:50px;width:50px;top:0;right:0;background-position:top right;background-repeat:no-repeat;position:absolute}body .card-view .card-image h1,body .card-view .card-image h2,body .card-view .card-image h3,body .card-view .card-image h4,body .card-view .card-image h5,body .card-view .card-image h6{position:absolute;bottom:0;left:0;width:100%;color:#fff;background:rgba(0,0,0,.65);margin:0;padding:6px 12px!important;border:none}body .card-view .small-only{display:none!important}body .card-view .leftColumn,body .card-view .rightColumn{display:inline-block;width:49%;vertical-align:top}body .card-view .column{display:inline-block;vertical-align:top}body .card-view .arrow{top:50%;width:50px;bottom:0;margin:auto 0;outline:medium none;position:absolute;font-size:40px;cursor:pointer;z-index:5}body .card-view .arrow i{top:-25px}body .card-view .arrow.prev{left:0;opacity:.2}body .card-view .arrow.prev:hover{opacity:1}body .card-view .arrow.next{right:0;opacity:.2;text-align:right}body .card-view .arrow.next:hover{opacity:1}body .card-view .img-default{background:#b3bead;background:-moz-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fcfff4),color-stop(40%,#dfe5d7),color-stop(100%,#b3bead));background:-webkit-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-o-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-ms-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:linear-gradient(to bottom,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fcfff4', endColorstr='#b3bead', GradientType=0)}body .card-view .img-explore{background-position:top left;background-image:url(https://farm6.staticflickr.com/5250/5279251697_3ab802e3ef.jpg)}body .card-view .img-editor{background-image:url(http://f.fastcompany.net/multisite_files/fastcompany/inline/2013/10/3020994-inline-d3-data-viz001.jpg);background-size:320px auto}body .card-view .img-console{background-image:url(http://shumakovich.com/uploads/useruploads/images/programming_256x256.png);background-size:auto auto;background-position:top}body .card-view .img-about{background-image:url(https://farm9.staticflickr.com/8282/7807659570_f5ba8dfc63.jpg);background-size:420px auto;background-position:center}body .card-view .img-sandbox{background-image:url(http://8020.photos.jpgmag.com/1727832_147374_5c80086d33_p.jpg);background-size:360px auto;background-position:top center}body .card-view .slider-nav{bottom:0;display:block;height:48px;left:0;margin:0 auto;padding:1em 0 .8em;position:absolute;right:0;text-align:center;width:100%;z-index:5}body .card-view .slider-nav li{margin:3px;padding:1px 3px;cursor:pointer;position:relative;display:inline-block;border:1px dotted #E0E0E0;background-color:rgba(255,255,255,.25)}body .card-view .slider-nav li a{color:rgba(128,128,128,.75)}body .card-view .slider-nav li.active{border:solid 1px #BBB;background-color:rgba(128,128,128,.25)}body .card-view .slider-nav li.active a{color:#000}body .card-view .slider{-webkit-perspective:1000px;-moz-perspective:1000px;-ms-perspective:1000px;-o-perspective:1000px;perspective:1000px;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d;-ms-transform-style:preserve-3d;-o-transform-style:preserve-3d;transform-style:preserve-3d}body .card-view .slide{-webkit-transition:1s linear all;-moz-transition:1s linear all;-o-transition:1s linear all;transition:1s linear all;opacity:1}body .card-view .slide.ng-hide-add{opacity:1}body .card-view .slide.ng-hide-add.ng-hide-add-active,body .card-view .slide.ng-hide-remove{opacity:0}body .card-view .slide.ng-hide-remove.ng-hide-remove-active{opacity:1}body .footer .log-group{padding:1px 6px}@media screen and (min-width:741px) and (max-width:1024px){#cardViewer .boxed{max-width:740px!important}}@media screen and (max-width:740px){#cardViewer .boxed{max-width:350px!important}#cardViewer .small-only{display:block!important}#cardViewer .card-view{height:100%;overflow:auto}#cardViewer .card-view .card{display:none}#cardViewer .card-view .card.active{display:block}}#fileExplorer{-webkit-user-select:none}#fileExplorer .folder-contents{padding:16px 8px;clear:both}#fileExplorer .file{color:#000;text-decoration:none}#fileExplorer .name{margin-top:6px;font-size:11px}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .file .icon img{width:48px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-large{display:block}#fileExplorer .view-large .files{padding:0;margin:0}#fileExplorer .view-large .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-large .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-large .file .name{width:100px;word-wrap:break-word}#fileExplorer .view-large .file.focus .name{color:#fff}#fileExplorer .view-large .file .icon{margin:0 auto;width:60px}#fileExplorer .view-large .file .icon img{width:60px;height:auto}#fileExplorer .view-large .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-med .files{padding:0;margin:0}#fileExplorer .view-med .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-med .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-med .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .view-med .file.focus .name{color:#fff}#fileExplorer .view-med .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .view-med .file .icon img{width:48px;height:auto}#fileExplorer .view-med .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-details{display:block}#fileExplorer .view-details .files{padding:0;margin:0}#fileExplorer .view-details .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .view-details .file.focus{-webkit-border-radius:0}#fileExplorer .view-details .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .view-details .file .icon{margin:0;width:24px;display:inline}#fileExplorer .view-details .file .icon img{width:24px;height:auto}@media screen and (max-width:640px) and (max-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .file.focus{-webkit-border-radius:0}#fileExplorer .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .file .icon{margin:0;width:24px;display:inline}#fileExplorer .file .icon img{width:24px;height:auto}#fileExplorer .name{padding:3px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}}@media screen and (min-width:1024px) and (min-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:100px;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;width:60px}#fileExplorer .file .icon img{width:60px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}}.abn-tree-animate-enter,li.abn-tree-row.ng-enter{transition:200ms linear all;position:relative;display:block;opacity:0;max-height:0}.abn-tree-animate-enter.abn-tree-animate-enter-active,li.abn-tree-row.ng-enter-active{opacity:1;max-height:30px}.abn-tree-animate-leave,li.abn-tree-row.ng-leave{transition:200ms linear all;position:relative;display:block;height:30px;max-height:30px;opacity:1}.abn-tree-animate-leave.abn-tree-animate-leave-active,li.abn-tree-row.ng-leave-active{height:0;max-height:0;opacity:0}ul.abn-tree li.abn-tree-row{padding:0;margin:0}ul.abn-tree li.abn-tree-row a{padding:3px 10px}ul.abn-tree i.indented{padding:2px 6px}.abn-tree{cursor:pointer}ul.nav.abn-tree .level-1 .indented{position:relative;left:0}ul.nav.abn-tree .level-2 .indented{position:relative;left:16px}ul.nav.abn-tree .level-3 .indented{position:relative;left:40px}ul.nav.abn-tree .level-4 .indented{position:relative;left:60px}ul.nav.abn-tree .level-5 .indented{position:relative;left:80px}ul.nav.abn-tree .level-6 .indented{position:relative;left:100px}ul.nav.nav-list.abn-tree .level-7 .indented{position:relative;left:120px}ul.nav.nav-list.abn-tree .level-8 .indented{position:relative;left:140px}ul.nav.nav-list.abn-tree .level-9 .indented{position:relative;left:160px}"
+    "body .glow-green{color:#00b500!important;text-shadow:0 0 2px #00b500}body .glow-red{color:#D00!important;text-shadow:0 0 2px #D00}body .glow-orange{color:#ff8d00!important;text-shadow:0 0 2px #ff8d00}body .glow-blue{color:#0094ff!important;text-shadow:0 0 2px #0094ff}body .input-group-xs>.form-control,body .input-group-xs>.input-group-addon,body .input-group-xs>.input-group-btn>.btn{height:22px;padding:1px 5px;font-size:12px;line-height:1.5}body .docked{flex-grow:1;flex-shrink:1;display:flex;overflow:auto}body .dock-tight{flex-grow:0;flex-shrink:0}body .dock-fill{flex-grow:1;flex-shrink:1}body .ellipsis{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .dragable{-webkit-app-region:drag;-webkit-user-select:none}body .non-dragable{-webkit-app-region:no-drag;-webkit-user-select:auto}body .inactive-gray{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .inactive-gray:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-25{opacity:.25;filter:alpha(opacity=25);filter:grayscale(100%) opacity(0.25);-webkit-filter:grayscale(100%) opacity(0.25);-moz-filter:alpha(opacity=25);-o-filter:alpha(opacity=25)}body .inactive-gray-25:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-10{opacity:.1;filter:alpha(opacity=10);filter:grayscale(100%) opacity(0.1);-webkit-filter:grayscale(100%) opacity(0.1);-moz-filter:alpha(opacity=10);-o-filter:alpha(opacity=10)}body .inactive-gray-10:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-ctrl{opacity:.65;filter:alpha(opacity=65);filter:grayscale(100%) opacity(0.65);-webkit-filter:grayscale(100%) opacity(0.65);-moz-filter:alpha(opacity=65);-o-filter:alpha(opacity=65)}body .inactive-fill-text{width:100%;height:100%;display:block;padding:64px 0;font-size:14px;text-align:center;color:rgba(128,128,128,.75)}body .results{min-width:480px;display:flex}body .results .icon{margin:0 8px;font-size:128px;width:128px!important;height:128px!important;position:relative;flex-grow:0;flex-shrink:0}body .results .icon .sub-icon{font-size:64px!important;width:64px!important;height:64px!important;position:absolute;right:0;top:0;margin-top:100px}body .results .info{margin:0 16px;min-height:128px;min-width:300px;display:inline-block;flex-grow:1;flex-shrink:1}body .results .info h4{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .results .info h4 a{color:#000}body .info-row{display:flex}body .info-row-links{color:silver}body .info-row-links a{color:#4a4a4a;margin-left:8px}body .info-row-links a:hover{color:#000}body .info-col-primary{flex-grow:1;flex-shrink:1}body .info-col-secondary{flex-grow:0;flex-shrink:0}body .info-overview{vertical-align:top}body .info-overview .panel-icon-lg{width:128px;height:128px;padding:0;margin:0 auto 10px;display:block;position:relative;background-repeat:no-repeat;background-size:auto 128px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inner{width:92px;height:92px;margin:6px auto;background-repeat:no-repeat;background-size:auto 86px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-overlay{right:0;bottom:0;width:48px;height:48px;position:absolute;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inset{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-inset-bl{margin:0;position:absolute;background-repeat:no-repeat;background-position:center center;width:64px;height:64px;left:10px;bottom:10px;background-size:auto 64px}body .info-overview .panel-label{margin:6px auto;text-align:center;text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .info-overview .panel-mid{text-align:center}body .info-tabs .trim-top{padding:10px;border-top:none;min-height:380px;border-top-left-radius:0;border-top-right-radius:0}body .img-clipper{width:48px;height:48px;padding:0;margin:3px auto;text-align:center;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .app-info-aside{display:flex;margin-bottom:12px}body .app-info-aside .app-info-icon{flex-grow:0;flex-shrink:0;flex-basis:64px;vertical-align:top}body .app-info-aside .app-info-info{flex-grow:1;flex-shrink:1;text-align:left;vertical-align:top}body .app-info-aside .app-info-info p{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .app-info-aside.info-disabled .app-info-icon{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .app-info-aside.info-disabled .app-info-icon:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .app-aside-collapser a{margin:0;padding:0;display:block;color:silver;text-decoration:none}body .app-aside-collapser a:hover{color:gray}body .iframe-body,body .iframe-body iframe{margin:0;padding:0}body .alertify-hidden{display:none}body .console .cmd-output{padding:3px;font-family:Courier New,Courier,monospace;color:gray}body .console .cmd-line{padding:0;margin:0}body .console .cmd-time{color:silver}body .console .cmd-text{white-space:pre}@media screen and (max-width:640px) and (max-height:480px){body .console .cmd-output{padding:4px;font-size:10.4px}}body .card-view{margin:0 auto;padding:0;color:#333;height:100%;overflow:auto}body .card-view.float-left .card{float:left}body .card-view .multi-column{columns:300px 3;-webkit-columns:300px 3}body .card-view a{color:#4c4c4c;text-decoration:none}body .card-view .boxed{margin:0 auto 36px;max-width:1056px;display:inline-block}body .card-view .card{width:320px;height:200px;padding:0;margin:15px 15px 0;overflow:hidden;background:#fff;background:#ededed;background:-moz-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#ededed),color-stop(45%,#f6f6f6),color-stop(61%,#fff),color-stop(61%,#fff));background:-webkit-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-o-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-ms-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:linear-gradient(to bottom,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#ffffff', GradientType=0);border:1px solid #AAA;border-bottom:3px solid #BBB}body .card-view .card:hover{-webkit-box-shadow:0 0 10px 1px rgba(128,128,128,.75);-moz-box-shadow:0 0 10px 1px rgba(128,128,128,.75);box-shadow:0 0 10px 1px rgba(128,128,128,.75)}body .card-view .card p{background:#fff;margin:0;padding:10px}body .card-view .card-image{width:100%;height:140px;padding:0;margin:0;position:relative;overflow:hidden;background-position:center;background-repeat:no-repeat}body .card-view .card-image .banner{height:50px;width:50px;top:0;right:0;background-position:top right;background-repeat:no-repeat;position:absolute}body .card-view .card-image h1,body .card-view .card-image h2,body .card-view .card-image h3,body .card-view .card-image h4,body .card-view .card-image h5,body .card-view .card-image h6{position:absolute;bottom:0;left:0;width:100%;color:#fff;background:rgba(0,0,0,.65);margin:0;padding:6px 12px!important;border:none}body .card-view .small-only{display:none!important}body .card-view .leftColumn,body .card-view .rightColumn{display:inline-block;width:49%;vertical-align:top}body .card-view .column{display:inline-block;vertical-align:top}body .card-view .arrow{top:50%;width:50px;bottom:0;margin:auto 0;outline:medium none;position:absolute;font-size:40px;cursor:pointer;z-index:5}body .card-view .arrow i{top:-25px}body .card-view .arrow.prev{left:0;opacity:.2}body .card-view .arrow.prev:hover{opacity:1}body .card-view .arrow.next{right:0;opacity:.2;text-align:right}body .card-view .arrow.next:hover{opacity:1}body .card-view .img-default{background:#b3bead;background:-moz-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fcfff4),color-stop(40%,#dfe5d7),color-stop(100%,#b3bead));background:-webkit-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-o-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-ms-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:linear-gradient(to bottom,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fcfff4', endColorstr='#b3bead', GradientType=0)}body .card-view .img-explore{background-position:top left;background-image:url(https://farm6.staticflickr.com/5250/5279251697_3ab802e3ef.jpg)}body .card-view .img-editor{background-image:url(http://f.fastcompany.net/multisite_files/fastcompany/inline/2013/10/3020994-inline-d3-data-viz001.jpg);background-size:320px auto}body .card-view .img-console{background-image:url(http://shumakovich.com/uploads/useruploads/images/programming_256x256.png);background-size:auto auto;background-position:top}body .card-view .img-about{background-image:url(https://farm9.staticflickr.com/8282/7807659570_f5ba8dfc63.jpg);background-size:420px auto;background-position:center}body .card-view .img-sandbox{background-image:url(http://8020.photos.jpgmag.com/1727832_147374_5c80086d33_p.jpg);background-size:360px auto;background-position:top center}body .card-view .slider-nav{bottom:0;display:block;height:48px;left:0;margin:0 auto;padding:1em 0 .8em;position:absolute;right:0;text-align:center;width:100%;z-index:5}body .card-view .slider-nav li{margin:3px;padding:1px 3px;cursor:pointer;position:relative;display:inline-block;border:1px dotted #E0E0E0;background-color:rgba(255,255,255,.25)}body .card-view .slider-nav li a{color:rgba(128,128,128,.75)}body .card-view .slider-nav li.active{border:solid 1px #BBB;background-color:rgba(128,128,128,.25)}body .card-view .slider-nav li.active a{color:#000}body .card-view .slider{-webkit-perspective:1000px;-moz-perspective:1000px;-ms-perspective:1000px;-o-perspective:1000px;perspective:1000px;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d;-ms-transform-style:preserve-3d;-o-transform-style:preserve-3d;transform-style:preserve-3d}body .card-view .slide{-webkit-transition:1s linear all;-moz-transition:1s linear all;-o-transition:1s linear all;transition:1s linear all;opacity:1}body .card-view .slide.ng-hide-add{opacity:1}body .card-view .slide.ng-hide-add.ng-hide-add-active,body .card-view .slide.ng-hide-remove{opacity:0}body .card-view .slide.ng-hide-remove.ng-hide-remove-active{opacity:1}body .footer .log-group{padding:1px 6px}@media screen and (min-width:741px) and (max-width:1024px){#cardViewer .boxed{max-width:740px!important}}@media screen and (max-width:740px){#cardViewer .boxed{max-width:350px!important}#cardViewer .small-only{display:block!important}#cardViewer .card-view{height:100%;overflow:auto}#cardViewer .card-view .card{display:none}#cardViewer .card-view .card.active{display:block}}#fileExplorer{-webkit-user-select:none}#fileExplorer .folder-contents{padding:16px 8px;clear:both}#fileExplorer .file{color:#000;text-decoration:none}#fileExplorer .name{margin-top:6px;font-size:11px}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .file .icon img{width:48px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-large{display:block}#fileExplorer .view-large .files{padding:0;margin:0}#fileExplorer .view-large .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-large .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-large .file .name{width:100px;word-wrap:break-word}#fileExplorer .view-large .file.focus .name{color:#fff}#fileExplorer .view-large .file .icon{margin:0 auto;width:60px}#fileExplorer .view-large .file .icon img{width:60px;height:auto}#fileExplorer .view-large .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-med .files{padding:0;margin:0}#fileExplorer .view-med .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-med .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-med .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .view-med .file.focus .name{color:#fff}#fileExplorer .view-med .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .view-med .file .icon img{width:48px;height:auto}#fileExplorer .view-med .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-details{display:block}#fileExplorer .view-details .files{padding:0;margin:0}#fileExplorer .view-details .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .view-details .file.focus{-webkit-border-radius:0}#fileExplorer .view-details .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .view-details .file .icon{margin:0;width:24px;display:inline}#fileExplorer .view-details .file .icon img{width:24px;height:auto}@media screen and (max-width:640px) and (max-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .file.focus{-webkit-border-radius:0}#fileExplorer .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .file .icon{margin:0;width:24px;display:inline}#fileExplorer .file .icon img{width:24px;height:auto}#fileExplorer .name{padding:3px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}}@media screen and (min-width:1024px) and (min-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:100px;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;width:60px}#fileExplorer .file .icon img{width:60px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}}.abn-tree-animate-enter,li.abn-tree-row.ng-enter{transition:200ms linear all;position:relative;display:block;opacity:0;max-height:0}.abn-tree-animate-enter.abn-tree-animate-enter-active,li.abn-tree-row.ng-enter-active{opacity:1;max-height:30px}.abn-tree-animate-leave,li.abn-tree-row.ng-leave{transition:200ms linear all;position:relative;display:block;height:30px;max-height:30px;opacity:1}.abn-tree-animate-leave.abn-tree-animate-leave-active,li.abn-tree-row.ng-leave-active{height:0;max-height:0;opacity:0}ul.abn-tree li.abn-tree-row{padding:0;margin:0}ul.abn-tree li.abn-tree-row a{padding:3px 10px}ul.abn-tree i.indented{padding:2px 6px}.abn-tree{cursor:pointer}ul.nav.abn-tree .level-1 .indented{position:relative;left:0}ul.nav.abn-tree .level-2 .indented{position:relative;left:16px}ul.nav.abn-tree .level-3 .indented{position:relative;left:40px}ul.nav.abn-tree .level-4 .indented{position:relative;left:60px}ul.nav.abn-tree .level-5 .indented{position:relative;left:80px}ul.nav.abn-tree .level-6 .indented{position:relative;left:100px}ul.nav.nav-list.abn-tree .level-7 .indented{position:relative;left:120px}ul.nav.nav-list.abn-tree .level-8 .indented{position:relative;left:140px}ul.nav.nav-list.abn-tree .level-9 .indented{position:relative;left:160px}"
   );
 
 
   $templateCache.put('assets/css/sandbox.min.css',
     "@import url(https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css);@import url(https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.2.0/animate.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css);body{color:#333;font-size:11px;font-family:Verdana,Geneva,Tahoma,sans-serif;display:flex;flex-direction:column}#menu{margin:6px;padding:3px;display:block}#menu ul{margin:0;padding:0}#menu ul li{margin:0;padding:0;display:inline;list-style:none}#menu ul li a{text-decoration:none}#contents{display:flex;flex-direction:row;min-height:520px}#left{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:210px}#main{margin:6px;padding:3px;flex-grow:1;flex-shrink:1}#main h2{margin:0;padding:3px 0;font-size:18px;font-weight:700}#main h5{margin:0 0 6px;padding:3px;border-bottom:solid 1px #f2f2f2;font-weight:bolder}#main h5 small{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#main hr{margin:8px 0}#main .centered{text-align:center}#footer{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:24px;border:dotted 1px gray}body .top-menu{top:0;left:0;right:0;position:absolute;max-height:32px;overflow:hidden;background-color:#FFF}body .top-menu a{padding:6px 12px;color:#000}body .top-menu .top-div{width:50%;padding:0 32px;margin:0}body .top-menu .top-div .nav.navbar-nav{float:right}body .top-spacer{width:100%;margin:32px auto 0;position:absolute}body .top-spacer .mask{overflow:hidden;height:20px}body .top-spacer .mask:after{content:'';display:block;margin:-28px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}body .top-spacer .top-spacer-icon{width:50px;height:50px;position:absolute;bottom:100%;margin-bottom:-25px;left:50%;margin-left:-25px;border-radius:100%;box-shadow:0 2px 4px #999;background:#fff;z-index:200}body .top-spacer .top-spacer-icon i{position:absolute;top:4px;bottom:4px;left:4px;right:4px;border-radius:100%;border:1px dashed #aaa;text-align:center;line-height:40px;font-style:normal;color:#999;z-index:1000}body .main-view-area{position:absolute;top:32px;left:0;right:0;bottom:24px}body .main-view-area .contents{width:100%;height:100%}body .main-view-area .ui-view-left{border-right:dotted 1px #ddd}body .ui-view-left .list-group-item.active{color:#000;background-color:#d8e1e8}body .ui-view-left .nav-pills>li.active>a,body .ui-view-left .nav-pills>li.active>a:focus,body .ui-view-left .nav-pills>li.active>a:hover{color:#000;background-color:#d8e1e8;border-radius:0}body .ui-view-main{overflow:auto}body .vertical-spacer{width:200px;left:0;top:32px;bottom:16px;position:absolute;display:block;overflow:auto}body .vertical-spacer .mask{overflow:hidden;width:20px;height:100%}body .vertical-spacer.left .mask:after{content:'';display:block;margin-left:-20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .vertical-spacer.right .mask{float:right}body .vertical-spacer.right .mask:before{content:'';display:block;margin-left:20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .main-contents{top:32px;left:200px;right:0;bottom:16px;position:absolute;z-index:100;overflow:auto}body .bottom-spacer{bottom:0;margin:0;padding:0;font-size:10px;color:gray;width:100%;height:24px;position:fixed;background-color:#FFF;z-index:200}body .bottom-spacer .mask{margin:0 auto;overflow:hidden;height:24px;width:100%;position:absolute}body .bottom-spacer .mask:after{content:'';display:block;margin:-25px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/browser/css/urls.min.css',
+    "@import\"http://localhost:8081/test/browser/less/modify-this.css\";@import\"http://localhost:8081/test/browser/less/modify-again.css\";.modify{my-url:url(\"http://localhost:8081/test/browser/less/a.png\")}.modify{my-url:url(\"http://localhost:8081/test/browser/less/b.png\")}@font-face{src:url(\"/fonts/garamond-pro.ttf\");src:local(Futura-Medium),url(http://localhost:8081/test/browser/less/fonts.svg#MyGeometricModern) format(\"svg\")}#shorthands{background:url(\"http://www.lesscss.org/spec.html\") no-repeat 0 4px}#misc{background-image:url(http://localhost:8081/test/browser/less/images/image.jpg)}#data-uri{background:kiVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAD/k kg9C9zwz3gVLMDA/A6P9/AFGGFyjOXZtQAAAAAElFTkSuQmCC);background-image:url(data:image/x-png,f9difSSFIIGFIFJD1f982FSDKAA9==);background-image:url(http://fonts.googleapis.com/css?family=\\\"Rokkitt\\\":\\(400\\),700)}#svg-data-uri{background:transparent url('data:image/svg+xml, <svg version=\"1.1\"><g></g></svg>')}.comma-delimited{background:url(http://localhost:8081/test/browser/less/bg.jpg) no-repeat,url(http://localhost:8081/test/browser/less/bg.png) repeat-x top left,url(http://localhost:8081/test/browser/less/bg)}.values{url:url('http://localhost:8081/test/browser/less/Trebuchet')}#data-uri{uri:url('http://localhost:8081/test/data/image.jpg')}#data-uri-guess{uri:url('http://localhost:8081/test/data/image.jpg')}#data-uri-ascii{uri-1:url('http://localhost:8081/test/data/page.html');uri-2:url('http://localhost:8081/test/data/page.html')}#data-uri-toobig{uri:url('http://localhost:8081/test/data/data-uri-fail.png')}#svg-functions{background-image:url('data:image/svg+xml,<?xml version=\"1.0\" ?><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"100%\" height=\"100%\" viewbox=\"0 0 1 1\" preserveaspectratio=\"none\"><lineargradient id=\"gradient\" gradientunits=\"userSpaceOnUse\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#000000\"><stop offset=\"100%\" stop-color=\"#ffffff\"></lineargradient><rect x=\"0\" y=\"0\" width=\"1\" height=\"1\" fill=\"url(#gradient)\"></svg>');background-image:url('data:image/svg+xml,<?xml version=\"1.0\" ?><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"100%\" height=\"100%\" viewbox=\"0 0 1 1\" preserveaspectratio=\"none\"><lineargradient id=\"gradient\" gradientunits=\"userSpaceOnUse\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#000000\"><stop offset=\"3%\" stop-color=\"#ffa500\"><stop offset=\"100%\" stop-color=\"#ffffff\"></lineargradient><rect x=\"0\" y=\"0\" width=\"1\" height=\"1\" fill=\"url(#gradient)\"></svg>');background-image:url('data:image/svg+xml,<?xml version=\"1.0\" ?><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"100%\" height=\"100%\" viewbox=\"0 0 1 1\" preserveaspectratio=\"none\"><lineargradient id=\"gradient\" gradientunits=\"userSpaceOnUse\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"1%\" stop-color=\"#c4c4c4\"><stop offset=\"3%\" stop-color=\"#ffa500\"><stop offset=\"5%\" stop-color=\"#008000\"><stop offset=\"95%\" stop-color=\"#ffffff\"></lineargradient><rect x=\"0\" y=\"0\" width=\"1\" height=\"1\" fill=\"url(#gradient)\"></svg>')}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/charsets.min.css',
+    "@charset \"UTF-8\";"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/colors.min.css',
+    "#yelow #short{color:#fea}#yelow #long{color:#fea}#yelow #rgba{color:rgba(255,238,170,.1)}#yelow #argb{color:#1affeeaa}#blue #short{color:#00f}#blue #long{color:#00f}#blue #rgba{color:rgba(0,0,255,.1)}#blue #argb{color:#1a0000ff}#alpha #hsla{color:rgba(61,45,41,.6)}#overflow .a{color:#000}#overflow .b{color:#fff}#overflow .c{color:#fff}#overflow .d{color:#0f0}#overflow .e{color:rgba(0,31,255,.42)}#grey{color:#c8c8c8}#333333{color:#333}#808080{color:gray}#00ff00{color:#0f0}.lightenblue{color:#33f}.darkenblue{color:#00c}.unknowncolors{color:blue2;border:2px solid superred}.transparent{color:transparent;background-color:rgba(0,0,0,0)}#alpha #fromvar{opacity:.7}#alpha #short{opacity:1}#alpha #long{opacity:1}#alpha #rgba{opacity:.2}#alpha #hsl{opacity:1}#percentage{color:255;border-color:rgba(255,0,0,.5)}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/comments.min.css',
+    "#comments,.comments{/**/color:red;background-color:#ffa500;font-size:12px;content:\"content\";border:1px solid #000;padding:0;margin:2em}.selector,.lots,.comments{color:gray,#ffa500;-webkit-border-radius:2px;-moz-border-radius:8px}.test{color:1px}.sr-only-focusable{clip:auto}@-webkit-keyframes hover{0%{color:red}}#last{color:#00f}#div{color:#a33}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/css-3.min.css',
+    ".comma-delimited{text-shadow:-1px -1px 1px red,6px 5px 5px #ff0;-moz-box-shadow:0 0 2px rgba(255,255,255,.4) inset,0 4px 6px rgba(255,255,255,.4) inset;-webkit-transform:rotate(0deg)}@font-face{font-family:Headline;unicode-range:U+??????,U+???,U+0-7F,U+A5}.other{-moz-transform:translate(0,11em) rotate(-90deg);transform:rotateX(45deg)}.item[data-cra_zy-attr1b-ut3=bold]{font-weight:bold}p:not([class*=\"lead\"]){color:#000}input[type=\"text\"].class#id[attr=32]:not(1){color:white;}div#id.class[a=1][b=2].class:not(1){color:white;}ul.comma>li:not(:only-child)::after{color:#fff}ol.comma>li:nth-last-child(2)::after{color:#fff}li:nth-child(4n+1),li:nth-child(-5n),li:nth-child(-n+2){color:#fff}a[href^=\"http://\"]{color:#000}a[href$=\"http://\"]{color:#000}form[data-disabled]{color:#000}p::before{color:#000}#issue322{-webkit-animation:anim2 7s infinite ease-in-out}@-webkit-keyframes frames{0%{border:1px}5.5%{border:2px}100%{border:3px}}@keyframes fontbulger1{to{font-size:15px}from,to{font-size:12px}0%,100%{font-size:12px}}.units{font:1.2rem/2rem;font:8vw/9vw;font:10vh/12vh;font:12vm/15vm;font:12vmin/15vmin;font:1.2ch/1.5ch}@supports (box-shadow:2px 2px 2px black)or(-moz-box-shadow:2px 2px 2px black){.outline{box-shadow:2px 2px 2px black;-moz-box-shadow:2px 2px 2px black;}}@-x-document url-prefix(\"\"github.com\"\"){h1{color:red;}}@viewport{font-size:10px;}foo url(http://www.example.com);foo|h1{color:blue}foo|*{color:#ff0}|h1{color:red}*|h1{color:green}h1{color:green}.upper-test{UpperCaseProperties:allowed}@host{div{display:block;}}::distributed(input::placeholder){color:#b3b3b3;}.shadow ^ .dom,body ^^ .shadow{display:done;}:host(.sel .a),:host-context(.sel .b),.sel /deep/ .b,::content .sel{type:shadow-dom;}#issue2066{background:url('/images/icon-team.svg') 0 0/contain}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/css-escapes.min.css',
+    ".escape\\|random\\|char{color:red}.mixin\\!tUp{font-weight:bold}.\\34 04{background:red}.\\34 04 strong{color:#f0f;font-weight:bold}.trailingTest\\+{color:red}blockquote{color:silver}[ng\\:cloak],ng\\:form{display:none}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/css-guards.min.css',
+    ".light{color:green}.see-the{color:green}.hide-the{color:green}.multiple-conditions-1{color:red}.inheritance .test{color:#000}.inheritance:hover{color:#ffc0cb}.clsWithGuard{dispaly:none}.dont-split-me-up{width:1px;color:red;height:1px}+.dont-split-me-up{sibling:true}.scope-check{sub-prop:2px;prop:1px}.scope-check-2{sub-prop:2px;prop:1px}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/css.min.css',
+    "@charset \"utf-8\";div{color:#000}div{width:99%}*{min-width:45em}h1,h2>a>p,h3{color:none}div.class{color:blue}div#id{color:green}.class#id{color:purple}.one.two.three{color:grey}@media print{*{font-size:3em}}@media screen{*{font-size:10px}}@font-face{font-family:'Garamond Pro'}a:hover,a:link{color:#999}p,p:first-child{text-transform:none}q:lang(no){quotes:none}p+h1{font-size:2.2em}#shorthands{border:1px solid #000;font:12px/16px Arial;font:100%/16px Arial;margin:1px 0;padding:0 auto}#more-shorthands{margin:0;padding:1px 0 2px 0;font:normal small/20px 'Trebuchet MS',Verdana,sans-serif;font:0/0 a;border-radius:5px/10px}.misc{-moz-border-radius:2px;display:-moz-inline-stack;width:.1em;background-color:#009998;background:-webkit-gradient(linear,left top,left bottom,from(red),to(#00f));margin:;filter:alpha(opacity=100);width:auto\\9}.misc .nested-multiple{multiple-semi-colons:yes}#important{color:red !important;width:100%!important;height:20px !important}@font-face{font-family:font-a}@font-face{font-family:font-b}.æøå{margin:0}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/detached-rulesets.min.css',
+    ".wrap-selector{color:#000;one:1px;four:magic-frame;visible-one:visible;visible-two:visible}.wrap-selector{color:red;visible-one:visible;visible-two:visible}.wrap-selector{color:#000;background:#fff;visible-one:visible;visible-two:visible}header{background:blue}@media screen and (min-width:1200){header{background:red}}html.lt-ie9 header{background:red}.wrap-selector{test:extra-wrap;visible-one:visible;visible-two:visible}.wrap-selector .wrap-selector{test:wrapped-twice;visible-one:visible;visible-two:visible}.wrap-selector{test-func:90;test-arithmetic:18px;visible-one:visible;visible-two:visible}.without-mixins{b:1}@media(orientation:portrait) andtv{.my-selector{background-color:black;}}@media(orientation:portrait) andwidescreen and print and tv{.triple-wrapped-mq{triple:true;}}@media(orientation:portrait) andwidescreen and tv{.triple-wrapped-mq{triple:true;}}@media(orientation:portrait) andtv{.triple-wrapped-mq{triple:true;}}.a{test:test}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/empty.min.css',
+    ""
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend-chaining.min.css',
+    ".a,.b,.c{color:#000}.f,.e,.d{color:#000}.g.h,.i.j.h,.k.j.h{color:#000}.i.j,.k.j{color:#fff}.l,.m,.n,.o,.p,.q,.r,.s,.t{color:#000}.u,.v.u.v{color:#000}.w,.v.w.v{color:#000}.x,.y,.z{color:x}.y,.z,.x{color:y}.z,.x,.y{color:z}.va,.vb,.vc{color:#000}.vb,.vc{color:#fff}@media tv{.ma,.mb,.mc{color:#000}.md,.ma,.mb,.mc{color:#fff}}@media tv andplasma{.me,.mf{background:red;}}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend-clearfix.min.css',
+    ".clearfix,.foo,.bar{*zoom:1}.clearfix:after,.foo:after,.bar:after{content:'';display:block;clear:both;height:0}.foo{color:red}.bar{color:blue}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend-exact.min.css',
+    ".replace.replace .replace,.c.replace+.replace .replace,.replace.replace .c,.c.replace+.replace .c,.rep_ace{prop:copy-paste-replace}.a .b .c{prop:not_effected}.a,.effected{prop:is_effected}.a .b{prop:not_effected}.a .b.c{prop:not_effected}.c .b .a,.a .b .a,.c .a .a,.a .a .a,.c .b .c,.a .b .c,.c .a .c,.a .a .c{prop:not_effected}.e.e,.dbl{prop:extend-double}.e.e:hover{hover:not-extended}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend-media.min.css',
+    ".ext1 .ext2,.all .ext2{background:#000}@media tv{.ext1 .ext3,.tv-lowres .ext3,.all .ext3{color:#fff}.tv-lowres{background:blue}}@media tv andhires{.ext1 .ext4,.tv-hires .ext4,.all .ext4{color:green;}.tv-hires{background:red;}}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend-nest.min.css',
+    ".sidebar,.sidebar2,.type1 .sidebar3,.type2.sidebar4{width:300px;background:red}.sidebar .box,.sidebar2 .box,.type1 .sidebar3 .box,.type2.sidebar4 .box{background:#fff;border:1px solid #000;margin:10px 0}.sidebar2{background:blue}.type1 .sidebar3{background:green}.type2.sidebar4{background:red}.button,.submit{color:#000}.button:hover,.submit:hover{color:#fff}.button2 :hover{nested:white}.button2 :hover{notnested:black}.amp-test-h,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e.amp-test-g{test:extended by masses of selectors}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend-selector.min.css',
+    ".error,.badError{border:1px red;background:#fdd}.error.intrusion,.badError.intrusion{font-size:1.3em;font-weight:bold}.intrusion .error,.intrusion .badError{display:none}.badError{border-width:3px}.foo .bar,.foo .baz,.ext1 .ext2 .bar,.ext1 .ext2 .baz,.ext3 .bar,.ext3 .baz,.ext4 .bar,.ext4 .baz{display:none}div.ext5,.ext6>.ext5,div.ext7,.ext6>.ext7{width:100px}.ext,.a .c,.b .c{test:1}.a,.b{test:2}.a .c,.b .c{test:3}.a .c .d,.b .c .d{test:4}.replace.replace .replace,.c.replace+.replace .replace,.replace.replace .c,.c.replace+.replace .c,.rep_ace.rep_ace .rep_ace,.c.rep_ace+.rep_ace .rep_ace,.rep_ace.rep_ace .c,.c.rep_ace+.rep_ace .c{prop:copy-paste-replace}.attributes [data=\"test\"],.attributes .attributes .attribute-test{extend:attributes}.attributes [data],.attributes .attributes .attribute-test2{extend:attributes2}.attributes [data=\"test3\"],.attributes .attributes .attribute-test{extend:attributes2}.header .header-nav,.footer .footer-nav{background:red}.header .header-nav:before,.footer .footer-nav:before{background:blue}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend.min.css',
+    ".error,.badError{border:1px red;background:#fdd}.error.intrusion,.badError.intrusion{font-size:1.3em;font-weight:bold}.intrusion .error,.intrusion .badError{display:none}.badError{border-width:3px}.foo .bar,.foo .baz,.ext1 .ext2 .bar,.ext1 .ext2 .baz,.ext3 .bar,.ext3 .baz,.foo .ext3,.ext4 .bar,.ext4 .baz,.foo .ext4{display:none}div.ext5,.ext6>.ext5,div.ext7,.ext6>.ext7{width:100px}.ext8.ext9,.fuu{result:add-foo}.ext8 .ext9,.ext8+.ext9,.ext8>.ext9,.buu,.zap,.zoo{result:bar-matched}.ext8.nomatch{result:none}.ext8 .ext9,.buu{result:match-nested-bar}.ext8.ext9,.fuu{result:match-nested-foo}.aa,.cc{color:#000}.aa .dd,.aa .ee{background:red}.bb,.cc,.ee,.ff{background:red}.bb .bb,.ff .ff{color:#000}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extract-and-length.min.css',
+    ".multiunit{length:6;extract:abc \"abc\" 1 1px 1% #123}.incorrect-index{v1:extract(a b c,5);v2:extract(a,b,c,-2)}.scalar{var-value:variable;var-length:1;ill-index:extract(variable,2);name-value:name;string-value:\"string\";number-value:12345678;color-value:#00f;rgba-value:rgba(80,160,240,.67);empty-value:;name-length:1;string-length:1;number-length:1;color-length:1;rgba-length:1;empty-length:1}.mixin-arguments-1{length:4;extract:c| b | a}.mixin-arguments-2{length:4;extract:c| b | a}.mixin-arguments-3{length:4;extract:c| b | a}.mixin-arguments-4{length:0;extract:extract(,2)| extract(,1)}.mixin-arguments-2{length:4;extract:c| b | a}.mixin-arguments-3{length:4;extract:c| b | a}.mixin-arguments-4{length:3;extract:c| b}.mixin-arguments-2{length:4;extract:3| 2 | 1}.mixin-arguments-3{length:4;extract:3| 2 | 1}.mixin-arguments-4{length:3;extract:3| 2}.md-space-comma{length-1:3;extract-1:1 2 3;length-2:3;extract-2:2}.md-space-comma-as-args-2{length:3;extract:\"x\" \"y\" \"z\"| 1 2 3 | a b c}.md-space-comma-as-args-3{length:3;extract:\"x\" \"y\" \"z\"| 1 2 3 | a b c}.md-space-comma-as-args-4{length:2;extract:\"x\" \"y\" \"z\"| 1 2 3}.md-cat-space-comma{length-1:3;extract-1:1 2 3;length-2:3;extract-2:2}.md-cat-space-comma-as-args-2{length:3;extract:\"x\" \"y\" \"z\"| 1 2 3 | a b c}.md-cat-space-comma-as-args-3{length:3;extract:\"x\" \"y\" \"z\"| 1 2 3 | a b c}.md-cat-space-comma-as-args-4{length:2;extract:\"x\" \"y\" \"z\"| 1 2 3}.md-cat-comma-space{length-1:3;extract-1:1,2,3;length-2:3;extract-2:2}.md-cat-comma-space-as-args-1{length:3;extract:\"x\",\"y\",\"z\"| 1,2,3 | a,b,c}.md-cat-comma-space-as-args-2{length:3;extract:\"x\",\"y\",\"z\"| 1,2,3 | a,b,c}.md-cat-comma-space-as-args-3{length:3;extract:\"x\",\"y\",\"z\"| 1,2,3 | a,b,c}.md-cat-comma-space-as-args-4{length:0;extract:extract(,2)| extract(,1)}.md-3D{length-1:2;extract-1:a b c d,1 2 3 4;length-2:2;extract-2:5 6 7 8;length-3:4;extract-3:7;length-4:1;extract-4:8}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/functions.min.css',
+    "#functions{color:#600;width:16;height:undefined(\"self\");border-width:5;variable:11;background:linear-gradient(#000,#fff)}#built-in{escaped:-Some::weird(#thing,y);lighten:#fcc;darken:#300;saturate:#203c31;desaturate:#29332f;greyscale:#2e2e2e;hsl-clamp:#fff;spin-p:#bf6a40;spin-n:#bf4055;luma-white:100%;luma-black:0%;luma-black-alpha:0%;luma-red:21.26%;luma-green:71.52%;luma-blue:7.22%;luma-yellow:92.78%;luma-cyan:78.74%;luma-differs-from-luminance:23.89833349%;luminance-white:100%;luminance-black:0%;luminance-black-alpha:0%;luminance-red:21.26%;luminance-differs-from-luma:36.40541176%;contrast-filter:contrast(30%);saturate-filter:saturate(5%);contrast-white:#000;contrast-black:#fff;contrast-red:#fff;contrast-green:#000;contrast-blue:#fff;contrast-yellow:#000;contrast-cyan:#000;contrast-light:#111;contrast-dark:#eee;contrast-wrongorder:#111;contrast-light-thresh:#111;contrast-dark-thresh:#eee;contrast-high-thresh:#eee;contrast-low-thresh:#111;contrast-light-thresh-per:#111;contrast-dark-thresh-per:#eee;contrast-high-thresh-per:#eee;contrast-low-thresh-per:#111;replace:\"Hello, World!\";replace-captured:\"This is a new string.\";replace-with-flags:\"2 + 2 = 4\";replace-single-quoted:'foo-2';replace-escaped-string:bar-2;replace-keyword:baz-2;format:\"rgb(32, 128, 64)\";format-string:\"hello world\";format-multiple:\"hello earth 2\";format-url-encode:\"red is %23ff0000\";format-single-quoted:'hello single world';format-escaped-string:hello escaped world;eformat:#208040;unitless:12;unit:14em;unitpercentage:100%;get-unit:px;get-unit-empty:;hue:98;saturation:12%;lightness:95%;hsvhue:98;hsvsaturation:12%;hsvvalue:95%;red:255;green:255;blue:255;rounded:11;rounded-two:10.67;roundedpx:3px;roundedpx-three:3.333px;rounded-percentage:10%;ceil:11px;floor:12px;sqrt:5px;pi:3.14159265;mod:2m;abs:4%;tan:.90040404;sin:.17364818;cos:.84385396;atan:.1rad;atan:34deg;atan:45deg;pow:64px;pow:64;pow:27;min:0;min:5;min:1pt;min:3mm;max:3;max:5em;percentage:20%;color:#f01;tint:#898989;tint-full:#fff;tint-percent:#898989;tint-negative:#656565;shade:#686868;shade-full:#000;shade-percent:#686868;shade-negative:#868686;fade-out:rgba(255,0,0,.95);fade-in:rgba(255,0,0,.95);hsv:#4d2926;hsva:rgba(77,40,38,.2);mix:#f30;mix-0:#ff0;mix-100:red;mix-weightless:#ff8000;mixt:rgba(255,0,0,.5)}#built-in .is-a{color:true;color1:true;color2:true;color3:true;keyword:true;number:true;string:true;pixel:true;percent:true;em:true;cat:true}#alpha{alpha:rgba(153,94,51,.6);alpha2:.5;alpha3:0}#blendmodes{multiply:#ed0000;screen:#f600f6;overlay:#ed0000;softlight:#fa0000;hardlight:#0000ed;difference:#f600f6;exclusion:#f600f6;average:#7b007b;negation:#d73131}#extract-and-length{extract:3 2 1 C B A;length:6}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/ie-filters.min.css',
+    ".nav{filter:progid:DXImageTransform.Microsoft.Alpha(opacity=20);filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\"#333333\",endColorstr=\"#000000\",GradientType=0)}.evalTest1{filter:progid:DXImageTransform.Microsoft.Alpha(opacity=30);filter:progid:DXImageTransform.Microsoft.Alpha(opacity=5)}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/import-inline.min.css',
+    "#import{color:red}@media(min-width:600px){#css{color:#ff0}}this isn't very valid CSS."
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/import-interpolation.min.css',
+    "body{width:100%}.a{var:test}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/import-once.min.css',
+    "#import{color:red}body{width:100%}.test-f{height:10px}body{width:100%}.test-f{height:10px}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/import-reference.min.css',
+    "input[type=\"text\"].class#id[attr=32]:not(1){color:white;}div#id.class[a=1][b=2].class:not(1){color:white;}@media print{.class{color:blue}.class .sub{width:42}}.visible{color:red}.visible .c{color:green}.visible{color:green}.visible:hover{color:green}.only-with-visible+.visible,.visible+.only-with-visible,.visible+.visible{color:green}.only-with-visible+.visible .sub,.visible+.only-with-visible .sub,.visible+.visible .sub{color:green}.b{color:red;color:green}.b .c{color:green}.b:hover{color:green}.b+.b{color:green}.b+.b .sub{color:green}.y{pulled-in:yes}.visible{extend:test}.test-mediaq-import{color:green;test:340px}@media(max-size:450px){.test-mediaq-import{color:red}}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/import.min.css',
+    "@charset \"UTF-8\";@import url(http://fonts.googleapis.com/css?family=Open+Sans);@import url(/absolute/something.css)screen and (color) and (max-width:600px);@import url(\"//ha.com/file.css\")(min-width:100px);#import-test{height:10px;color:red;width:10px;height:30%}@media screen and (max-width:600px){body{width:100%}}#import{color:red}.mixin{height:10px;color:red}@media screen and (max-width:601px){#css{color:#ff0}}@media screen and (max-width:602px){body{width:100%}}@media screen and (max-width:603px){#css{color:#ff0}}@media print{body{width:100%}}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/javascript.min.css',
+    ".eval{js:42;js:2;js:\"hello world\";js:1,2,3;title:\"string\";ternary:true;multiline:2}.scope{var:42;escaped:7px}.vars{width:8}.escape-interpol{width:hello world}.arrays{ary:\"1, 2, 3\";ary1:\"1, 2, 3\"}.test-tran{1:opacity .3s ease-in .3s,max-height .6s linear,margin-bottom .4s linear;2: [opacity .3s ease-in .3s,max-height .6s linear,margin-bottom .4s linear];3:opacity .3s ease-in .3s,max-height .6s linear,margin-bottom .4s linear}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/lazy-eval.min.css',
+    ".lazy-eval{width:100%}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/media.min.css',
+    "@media print{.class{color:blue}.class .sub{width:42}.top,header>h1{color:#444}}@media screen{body{max-width:480}}@media all and (device-aspect-ratio:16/9){body{max-width:800px}}@media all and (orientation:portrait){aside{float:none}}@media handheld and (min-width:42),screen and (min-width:20em){body{max-width:480px}}@media print{body{padding:20px}body header{background-color:red}}@media print and (orientation:landscape){body{margin-left:20px}}@media screen{.sidebar{width:300px}}@media screen and (orientation:landscape){.sidebar{width:500px}}@media a andb{.first .second .third{width:300px;}.first .second .fourth{width:3;}}@media a andb and c{.first .second .third{width:500px;}}@media a,b andc{body{width:95%;}}@media a andx,b and c and x,a and y,b and c and y{body{width:100%;}}.a{background:#000}@media handheld{.a{background:#fff}}@media handheld and (max-width:100px){.a{background:red}}.b{background:#000}@media handheld{.b{background:#fff}}@media handheld and (max-width:200px){.b{background:red}}@media only screen and (max-width:200px){body{width:480px}}@media print{@page:left{margin:.5cm}@page:right{margin:.5cm}@page Test:first{margin:1cm}@page:first{size:8.5in 11in;@top-left{margin:1cm}@top-left-corner{margin:1cm}@top-center{margin:1cm}@top-right{margin:1cm}@top-right-corner{margin:1cm}@bottom-left{margin:1cm}@bottom-left-corner{margin:1cm}@bottom-center{margin:1cm}@bottom-right{margin:1cm}@bottom-right-corner{margin:1cm}@left-top{margin:1cm}@left-middle{margin:1cm}@left-bottom{margin:1cm}@right-top{margin:1cm}@right-middle{content:\"Page \" counter(page)}@right-bottom{margin:1cm}}}@media(-webkit-min-device-pixel-ratio:2),(min--moz-device-pixel-ratio:2),(-o-min-device-pixel-ratio:2/1),(min-resolution:2dppx),(min-resolution:128dpcm){.b{background:red}}body{background:red}@media(max-width:500px){body{background:green}}@media(max-width:1000px){body{background:red;background:blue}}@media(max-width:1000px) and (max-width:500px){body{background:green}}@media(max-width:1200px){}@media(max-width:1200px) and (max-width:900px){body{font-size:11px}}@media(min-width:480px){.nav-justified>li{display:table-cell}}@media(min-width:768px) and (min-width:480px){.menu>li{display:table-cell}}@media all andtv{.all-and-tv-variables{var:all-and-tv;}}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/merge.min.css',
+    ".test1{transform:rotate(90deg),skew(30deg),scale(2,4)}.test2{transform:rotate(90deg),skew(30deg);transform:scaleX(45deg)}.test3{transform:scaleX(45deg);background:url(data://img1.png)}.test4{transform:rotate(90deg),skew(30deg);transform:scale(2,4) !important}.test5{transform:rotate(90deg),skew(30deg);transform:scale(2,4) !important}.test6{transform:scale(2,4)}.test-interleaved{transform:t1,t2,t3;background:b1,b2,b3}.test-spaced{transform:t1 t2 t3;background:b1 b2,b3}.test-interleaved-with-spaced{transform:t1s,t2 t3s,t4 t5s t6s;background:b1 b2s,b3,b4}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-args.min.css',
+    "#hidden{color:transparent}#hidden1{color:transparent}.two-args{color:blue;width:10px;height:99%;border:2px dotted #000}.one-arg{width:15px;height:49%}.no-parens{width:5px;height:49%}.no-args{width:5px;height:49%}.var-args{width:45;height:17%}.multi-mix{width:10px;height:29%;margin:4;padding:5}body{padding:30px;color:red}.scope-mix{width:8}.content{width:600px}.content .column{margin:600px}#same-var-name{radius:5px}#var-inside{width:10px}.arguments{border:1px solid #000;width:1px}.arguments2{border:0;width:0}.arguments3{border:0;width:0}.arguments4{border:0 1 2 3 4;rest:1 2 3 4;width:0}.edge-case{border:\"{\";width:\"{\"}.slash-vs-math{border-radius:2px/5px;border-radius:5px/10px;border-radius:6px}.comma-vs-semi-colon{one:a;two:b,c;one:d,e;two:f;one:g;one:h;one:i;one:j;one:k;two:l;one:m,n;one:o,p;two:q;one:r,s;two:t}#named-conflict{four:a,11,12,13;four:a,21,22,23}.test-mixin-default-arg{defaults:1px 1px 1px;defaults:2px 2px 2px}.selector{margin:2,2,2,2}.selector2{margin:2,2,2,2}.selector3{margin:4}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-closure.min.css',
+    ".class{width:99px}.overwrite{width:99px}.nested .class{width:5px}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-guards-default-func.min.css',
+    "guard-default-basic-1-1{case:1}guard-default-basic-1-2{default:2}guard-default-basic-2-0{default:0}guard-default-basic-2-2{case:2}guard-default-basic-3-0{default:0}guard-default-basic-3-2{case:2}guard-default-basic-3-3{case:3}guard-default-definition-order-0{default:0}guard-default-definition-order-2{case:2}guard-default-definition-order-2{case:3}guard-default-out-of-guard-0{case-0:default();case-1:1;default:2;case-2:default()}guard-default-out-of-guard-1{default:default()}guard-default-out-of-guard-2{default:default()}guard-default-expr-not-1{case:1;default:1}guard-default-expr-eq-true{case:true}guard-default-expr-eq-false{case:false;default:false}guard-default-expr-or-1{case:1}guard-default-expr-or-2{case:2;default:2}guard-default-expr-or-3{default:3}guard-default-expr-and-1{case:1}guard-default-expr-and-2{case:2}guard-default-expr-and-3{default:3}guard-default-expr-always-1{case:1;default:1}guard-default-expr-always-2{default:2}guard-default-expr-never-1{case:1}guard-default-multi-1-0{case:0}guard-default-multi-1-1{default-1:1}guard-default-multi-2-1{default-1:no}guard-default-multi-2-2{default-2:no}guard-default-multi-2-3{default-3:3}guard-default-multi-3-blue{case-2:#00008b}guard-default-multi-3-green{default-color:green}guard-default-multi-3-foo{case-1:I am 'foo'}guard-default-multi-3-baz{default-string:I am 'baz'}guard-default-multi-4{always:1;always:2;case:2}guard-default-not-ambiguos-2{case:1;not-default:2}guard-default-not-ambiguos-3{case:1;not-default-1:2;not-default-2:2}guard-default-scopes-3{3:when default}guard-default-scopes-1{1:no condition}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-guards.min.css',
+    ".light1{color:#fff;margin:1px}.light2{color:#000;margin:1px}.max1{width:6}.max2{width:8}.glob1{margin:auto auto}.ops1{height:gt-or-eq;height:lt-or-eq;height:lt-or-eq-alias}.ops2{height:gt-or-eq;height:not-eq}.ops3{height:lt-or-eq;height:lt-or-eq-alias;height:not-eq}.default1{content:default}.test1{content:\"true.\"}.test2{content:\"false.\"}.test3{content:\"false.\"}.test4{content:\"false.\"}.test5{content:\"false.\"}.bool1{content:true and true;content:true;content:false,true;content:false and true and true,true;content:false,true and true;content:false,false,true;content:false,true and true and true,false;content:not false;content:not false and false,not false}.equality-units{test:pass}.colorguardtest{content:is red;content:is not #00f its red;content:is not #00f its purple}.stringguardtest{content:\"theme1\" is \"theme1\";content:\"theme1\" is not \"theme2\";content:\"theme1\" is 'theme1';content:\"theme1\" is not 'theme2';content:'theme1' is \"theme1\";content:'theme1' is not \"theme2\";content:'theme1' is 'theme1';content:'theme1' is not 'theme2';content:theme1 is not \"theme2\";content:theme1 is not 'theme2';content:theme1 is theme1}#tryNumberPx{catch:all;declare:4;declare:4px}.call-lock-mixin .call-inner-lock-mixin{a:1;x:1}.mixin-generated-class{a:1}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-important.min.css',
+    ".class{border:1;boxer:1;border-width:1;border:2 !important;boxer:2 !important;border-width:2 !important;border:3;boxer:3;border-width:3;border:4 !important;boxer:4 !important;border-width:4 !important;border:5;boxer:5;border-width:5;border:0 !important;boxer:0 !important;border-width:0 !important;border:9 !important;border:9;boxer:9;border-width:9}.class .inner{test:1}.class .inner{test:2 !important}.class .inner{test:3}.class .inner{test:4 !important}.class .inner{test:5}.class .inner{test:0 !important}.class .inner{test:9}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-interpolated.min.css',
+    ".foo{a:1}.foo{a:2}#foo{a:3}#foo{a:4}mi-test-a{a:1;a:2;a:3;a:4}.b .bb.foo-xxx .yyy-foo#foo .foo.bbb{b:1}mi-test-b{b:1}#foo-foo>.bar .baz{c:c}mi-test-c-1>.bar .baz{c:c}mi-test-c-2 .baz{c:c}mi-test-c-3{c:c}mi-test-d{gender:\"Male\"}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-named-args.min.css',
+    ".named-arg{color:blue;width:5px;height:99%;args:1px 100%;text-align:center}.class{width:5px;height:19%;args:1px 20%}.all-args-wrong-args{width:10px;height:9%;args:2px 10%}.named-args2{width:15px;height:49%;color:#646464}.named-args3{width:5px;height:29%;color:#123456}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-nested.min.css',
+    ".class .inner{height:300}.class .inner .innest{width:30;border-width:60}.class2 .inner{height:600}.class2 .inner .innest{width:60;border-width:120}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-pattern.min.css',
+    ".zero{variadic:true;named-variadic:true;zero:0;one:1;two:2;three:3}.one{variadic:true;named-variadic:true;one:1;one-req:1;two:2;three:3}.two{variadic:true;named-variadic:true;two:2;three:3}.three{variadic:true;named-variadic:true;three-req:3;three:3}.left{left:1}.right{right:1}.border-right{color:#000;border-right:4px}.border-left{color:#000;border-left:4px}.only-right{right:33}.only-left{left:33}.left-right{both:330}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins.min.css',
+    ".mixin{border:1px solid #000}.mixout{border-color:#ffa500}.borders{border-style:dashed}.mixin>*{border:do not match me}#namespace .borders{border-style:dotted}#namespace .biohazard{content:\"death\"}#namespace .biohazard .man{color:transparent}#theme>.mixin{background-color:grey}#container{color:#000;border:1px solid #000;border-color:#ffa500;background-color:grey}#header .milk{color:#fff;border:1px solid #000;background-color:grey}#header #cookie{border-style:dashed}#header #cookie .chips{border-style:dotted}#header #cookie .chips .calories{color:#000;border:1px solid #000;border-color:#ffa500;background-color:grey}.secure-zone{color:transparent}.direct{border-style:dotted}.bo,.bar{width:100%}.bo{border:1px}.ar.bo.ca{color:#000}.jo.ki{background:none}.amp.support{color:#ffa500}.amp.support .higher{top:0}.amp.support.deeper{height:auto}.extended{width:100%;border:1px;background:none;color:#ffa500;top:0;height:auto}.extended .higher{top:0}.extended.deeper{height:auto}.do .re .mi .fa .sol .la .si{color:#0ff}.mutli-selector-parents{color:#0ff}.foo .bar{width:100%}.underParents{color:red}.parent .underParents{color:red}*+h1{margin-top:25px}legend+h1{margin-top:0}h1+*{margin-top:10px}*+h2{margin-top:20px}legend+h2{margin-top:0}h2+*{margin-top:8px}*+h3{margin-top:15px}legend+h3{margin-top:0}h3+*{margin-top:5px}.error{background-image:\"/a.png\";background-position:center center}.test-rec .recursion{color:#000}.button{padding-left:44px}.button.large{padding-left:40em}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/no-output.min.css',
+    ""
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/operations.min.css',
+    "#operations{color:#111;height:9px;width:3em;substraction:0;division:1}#operations .spacing{height:9px;width:3em}.with-variables{height:16em;width:24em;size:1cm}.with-functions{color:#646464;color:#ff8080;color:#c94a4a}.negative{height:0;width:4px}.shorthands{padding:-1px 2px 0 -4px}.rem-dimensions{font-size:5.5rem}.colors{color:#123;border-color:#345;background-color:#000}.colors .other{color:#222;border-color:#222}.negations{variable:-4px;variable1:0;variable2:0;variable3:8px;variable4:0;paren:-4px;paren2:16px}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/parens.min.css',
+    ".parens{border:2px solid #000;margin:1px 3px 16 3;width:36;padding:2px 36px}.more-parens{padding:8 4 4 4px;width-all:96;width-first:16* 6;width-keep:(4* 4)* 6;height-keep:(7* 7)+ (8 * 8);height-all:113;height-parts:49 + 64;margin-keep:(4* (5 + 5)/ 2)- (4 * 2);margin-parts:20 - 8;margin-all:12;border-radius-keep:4px* (1 + 1)/ 4 + 3px;border-radius-parts:8px/7px;border-radius-all:5px}.negative{neg-var:-1;neg-var-paren:-(1)}.nested-parens{width:2* (4 *(2 +(1 + 6)))- 1;height:((2 + 3)* (2 + 3)/ (9 - 4))+ 1}.mixed-units{margin:2px 4em 1 5pc;padding:6px 1em 2px 2}.test-false-negatives{a:(}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/property-name-interp.min.css',
+    "pi-test{border:0;@not-variable:@not-variable;ufo-width:50%;*-z-border:1px dashed blue;-www-border-top:2px;radius-is-not-a-border:true;border-top-left-radius:2em;border-top-red-radius-:3pt;global-local-mixer-property:strong}pi-test-merge{pre-property-ish:high,middle,low,base;pre-property-ish+:nice try dude}pi-indirect-vars{auto:auto}pi-complex-values{3px rgba(255,255,0,.5),3.141592653589793 3px rgba(255,255,0,.5),3.141592653589793/**/ :none}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/rulesets.min.css',
+    "#first>.one{font-size:2em}#first>.one>#second .two>#deux{width:50%}#first>.one>#second .two>#deux #third{height:100%}#first>.one>#second .two>#deux #third:focus{color:#000}#first>.one>#second .two>#deux #third:focus #fifth>#sixth .seventh #eighth+#ninth{color:purple}#first>.one>#second .two>#deux #fourth,#first>.one>#second .two>#deux #five,#first>.one>#second .two>#deux #six{color:#100}#first>.one>#second .two>#deux #fourth .seven,#first>.one>#second .two>#deux #five .seven,#first>.one>#second .two>#deux #six .seven,#first>.one>#second .two>#deux #fourth .eight>#nine,#first>.one>#second .two>#deux #five .eight>#nine,#first>.one>#second .two>#deux #six .eight>#nine{border:1px solid #000}#first>.one>#second .two>#deux #fourth #ten,#first>.one>#second .two>#deux #five #ten,#first>.one>#second .two>#deux #six #ten{color:red}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/scope.min.css',
+    ".tiny-scope{color:#989}.scope1{color:#00f;border-color:#000}.scope1 .scope2{color:#00f}.scope1 .scope2 .scope3{color:red;border-color:#000;background-color:#fff}.scope{scoped-val:green}.heightIsSet{height:1024px}.useHeightInMixinCall{mixin-height:1024px}.imported{exists:true}.testImported{exists:true}#allAreUsedHere{default:'top level';scope:'top level';sub-scope-only:'inside'}#parentSelectorScope{prop:#fff}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/selectors.min.css',
+    "h1 a:hover,h2 a:hover,h3 a:hover,h1 p:hover,h2 p:hover,h3 p:hover{color:red}#all{color:blue}#the{color:blue}#same{color:blue}ul,li,div,q,blockquote,textarea{margin:0}td{margin:0;padding:0}td,input{line-height:1em}a{color:red}a:hover{color:blue}div a{color:green}p a span{color:#ff0}.foo .bar .qux,.foo .baz .qux{display:block}.qux .foo .bar,.qux .foo .baz{display:inline}.qux.foo .bar,.qux.foo .baz{display:inline-block}.qux .foo .bar .biz,.qux .foo .baz .biz{display:none}.a.b.c{color:red}.c .b.a{color:red}.foo .p.bar{color:red}.foo.p.bar{color:red}.foo+.foo{background:amber}.foo+.foo{background:amber}.foo+.foo,.foo+.bar,.bar+.foo,.bar+.bar{background:amber}.foo a>.foo a,.foo a>.bar a,.foo a>.foo b,.foo a>.bar b,.bar a>.foo a,.bar a>.bar a,.bar a>.foo b,.bar a>.bar b,.foo b>.foo a,.foo b>.bar a,.foo b>.foo b,.foo b>.bar b,.bar b>.foo a,.bar b>.bar a,.bar b>.foo b,.bar b>.bar b{background:amber}.other ::fnord{color:red}.other::fnord{color:red}.other ::bnord{color:red}.other::bnord{color:red}.blood{color:red}.bloodred{color:green}#blood.blood.red.black{color:#000}:nth-child(3){selector:interpolated}.test:nth-child(odd):not(:nth-child(3)){color:red}[prop],[prop=10%],[prop=\"value3\"],[prop*=\"val3\"],[|prop~=\"val3\"],[*|prop$=\"val3\"],[ns|prop^=\"val3\"],[]^=\"val3\"],[3=3],[3]{attributes:yes;}.blood{color:red}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/strings.min.css',
+    "#strings{background-image:url(\"http://son-of-a-banana.com\");quotes:\"~\" \"~\";content:\"#*%:&^,)!.(~*})\";empty:\"\";brackets:\"{\" \"}\";escapes:\"\\\"hello\\\" \\\\world\";escapes2:\"\\\"llo\"}#comments{content:\"/* hello */ // not-so-secret\"}#single-quote{quotes:\"'\" \"'\";content:'\"\"#!&\"\"';empty:'';semi-colon:';'}#escaped{filter:DX.Transform.MS.BS.filter(opacity=50)}#one-line{image:url(http://tooks.com)}#crazy{image:url(http://),\"}\",url(\"http://}\")}#interpolation{url:\"http://lesscss.org/dev/image.jpg\";url2:\"http://lesscss.org/image-256.jpg\";url3:\"http://lesscss.org#445566\";url4:\"http://lesscss.org/hello\";url5:\"http://lesscss.org/54.4px\"}.mix-mul-class{color:#00f;color:red;color:#000;color:#ffa500}.watermark{family:Univers,Arial,Verdana,San-Serif}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/urls.min.css',
+    "@import\"css/background.css\";@import\"import/import-test-d.css\";@import\"file.css\";@font-face{src:url(\"/fonts/garamond-pro.ttf\");src:local(Futura-Medium),url(fonts.svg#MyGeometricModern) format(\"svg\")}#shorthands{background:url(\"http://www.lesscss.org/spec.html\") no-repeat 0 4px;background:url(\"img.jpg\") center/100px;background:#fff url(image.png) center/1px 100px repeat-x scroll content-box padding-box}#misc{background-image:url(images/image.jpg)}#data-uri{background:kiVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAD/k kg9C9zwz3gVLMDA/A6P9/AFGGFyjOXZtQAAAAAElFTkSuQmCC);background-image:url(data:image/x-png,f9difSSFIIGFIFJD1f982FSDKAA9==);background-image:url(http://fonts.googleapis.com/css?family=\\\"Rokkitt\\\":\\(400\\),700);background-image:url(\"http://fonts.googleapis.com/css?family=\\\"Rokkitt\\\":\\(400\\),700\")}#svg-data-uri{background:transparent url('data:image/svg+xml, <svg version=\"1.1\"><g></g></svg>')}.comma-delimited{background:url(bg.jpg) no-repeat,url(bg.png) repeat-x top left,url(bg)}.values{url:url('Trebuchet')}#logo{width:100px;height:100px;background:url('import/assets/logo.png')}@font-face{font-family:xecret;src:url('import/assets/xecret.ttf')}#secret{font-family:xecret,sans-serif}#imported-relative-path{background-image:url(../data/image.jpg);border-image:url('../data/image.jpg')}#relative-url-import{background-image:url(../data/image.jpg);border-image:url('../data/image.jpg')}#data-uri{uri:url(\"data:image/jpeg;base64,bm90IGFjdHVhbGx5IGEganBlZyBmaWxlCg==\");uri-fragment:url(\"data:image/jpeg;base64,bm90IGFjdHVhbGx5IGEganBlZyBmaWxlCg==#fragment\")}#data-uri-guess{uri:url(\"data:image/jpeg;base64,bm90IGFjdHVhbGx5IGEganBlZyBmaWxlCg==\")}#data-uri-ascii{uri-1:url(\"data:text/html,%3Ch1%3EThis%20page%20is%20100%25%20Awesome.%3C%2Fh1%3E%0A\");uri-2:url(\"data:text/html,%3Ch1%3EThis%20page%20is%20100%25%20Awesome.%3C%2Fh1%3E%0A\")}#data-uri-toobig{uri:url('../data/data-uri-fail.png')}#svg-functions{background-image:url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzAwMDAwMCIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2ZmZmZmZiIvPjwvbGluZWFyR3JhZGllbnQ+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkaWVudCkiIC8+PC9zdmc+');background-image:url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzAwMDAwMCIvPjxzdG9wIG9mZnNldD0iMyUiIHN0b3AtY29sb3I9IiNmZmE1MDAiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZmZmZmYiLz48L2xpbmVhckdyYWRpZW50PjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9InVybCgjZ3JhZGllbnQpIiAvPjwvc3ZnPg==');background-image:url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIxJSIgc3RvcC1jb2xvcj0iI2M0YzRjNCIvPjxzdG9wIG9mZnNldD0iMyUiIHN0b3AtY29sb3I9IiNmZmE1MDAiLz48c3RvcCBvZmZzZXQ9IjUlIiBzdG9wLWNvbG9yPSIjMDA4MDAwIi8+PHN0b3Agb2Zmc2V0PSI5NSUiIHN0b3AtY29sb3I9IiNmZmZmZmYiLz48L2xpbmVhckdyYWRpZW50PjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9InVybCgjZ3JhZGllbnQpIiAvPjwvc3ZnPg==')}@font-face{font-family:'MyWebFont';src:url(webfont.eot);src:url('webfont.eot?#iefix') format('embedded-opentype'),url('webfont.woff') format('woff'),format('truetype') url('webfont.ttf'),url('webfont.svg#svgFontName') format('svg')}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/variables-in-at-rules.min.css',
+    "@charset \"UTF-8\";@namespace less \"http://lesscss.org\";@keyframes enlarger{from{font-size:12px}to{font-size:15px}}@-webkit-keyframes reducer{from{font-size:13px}to{font-size:10px}}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/variables.min.css',
+    ".variables{width:14cm}.variables{height:24px;color:#888;font-family:\"Trebuchet MS\",Verdana,sans-serif;quotes:\"~\" \"~\"}.redef{zero:0}.redef .inition{three:3}.values{minus-one:-1;font-family:'Trebuchet','Trebuchet','Trebuchet';color:#888 !important;multi:something 'A',B,C,'Trebuchet'}.variable-names{name:'hello'}.alpha{filter:alpha(opacity=42)}.testPollution{a:'no-pollution'}.units{width:1px;same-unit-as-previously:1px;square-pixel-divided:1px;odd-unit:2;percentage:500%;pixels:500px;conversion-metric-a:30mm;conversion-metric-b:3cm;conversion-imperial:3in;custom-unit:420octocats;custom-unit-cancelling:18dogs;mix-units:2px;invalid-units:1px}"
+  );
+
+
+  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/whitespace.min.css',
+    ".whitespace{color:#fff}.whitespace{color:#fff}.whitespace{color:#fff}.whitespace{color:#fff}.whitespace{color:#fff}.white,.space,.mania{color:#fff}.no-semi-column{color:#fff}.no-semi-column{color:#fff;white-space:pre}.no-semi-column{border:2px solid #fff}.newlines{background:the,great,wall;border:2px solid #000}.sel .newline_ws .tab_ws{color:#fff;background-position:45 -23}"
   );
 
 

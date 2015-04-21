@@ -1,6 +1,6 @@
 ﻿<div class="console">
     <style>
-        .contents.docked {
+        .contents {
             padding: 0 !important;
             margin: 0 !important;
         }
@@ -16,28 +16,32 @@
             padding: 6px;
         }
     </style>
-    <div class="dock-tight btn-group btn-group-sm">
-        <a href="./index.html" class="btn btn-default pull-left"><i class="glyphicon glyphicon-chevron-left"></i></a>
-        <div class="btn-group btn-group-sm pull-right">
-            <a href="" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+    <div class="cmd-output dock-fill">
+        <div class="cmd-line" ng-repeat="ln in lines">
+            <span class="text-{{ln.type}}"><i class="glyphicon" title="{{ln.time | date:'hh:mm:ss'}}" ng-class="{ 'glyphicon-chevron-right':ln.type=='info', 'glyphicon-ok-sign':ln.type=='success', 'glyphicon-warning-sign':ln.type=='warning', 'glyphicon-exclamation-sign':ln.type=='error' }"></i> <span class="cmd-text">{{ln.text}}</span></span>
+        </div>
+    </div>
+    <div class="btn-group btn-group-xs" style="position: absolute; bottom: 0; left: 0; right: 0;">
+        <div class="btn-group btn-group-xs pull-left dropup">
+            <a href="" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
                 <i class="glyphicon glyphicon-chevron-right"></i>
-                <span class="caret"></span>
+                {{ myConsole.getProxyName() }}
             </a>
-            <ul class="dropdown-menu" role="menu">
+            <ul class="dropdown-menu dropup" role="menu">
                 <li ng-repeat="itm in myConsole.getProxies()">
                     <a href="" ng-click="myConsole.setProxy(itm.ProxyName)">Switch to {{ itm.ProxyName }}</a>
                 </li>
             </ul>
-        </div>
-        <a href="" class="btn btn-default pull-right" ng-click="myConsole.clear()"><i class="glyphicon glyphicon-trash"></i></a>
-        <div class="input-group input-group-sm">
-            <label for="txtInput" class="input-group-addon">{{ myConsole.getProxyName() }}: </label>
-            <input id="txtInput" type="text" class="cmd-input form-control" tabindex="1" ng-model="txtInput" ng-keypress="($event.which === 13)?myConsole.command(txtInput):0" placeholder="Enter Command Here" />
-        </div>
-    </div>
-    <div class="cmd-output dock-fill">
-        <div class="cmd-line" ng-repeat="ln in lines">
-            <span class="text-{{ln.type}}"><i class="glyphicon" title="{{ln.time | date:'hh:mm:ss'}}" ng-class="{ 'glyphicon-chevron-right':ln.type=='info', 'glyphicon-ok-sign':ln.type=='success', 'glyphicon-warning-sign':ln.type=='warning', 'glyphicon-exclamation-sign':ln.type=='error' }"></i> <span class="cmd-text">{{ln.text}}</span></span>
+        </div>        
+        <div class="input-group input-group-xs">
+            <input id="txtInput" type="text" tabindex="1"
+                   class="form-control"
+                   ng-model="txtInput"
+                   ng-keypress="($event.which === 13)?myConsole.command(txtInput):0"
+                   placeholder="Enter Command Here" />
+            <a href="" class="input-group-addon btn btn-default" ng-click="myConsole.clear()">
+                <i class="glyphicon glyphicon-trash"></i>
+            </a>
         </div>
     </div>
 </div>

@@ -5,33 +5,27 @@ angular.module('prototyped.ng.extended', [
     'prototyped.ng.extended.views',
     'prototyped.ng.extended.styles'
 ]).config([
-    'appConfigProvider', function (appConfigProvider) {
+    'appConfigProvider', 'appStateProvider', function (appConfigProvider, appStateProvider) {
         // Define module configuration
-        appConfigProvider.set({
-            'prototyped.ng.extended': {
-                active: true,
-                hideInBrowserMode: true
-            }
+        appConfigProvider.config('prototyped.ng.extended', {
+            active: true,
+            hideInBrowserMode: true
         });
 
-        var appConfig = appConfigProvider.$get();
-        if (appConfig) {
-            // Define module routes
-            appConfig.routers.push({
-                url: '/extend',
-                priority: 100,
-                menuitem: {
-                    label: 'Extenders',
-                    icon: 'fa fa-flask',
-                    state: 'extended.info'
-                },
-                cardview: {
-                    style: 'img-extended',
-                    title: 'Extended Functionality',
-                    desc: 'Dynamically load and extend features. Inject new modules into the current runtime.'
-                }
-            });
-        }
+        // Define module state
+        appStateProvider.define('/extend', {
+            priority: 100,
+            menuitem: {
+                label: 'Extenders',
+                icon: 'fa fa-flask',
+                state: 'extended.info'
+            },
+            cardview: {
+                style: 'img-extended',
+                title: 'Extended Functionality',
+                desc: 'Dynamically load and extend features. Inject new modules into the current runtime.'
+            }
+        });
     }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
@@ -111,7 +105,7 @@ angular.module('prototyped.ng.extended', [
     '\n' +
     '        }</script></div>');
   $templateCache.put('views/extended/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=proto.cmd><i class=fa ng-class="{ \'fa-refresh glow-blue\': cmd.busy, \'fa-desktop glow-green\': !cmd.busy && appNode.active, \'fa-warning glow-orange\': !cmd.busy && !appNode.active }"></i>&nbsp; Find All Extenders</a></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=proto.cmd><i class=fa ng-class="{ \'fa-refresh glow-blue\': cmd.busy, \'fa-desktop glow-green\': !cmd.busy && appState.node.active, \'fa-warning glow-orange\': !cmd.busy && !appState.node.active }"></i>&nbsp; Find All Extenders</a></li></ul>');
 }]);
 ;angular.module('prototyped.ng.extended.styles', []).run(['$templateCache', function($templateCache) { 
   'use strict';

@@ -1,15 +1,13 @@
-﻿module proto.ng.common {
+﻿module proto.ng.modules.common {
 
     export class AppConfig {
         public version: string;
         public options: AppOptions;
-        public routers: any[];
+        public modules: any = {};
 
         constructor() {
-            this.routers = [];
-            this.options = new AppOptions();
+            this.options = new AppOptions();            
         }
-
     }
 
 }

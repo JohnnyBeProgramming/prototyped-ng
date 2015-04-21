@@ -24,12 +24,10 @@ angular.module('myApp', [
   'myApp.modules',
 ])
 
-    .config(['$stateProvider', 'appConfigProvider', function ($stateProvider, appConfigProvider) {
+    .config(['$stateProvider', 'appStateProvider', function ($stateProvider, appStateProvider) {
 
-        var appConfig = appConfigProvider.$get();
-        if (appConfig) {
-            appConfig.routers.push({
-                url: '/extend-init',
+        appStateProvider
+            .define('/extend-init', {
                 priority: 99999999,
                 cardview: {
                     ready: false,
@@ -39,7 +37,6 @@ angular.module('myApp', [
                     visible: function () {
                         try {
                             var mod = angular.module('prototyped.ng.extended');
-                            console.log(mod);
                             return mod == null;
                         } catch (ex) {
                             return true;
@@ -48,32 +45,30 @@ angular.module('myApp', [
                 },
             });
 
-            $stateProvider
-                .state('extend_init', {
-                    url: '/extend-init',
-                    views: {
-                        'main@': {
-                            controller: function ($http, $state, $injector, appExtended) {
-                                var modExtend = 'prototyped.ng.extended';
-                                var urlExtend = 'assets/lib/' + modExtend + '.js';
-                                if (!$('head > script[src="' + urlExtend + '"]').length) {
+        $stateProvider
+            .state('extend_init', {
+                url: '/extend-init',
+                views: {
+                    'main@': {
+                        controller: function ($http, $state, $injector, appExtended) {
+                            var modExtend = 'prototyped.ng.extended';
+                            var urlExtend = 'assets/lib/' + modExtend + '.js';
+                            if (!$('head > script[src="' + urlExtend + '"]').length) {
 
-                                    // Try to load the module (async, after bootstrap)
-                                    console.log(' - Loading: ' + urlExtend);
-                                    $.getScript(urlExtend, function (data, textStatus, jqxhr) {
-                                        console.debug(' - Loaded: ' + urlExtend + '...');
+                                // Try to load the module (async, after bootstrap)
+                                console.log(' - Loading: ' + urlExtend);
+                                $.getScript(urlExtend, function (data, textStatus, jqxhr) {
+                                    console.debug(' - Loaded: ' + urlExtend + '...');
 
-                                        appExtended.injectModule($injector, modExtend);
+                                    appExtended.injectModule($injector, modExtend);
 
-                                        $state.go('default');
-                                    });
-                                }
-                            },
+                                    $state.go('default');
+                                });
+                            }
                         },
                     },
-                })
-
-        }
+                },
+            })
     }])
 
     .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {

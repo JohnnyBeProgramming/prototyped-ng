@@ -5,33 +5,27 @@ angular.module('prototyped.ng.extended', [
     'prototyped.ng.extended.views',
     'prototyped.ng.extended.styles'
 ]).config([
-    'appConfigProvider', function (appConfigProvider) {
+    'appConfigProvider', 'appStateProvider', function (appConfigProvider, appStateProvider) {
         // Define module configuration
-        appConfigProvider.set({
-            'prototyped.ng.extended': {
-                active: true,
-                hideInBrowserMode: true
-            }
+        appConfigProvider.config('prototyped.ng.extended', {
+            active: true,
+            hideInBrowserMode: true
         });
 
-        var appConfig = appConfigProvider.$get();
-        if (appConfig) {
-            // Define module routes
-            appConfig.routers.push({
-                url: '/extend',
-                priority: 100,
-                menuitem: {
-                    label: 'Extenders',
-                    icon: 'fa fa-flask',
-                    state: 'extended.info'
-                },
-                cardview: {
-                    style: 'img-extended',
-                    title: 'Extended Functionality',
-                    desc: 'Dynamically load and extend features. Inject new modules into the current runtime.'
-                }
-            });
-        }
+        // Define module state
+        appStateProvider.define('/extend', {
+            priority: 100,
+            menuitem: {
+                label: 'Extenders',
+                icon: 'fa fa-flask',
+                state: 'extended.info'
+            },
+            cardview: {
+                style: 'img-extended',
+                title: 'Extended Functionality',
+                desc: 'Dynamically load and extend features. Inject new modules into the current runtime.'
+            }
+        });
     }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states

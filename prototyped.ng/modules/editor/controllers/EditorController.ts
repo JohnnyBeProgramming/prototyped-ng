@@ -1,6 +1,6 @@
 ﻿///<reference path="../../../imports.d.ts"/>
 
-module proto.ng.editor {
+module proto.ng.modules.editor {
 
     export class EditorController {
 

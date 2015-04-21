@@ -53,31 +53,6 @@ body {
         color: #6d6d6d;
     }
 
-    .docked {
-        flex-grow: 1;
-        flex-shrink: 1;
-        display: flex;
-        height: 100%;
-        overflow: none;
-    }
-
-    .dock-tight {
-        flex-grow: 0;
-        flex-shrink: 0;
-    }
-
-    .dock-fill {
-        flex-grow: 1;
-        flex-shrink: 1;
-    }
-
-    .ellipsis {
-        text-wrap: avoid;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-    }
-
     .app-loading {
         .docked;
         text-align: center;
@@ -248,7 +223,7 @@ body {
     .viewport {
         padding: 0;
         margin: 0;
-        position: fixed;
+        position: absolute;
         top: 50px;
         left: 0;
         right: 0;

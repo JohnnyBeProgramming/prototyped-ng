@@ -1,4 +1,4 @@
-﻿module proto.ng.common {
+﻿module proto.ng.modules.common {
 
     export class AppNode {
         public active: boolean;

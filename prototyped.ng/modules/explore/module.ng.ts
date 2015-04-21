@@ -1,12 +1,38 @@
 /// <reference path="../../imports.d.ts" />
 
 angular.module('prototyped.explorer', [
+    'prototyped.ng.runtime',
     'ui.router',
 ])
 
-    .config(['$stateProvider', ($stateProvider) => {
-
-        $stateProvider
+    .config(['appStateProvider', (appStateProvider: proto.ng.modules.common.providers.AppStateProvider) => {
+        // Define application state
+        appStateProvider
+            .define('/explore', {
+                priority: 0,
+                state: {},
+                menuitem: {
+                    label: 'Explore',
+                    state: 'proto.explore',
+                    icon: 'fa fa-cubes',
+                },
+                cardview: {
+                    style: 'img-explore',
+                    title: 'Explore Features & Options',
+                    desc: 'You can explore locally installed features and find your way around the site by clicking on this card...'
+                },
+                visible: () => {
+                    return appStateProvider.appConfig.options.showDefaultItems;
+                },
+                /*
+                children: [
+                    { label: 'Discovery', icon: 'fa fa-refresh', state: 'modules.discover', },
+                    { label: 'Connnect', icon: 'fa fa-gears', state: 'modules.connect', },
+                    { divider: true },
+                    { label: 'Clean & Exit', icon: 'fa fa-recycle', state: 'modules.clear', },
+                ],
+                */
+            })
             .state('proto.explore', {
                 url: '^/explore',
                 views: {
@@ -29,7 +55,7 @@ angular.module('prototyped.explorer', [
                     'left@': { templateUrl: 'views/explore/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/explore/views/index.tpl.html',
-                        controller: 'proto.ng.explorer.ExplorerController',
+                        controller: 'proto.ng.modules.explorer.ExplorerController',
                         controllerAs: 'ctrlExplorer'
                     },
                 }
@@ -37,8 +63,7 @@ angular.module('prototyped.explorer', [
 
     }])
 
-    .service('navigationService', ['$state', '$q', proto.ng.explorer.NavigationService])
-
+    .service('navigationService', ['$state', '$q', proto.ng.modules.explorer.NavigationService])
 
     .directive('protoAddressBar', ['$q', ($q) => {
         return {
@@ -48,22 +73,22 @@ angular.module('prototyped.explorer', [
             },
             transclude: false,
             templateUrl: 'modules/explore/views/addressbar.tpl.html',
-            controller: 'proto.ng.explorer.AddressBarController',
+            controller: 'proto.ng.modules.explorer.AddressBarController',
             controllerAs: 'addrBar'
         };
     }])
-    .controller('proto.ng.explorer.AddressBarController', [
+    .controller('proto.ng.modules.explorer.AddressBarController', [
         '$rootScope',
         '$scope',
         '$q',
-        proto.ng.explorer.AddressBarController
+        proto.ng.modules.explorer.AddressBarController
     ])
 
-    .controller('proto.ng.explorer.ExplorerController', [
+    .controller('proto.ng.modules.explorer.ExplorerController', [
         '$rootScope',
         '$scope',
         '$q',
-        proto.ng.explorer.ExplorerController
+        proto.ng.modules.explorer.ExplorerController
     ])
 
     .controller('ExplorerViewController', [
@@ -71,6 +96,6 @@ angular.module('prototyped.explorer', [
         '$scope',
         '$q',
         'navigationService',
-        proto.ng.explorer.ExplorerViewController
+        proto.ng.modules.explorer.ExplorerViewController
     ])
 

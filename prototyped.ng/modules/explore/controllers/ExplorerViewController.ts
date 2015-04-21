@@ -1,4 +1,4 @@
-﻿module proto.ng.explorer {
+﻿module proto.ng.modules.explorer {
 
     export class ExplorerViewController {
 

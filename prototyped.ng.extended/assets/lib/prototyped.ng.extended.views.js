@@ -6,5 +6,5 @@ angular.module('prototyped.ng.extended.views', []).run(['$templateCache', functi
     '\n' +
     '        }</script></div>');
   $templateCache.put('views/extended/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=proto.cmd><i class=fa ng-class="{ \'fa-refresh glow-blue\': cmd.busy, \'fa-desktop glow-green\': !cmd.busy && appNode.active, \'fa-warning glow-orange\': !cmd.busy && !appNode.active }"></i>&nbsp; Find All Extenders</a></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=proto.cmd><i class=fa ng-class="{ \'fa-refresh glow-blue\': cmd.busy, \'fa-desktop glow-green\': !cmd.busy && appState.node.active, \'fa-warning glow-orange\': !cmd.busy && !appState.node.active }"></i>&nbsp; Find All Extenders</a></li></ul>');
 }]);

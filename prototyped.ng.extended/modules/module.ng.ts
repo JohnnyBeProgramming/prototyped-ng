@@ -10,21 +10,18 @@ angular.module('prototyped.ng.extended', [
 ])
 
 // Extend appConfig with module config
-    .config(['appConfigProvider', function (appConfigProvider) {
+    .config(['appConfigProvider', 'appStateProvider', function (appConfigProvider, appStateProvider) {
 
         // Define module configuration
-        appConfigProvider.set({
-            'prototyped.ng.extended': {
+        appConfigProvider
+            .config('prototyped.ng.extended', {
                 active: true,
                 hideInBrowserMode: true,
-            }
-        });
+            });
 
-        var appConfig = appConfigProvider.$get();
-        if (appConfig) {
-            // Define module routes
-            appConfig.routers.push({
-                url: '/extend',
+        // Define module state
+        appStateProvider
+            .define('/extend', {
                 priority: 100,
                 menuitem: {
                     label: 'Extenders',
@@ -38,7 +35,6 @@ angular.module('prototyped.ng.extended', [
                 },
             });
 
-        }
     }])
 
     .config(['$stateProvider', function ($stateProvider) {
@@ -103,7 +99,7 @@ angular.module('prototyped.ng.extended', [
             angular.extend(context, updates);
         }
     }])
-    
+
     .run(['$templateCache', function ($templateCache) {
         var element = document.head;
         var cssPath = 'assets/css/extended.min.css';

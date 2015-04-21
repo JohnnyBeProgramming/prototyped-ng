@@ -66,6 +66,26 @@
     <TypeScriptCompile Include="modules\common\AppOptions.ts" />
     <TypeScriptCompile Include="modules\common\AppState.ts" />
     <TypeScriptCompile Include="modules\common\AppConfig.ts" />
+    <TypeScriptCompile Include="modules\common\controllers\CardViewController.ts" />
+    <TypeScriptCompile Include="modules\common\directives\AppCleanDirective.ts" />
+    <TypeScriptCompile Include="modules\common\directives\AppCloseDirective.ts" />
+    <TypeScriptCompile Include="modules\common\directives\AppDebugDirective.ts" />
+    <TypeScriptCompile Include="modules\common\directives\AppFullScreenDirective.ts" />
+    <TypeScriptCompile Include="modules\common\directives\AppKioskDirective.ts" />
+    <TypeScriptCompile Include="modules\common\directives\AppVersionDirective.ts" />
+    <TypeScriptCompile Include="modules\common\directives\DomReplaceDirective.ts" />
+    <TypeScriptCompile Include="modules\common\directives\EatClickIfDirective.ts" />
+    <TypeScriptCompile Include="modules\common\directives\ResxImportDirective.ts" />
+    <TypeScriptCompile Include="modules\common\directives\ResxIncludeDirective.ts" />
+    <TypeScriptCompile Include="modules\common\directives\ToHtmlDirective.ts" />
+    <TypeScriptCompile Include="modules\common\filters\ToXmlFilter.ts" />
+    <TypeScriptCompile Include="modules\common\filters\FromNowFilter.ts" />
+    <TypeScriptCompile Include="modules\common\filters\InterpolateFilter.ts" />
+    <TypeScriptCompile Include="modules\common\filters\IsArrayFilter.ts" />
+    <TypeScriptCompile Include="modules\common\filters\ListReverseFilter.ts" />
+    <TypeScriptCompile Include="modules\common\filters\ParseBytesFilter.ts" />
+    <TypeScriptCompile Include="modules\common\filters\ToByteFilter.ts" />
+    <TypeScriptCompile Include="modules\common\filters\TypeCountFilter.ts" />
     <TypeScriptCompile Include="modules\common\providers\AppConfigProvider.ts" />
     <TypeScriptCompile Include="modules\common\providers\AppNodeProvider.ts" />
     <TypeScriptCompile Include="modules\common\providers\AppStateProvider.ts" />
@@ -103,6 +123,7 @@
     <Content Include="views\explore\main.tpl.html" />
     <Content Include="views\explore\left.tpl.html" />
     <Content Include="web.config" />
+    <TypeScriptCompile Include="modules\runtime.ng.ts" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="imports.d.ts" />

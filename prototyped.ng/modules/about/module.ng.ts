@@ -1,22 +1,31 @@
 /// <reference path="../../imports.d.ts" />
 
 angular.module('prototyped.about', [
-// Ensures that templates loaded
+    'prototyped.ng.runtime',
     'prototyped.ng.views',
     'prototyped.ng.styles',
-
-// Other dependencies
-    'ui.router'
 ])
 
-    .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
-
-        // Define redirects
-        $urlRouterProvider
-            .when('/about', '/about/info');
-
-        // Define the UI states
-        $stateProvider
+    .config(['appStateProvider', (appStateProvider: proto.ng.modules.common.providers.AppStateProvider) => {
+        // Define application state
+        appStateProvider
+            .when('/about', '/about/info')
+            .define('/about', {
+                priority: 1000,
+                menuitem: {
+                    label: 'About',
+                    state: 'about.info',
+                    icon: 'fa fa-info-circle',
+                },
+                cardview: {
+                    style: 'img-about',
+                    title: 'About this software',
+                    desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
+                },
+                visible: () => {
+                    return appStateProvider.appConfig.options.showAboutPage;
+                },
+            })
             .state('about', {
                 url: '/about',
                 abstract: true,
@@ -48,7 +57,6 @@ angular.module('prototyped.about', [
                     },
                 }
             })
-
     }])
 
     .controller('AboutInfoController', ['$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
