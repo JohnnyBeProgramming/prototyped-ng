@@ -1753,32 +1753,7 @@ var proto;
 (function (proto) {
     (function (ng) {
         (function (samples) {
-            (function (_errorHandlers) {
-                function ConfigureErrorHandlers(appConfigProvider) {
-                    appConfigProvider.set({
-                        'errorHandlers': proto.ng.samples.errorHandlers.ErrorHandlers
-                    });
-                }
-                _errorHandlers.ConfigureErrorHandlers = ConfigureErrorHandlers;
-
-                function ConfigureGoogle(appConfigProvider) {
-                    appConfigProvider.set({
-                        'googleConfig': {
-                            publicKey: 'UA-61791366-1'
-                        }
-                    });
-                }
-                _errorHandlers.ConfigureGoogle = ConfigureGoogle;
-
-                function ConfigureRaven(appConfigProvider) {
-                    appConfigProvider.set({
-                        'ravenConfig': {
-                            publicKey: 'https://e94eaeaab36f4d14a99e0472e85ba289@app.getsentry.com/36391'
-                        }
-                    });
-                }
-                _errorHandlers.ConfigureRaven = ConfigureRaven;
-
+            (function (errorHandlers) {
                 function ConfigureProviders($provide, $httpProvider) {
                     // Register http error handler
                     $httpProvider.interceptors.push('errorHttpInterceptor');
@@ -1793,7 +1768,7 @@ var proto;
                             return $delegate;
                         }]);
                 }
-                _errorHandlers.ConfigureProviders = ConfigureProviders;
+                errorHandlers.ConfigureProviders = ConfigureProviders;
             })(samples.errorHandlers || (samples.errorHandlers = {}));
             var errorHandlers = samples.errorHandlers;
         })(ng.samples || (ng.samples = {}));
@@ -1811,7 +1786,19 @@ var proto;
 /// <reference path="typings/config.ts" />
 angular.module('prototyped.ng.samples.errorHandlers', [
     'prototyped.ng.config'
-]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureErrorHandlers]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureGoogle]).config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureRaven]).config(['$provide', '$httpProvider', proto.ng.samples.errorHandlers.ConfigureProviders]).config([
+]).config([
+    'appConfigProvider', function (appConfigProvider) {
+        // Configure module
+        appConfigProvider.set({
+            'errorHandlers': proto.ng.samples.errorHandlers.ErrorHandlers,
+            'googleConfig': {
+                publicKey: 'UA-61791366-1'
+            },
+            'ravenConfig': {
+                publicKey: 'https://e94eaeaab36f4d14a99e0472e85ba289@app.getsentry.com/36391'
+            }
+        });
+    }]).config([
     '$stateProvider', function ($stateProvider) {
         // Set up the states
         $stateProvider.state('samples.errors', {
@@ -1824,7 +1811,7 @@ angular.module('prototyped.ng.samples.errorHandlers', [
                 }
             }
         });
-    }]).factory('$exceptionHandler', [
+    }]).config(['$provide', '$httpProvider', proto.ng.samples.errorHandlers.ConfigureProviders]).factory('$exceptionHandler', [
     '$log', 'appNode', function ($log, appNode) {
         var instance = new proto.ng.samples.errorHandlers.ExceptionHandlerFactory($log, appNode);
         return function (exception, cause) {

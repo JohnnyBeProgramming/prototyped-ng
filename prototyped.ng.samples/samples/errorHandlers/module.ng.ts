@@ -10,11 +10,19 @@
 angular.module('prototyped.ng.samples.errorHandlers', [
     'prototyped.ng.config'
 ])
-    .config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureErrorHandlers])
-    .config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureGoogle])
-    .config(['appConfigProvider', proto.ng.samples.errorHandlers.ConfigureRaven])
-    .config(['$provide', '$httpProvider', proto.ng.samples.errorHandlers.ConfigureProviders])
-    .config(['$stateProvider', function ($stateProvider) {
+    .config(['appConfigProvider', (appConfigProvider) => {
+        // Configure module
+        appConfigProvider.set({
+            'errorHandlers': proto.ng.samples.errorHandlers.ErrorHandlers,
+            'googleConfig': {
+                publicKey: 'UA-61791366-1',
+            },
+            'ravenConfig': {
+                publicKey: 'https://e94eaeaab36f4d14a99e0472e85ba289@app.getsentry.com/36391',
+            },
+        });
+    }])
+    .config(['$stateProvider', ($stateProvider) => {
         // Set up the states
         $stateProvider
             .state('samples.errors', {
@@ -28,6 +36,7 @@ angular.module('prototyped.ng.samples.errorHandlers', [
                 }
             })
     }])
+    .config(['$provide', '$httpProvider', proto.ng.samples.errorHandlers.ConfigureProviders])
 
     .factory('$exceptionHandler', ['$log', 'appNode', function ($log, appNode) {
         var instance = new proto.ng.samples.errorHandlers.ExceptionHandlerFactory($log, appNode);

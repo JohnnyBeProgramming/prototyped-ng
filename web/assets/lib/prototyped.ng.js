@@ -473,17 +473,23 @@ var proto;
 (function (proto) {
     (function (ng) {
         (function (common) {
-            var AppNodeProvider = (function () {
-                function AppNodeProvider() {
-                    this.appNode = new AppNode();
+            var AppConfig = (function () {
+                function AppConfig() {
+                    this.routers = [];
+                    this.options = new common.AppOptions();
                 }
-                AppNodeProvider.prototype.$get = function () {
-                    return this.appNode;
-                };
-                return AppNodeProvider;
+                return AppConfig;
             })();
-            common.AppNodeProvider = AppNodeProvider;
-
+            common.AppConfig = AppConfig;
+        })(ng.common || (ng.common = {}));
+        var common = ng.common;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (common) {
             var AppNode = (function () {
                 function AppNode() {
                     this.active = typeof require !== 'undefined';
@@ -566,22 +572,47 @@ var proto;
 (function (proto) {
     (function (ng) {
         (function (common) {
-            var AppStateProvider = (function () {
-                function AppStateProvider($stateProvider, appConfigProvider, appNodeProvider) {
-                    this.$stateProvider = $stateProvider;
-                    this.appConfigProvider = appConfigProvider;
-                    this.appNodeProvider = appNodeProvider;
-                    var appConfig = appConfigProvider.$get();
-                    this.appState = new AppState($stateProvider, appNodeProvider, appConfig);
-                    this.appState.debug = appConfig.debug || false;
+            var AppOptions = (function () {
+                function AppOptions() {
+                    this.showAboutPage = true;
+                    this.showDefaultItems = true;
                 }
-                AppStateProvider.prototype.$get = function () {
-                    return this.appState;
-                };
-                return AppStateProvider;
+                return AppOptions;
             })();
-            common.AppStateProvider = AppStateProvider;
-
+            common.AppOptions = AppOptions;
+        })(ng.common || (ng.common = {}));
+        var common = ng.common;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (common) {
+            (function (providers) {
+                var AppNodeProvider = (function () {
+                    function AppNodeProvider() {
+                        this.appNode = new common.AppNode();
+                    }
+                    AppNodeProvider.prototype.$get = function () {
+                        return this.appNode;
+                    };
+                    return AppNodeProvider;
+                })();
+                providers.AppNodeProvider = AppNodeProvider;
+            })(common.providers || (common.providers = {}));
+            var providers = common.providers;
+        })(ng.common || (ng.common = {}));
+        var common = ng.common;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="../../imports.d.ts" />
+/// <reference path="providers/AppNodeProvider.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (common) {
             var AppState = (function () {
                 /*
                 public show: {
@@ -659,17 +690,55 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (common) {
+            (function (providers) {
+                var AppConfigProvider = (function () {
+                    function AppConfigProvider(defaultAppConfig) {
+                        this.defaultAppConfig = defaultAppConfig;
+                    }
+                    return AppConfigProvider;
+                })();
+                providers.AppConfigProvider = AppConfigProvider;
+            })(common.providers || (common.providers = {}));
+            var providers = common.providers;
+        })(ng.common || (ng.common = {}));
+        var common = ng.common;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (common) {
+            (function (providers) {
+                var AppStateProvider = (function () {
+                    function AppStateProvider($stateProvider, appConfigProvider, appNodeProvider) {
+                        this.$stateProvider = $stateProvider;
+                        this.appConfigProvider = appConfigProvider;
+                        this.appNodeProvider = appNodeProvider;
+                        var appConfig = appConfigProvider.$get();
+                        this.appState = new common.AppState($stateProvider, appNodeProvider, appConfig);
+                        this.appState.debug = appConfig.debug || false;
+                    }
+                    AppStateProvider.prototype.$get = function () {
+                        return this.appState;
+                    };
+                    return AppStateProvider;
+                })();
+                providers.AppStateProvider = AppStateProvider;
+            })(common.providers || (common.providers = {}));
+            var providers = common.providers;
+        })(ng.common || (ng.common = {}));
+        var common = ng.common;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../imports.d.ts" />
 // Constant object with default values
-angular.module('prototyped.ng.config', []).constant('appDefaultConfig', {
-    version: '0.0.1',
-    routers: [],
-    options: {
-        debug: false,
-        showAboutPage: true,
-        showDefaultItems: true
-    }
-}).provider('appConfig', [
+angular.module('prototyped.ng.config', []).constant('appDefaultConfig', new proto.ng.common.AppConfig()).provider('appConfig', [
     'appDefaultConfig', function (appDefaultConfig) {
         var config = appDefaultConfig;
         return {
@@ -1968,7 +2037,7 @@ angular.module('prototyped.ng', [
             });
         };
     }]).directive('appVersion', [
-    'appConfig', 'appNode', function (appConfig, appNode) {
+    'appState', 'appNode', function (appState) {
         function getVersionInfo(ident) {
             try  {
                 if (typeof process !== 'undefined' && process.versions) {
@@ -1983,7 +2052,7 @@ angular.module('prototyped.ng', [
             var targ = attrs['appVersion'];
             var val = null;
             if (!targ) {
-                val = appConfig.version;
+                val = appState.version;
             } else
                 switch (targ) {
                     case 'angular':
@@ -2008,9 +2077,9 @@ angular.module('prototyped.ng', [
             }
         };
     }]).filter('interpolate', [
-    'appNode', function (appNode) {
+    'appState', function (appState) {
         return function (text) {
-            return String(text).replace(/\%VERSION\%/mg, appNode.version);
+            return String(text).replace(/\%VERSION\%/mg, appState.version);
         };
     }]).filter('fromNow', [
     '$filter', function ($filter) {

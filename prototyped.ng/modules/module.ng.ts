@@ -43,7 +43,6 @@ angular.module('prototyped.ng', [
                     desc: 'You can explore locally installed features and find your way around the site by clicking on this card...'
                 },
                 visible: function () {
-
                     return appConfig.options.showDefaultItems;
                 },
                 children: [
@@ -101,9 +100,8 @@ angular.module('prototyped.ng', [
             })
     }])
 
-    .provider('appNode', [proto.ng.common.AppNodeProvider])
-
-    .provider('appState', ['$stateProvider', 'appConfigProvider', 'appNodeProvider', proto.ng.common.AppStateProvider])
+    .provider('appNode', [proto.ng.common.providers.AppNodeProvider])
+    .provider('appState', ['$stateProvider', 'appConfigProvider', 'appNodeProvider', proto.ng.common.providers.AppStateProvider])
 
     .controller('CardViewCtrl', ['$scope', 'appConfig', function ($scope, appConfig) {
         // Make sure 'mySiteMap' exists
@@ -227,7 +225,7 @@ angular.module('prototyped.ng', [
         };
     }])
 
-    .directive('appVersion', ['appConfig', 'appNode', function (appConfig, appNode) {
+    .directive('appVersion', ['appState', function (appState: proto.ng.common.AppState) {
 
         function getVersionInfo(ident) {
             try {
@@ -242,7 +240,7 @@ angular.module('prototyped.ng', [
             var targ = attrs['appVersion'];
             var val = null;
             if (!targ) {
-                val = appConfig.version;
+                val = appState.version;
             } else switch (targ) {
                 case 'angular':
                     val = angular.version.full;
@@ -267,9 +265,9 @@ angular.module('prototyped.ng', [
         };
     }])
 
-    .filter('interpolate', ['appNode', function (appNode) {
+    .filter('interpolate', ['appState', function (appState: proto.ng.common.AppState) {
         return function (text) {
-            return String(text).replace(/\%VERSION\%/mg, appNode.version);
+            return String(text).replace(/\%VERSION\%/mg, appState.version);
         };
     }])
     .filter('fromNow', ['$filter', function ($filter) {

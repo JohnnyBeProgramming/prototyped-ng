@@ -1,17 +1,5 @@
 ﻿module proto.ng.common {
 
-    export class AppNodeProvider {
-        public appNode: AppNode;
-
-        constructor() {
-            this.appNode = new AppNode();
-        }
-
-        public $get(): AppNode {
-            return this.appNode;
-        }
-    }
-
     export class AppNode {
         public active: boolean;
 

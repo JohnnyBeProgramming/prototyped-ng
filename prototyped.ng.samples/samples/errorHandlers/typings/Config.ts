@@ -4,28 +4,6 @@
 
 module proto.ng.samples.errorHandlers {
 
-    export function ConfigureErrorHandlers(appConfigProvider) {
-        appConfigProvider.set({
-            'errorHandlers': proto.ng.samples.errorHandlers.ErrorHandlers,
-        });
-    }
-
-    export function ConfigureGoogle(appConfigProvider) {
-        appConfigProvider.set({
-            'googleConfig': {
-                publicKey: 'UA-61791366-1',
-            },
-        });
-    }
-
-    export function ConfigureRaven(appConfigProvider) {
-        appConfigProvider.set({
-            'ravenConfig': {
-                publicKey: 'https://e94eaeaab36f4d14a99e0472e85ba289@app.getsentry.com/36391',
-            },
-        });
-    }
-
     export function ConfigureProviders($provide, $httpProvider) {
 
         // Register http error handler

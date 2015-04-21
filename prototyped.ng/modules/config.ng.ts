@@ -1,17 +1,8 @@
 ﻿/// <reference path="../imports.d.ts" />
 
-
 // Constant object with default values
 angular.module('prototyped.ng.config', [])
-    .constant('appDefaultConfig', {
-        version: '0.0.1',
-        routers: [],
-        options: {
-            debug: false,
-            showAboutPage: true,
-            showDefaultItems: true,
-        },
-    })
+    .constant('appDefaultConfig', new proto.ng.common.AppConfig())
     .provider('appConfig', ['appDefaultConfig', function (appDefaultConfig) {
         var config = appDefaultConfig;
         return {
@@ -74,7 +65,6 @@ angular.module('prototyped.ng.config', [])
                 console.debug('Starting app ' + ngTargetApp + '...');
                 angular.bootstrap(elem, [ngTargetApp]);
             }
-
         }
     })
  

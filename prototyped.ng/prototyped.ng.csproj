@@ -63,7 +63,12 @@
     <Content Include="builder\Gruntfile.js" />
     <Content Include="index.html" />
     <TypeScriptCompile Include="modules\common\AppNode.ts" />
+    <TypeScriptCompile Include="modules\common\AppOptions.ts" />
     <TypeScriptCompile Include="modules\common\AppState.ts" />
+    <TypeScriptCompile Include="modules\common\AppConfig.ts" />
+    <TypeScriptCompile Include="modules\common\providers\AppConfigProvider.ts" />
+    <TypeScriptCompile Include="modules\common\providers\AppNodeProvider.ts" />
+    <TypeScriptCompile Include="modules\common\providers\AppStateProvider.ts" />
     <TypeScriptCompile Include="modules\config.ng.ts" />
     <TypeScriptCompile Include="modules\console\controllers\ConsoleController.ts" />
     <TypeScriptCompile Include="modules\console\module.ng.ts" />
