@@ -10,9 +10,9 @@ angular.module('prototyped.editor', [
         // Define the UI states
         $stateProvider
             .state('proto.editor', {
-                url: '/editor',
+                url: '^/editor',
                 views: {
-                    'left@': { templateUrl: 'views/common/components/left.tpl.html' },
+                    //'left@': { templateUrl: 'views/common/components/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/editor/views/main.tpl.html',
                         controller: 'proto.ng.modules.editor.EditorController',

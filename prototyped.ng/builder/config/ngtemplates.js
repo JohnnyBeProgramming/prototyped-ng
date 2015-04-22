@@ -59,7 +59,8 @@ module.exports = {
         },
         src: [
             '<%= cfg.base %>**/**.min.css',
-            '!<%= cfg.base %>node_modules/**',
+            '!<%= cfg.base %>**/builder/**',
+            '!<%= cfg.base %>**/node_modules/**',
         ],
         dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.styles.js',
         module: '<%= cfg.mod %>.styles',
