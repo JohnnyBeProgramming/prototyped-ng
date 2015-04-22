@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0.3",
+    "version": "1.0.3",
     "name": "Prototyped",
     "author": "author",
     "private": true,
@@ -24,6 +24,6 @@
         "plugin": false,
         "page-cache": false
     },
-    "node-remote": "<local>", // "https://*"
+    "node-remote": "<local>",
     "chromium-args": "--child-clean-exit"
 }

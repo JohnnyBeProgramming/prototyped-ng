@@ -22,7 +22,7 @@
                 ng-class="{ 'text-info inactive-gray':row.type=='debug', 'text-info':row.type=='info', 'text-warning glow-orange':row.type=='warn', 'text-danger glow-red':row.type=='error' }">
                 <td>{{ row.time | date:'hh:mm:ss' }}</td>
                 <td>{{ row.type }}</td>
-                <td class="ellipsis" style="width: auto; overflow: hidden">
+                <td class="ellipsis" style="width: auto; overflow: hidden; white-space: pre;">
                     {{ row.desc }}
                 </td>
             </tr>

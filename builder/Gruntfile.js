@@ -37,8 +37,8 @@ module.exports = function (grunt) {
         //'copy:destination',
     ]);
     grunt.registerTask('build-styles', [
-        //'less',
-        //'cssmin'
+        'less',
+        'cssmin'
     ]);
     grunt.registerTask('build-scripts', [
         'html2js',
