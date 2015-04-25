@@ -37,13 +37,12 @@ angular.module('prototyped.explorer', [
                 url: '^/explore',
                 views: {
                     'left@': {
-                        templateUrl: 'views/explore/left.tpl.html',
-                        controller: ['$scope', 'navigationService', function ($scope, navigationService) {
-                            $scope.navigation = navigationService;
-                        }],
+                        templateUrl: 'modules/explore/views/left.tpl.html',
+                        controller: 'ExplorerLeftController',                        
+                        controllerAs: 'exploreLeftCtrl',
                     },
                     'main@': {
-                        templateUrl: 'views/explore/main.tpl.html',
+                        templateUrl: 'modules/explore/views/main.tpl.html',
                         controller: 'ExplorerViewController',
                         controllerAs: 'exploreCtrl',
                     },
@@ -52,11 +51,27 @@ angular.module('prototyped.explorer', [
             .state('proto.browser', {
                 url: '^/browser',
                 views: {
-                    'left@': { templateUrl: 'views/explore/left.tpl.html' },
+                    'left@': { templateUrl: 'modules/explore/views/left.tpl.html' },
                     'main@': {
                         templateUrl: 'modules/explore/views/index.tpl.html',
                         controller: 'proto.ng.modules.explorer.ExplorerController',
                         controllerAs: 'ctrlExplorer'
+                    },
+                }
+            })
+            .state('proto.routing', {
+                url: '^/routing',
+                views: {
+                    'left@': {
+                        templateUrl: 'modules/explore/views/left.tpl.html',
+                        controller: ['$scope', 'navigationService', function ($scope, navigationService) {
+                            $scope.navigation = navigationService;
+                        }],
+                    },
+                    'main@': {
+                        templateUrl: 'modules/explore/views/main.tpl.html',
+                        controller: 'ExplorerViewController',
+                        controllerAs: 'exploreCtrl',
                     },
                 }
             })
@@ -65,37 +80,23 @@ angular.module('prototyped.explorer', [
 
     .service('navigationService', ['$state', '$q', proto.ng.modules.explorer.NavigationService])
 
-    .directive('protoAddressBar', ['$q', ($q) => {
-        return {
-            restrict: 'EA',
-            scope: {
-                target: '=protoAddressBar'
-            },
-            transclude: false,
-            templateUrl: 'modules/explore/views/addressbar.tpl.html',
-            controller: 'proto.ng.modules.explorer.AddressBarController',
-            controllerAs: 'addrBar'
-        };
-    }])
-    .controller('proto.ng.modules.explorer.AddressBarController', [
-        '$rootScope',
-        '$scope',
-        '$q',
-        proto.ng.modules.explorer.AddressBarController
+    .directive('protoAddressBar', ['$q',
+        //proto.ng.modules.explorer.AddressBarDirective
+        function ($q) {
+            return {
+                restrict: 'EA',
+                scope: {
+                    target: '=protoAddressBar'
+                },
+                transclude: false,
+                templateUrl: 'modules/explore/views/addressbar.tpl.html',
+                controller: 'proto.ng.modules.explorer.AddressBarController',
+                controllerAs: 'addrBar'
+            }
+        }
     ])
 
-    .controller('proto.ng.modules.explorer.ExplorerController', [
-        '$rootScope',
-        '$scope',
-        '$q',
-        proto.ng.modules.explorer.ExplorerController
-    ])
-
-    .controller('ExplorerViewController', [
-        '$rootScope',
-        '$scope',
-        '$q',
-        'navigationService',
-        proto.ng.modules.explorer.ExplorerViewController
-    ])
-
+    .controller('proto.ng.modules.explorer.AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController])
+    .controller('proto.ng.modules.explorer.ExplorerController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.ExplorerController])
+    .controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController])
+    .controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController])

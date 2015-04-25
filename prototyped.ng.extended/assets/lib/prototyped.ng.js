@@ -1,506 +1,3 @@
-/// <reference path="../../imports.d.ts" />
-angular.module('prototyped.about', [
-    'prototyped.ng.runtime',
-    'prototyped.ng.views',
-    'prototyped.ng.styles'
-]).config([
-    'appStateProvider', function (appStateProvider) {
-        // Define application state
-        appStateProvider.when('/about', '/about/info').define('/about', {
-            priority: 1000,
-            menuitem: {
-                label: 'About',
-                state: 'about.info',
-                icon: 'fa fa-info-circle'
-            },
-            cardview: {
-                style: 'img-about',
-                title: 'About this software',
-                desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
-            },
-            visible: function () {
-                return appStateProvider.appConfig.options.showAboutPage;
-            }
-        }).state('about', {
-            url: '/about',
-            abstract: true
-        }).state('about.info', {
-            url: '/info',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/about/info.tpl.html',
-                    controller: 'AboutInfoController'
-                }
-            }
-        }).state('about.online', {
-            url: '^/contact',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': { templateUrl: 'views/about/contact.tpl.html' }
-            }
-        }).state('about.conection', {
-            url: '/conection',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/about/connections.tpl.html',
-                    controller: 'AboutConnectionController'
-                }
-            }
-        });
-    }]).controller('AboutInfoController', [
-    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
-        function css(a) {
-            var sheets = document.styleSheets, o = [];
-            for (var i in sheets) {
-                var rules = sheets[i].rules || sheets[i].cssRules;
-                for (var r in rules) {
-                    if (a.is(rules[r].selectorText)) {
-                        o.push(rules[r].selectorText);
-                    }
-                }
-            }
-            return o;
-        }
-
-        function selectorExists(selector) {
-            return false;
-            //var ret = css($(selector));
-            //return ret;
-        }
-
-        function getVersionInfo(ident) {
-            try  {
-                if (typeof process !== 'undefined' && process.versions) {
-                    return process.versions[ident];
-                }
-            } catch (ex) {
-            }
-            return null;
-        }
-
-        // Define a function to detect the capabilities
-        $scope.detectBrowserInfo = function () {
-            var info = {
-                about: null,
-                versions: {
-                    ie: null,
-                    html: null,
-                    jqry: null,
-                    css: null,
-                    js: null,
-                    ng: null,
-                    nw: null,
-                    njs: null,
-                    v8: null,
-                    openssl: null,
-                    chromium: null
-                },
-                detects: {
-                    jqry: false,
-                    less: false,
-                    bootstrap: false,
-                    ngAnimate: false,
-                    ngUiRouter: false,
-                    ngUiUtils: false,
-                    ngUiBootstrap: false
-                },
-                css: {
-                    boostrap2: null,
-                    boostrap3: null
-                },
-                codeName: navigator.appCodeName,
-                userAgent: navigator.userAgent
-            };
-
-            try  {
-                // Get IE version (if defined)
-                if (!!window['ActiveXObject']) {
-                    info.versions.ie = 10;
-                }
-
-                // Sanitize codeName and userAgentt
-                var cn = info.codeName;
-                var ua = info.userAgent;
-                if (ua) {
-                    // Remove start of string in UAgent upto CName or end of string if not found.
-                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
-
-                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
-                    ua = ua.substring(cn.length);
-
-                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
-                        ua = ua.substring(1);
-                    }
-
-                    // Remove the end of the string from first characrer that is not a number or point etc.
-                    var pointer = 0;
-                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
-                        pointer = pointer + 1;
-                    }
-                    ua = ua.substring(0, pointer);
-
-                    if (!window.isNaN(ua)) {
-                        if (parseInt(ua) > 0) {
-                            info.versions.html = ua;
-                        }
-                        if (parseFloat(ua) >= 5) {
-                            info.versions.css = '3.x';
-                            info.versions.js = '5.x';
-                        }
-                    }
-                }
-                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
-                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
-                info.versions.nw = getVersionInfo('node-webkit');
-                info.versions.njs = getVersionInfo('node');
-                info.versions.v8 = getVersionInfo('v8');
-                info.versions.openssl = getVersionInfo('openssl');
-                info.versions.chromium = getVersionInfo('chromium');
-
-                // Check for CSS extensions
-                info.css.boostrap2 = selectorExists('hero-unit');
-                info.css.boostrap3 = selectorExists('jumbotron');
-
-                // Detect selected features and availability
-                info.about = {
-                    protocol: $location.$$protocol,
-                    browser: {},
-                    server: {
-                        active: undefined,
-                        url: $location.$$absUrl
-                    },
-                    os: {},
-                    hdd: { type: null }
-                };
-
-                // Detect the operating system
-                var osName = 'Unknown OS';
-                var appVer = navigator.appVersion;
-                if (appVer) {
-                    if (appVer.indexOf("Win") != -1)
-                        osName = 'Windows';
-                    if (appVer.indexOf("Mac") != -1)
-                        osName = 'MacOS';
-                    if (appVer.indexOf("X11") != -1)
-                        osName = 'UNIX';
-                    if (appVer.indexOf("Linux") != -1)
-                        osName = 'Linux';
-                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
-                }
-                info.about.os.name = osName;
-
-                // Check for jQuery
-                info.detects.jqry = typeof jQuery !== 'undefined';
-
-                // Check for general header and body scripts
-                $("script").each(function () {
-                    var src = $(this).attr("src");
-                    if (src) {
-                        // Fast check on known script names
-                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
-                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
-                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
-                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
-                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
-                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
-                    }
-                });
-
-                // Get the client browser details (build a url string)
-                var detectUrl = (function () {
-                    var p = [], w = window, d = document, e = 0, f = 0;
-                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
-                    e |= w.ActiveXObject ? 1 : 0;
-                    e |= w.opera ? 2 : 0;
-                    e |= w.chrome ? 4 : 0;
-                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
-                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
-                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
-                    p.push('e=' + e);
-                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
-                    f |= 'WebSocket' in w ? 2 : 0;
-                    f |= w.Worker ? 4 : 0;
-                    f |= w.applicationCache ? 8 : 0;
-                    f |= w.history && history.pushState ? 16 : 0;
-                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
-                    f |= 'FileReader' in w ? 64 : 0;
-                    p.push('f=' + f);
-                    p.push('r=' + Math.random().toString(36).substring(7));
-                    p.push('w=' + screen.width);
-                    p.push('h=' + screen.height);
-                    var s = d.createElement('script');
-                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
-                })();
-
-                // Send a loaded package to a server to detect more features
-                $.getScript(detectUrl).done(function (script, textStatus) {
-                    $rootScope.$applyAsync(function () {
-                        // Browser info and details loaded
-                        var browserInfo = new window.WhichBrowser();
-                        angular.extend(info.about, browserInfo);
-                    });
-                }).fail(function (jqxhr, settings, exception) {
-                    console.error(exception);
-                });
-
-                // Set browser name to IE (if defined)
-                if (navigator.appName == 'Microsoft Internet Explorer') {
-                    info.about.browser.name = 'Internet Explorer';
-                }
-
-                // Check if the browser supports web db's
-                var webDB = info.about.webdb = {
-                    db: null,
-                    version: '1',
-                    active: null,
-                    size: 5 * 1024 * 1024,
-                    test: function (name, desc, dbVer, dbSize) {
-                        try  {
-                            // Try and open a web db
-                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
-                            webDB.onSuccess(null, null);
-                        } catch (ex) {
-                            // Nope, something went wrong
-                            webDB.onError(null, null);
-                        }
-                    },
-                    onSuccess: function (tx, r) {
-                        if (tx) {
-                            if (r) {
-                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
-                            }
-                            if (tx) {
-                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
-                            }
-                        }
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = true;
-                            webDB.used = JSON.stringify(webDB.db).length;
-                        });
-                    },
-                    onError: function (tx, e) {
-                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = false;
-                        });
-                    }
-                };
-                info.about.webdb.test();
-            } catch (ex) {
-                console.error(ex);
-            }
-
-            // Return the preliminary info
-            return info;
-        };
-
-        // Define the state
-        $scope.info = $scope.detectBrowserInfo();
-    }]).controller('AboutConnectionController', [
-    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
-        $scope.result = null;
-        $scope.status = null;
-        $scope.state = {
-            editMode: false,
-            location: $location.$$absUrl,
-            protocol: $location.$$protocol,
-            requireHttps: ($location.$$protocol == 'https')
-        };
-        $scope.detect = function () {
-            var target = $scope.state.location;
-            var started = Date.now();
-            $scope.result = null;
-            $scope.latency = null;
-            $scope.status = { code: 0, desc: '', style: 'label-default' };
-            $.ajax({
-                url: target,
-                crossDomain: true,
-                /*
-                username: 'user',
-                password: 'pass',
-                xhrFields: {
-                withCredentials: true
-                }
-                */
-                beforeSend: function (xhr) {
-                    $timeout(function () {
-                        //$scope.status.code = xhr.status;
-                        $scope.status.desc = 'sending';
-                        $scope.status.style = 'label-info';
-                    });
-                },
-                success: function (data, textStatus, xhr) {
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-success';
-                        $scope.result = {
-                            valid: true,
-                            info: data,
-                            sent: started,
-                            received: Date.now()
-                        };
-                    });
-                },
-                error: function (xhr, textStatus, error) {
-                    xhr.ex = error;
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-danger';
-                        $scope.result = {
-                            valid: false,
-                            info: xhr,
-                            sent: started,
-                            error: xhr.statusText,
-                            received: Date.now()
-                        };
-                    });
-                },
-                complete: function (xhr, textStatus) {
-                    console.debug(' - Status Code: ' + xhr.status);
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                    });
-                }
-            }).always(function (xhr) {
-                $timeout(function () {
-                    $scope.latency = $scope.getLatencyInfo();
-                });
-            });
-        };
-        $scope.setProtocol = function (protocol) {
-            var val = $scope.state.location;
-            var pos = val.indexOf('://');
-            if (pos > 0) {
-                val = protocol + val.substring(pos);
-            }
-            $scope.state.protocol = protocol;
-            $scope.state.location = val;
-            $scope.detect();
-        };
-        $scope.getProtocolStyle = function (protocol, activeStyle) {
-            var cssRes = '';
-            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
-            if (isValid) {
-                if (!$scope.result) {
-                    cssRes += 'btn-primary';
-                } else if ($scope.result.valid && activeStyle) {
-                    cssRes += activeStyle;
-                } else if ($scope.result) {
-                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
-                }
-            }
-            return cssRes;
-        };
-        $scope.getStatusIcon = function (activeStyle) {
-            var cssRes = '';
-            if (!$scope.result) {
-                cssRes += 'glyphicon-refresh';
-            } else if (activeStyle && $scope.result.valid) {
-                cssRes += activeStyle;
-            } else {
-                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
-            }
-            return cssRes;
-        };
-        $scope.submitForm = function () {
-            $scope.state.editMode = false;
-            if ($scope.state.requireHttps) {
-                $scope.setProtocol('https');
-            } else {
-                $scope.detect();
-            }
-        };
-        $scope.getStatusColor = function () {
-            var cssRes = $scope.getStatusIcon() + ' ';
-            if (!$scope.result) {
-                cssRes += 'busy';
-            } else if ($scope.result.valid) {
-                cssRes += 'success';
-            } else {
-                cssRes += 'error';
-            }
-            return cssRes;
-        };
-        $scope.getLatencyInfo = function () {
-            var cssNone = 'text-muted';
-            var cssHigh = 'text-success';
-            var cssMedium = 'text-warning';
-            var cssLow = 'text-danger';
-            var info = {
-                desc: '',
-                style: cssNone
-            };
-
-            if (!$scope.result) {
-                return info;
-            }
-
-            if (!$scope.result.valid) {
-                info.style = 'text-muted';
-                info.desc = 'Connection Failed';
-                return info;
-            }
-
-            var totalMs = $scope.result.received - $scope.result.sent;
-            if (totalMs > 2 * 60 * 1000) {
-                info.style = cssNone;
-                info.desc = 'Timed out';
-            } else if (totalMs > 1 * 60 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Impossibly slow';
-            } else if (totalMs > 30 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Very slow';
-            } else if (totalMs > 1 * 1000) {
-                info.style = cssMedium;
-                info.desc = 'Relatively slow';
-            } else if (totalMs > 500) {
-                info.style = cssMedium;
-                info.desc = 'Moderately slow';
-            } else if (totalMs > 250) {
-                info.style = cssMedium;
-                info.desc = 'Barely Responsive';
-            } else if (totalMs > 150) {
-                info.style = cssHigh;
-                info.desc = 'Average Response Time';
-            } else if (totalMs > 50) {
-                info.style = cssHigh;
-                info.desc = 'Responsive Enough';
-            } else if (totalMs > 15) {
-                info.style = cssHigh;
-                info.desc = 'Very Responsive';
-            } else {
-                info.style = cssHigh;
-                info.desc = 'Optimal';
-            }
-            return info;
-        };
-    }]);
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (common) {
-                var AppConfig = (function () {
-                    function AppConfig() {
-                        this.modules = {};
-                        this.options = new common.AppOptions();
-                    }
-                    return AppConfig;
-                })();
-                common.AppConfig = AppConfig;
-            })(modules.common || (modules.common = {}));
-            var common = modules.common;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
 var proto;
 (function (proto) {
     (function (ng) {
@@ -719,6 +216,26 @@ var proto;
                     return AppState;
                 })();
                 common.AppState = AppState;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                var AppConfig = (function () {
+                    function AppConfig() {
+                        this.modules = {};
+                        this.options = new common.AppOptions();
+                    }
+                    return AppConfig;
+                })();
+                common.AppConfig = AppConfig;
             })(modules.common || (modules.common = {}));
             var common = modules.common;
         })(ng.modules || (ng.modules = {}));
@@ -1206,6 +723,75 @@ var proto;
         (function (modules) {
             (function (common) {
                 (function (filters) {
+                    function ToXmlFilter($parse, $rootScope) {
+                        function toXmlString(name, input, expanded, childExpanded) {
+                            var val = '';
+                            var sep = '';
+                            var attr = '';
+                            if ($.isArray(input)) {
+                                if (expanded) {
+                                    for (var i = 0; i < input.length; i++) {
+                                        val += toXmlString(null, input[i], childExpanded);
+                                    }
+                                } else {
+                                    name = 'Array';
+                                    attr += sep + ' length="' + input.length + '"';
+                                    val = 'Array[' + input.length + ']';
+                                }
+                            } else if ($.isPlainObject(input)) {
+                                if (expanded) {
+                                    for (var id in input) {
+                                        if (input.hasOwnProperty(id)) {
+                                            var child = input[id];
+                                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                                val = toXmlString(id, child, childExpanded);
+                                            } else {
+                                                sep = ' ';
+                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    name = 'Object';
+                                    for (var id in input) {
+                                        if (input.hasOwnProperty(id)) {
+                                            var child = input[id];
+                                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                                val += toXmlString(id, child, childExpanded);
+                                            } else {
+                                                sep = ' ';
+                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                            }
+                                        }
+                                    }
+                                    //val = 'Object[ ' + JSON.stringify(input) + ' ]';
+                                }
+                            }
+                            if (name) {
+                                val = '<' + name + '' + attr + '>' + val + '</' + name + '>';
+                            }
+                            return val;
+                        }
+                        return function (input, rootName) {
+                            return toXmlString(rootName || 'xml', input, true);
+                        };
+                    }
+                    filters.ToXmlFilter = ToXmlFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
                     function FromNowFilter($filter) {
                         return function (dateString, format) {
                             try  {
@@ -1365,75 +951,6 @@ var proto;
                         };
                     }
                     filters.ToByteFilter = ToByteFilter;
-                })(common.filters || (common.filters = {}));
-                var filters = common.filters;
-            })(modules.common || (modules.common = {}));
-            var common = modules.common;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (common) {
-                (function (filters) {
-                    function ToXmlFilter($parse, $rootScope) {
-                        function toXmlString(name, input, expanded, childExpanded) {
-                            var val = '';
-                            var sep = '';
-                            var attr = '';
-                            if ($.isArray(input)) {
-                                if (expanded) {
-                                    for (var i = 0; i < input.length; i++) {
-                                        val += toXmlString(null, input[i], childExpanded);
-                                    }
-                                } else {
-                                    name = 'Array';
-                                    attr += sep + ' length="' + input.length + '"';
-                                    val = 'Array[' + input.length + ']';
-                                }
-                            } else if ($.isPlainObject(input)) {
-                                if (expanded) {
-                                    for (var id in input) {
-                                        if (input.hasOwnProperty(id)) {
-                                            var child = input[id];
-                                            if ($.isArray(child) || $.isPlainObject(child)) {
-                                                val = toXmlString(id, child, childExpanded);
-                                            } else {
-                                                sep = ' ';
-                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    name = 'Object';
-                                    for (var id in input) {
-                                        if (input.hasOwnProperty(id)) {
-                                            var child = input[id];
-                                            if ($.isArray(child) || $.isPlainObject(child)) {
-                                                val += toXmlString(id, child, childExpanded);
-                                            } else {
-                                                sep = ' ';
-                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
-                                            }
-                                        }
-                                    }
-                                    //val = 'Object[ ' + JSON.stringify(input) + ' ]';
-                                }
-                            }
-                            if (name) {
-                                val = '<' + name + '' + attr + '>' + val + '</' + name + '>';
-                            }
-                            return val;
-                        }
-                        return function (input, rootName) {
-                            return toXmlString(rootName || 'xml', input, true);
-                        };
-                    }
-                    filters.ToXmlFilter = ToXmlFilter;
                 })(common.filters || (common.filters = {}));
                 var filters = common.filters;
             })(modules.common || (modules.common = {}));
@@ -2154,9 +1671,9 @@ angular.module('prototyped.editor', [
     '$stateProvider', function ($stateProvider) {
         // Define the UI states
         $stateProvider.state('proto.editor', {
-            url: '/editor',
+            url: '^/editor',
             views: {
-                'left@': { templateUrl: 'views/common/components/left.tpl.html' },
+                //'left@': { templateUrl: 'views/common/components/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/editor/views/main.tpl.html',
                     controller: 'proto.ng.modules.editor.EditorController'
@@ -2647,14 +2164,14 @@ angular.module('prototyped.explorer', [
             url: '^/explore',
             views: {
                 'left@': {
-                    templateUrl: 'views/explore/left.tpl.html',
+                    templateUrl: 'modules/explore/views/left.tpl.html',
                     controller: [
                         '$scope', 'navigationService', function ($scope, navigationService) {
                             $scope.navigation = navigationService;
                         }]
                 },
                 'main@': {
-                    templateUrl: 'views/explore/main.tpl.html',
+                    templateUrl: 'modules/explore/views/main.tpl.html',
                     controller: 'ExplorerViewController',
                     controllerAs: 'exploreCtrl'
                 }
@@ -2662,11 +2179,27 @@ angular.module('prototyped.explorer', [
         }).state('proto.browser', {
             url: '^/browser',
             views: {
-                'left@': { templateUrl: 'views/explore/left.tpl.html' },
+                'left@': { templateUrl: 'modules/explore/views/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/explore/views/index.tpl.html',
                     controller: 'proto.ng.modules.explorer.ExplorerController',
                     controllerAs: 'ctrlExplorer'
+                }
+            }
+        }).state('proto.routing', {
+            url: '^/routing',
+            views: {
+                'left@': {
+                    templateUrl: 'modules/explore/views/left.tpl.html',
+                    controller: [
+                        '$scope', 'navigationService', function ($scope, navigationService) {
+                            $scope.navigation = navigationService;
+                        }]
+                },
+                'main@': {
+                    templateUrl: 'modules/explore/views/main.tpl.html',
+                    controller: 'ExplorerViewController',
+                    controllerAs: 'exploreCtrl'
                 }
             }
         });
@@ -2699,6 +2232,504 @@ angular.module('prototyped.explorer', [
     'navigationService',
     proto.ng.modules.explorer.ExplorerViewController
 ]);
+/// <reference path="../imports.d.ts" />
+/// <reference path="config.ng.ts" />
+// Define common runtime modules (shared)
+angular.module('prototyped.ng.runtime', [
+    'prototyped.ng.config',
+    'ui.router'
+]).provider('appNode', [
+    proto.ng.modules.common.providers.AppNodeProvider
+]).provider('appState', [
+    '$stateProvider',
+    '$urlRouterProvider',
+    'appConfigProvider',
+    'appNodeProvider',
+    proto.ng.modules.common.providers.AppStateProvider
+]);
+/// <reference path="../../imports.d.ts" />
+angular.module('prototyped.about', [
+    'prototyped.ng.runtime',
+    'prototyped.ng.views',
+    'prototyped.ng.styles'
+]).config([
+    'appStateProvider', function (appStateProvider) {
+        // Define application state
+        appStateProvider.when('/about', '/about/info').define('/about', {
+            priority: 1000,
+            menuitem: {
+                label: 'About',
+                state: 'about.info',
+                icon: 'fa fa-info-circle'
+            },
+            cardview: {
+                style: 'img-about',
+                title: 'About this software',
+                desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
+            },
+            visible: function () {
+                return appStateProvider.appConfig.options.showAboutPage;
+            }
+        }).state('about', {
+            url: '/about',
+            abstract: true
+        }).state('about.info', {
+            url: '/info',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/info.tpl.html',
+                    controller: 'AboutInfoController'
+                }
+            }
+        }).state('about.online', {
+            url: '^/contact',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': { templateUrl: 'views/about/contact.tpl.html' }
+            }
+        }).state('about.conection', {
+            url: '/conection',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/connections.tpl.html',
+                    controller: 'AboutConnectionController'
+                }
+            }
+        });
+    }]).controller('AboutInfoController', [
+    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
+        function css(a) {
+            var sheets = document.styleSheets, o = [];
+            for (var i in sheets) {
+                var rules = sheets[i].rules || sheets[i].cssRules;
+                for (var r in rules) {
+                    if (a.is(rules[r].selectorText)) {
+                        o.push(rules[r].selectorText);
+                    }
+                }
+            }
+            return o;
+        }
+
+        function selectorExists(selector) {
+            return false;
+            //var ret = css($(selector));
+            //return ret;
+        }
+
+        function getVersionInfo(ident) {
+            try  {
+                if (typeof process !== 'undefined' && process.versions) {
+                    return process.versions[ident];
+                }
+            } catch (ex) {
+            }
+            return null;
+        }
+
+        // Define a function to detect the capabilities
+        $scope.detectBrowserInfo = function () {
+            var info = {
+                about: null,
+                versions: {
+                    ie: null,
+                    html: null,
+                    jqry: null,
+                    css: null,
+                    js: null,
+                    ng: null,
+                    nw: null,
+                    njs: null,
+                    v8: null,
+                    openssl: null,
+                    chromium: null
+                },
+                detects: {
+                    jqry: false,
+                    less: false,
+                    bootstrap: false,
+                    ngAnimate: false,
+                    ngUiRouter: false,
+                    ngUiUtils: false,
+                    ngUiBootstrap: false
+                },
+                css: {
+                    boostrap2: null,
+                    boostrap3: null
+                },
+                codeName: navigator.appCodeName,
+                userAgent: navigator.userAgent
+            };
+
+            try  {
+                // Get IE version (if defined)
+                if (!!window['ActiveXObject']) {
+                    info.versions.ie = 10;
+                }
+
+                // Sanitize codeName and userAgentt
+                var cn = info.codeName;
+                var ua = info.userAgent;
+                if (ua) {
+                    // Remove start of string in UAgent upto CName or end of string if not found.
+                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
+
+                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
+                    ua = ua.substring(cn.length);
+
+                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
+                        ua = ua.substring(1);
+                    }
+
+                    // Remove the end of the string from first characrer that is not a number or point etc.
+                    var pointer = 0;
+                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
+                        pointer = pointer + 1;
+                    }
+                    ua = ua.substring(0, pointer);
+
+                    if (!window.isNaN(ua)) {
+                        if (parseInt(ua) > 0) {
+                            info.versions.html = ua;
+                        }
+                        if (parseFloat(ua) >= 5) {
+                            info.versions.css = '3.x';
+                            info.versions.js = '5.x';
+                        }
+                    }
+                }
+                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
+                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
+                info.versions.nw = getVersionInfo('node-webkit');
+                info.versions.njs = getVersionInfo('node');
+                info.versions.v8 = getVersionInfo('v8');
+                info.versions.openssl = getVersionInfo('openssl');
+                info.versions.chromium = getVersionInfo('chromium');
+
+                // Check for CSS extensions
+                info.css.boostrap2 = selectorExists('hero-unit');
+                info.css.boostrap3 = selectorExists('jumbotron');
+
+                // Detect selected features and availability
+                info.about = {
+                    protocol: $location.$$protocol,
+                    browser: {},
+                    server: {
+                        active: undefined,
+                        url: $location.$$absUrl
+                    },
+                    os: {},
+                    hdd: { type: null }
+                };
+
+                // Detect the operating system
+                var osName = 'Unknown OS';
+                var appVer = navigator.appVersion;
+                if (appVer) {
+                    if (appVer.indexOf("Win") != -1)
+                        osName = 'Windows';
+                    if (appVer.indexOf("Mac") != -1)
+                        osName = 'MacOS';
+                    if (appVer.indexOf("X11") != -1)
+                        osName = 'UNIX';
+                    if (appVer.indexOf("Linux") != -1)
+                        osName = 'Linux';
+                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
+                }
+                info.about.os.name = osName;
+
+                // Check for jQuery
+                info.detects.jqry = typeof jQuery !== 'undefined';
+
+                // Check for general header and body scripts
+                $("script").each(function () {
+                    var src = $(this).attr("src");
+                    if (src) {
+                        // Fast check on known script names
+                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
+                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
+                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
+                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
+                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
+                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
+                    }
+                });
+
+                // Get the client browser details (build a url string)
+                var detectUrl = (function () {
+                    var p = [], w = window, d = document, e = 0, f = 0;
+                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
+                    e |= w.ActiveXObject ? 1 : 0;
+                    e |= w.opera ? 2 : 0;
+                    e |= w.chrome ? 4 : 0;
+                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
+                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
+                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
+                    p.push('e=' + e);
+                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
+                    f |= 'WebSocket' in w ? 2 : 0;
+                    f |= w.Worker ? 4 : 0;
+                    f |= w.applicationCache ? 8 : 0;
+                    f |= w.history && history.pushState ? 16 : 0;
+                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
+                    f |= 'FileReader' in w ? 64 : 0;
+                    p.push('f=' + f);
+                    p.push('r=' + Math.random().toString(36).substring(7));
+                    p.push('w=' + screen.width);
+                    p.push('h=' + screen.height);
+                    var s = d.createElement('script');
+                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
+                })();
+
+                // Send a loaded package to a server to detect more features
+                $.getScript(detectUrl).done(function (script, textStatus) {
+                    $rootScope.$applyAsync(function () {
+                        // Browser info and details loaded
+                        var browserInfo = new window.WhichBrowser();
+                        angular.extend(info.about, browserInfo);
+                    });
+                }).fail(function (jqxhr, settings, exception) {
+                    console.error(exception);
+                });
+
+                // Set browser name to IE (if defined)
+                if (navigator.appName == 'Microsoft Internet Explorer') {
+                    info.about.browser.name = 'Internet Explorer';
+                }
+
+                // Check if the browser supports web db's
+                var webDB = info.about.webdb = {
+                    db: null,
+                    version: '1',
+                    active: null,
+                    size: 5 * 1024 * 1024,
+                    test: function (name, desc, dbVer, dbSize) {
+                        try  {
+                            // Try and open a web db
+                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
+                            webDB.onSuccess(null, null);
+                        } catch (ex) {
+                            // Nope, something went wrong
+                            webDB.onError(null, null);
+                        }
+                    },
+                    onSuccess: function (tx, r) {
+                        if (tx) {
+                            if (r) {
+                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
+                            }
+                            if (tx) {
+                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
+                            }
+                        }
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = true;
+                            webDB.used = JSON.stringify(webDB.db).length;
+                        });
+                    },
+                    onError: function (tx, e) {
+                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = false;
+                        });
+                    }
+                };
+                info.about.webdb.test();
+            } catch (ex) {
+                console.error(ex);
+            }
+
+            // Return the preliminary info
+            return info;
+        };
+
+        // Define the state
+        $scope.info = $scope.detectBrowserInfo();
+    }]).controller('AboutConnectionController', [
+    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
+        $scope.result = null;
+        $scope.status = null;
+        $scope.state = {
+            editMode: false,
+            location: $location.$$absUrl,
+            protocol: $location.$$protocol,
+            requireHttps: ($location.$$protocol == 'https')
+        };
+        $scope.detect = function () {
+            var target = $scope.state.location;
+            var started = Date.now();
+            $scope.result = null;
+            $scope.latency = null;
+            $scope.status = { code: 0, desc: '', style: 'label-default' };
+            $.ajax({
+                url: target,
+                crossDomain: true,
+                /*
+                username: 'user',
+                password: 'pass',
+                xhrFields: {
+                withCredentials: true
+                }
+                */
+                beforeSend: function (xhr) {
+                    $timeout(function () {
+                        //$scope.status.code = xhr.status;
+                        $scope.status.desc = 'sending';
+                        $scope.status.style = 'label-info';
+                    });
+                },
+                success: function (data, textStatus, xhr) {
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-success';
+                        $scope.result = {
+                            valid: true,
+                            info: data,
+                            sent: started,
+                            received: Date.now()
+                        };
+                    });
+                },
+                error: function (xhr, textStatus, error) {
+                    xhr.ex = error;
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-danger';
+                        $scope.result = {
+                            valid: false,
+                            info: xhr,
+                            sent: started,
+                            error: xhr.statusText,
+                            received: Date.now()
+                        };
+                    });
+                },
+                complete: function (xhr, textStatus) {
+                    console.debug(' - Status Code: ' + xhr.status);
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                    });
+                }
+            }).always(function (xhr) {
+                $timeout(function () {
+                    $scope.latency = $scope.getLatencyInfo();
+                });
+            });
+        };
+        $scope.setProtocol = function (protocol) {
+            var val = $scope.state.location;
+            var pos = val.indexOf('://');
+            if (pos > 0) {
+                val = protocol + val.substring(pos);
+            }
+            $scope.state.protocol = protocol;
+            $scope.state.location = val;
+            $scope.detect();
+        };
+        $scope.getProtocolStyle = function (protocol, activeStyle) {
+            var cssRes = '';
+            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
+            if (isValid) {
+                if (!$scope.result) {
+                    cssRes += 'btn-primary';
+                } else if ($scope.result.valid && activeStyle) {
+                    cssRes += activeStyle;
+                } else if ($scope.result) {
+                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
+                }
+            }
+            return cssRes;
+        };
+        $scope.getStatusIcon = function (activeStyle) {
+            var cssRes = '';
+            if (!$scope.result) {
+                cssRes += 'glyphicon-refresh';
+            } else if (activeStyle && $scope.result.valid) {
+                cssRes += activeStyle;
+            } else {
+                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
+            }
+            return cssRes;
+        };
+        $scope.submitForm = function () {
+            $scope.state.editMode = false;
+            if ($scope.state.requireHttps) {
+                $scope.setProtocol('https');
+            } else {
+                $scope.detect();
+            }
+        };
+        $scope.getStatusColor = function () {
+            var cssRes = $scope.getStatusIcon() + ' ';
+            if (!$scope.result) {
+                cssRes += 'busy';
+            } else if ($scope.result.valid) {
+                cssRes += 'success';
+            } else {
+                cssRes += 'error';
+            }
+            return cssRes;
+        };
+        $scope.getLatencyInfo = function () {
+            var cssNone = 'text-muted';
+            var cssHigh = 'text-success';
+            var cssMedium = 'text-warning';
+            var cssLow = 'text-danger';
+            var info = {
+                desc: '',
+                style: cssNone
+            };
+
+            if (!$scope.result) {
+                return info;
+            }
+
+            if (!$scope.result.valid) {
+                info.style = 'text-muted';
+                info.desc = 'Connection Failed';
+                return info;
+            }
+
+            var totalMs = $scope.result.received - $scope.result.sent;
+            if (totalMs > 2 * 60 * 1000) {
+                info.style = cssNone;
+                info.desc = 'Timed out';
+            } else if (totalMs > 1 * 60 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Impossibly slow';
+            } else if (totalMs > 30 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Very slow';
+            } else if (totalMs > 1 * 1000) {
+                info.style = cssMedium;
+                info.desc = 'Relatively slow';
+            } else if (totalMs > 500) {
+                info.style = cssMedium;
+                info.desc = 'Moderately slow';
+            } else if (totalMs > 250) {
+                info.style = cssMedium;
+                info.desc = 'Barely Responsive';
+            } else if (totalMs > 150) {
+                info.style = cssHigh;
+                info.desc = 'Average Response Time';
+            } else if (totalMs > 50) {
+                info.style = cssHigh;
+                info.desc = 'Responsive Enough';
+            } else if (totalMs > 15) {
+                info.style = cssHigh;
+                info.desc = 'Very Responsive';
+            } else {
+                info.style = cssHigh;
+                info.desc = 'Optimal';
+            }
+            return info;
+        };
+    }]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
@@ -3236,21 +3267,6 @@ angular.module('prototyped.ng', [
 
         console.debug(' - Current Config: ', appConfig);
     }]);
-/// <reference path="../imports.d.ts" />
-/// <reference path="config.ng.ts" />
-// Define common runtime modules (shared)
-angular.module('prototyped.ng.runtime', [
-    'prototyped.ng.config',
-    'ui.router'
-]).provider('appNode', [
-    proto.ng.modules.common.providers.AppNodeProvider
-]).provider('appState', [
-    '$stateProvider',
-    '$urlRouterProvider',
-    'appConfigProvider',
-    'appNodeProvider',
-    proto.ng.modules.common.providers.AppStateProvider
-]);
 ;angular.module('prototyped.ng.views', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('modules/console/views/logs.tpl.html',
     '<div class=container style=width:100%><span class=pull-right style="padding: 3px"><a href="" ng-click="">Refresh</a> | <a href="" ng-click="appState.logs = []">Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appState.logs.length><td colspan=3><em>No events have been logged...</em></td></tr><tr ng-repeat="row in appState.logs" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td class=ellipsis style="width: auto; overflow: hidden; white-space: pre">{{ row.desc }}</td></tr></tbody></table></div>');
@@ -3271,7 +3287,10 @@ angular.module('prototyped.ng.runtime', [
     '            padding: 6px;\n' +
     '        }</style><div class="cmd-output dock-fill"><div class=cmd-line ng-repeat="ln in lines"><span class=text-{{ln.type}}><i class=glyphicon title="{{ln.time | date:\'hh:mm:ss\'}}" ng-class="{ \'glyphicon-chevron-right\':ln.type==\'info\', \'glyphicon-ok-sign\':ln.type==\'success\', \'glyphicon-warning-sign\':ln.type==\'warning\', \'glyphicon-exclamation-sign\':ln.type==\'error\' }"></i> <span class=cmd-text>{{ln.text}}</span></span></div></div><div class="btn-group btn-group-xs" style="position: absolute; bottom: 0; left: 0; right: 0"><div class="btn-group btn-group-xs pull-left dropup"><a href="" class="btn btn-primary dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-chevron-right"></i> {{ myConsole.getProxyName() }}</a><ul class="dropdown-menu dropup" role=menu><li ng-repeat="itm in myConsole.getProxies()"><a href="" ng-click=myConsole.setProxy(itm.ProxyName)>Switch to {{ itm.ProxyName }}</a></li></ul></div><div class="input-group input-group-xs"><input id=txtInput tabindex=1 class=form-control ng-model=txtInput ng-keypress="($event.which === 13)?myConsole.command(txtInput):0" placeholder="Enter Command Here"> <a href="" class="input-group-addon btn btn-default" ng-click=myConsole.clear()><i class="glyphicon glyphicon-trash"></i></a></div></div></div>');
   $templateCache.put('modules/editor/views/main.tpl.html',
-    '<div class=text-editor ng-init=myWriter.init()><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/codemirror.min.js></script><link href=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/codemirror.min.css rel=stylesheet><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/xml/xml.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/css/css.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/javascript/javascript.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/htmlmixed/htmlmixed.min.js></script><style resx:import=modules/editor/styles/css/editor.min.css></style><div class="btn-group btn-group-sm dock-tight"><a ng-href="/" ng-click="myWriter.checkUnsaved() && $event.preventDefault()" class="btn btn-default pull-left"><i class="glyphicon glyphicon-chevron-left"></i></a> <a href="" class="btn btn-default pull-left" ng-click=myWriter.newFile()><i class="glyphicon glyphicon-file"></i></a> <a href="" class="btn btn-default pull-left" ng-click=myWriter.openFile() ng-disabled=!myWriter.HasFileSys><i class="glyphicon glyphicon-folder-open"></i></a><div class="btn-group btn-group-sm pull-right"><a href="" ng-disabled=!myWriter.FileLocation class="btn btn-default dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-save"></i> <span class=caret></span></a><ul class=dropdown-menu role=menu><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileContents}"><a href="" ng-click=myWriter.saveFileAs()><i class="glyphicon glyphicon-floppy-disk"></i> Save file as...</a></li><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileLocation}"><a href="" ng-click=myWriter.openFileLocation() ng-disabled="!myWriter.HasFileSys || !myWriter.FileLocation"><i class="glyphicon glyphicon-save"></i>Open file...</a></li></ul></div><a href="" class="btn btn-default pull-right" ng-click=myWriter.saveFile() ng-disabled="!(myWriter.HasFileSys && myWriter.HasChanges)"><i class="glyphicon glyphicon-floppy-disk"></i></a><div class="input-group input-group-sm"><label for=txtFileName class=input-group-addon>File:</label><input id=txtFileName class="cmd-input form-control" tabindex=1 value={{myWriter.FileLocation}} placeholder="{{ myWriter.FileLocation || \'Create new or open existing...\' }}" ng-readonly="true"></div></div><textarea id=FileContents class="text-area dock-fill" ng-disabled="myWriter.FileContents == null" ng-model=myWriter.FileContents></textarea><input style=display:none id=fileDialog type=file accept=".txt,.json"> <input style=display:none id=saveDialog type=file accept=.txt nwsaveas></div>');
+    '<div class=text-editor ng-init=myWriter.init()><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/codemirror.min.js></script><link href=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/codemirror.min.css rel=stylesheet><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/xml/xml.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/css/css.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/javascript/javascript.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/htmlmixed/htmlmixed.min.js></script><style>.contents {\n' +
+    '            margin: 0 !important;\n' +
+    '            padding: 0 !important;\n' +
+    '        }</style><style resx:import=modules/editor/styles/css/editor.min.css></style><div class="btn-group btn-group-sm dock-tight"><a href="" class="btn btn-default pull-left" ng-click=myWriter.newFile()><i class="glyphicon glyphicon-file"></i></a> <a href="" class="btn btn-default pull-left" ng-click=myWriter.openFile() ng-disabled=!myWriter.HasFileSys><i class="glyphicon glyphicon-folder-open"></i></a><div class="btn-group btn-group-sm pull-right"><a href="" ng-disabled=!myWriter.FileLocation class="btn btn-default dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-save"></i> <span class=caret></span></a><ul class=dropdown-menu role=menu><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileContents}"><a href="" ng-click=myWriter.saveFileAs()><i class="glyphicon glyphicon-floppy-disk"></i> Save file as...</a></li><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileLocation}"><a href="" ng-click=myWriter.openFileLocation() ng-disabled="!myWriter.HasFileSys || !myWriter.FileLocation"><i class="glyphicon glyphicon-save"></i>Open file...</a></li></ul></div><a href="" class="btn btn-default pull-right" ng-click=myWriter.saveFile() ng-disabled="!(myWriter.HasFileSys && myWriter.HasChanges)"><i class="glyphicon glyphicon-floppy-disk"></i></a><div class="input-group input-group-sm"><label for=txtFileName class=input-group-addon>File:</label><input id=txtFileName class="cmd-input form-control" tabindex=1 value={{myWriter.FileLocation}} placeholder="{{ myWriter.FileLocation || \'Create new or open existing...\' }}" ng-readonly="true"></div></div><textarea id=FileContents class=text-area ng-disabled="myWriter.FileContents == null" ng-model=myWriter.FileContents></textarea><input style=display:none id=fileDialog type=file accept=".txt,.json"> <input style=display:none id=saveDialog type=file accept=.txt nwsaveas></div>');
   $templateCache.put('modules/explore/views/addressbar.tpl.html',
     '<div class="view-toolbar btn-group btn-group-sm"><style>#addressbar {\n' +
     '            background: none;\n' +
@@ -3292,6 +3311,10 @@ angular.module('prototyped.ng.runtime', [
     '            color: #808080;\n' +
     '            text-decoration: none;\n' +
     '        }</style><div class="view-selector pull-right" ng-init="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }"><div class="input-group pull-left"><a href="" class=dropdown-toggle data-toggle=dropdown aria-expanded=false><i ng-class=viewMode.css></i> {{ viewMode.desc || \'Default View\' }} <span class=caret></span></a><ul class="pull-right dropdown-menu" role=menu><li><a href="" ng-click="viewMode = { desc:\'Large Icons\', css:\'fa fa-th-large\', view: \'view-large\' }"><i class="fa fa-th-large"></i> Large Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Medium Icons\', css:\'fa fa-th\', view: \'view-med\' }"><i class="fa fa-th"></i> Medium Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Details View\', css:\'fa fa-list\', view: \'view-details\' }"><i class="fa fa-list"></i> Details View</a></li><li class=divider></li><li><a href="" ng-click="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }">Use Default</a></li></ul></div></div><h4>File Browser <small>Explore files and folders on your local system</small></h4><div id=fileExplorer ng-class=viewMode.view><div proto:address-bar></div><div class=loader ng-show=isBusy><br><em style="padding: 24px">Loading...</em></div><div ng-show="!isBusy && dir_path"><div class=folder-contents ng-if="!folders.length && !files.length"><em>No files or folders were found...</em></div><div class=folder-contents ng-if=folders.length><h5>File Folders</h5><div id=files class=files><a href="" class="file centered" ng-click=ctrlExplorer.navigate(itm.path) ng-repeat="itm in folders"><div class=icon><i class="glyphicon glyphicon-folder-open" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div></div><div class=folder-contents ng-if=files.length><h5>Application Files</h5><div id=files class=files><a href="" class="file centered" ng-repeat="itm in files" ng-class="{ \'focus\' : (selected == itm.path)}" ng-click=ctrlExplorer.select(itm.path) ng-dblclick=ctrlExplorer.open(itm.path)><div class=icon ng-switch=itm.type><i ng-switch-default class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=blank class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=text class="fa fa-file-text-o" style="font-size: 32px"></i> <i ng-switch-when=image class="fa fa-file-image-o" style="font-size: 32px"></i> <i ng-switch-when=pdf class="fa fa-file-pdf-o" style="font-size: 32px"></i> <i ng-switch-when=css class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=html class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=word class="fa fa-file-word-o" style="font-size: 32px"></i> <i ng-switch-when=powerpoint class="fa fa-file-powerpoint-o" style="font-size: 32px"></i> <i ng-switch-when=movie class="fa fa-file-movie-o" style="font-size: 32px"></i> <i ng-switch-when=excel class="fa fa-file-excel-o" style="font-size: 32px"></i> <i ng-switch-when=compressed class="fa fa-file-archive-o" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div></div></div><div ng-show="!isBusy && !dir_path"><br><h5><i class="glyphicon glyphicon-warning-sign"></i> Warning <small>All features not available</small></h5><div class="alert alert-warning"><p><b>Please Note:</b> You are running this from a browser window.</p><p>For security reasons, web browsers do not have permission to use the local file system, or other advanced operating system features.</p><p>To use this application with full functionality, you need an elevated runtime (<a href=/about/info>see this how to</a>).</p></div></div></div></div>');
+  $templateCache.put('modules/explore/views/left.tpl.html',
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-info-circle"></i>&nbsp; Site Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if=navigation.getTreeData()><abn:tree tree-data=navigation.getTreeData() icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.browser><i class="fa fa-cogs"></i>&nbsp; File Browser</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.browser\'"><div class="col-md-3 panel-left"><h5><i class="fa fa-gear"></i> My Client</h5><div class=panel-icon-lg><a class="panel-icon-lg inactive-gray img-drive ng-scope"></a><div ng:if=info.about.webdb.active class="panel-icon-inset-bl img-webdb ng-scope"></div></div></div><div class=panel-icon-lg><div class=img-drive-warn style="height: 128px">...</div></div></li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.routing><i class="fa fa-info-circle"></i>&nbsp; Routing &amp; State</a></li><li class=list-group-item style="padding: 6px 0" ng-if=navigation.getTreeData()><abn:tree tree-data=navigation.getTreeData() icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
+  $templateCache.put('modules/explore/views/main.tpl.html',
+    '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail ng-if=exploreCtrl.selected><br><br><div class=row><div class=col-md-9><form class=form-horizontal><div class=form-group><label for=inputState class="col-sm-2 control-label">State</label><div class=col-sm-10><input class=form-control id=inputState placeholder=empty ng-model=exploreCtrl.selected.name readonly></div></div><div class=form-group><label for=inputPath class="col-sm-2 control-label">Path</label><div class=col-sm-10><input class=form-control id=inputPath placeholder="not set" ng-model=exploreCtrl.selected.url readonly></div></div><div class=form-group><div class="col-sm-offset-2 col-sm-10"><div class=checkbox><label><input type=checkbox ng-model=exploreCtrl.selected.abstract> Abstract</label></div></div></div><div class=form-group ng-if=exploreCtrl.selected.name><div class="col-sm-offset-2 col-sm-10"><a class="btn btn-default" ng-class="{ \'btn-primary\': !exploreCtrl.selected.abstract }" ui-sref="{{ exploreCtrl.selected.name }}" ng-disabled=exploreCtrl.selected.abstract>Got to page</a></div></div></form></div><div class=col-md-3>{{ exploreCtrl.selection.views }}</div></div></div></div>');
   $templateCache.put('views/about/connections.tpl.html',
     '<div ng:cloak style="width: 100%"><div ng-if=!state.showRaw class=results ng-init=detect()><div class="icon pull-left left"><i class="glyphicon glyphicon-globe"></i> <i class="sub-icon glyphicon" ng-class=getStatusColor()></i></div><div class="info pull-left"><div><div class=pull-right><a class=ctrl-sm ng-click="state.editMode = true" href=""><i class="glyphicon glyphicon-pencil"></i></a></div><h4 ng-if=!state.editMode><a href="{{ state.location }}">{{ state.location }}</a></h4></div><div ng-if=!state.editMode><div ng-if=state.location><p class=info-row><div class="info-col-primary pull-left">Protocol: <span class="btn-group btn-group-xs" role=group aria-label=...><button type=button ng-disabled=state.requireHttps class="btn btn-default" ng-click="setProtocol(\'http\')" ng-class="state.requireHttps ? \'disabled\' : getProtocolStyle(\'http\', \'btn-warning\')"><i class=glyphicon ng-class="getStatusIcon(\'glyphicon-eye-open\')" ng-if="state.location.indexOf(\'http://\') == 0"></i> HTTP</button> <button type=button class="btn btn-default" ng-click="setProtocol(\'https\')" ng-class="getProtocolStyle(\'https\')"><i class=glyphicon ng-class="getStatusIcon(\'glyphicon-eye-close\')" ng-if="state.location.indexOf(\'https://\') == 0"></i> HTTPS</button></span></div><div class="info-col-secondary pull-right"><span class="btn-group btn-group-xs" role=group><a ng-if=result.info class="btn btn-default" href="" ng-click="state.activeTab = (state.activeTab == \'result\') ? null : \'result\'" ng-class="{\'btn-info\':(state.activeTab == \'result\'), \'btn-default\':(state.activeTab != \'result\')}"><i class="glyphicon glyphicon-file"></i> View Result</a> <a ng-if=state.location class=btn href="" ng-click="state.activeTab = (state.activeTab == \'preview\') ? null : \'preview\'" ng-class="{\'btn-info\':(state.activeTab == \'preview\'), \'btn-default\':(state.activeTab != \'preview\')}"><i class=glyphicon ng-class="{\'glyphicon-eye-close\':state.showPreview, \'glyphicon-eye-open\':!state.showPreview}"></i> {{ state.showPreview ? \'Hide\' : \'Show\' }} Preview</a></span></div><br class="clearfix"></p><p class=info-row><div class="info-col-primary pull-left" ng-if=result><div class=info-col-ellipse>Latency: {{ result.received - result.sent }}ms <span ng-if=latency.desc ng-class=latency.style>(<em>{{ latency.desc }}</em>)</span></div></div><div class="info-col-primary pull-left" ng-if=!result><em>Checking...</em></div><div class="info-col-secondary pull-right"><span ng-if="status.code >= 0" class="pull-right label" ng-class=status.style title="Status: {{ status.desc }}, Code: {{ status.code }}">{{ status.desc }}: {{ status.code }}</span></div><br class="clearfix"></p></div><div ng-if="result != null"><p><div class="alert alert-warning" ng-if="result.valid && state.protocol == \'http\'"><i class="glyphicon glyphicon-eye-open"></i> <b>Warning:</b> The web connection <b class=text-danger>is not secure</b>, use <a href="" ng-click="setProtocol(\'https\')">HTTPS</a>.</div><div class="alert alert-success" ng-if="result.valid && state.protocol == \'https\'"><i class="glyphicon glyphicon-ok"></i> <b>Validated:</b> The web connection looks secure.</div><div class="alert alert-danger" ng-if="!result.valid && result.error && result.error != \'error\'"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Failed:</b> {{ result.error }}</div><div class="alert alert-danger" ng-if="!result.valid && !(result.error && result.error != \'error\')"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Offline:</b> Connection could not be established.</div></p></div></div><form ng-if=state.editMode><div class=form-group><h4 class=control-label for=txtTarget>Enter the website URL to connect to:</h4><input class=form-control id=txtTarget ng-model=state.location></div><div class=form-group><div class=checkbox><label><input type=checkbox ng-model=state.requireHttps> Require secure connection</label></div><div class=checkbox ng-class="\'disabled text-muted\'" ng-if=state.requireHttps><label><input type=checkbox ng-model=state.requireCert ng-disabled=true> Requires Client Certificate</label></div></div><div class=form-group ng-show=state.requireCert><label for=exampleInputFile>Select Client Certificate:</label><input type=file id=exampleInputFile><p class=help-block>This must be a valid client certificate.</p></div><button type=submit class="btn btn-primary" ng-click=submitForm()>Update</button></form></div></div><div ng-if="state.activeTab == \'preview\'" class="panel panel-default"><div class=panel-heading><b class=panel-title><i class="glyphicon glyphicon-globe"></i> <a target=_blank href="{{ state.location }}">{{ state.location }}</a></b></div><div class="panel-body info-row iframe-body" style="min-height: 480px"><iframe class=info-col-primary ng-src="{{ state.location }}" frameborder=0>IFrame not available</iframe></div></div><div ng-if="state.activeTab == \'result\'" class=source><span class=pull-right><a class="btn btn-sm btn-primary" ng-click="state.activeTab = null">Close</a></span> <samp><pre>{{ result.info }}</pre></samp></div></div><style>.results {\n' +
     '        min-width: 480px;\n' +
@@ -3422,10 +3445,6 @@ angular.module('prototyped.ng.runtime', [
     '            padding: 0 !important;\n' +
     '            background: #E0E0E0!important;\n' +
     '        }</style><div class="slider docked"><a class="arrow prev" href="" ng-show=false ng-click=cardView.showPrev()><i class="glyphicon glyphicon-chevron-left"></i></a> <a class="arrow next" href="" ng-show=false ng-click=cardView.showNext()><i class="glyphicon glyphicon-chevron-right"></i></a><div class=boxed><a class="card fixed-width slide" ng-class="{ \'inactive-gray-25\': route.cardview.ready === false }" ng-repeat="route in cardView.pages | orderBy:\'(priority || 1)\'" ng-if="route.cardview && (!route.visible || route.visible())" ng-href={{route.url}} ng-class="{ \'active\': cardView.isActive($index) }" ng-swipe-right=cardView.showPrev() ng-swipe-left=cardView.showNext()><div class=card-image ng-class=route.cardview.style><div class=banner></div><h2>{{route.cardview.title}}</h2></div><p>{{route.cardview.desc}}</p></a></div><ul class="small-only slider-nav"><li ng-repeat="page in cardView.pages" ng-class="{\'active\':isActive($index)}"><a href="" ng-click=cardView.showItem($index); title={{page.title}}><i class="glyphicon glyphicon-file"></i></a></li></ul></div></div>');
-  $templateCache.put('views/explore/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-info-circle"></i>&nbsp; Site Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if=navigation.getTreeData()><abn:tree tree-data=navigation.getTreeData() icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
-  $templateCache.put('views/explore/main.tpl.html',
-    '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail ng-if=exploreCtrl.selected><br><br><div class=row><div class=col-md-9><form class=form-horizontal><div class=form-group><label for=inputState class="col-sm-2 control-label">State</label><div class=col-sm-10><input class=form-control id=inputState placeholder=empty ng-model=exploreCtrl.selected.name readonly></div></div><div class=form-group><label for=inputPath class="col-sm-2 control-label">Path</label><div class=col-sm-10><input class=form-control id=inputPath placeholder="not set" ng-model=exploreCtrl.selected.url readonly></div></div><div class=form-group><div class="col-sm-offset-2 col-sm-10"><div class=checkbox><label><input type=checkbox ng-model=exploreCtrl.selected.abstract> Abstract</label></div></div></div><div class=form-group ng-if=exploreCtrl.selected.name><div class="col-sm-offset-2 col-sm-10"><a class="btn btn-default" ng-class="{ \'btn-primary\': !exploreCtrl.selected.abstract }" ui-sref="{{ exploreCtrl.selected.name }}" ng-disabled=exploreCtrl.selected.abstract>Got to page</a></div></div></form></div><div class=col-md-3>{{ exploreCtrl.selection.views }}</div></div></div></div>');
 }]);
 ;angular.module('prototyped.ng.styles', []).run(['$templateCache', function($templateCache) { 
   'use strict';
@@ -3441,7 +3460,7 @@ angular.module('prototyped.ng.runtime', [
 
 
   $templateCache.put('assets/css/prototyped.min.css',
-    "body .glow-green{color:#00b500!important;text-shadow:0 0 2px #00b500}body .glow-red{color:#D00!important;text-shadow:0 0 2px #D00}body .glow-orange{color:#ff8d00!important;text-shadow:0 0 2px #ff8d00}body .glow-blue{color:#0094ff!important;text-shadow:0 0 2px #0094ff}body .input-group-xs>.form-control,body .input-group-xs>.input-group-addon,body .input-group-xs>.input-group-btn>.btn{height:22px;padding:1px 5px;font-size:12px;line-height:1.5}body .docked{flex-grow:1;flex-shrink:1;display:flex;overflow:auto}body .dock-tight{flex-grow:0;flex-shrink:0}body .dock-fill{flex-grow:1;flex-shrink:1}body .ellipsis{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .dragable{-webkit-app-region:drag;-webkit-user-select:none}body .non-dragable{-webkit-app-region:no-drag;-webkit-user-select:auto}body .inactive-gray{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .inactive-gray:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-25{opacity:.25;filter:alpha(opacity=25);filter:grayscale(100%) opacity(0.25);-webkit-filter:grayscale(100%) opacity(0.25);-moz-filter:alpha(opacity=25);-o-filter:alpha(opacity=25)}body .inactive-gray-25:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-10{opacity:.1;filter:alpha(opacity=10);filter:grayscale(100%) opacity(0.1);-webkit-filter:grayscale(100%) opacity(0.1);-moz-filter:alpha(opacity=10);-o-filter:alpha(opacity=10)}body .inactive-gray-10:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-ctrl{opacity:.65;filter:alpha(opacity=65);filter:grayscale(100%) opacity(0.65);-webkit-filter:grayscale(100%) opacity(0.65);-moz-filter:alpha(opacity=65);-o-filter:alpha(opacity=65)}body .inactive-fill-text{width:100%;height:100%;display:block;padding:64px 0;font-size:14px;text-align:center;color:rgba(128,128,128,.75)}body .results{min-width:480px;display:flex}body .results .icon{margin:0 8px;font-size:128px;width:128px!important;height:128px!important;position:relative;flex-grow:0;flex-shrink:0}body .results .icon .sub-icon{font-size:64px!important;width:64px!important;height:64px!important;position:absolute;right:0;top:0;margin-top:100px}body .results .info{margin:0 16px;min-height:128px;min-width:300px;display:inline-block;flex-grow:1;flex-shrink:1}body .results .info h4{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .results .info h4 a{color:#000}body .info-row{display:flex}body .info-row-links{color:silver}body .info-row-links a{color:#4a4a4a;margin-left:8px}body .info-row-links a:hover{color:#000}body .info-col-primary{flex-grow:1;flex-shrink:1}body .info-col-secondary{flex-grow:0;flex-shrink:0}body .info-overview{vertical-align:top}body .info-overview .panel-icon-lg{width:128px;height:128px;padding:0;margin:0 auto 10px;display:block;position:relative;background-repeat:no-repeat;background-size:auto 128px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inner{width:92px;height:92px;margin:6px auto;background-repeat:no-repeat;background-size:auto 86px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-overlay{right:0;bottom:0;width:48px;height:48px;position:absolute;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inset{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-inset-bl{margin:0;position:absolute;background-repeat:no-repeat;background-position:center center;width:64px;height:64px;left:10px;bottom:10px;background-size:auto 64px}body .info-overview .panel-label{margin:6px auto;text-align:center;text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .info-overview .panel-mid{text-align:center}body .info-tabs .trim-top{padding:10px;border-top:none;min-height:380px;border-top-left-radius:0;border-top-right-radius:0}body .img-clipper{width:48px;height:48px;padding:0;margin:3px auto;text-align:center;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .app-info-aside{display:flex;margin-bottom:12px}body .app-info-aside .app-info-icon{flex-grow:0;flex-shrink:0;flex-basis:64px;vertical-align:top}body .app-info-aside .app-info-info{flex-grow:1;flex-shrink:1;text-align:left;vertical-align:top}body .app-info-aside .app-info-info p{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .app-info-aside.info-disabled .app-info-icon{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .app-info-aside.info-disabled .app-info-icon:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .app-aside-collapser a{margin:0;padding:0;display:block;color:silver;text-decoration:none}body .app-aside-collapser a:hover{color:gray}body .iframe-body,body .iframe-body iframe{margin:0;padding:0}body .alertify-hidden{display:none}body .console .cmd-output{padding:3px;font-family:Courier New,Courier,monospace;color:gray}body .console .cmd-line{padding:0;margin:0;white-space:pre}body .console .cmd-time{color:silver}body .console .cmd-text{white-space:pre}@media screen and (max-width:640px) and (max-height:480px){body .console .cmd-output{padding:4px;font-size:10.4px}}body .card-view{margin:0 auto;padding:0;color:#333;height:100%;overflow:auto}body .card-view.float-left .card{float:left}body .card-view .multi-column{columns:300px 3;-webkit-columns:300px 3}body .card-view a{color:#4c4c4c;text-decoration:none}body .card-view .boxed{margin:0 auto 36px;max-width:1056px;display:inline-block}body .card-view .card{width:320px;height:200px;padding:0;margin:15px 15px 0;overflow:hidden;background:#fff;background:#ededed;background:-moz-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#ededed),color-stop(45%,#f6f6f6),color-stop(61%,#fff),color-stop(61%,#fff));background:-webkit-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-o-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-ms-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:linear-gradient(to bottom,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#ffffff', GradientType=0);border:1px solid #AAA;border-bottom:3px solid #BBB}body .card-view .card:hover{-webkit-box-shadow:0 0 10px 1px rgba(128,128,128,.75);-moz-box-shadow:0 0 10px 1px rgba(128,128,128,.75);box-shadow:0 0 10px 1px rgba(128,128,128,.75)}body .card-view .card p{background:#fff;margin:0;padding:10px}body .card-view .card-image{width:100%;height:140px;padding:0;margin:0;position:relative;overflow:hidden;background-position:center;background-repeat:no-repeat}body .card-view .card-image .banner{height:50px;width:50px;top:0;right:0;background-position:top right;background-repeat:no-repeat;position:absolute}body .card-view .card-image h1,body .card-view .card-image h2,body .card-view .card-image h3,body .card-view .card-image h4,body .card-view .card-image h5,body .card-view .card-image h6{position:absolute;bottom:0;left:0;width:100%;color:#fff;background:rgba(0,0,0,.65);margin:0;padding:6px 12px!important;border:none}body .card-view .small-only{display:none!important}body .card-view .leftColumn,body .card-view .rightColumn{display:inline-block;width:49%;vertical-align:top}body .card-view .column{display:inline-block;vertical-align:top}body .card-view .arrow{top:50%;width:50px;bottom:0;margin:auto 0;outline:medium none;position:absolute;font-size:40px;cursor:pointer;z-index:5}body .card-view .arrow i{top:-25px}body .card-view .arrow.prev{left:0;opacity:.2}body .card-view .arrow.prev:hover{opacity:1}body .card-view .arrow.next{right:0;opacity:.2;text-align:right}body .card-view .arrow.next:hover{opacity:1}body .card-view .img-default{background:#b3bead;background:-moz-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fcfff4),color-stop(40%,#dfe5d7),color-stop(100%,#b3bead));background:-webkit-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-o-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-ms-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:linear-gradient(to bottom,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fcfff4', endColorstr='#b3bead', GradientType=0)}body .card-view .img-explore{background-position:top left;background-image:url(https://farm6.staticflickr.com/5250/5279251697_3ab802e3ef.jpg)}body .card-view .img-editor{background-image:url(http://f.fastcompany.net/multisite_files/fastcompany/inline/2013/10/3020994-inline-d3-data-viz001.jpg);background-size:320px auto}body .card-view .img-console{background-image:url(http://shumakovich.com/uploads/useruploads/images/programming_256x256.png);background-size:auto auto;background-position:top}body .card-view .img-about{background-image:url(https://farm9.staticflickr.com/8282/7807659570_f5ba8dfc63.jpg);background-size:420px auto;background-position:center}body .card-view .img-sandbox{background-image:url(http://8020.photos.jpgmag.com/1727832_147374_5c80086d33_p.jpg);background-size:360px auto;background-position:top center}body .card-view .slider-nav{bottom:0;display:block;height:48px;left:0;margin:0 auto;padding:1em 0 .8em;position:absolute;right:0;text-align:center;width:100%;z-index:5}body .card-view .slider-nav li{margin:3px;padding:1px 3px;cursor:pointer;position:relative;display:inline-block;border:1px dotted #E0E0E0;background-color:rgba(255,255,255,.25)}body .card-view .slider-nav li a{color:rgba(128,128,128,.75)}body .card-view .slider-nav li.active{border:solid 1px #BBB;background-color:rgba(128,128,128,.25)}body .card-view .slider-nav li.active a{color:#000}body .card-view .slider{-webkit-perspective:1000px;-moz-perspective:1000px;-ms-perspective:1000px;-o-perspective:1000px;perspective:1000px;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d;-ms-transform-style:preserve-3d;-o-transform-style:preserve-3d;transform-style:preserve-3d}body .card-view .slide{-webkit-transition:1s linear all;-moz-transition:1s linear all;-o-transition:1s linear all;transition:1s linear all;opacity:1}body .card-view .slide.ng-hide-add{opacity:1}body .card-view .slide.ng-hide-add.ng-hide-add-active,body .card-view .slide.ng-hide-remove{opacity:0}body .card-view .slide.ng-hide-remove.ng-hide-remove-active{opacity:1}body .footer .log-group{padding:1px 6px}@media screen and (min-width:741px) and (max-width:1024px){#cardViewer .boxed{max-width:740px!important}}@media screen and (max-width:740px){#cardViewer .boxed{max-width:350px!important}#cardViewer .small-only{display:block!important}#cardViewer .card-view{height:100%;overflow:auto}#cardViewer .card-view .card{display:none}#cardViewer .card-view .card.active{display:block}}#fileExplorer{-webkit-user-select:none}#fileExplorer .folder-contents{padding:16px 8px;clear:both}#fileExplorer .file{color:#000;text-decoration:none}#fileExplorer .name{margin-top:6px;font-size:11px}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .file .icon img{width:48px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-large{display:block}#fileExplorer .view-large .files{padding:0;margin:0}#fileExplorer .view-large .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-large .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-large .file .name{width:100px;word-wrap:break-word}#fileExplorer .view-large .file.focus .name{color:#fff}#fileExplorer .view-large .file .icon{margin:0 auto;width:60px}#fileExplorer .view-large .file .icon img{width:60px;height:auto}#fileExplorer .view-large .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-med .files{padding:0;margin:0}#fileExplorer .view-med .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-med .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-med .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .view-med .file.focus .name{color:#fff}#fileExplorer .view-med .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .view-med .file .icon img{width:48px;height:auto}#fileExplorer .view-med .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-details{display:block}#fileExplorer .view-details .files{padding:0;margin:0}#fileExplorer .view-details .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .view-details .file.focus{-webkit-border-radius:0}#fileExplorer .view-details .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .view-details .file .icon{margin:0;width:24px;display:inline}#fileExplorer .view-details .file .icon img{width:24px;height:auto}@media screen and (max-width:640px) and (max-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .file.focus{-webkit-border-radius:0}#fileExplorer .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .file .icon{margin:0;width:24px;display:inline}#fileExplorer .file .icon img{width:24px;height:auto}#fileExplorer .name{padding:3px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}}@media screen and (min-width:1024px) and (min-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:100px;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;width:60px}#fileExplorer .file .icon img{width:60px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}}.abn-tree-animate-enter,li.abn-tree-row.ng-enter{transition:200ms linear all;position:relative;display:block;opacity:0;max-height:0}.abn-tree-animate-enter.abn-tree-animate-enter-active,li.abn-tree-row.ng-enter-active{opacity:1;max-height:30px}.abn-tree-animate-leave,li.abn-tree-row.ng-leave{transition:200ms linear all;position:relative;display:block;height:30px;max-height:30px;opacity:1}.abn-tree-animate-leave.abn-tree-animate-leave-active,li.abn-tree-row.ng-leave-active{height:0;max-height:0;opacity:0}ul.abn-tree li.abn-tree-row{padding:0;margin:0}ul.abn-tree li.abn-tree-row a{padding:3px 10px}ul.abn-tree i.indented{padding:2px 6px}.abn-tree{cursor:pointer}ul.nav.abn-tree .level-1 .indented{position:relative;left:0}ul.nav.abn-tree .level-2 .indented{position:relative;left:16px}ul.nav.abn-tree .level-3 .indented{position:relative;left:40px}ul.nav.abn-tree .level-4 .indented{position:relative;left:60px}ul.nav.abn-tree .level-5 .indented{position:relative;left:80px}ul.nav.abn-tree .level-6 .indented{position:relative;left:100px}ul.nav.nav-list.abn-tree .level-7 .indented{position:relative;left:120px}ul.nav.nav-list.abn-tree .level-8 .indented{position:relative;left:140px}ul.nav.nav-list.abn-tree .level-9 .indented{position:relative;left:160px}"
+    "body .glow-green{color:#00b500!important;text-shadow:0 0 2px #00b500}body .glow-red{color:#D00!important;text-shadow:0 0 2px #D00}body .glow-orange{color:#ff8d00!important;text-shadow:0 0 2px #ff8d00}body .glow-blue{color:#0094ff!important;text-shadow:0 0 2px #0094ff}body .input-group-xs>.form-control,body .input-group-xs>.input-group-addon,body .input-group-xs>.input-group-btn>.btn{height:22px;padding:1px 5px;font-size:12px;line-height:1.5}body .docked{flex-grow:1;flex-shrink:1;display:flex;overflow:auto}body .dock-tight{flex-grow:0;flex-shrink:0}body .dock-fill{flex-grow:1;flex-shrink:1}body .ellipsis{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .dragable{-webkit-app-region:drag;-webkit-user-select:none}body .non-dragable{-webkit-app-region:no-drag;-webkit-user-select:auto}body .inactive-gray{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .inactive-gray:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-25{opacity:.25;filter:alpha(opacity=25);filter:grayscale(100%) opacity(0.25);-webkit-filter:grayscale(100%) opacity(0.25);-moz-filter:alpha(opacity=25);-o-filter:alpha(opacity=25)}body .inactive-gray-25:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-10{opacity:.1;filter:alpha(opacity=10);filter:grayscale(100%) opacity(0.1);-webkit-filter:grayscale(100%) opacity(0.1);-moz-filter:alpha(opacity=10);-o-filter:alpha(opacity=10)}body .inactive-gray-10:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-ctrl{opacity:.65;filter:alpha(opacity=65);filter:grayscale(100%) opacity(0.65);-webkit-filter:grayscale(100%) opacity(0.65);-moz-filter:alpha(opacity=65);-o-filter:alpha(opacity=65)}body .inactive-fill-text{width:100%;height:100%;display:block;padding:64px 0;font-size:14px;text-align:center;color:rgba(128,128,128,.75)}body .results{min-width:480px;display:flex}body .results .icon{margin:0 8px;font-size:128px;width:128px!important;height:128px!important;position:relative;flex-grow:0;flex-shrink:0}body .results .icon .sub-icon{font-size:64px!important;width:64px!important;height:64px!important;position:absolute;right:0;top:0;margin-top:100px}body .results .info{margin:0 16px;min-height:128px;min-width:300px;display:inline-block;flex-grow:1;flex-shrink:1}body .results .info h4{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .results .info h4 a{color:#000}body .info-row{display:flex}body .info-row-links{color:silver}body .info-row-links a{color:#4a4a4a;margin-left:8px}body .info-row-links a:hover{color:#000}body .info-col-primary{flex-grow:1;flex-shrink:1}body .info-col-secondary{flex-grow:0;flex-shrink:0}body .info-overview{vertical-align:top}body .info-overview .panel-icon-lg{width:128px;height:128px;padding:0;margin:0 auto 10px;display:block;position:relative;background-repeat:no-repeat;background-size:auto 128px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inner{width:92px;height:92px;margin:6px auto;background-repeat:no-repeat;background-size:auto 86px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-overlay{right:0;bottom:0;width:48px;height:48px;position:absolute;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inset{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-inset-bl{margin:0;position:absolute;background-repeat:no-repeat;background-position:center center;width:64px;height:64px;left:10px;bottom:10px;background-size:auto 64px}body .info-overview .panel-label{margin:6px auto;text-align:center;text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .info-overview .panel-mid{text-align:center}body .info-tabs .trim-top{padding:10px;border-top:none;min-height:380px;border-top-left-radius:0;border-top-right-radius:0}body .img-clipper{width:48px;height:48px;padding:0;margin:3px auto;text-align:center;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .app-info-aside{display:flex;margin-bottom:12px}body .app-info-aside .app-info-icon{flex-grow:0;flex-shrink:0;flex-basis:64px;vertical-align:top}body .app-info-aside .app-info-info{flex-grow:1;flex-shrink:1;text-align:left;vertical-align:top}body .app-info-aside .app-info-info p{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .app-info-aside.info-disabled .app-info-icon{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .app-info-aside.info-disabled .app-info-icon:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .app-aside-collapser a{margin:0;padding:0;display:block;color:silver;text-decoration:none}body .app-aside-collapser a:hover{color:gray}body .iframe-body,body .iframe-body iframe{margin:0;padding:0}body .alertify-hidden{display:none}body .console .cmd-output{padding:3px;font-family:Courier New,Courier,monospace;color:gray}body .console .cmd-line{padding:0;margin:0}body .console .cmd-time{color:silver}body .console .cmd-text{white-space:pre}@media screen and (max-width:640px) and (max-height:480px){body .console .cmd-output{padding:4px;font-size:10.4px}}body .card-view{margin:0 auto;padding:0;color:#333;height:100%;overflow:auto}body .card-view.float-left .card{float:left}body .card-view .multi-column{columns:300px 3;-webkit-columns:300px 3}body .card-view a{color:#4c4c4c;text-decoration:none}body .card-view .boxed{margin:0 auto 36px;max-width:1056px;display:inline-block}body .card-view .card{width:320px;height:200px;padding:0;margin:15px 15px 0;overflow:hidden;background:#fff;background:#ededed;background:-moz-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#ededed),color-stop(45%,#f6f6f6),color-stop(61%,#fff),color-stop(61%,#fff));background:-webkit-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-o-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-ms-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:linear-gradient(to bottom,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#ffffff', GradientType=0);border:1px solid #AAA;border-bottom:3px solid #BBB}body .card-view .card:hover{-webkit-box-shadow:0 0 10px 1px rgba(128,128,128,.75);-moz-box-shadow:0 0 10px 1px rgba(128,128,128,.75);box-shadow:0 0 10px 1px rgba(128,128,128,.75)}body .card-view .card p{background:#fff;margin:0;padding:10px}body .card-view .card-image{width:100%;height:140px;padding:0;margin:0;position:relative;overflow:hidden;background-position:center;background-repeat:no-repeat}body .card-view .card-image .banner{height:50px;width:50px;top:0;right:0;background-position:top right;background-repeat:no-repeat;position:absolute}body .card-view .card-image h1,body .card-view .card-image h2,body .card-view .card-image h3,body .card-view .card-image h4,body .card-view .card-image h5,body .card-view .card-image h6{position:absolute;bottom:0;left:0;width:100%;color:#fff;background:rgba(0,0,0,.65);margin:0;padding:6px 12px!important;border:none}body .card-view .small-only{display:none!important}body .card-view .leftColumn,body .card-view .rightColumn{display:inline-block;width:49%;vertical-align:top}body .card-view .column{display:inline-block;vertical-align:top}body .card-view .arrow{top:50%;width:50px;bottom:0;margin:auto 0;outline:medium none;position:absolute;font-size:40px;cursor:pointer;z-index:5}body .card-view .arrow i{top:-25px}body .card-view .arrow.prev{left:0;opacity:.2}body .card-view .arrow.prev:hover{opacity:1}body .card-view .arrow.next{right:0;opacity:.2;text-align:right}body .card-view .arrow.next:hover{opacity:1}body .card-view .img-default{background:#b3bead;background:-moz-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fcfff4),color-stop(40%,#dfe5d7),color-stop(100%,#b3bead));background:-webkit-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-o-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-ms-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:linear-gradient(to bottom,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fcfff4', endColorstr='#b3bead', GradientType=0)}body .card-view .img-explore{background-position:top left;background-image:url(https://farm6.staticflickr.com/5250/5279251697_3ab802e3ef.jpg)}body .card-view .img-editor{background-image:url(http://f.fastcompany.net/multisite_files/fastcompany/inline/2013/10/3020994-inline-d3-data-viz001.jpg);background-size:320px auto}body .card-view .img-console{background-image:url(http://shumakovich.com/uploads/useruploads/images/programming_256x256.png);background-size:auto auto;background-position:top}body .card-view .img-about{background-image:url(https://farm9.staticflickr.com/8282/7807659570_f5ba8dfc63.jpg);background-size:420px auto;background-position:center}body .card-view .img-sandbox{background-image:url(http://8020.photos.jpgmag.com/1727832_147374_5c80086d33_p.jpg);background-size:360px auto;background-position:top center}body .card-view .slider-nav{bottom:0;display:block;height:48px;left:0;margin:0 auto;padding:1em 0 .8em;position:absolute;right:0;text-align:center;width:100%;z-index:5}body .card-view .slider-nav li{margin:3px;padding:1px 3px;cursor:pointer;position:relative;display:inline-block;border:1px dotted #E0E0E0;background-color:rgba(255,255,255,.25)}body .card-view .slider-nav li a{color:rgba(128,128,128,.75)}body .card-view .slider-nav li.active{border:solid 1px #BBB;background-color:rgba(128,128,128,.25)}body .card-view .slider-nav li.active a{color:#000}body .card-view .slider{-webkit-perspective:1000px;-moz-perspective:1000px;-ms-perspective:1000px;-o-perspective:1000px;perspective:1000px;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d;-ms-transform-style:preserve-3d;-o-transform-style:preserve-3d;transform-style:preserve-3d}body .card-view .slide{-webkit-transition:1s linear all;-moz-transition:1s linear all;-o-transition:1s linear all;transition:1s linear all;opacity:1}body .card-view .slide.ng-hide-add{opacity:1}body .card-view .slide.ng-hide-add.ng-hide-add-active,body .card-view .slide.ng-hide-remove{opacity:0}body .card-view .slide.ng-hide-remove.ng-hide-remove-active{opacity:1}body .footer .log-group{padding:1px 6px}@media screen and (min-width:741px) and (max-width:1024px){#cardViewer .boxed{max-width:740px!important}}@media screen and (max-width:740px){#cardViewer .boxed{max-width:350px!important}#cardViewer .small-only{display:block!important}#cardViewer .card-view{height:100%;overflow:auto}#cardViewer .card-view .card{display:none}#cardViewer .card-view .card.active{display:block}}#fileExplorer{-webkit-user-select:none}#fileExplorer .folder-contents{padding:16px 8px;clear:both}#fileExplorer .file{color:#000;text-decoration:none}#fileExplorer .name{margin-top:6px;font-size:11px}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .file .icon img{width:48px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-large{display:block}#fileExplorer .view-large .files{padding:0;margin:0}#fileExplorer .view-large .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-large .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-large .file .name{width:100px;word-wrap:break-word}#fileExplorer .view-large .file.focus .name{color:#fff}#fileExplorer .view-large .file .icon{margin:0 auto;width:60px}#fileExplorer .view-large .file .icon img{width:60px;height:auto}#fileExplorer .view-large .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-med .files{padding:0;margin:0}#fileExplorer .view-med .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-med .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-med .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .view-med .file.focus .name{color:#fff}#fileExplorer .view-med .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .view-med .file .icon img{width:48px;height:auto}#fileExplorer .view-med .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-details{display:block}#fileExplorer .view-details .files{padding:0;margin:0}#fileExplorer .view-details .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .view-details .file.focus{-webkit-border-radius:0}#fileExplorer .view-details .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .view-details .file .icon{margin:0;width:24px;display:inline}#fileExplorer .view-details .file .icon img{width:24px;height:auto}@media screen and (max-width:640px) and (max-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .file.focus{-webkit-border-radius:0}#fileExplorer .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .file .icon{margin:0;width:24px;display:inline}#fileExplorer .file .icon img{width:24px;height:auto}#fileExplorer .name{padding:3px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}}@media screen and (min-width:1024px) and (min-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:100px;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;width:60px}#fileExplorer .file .icon img{width:60px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}}.abn-tree-animate-enter,li.abn-tree-row.ng-enter{transition:200ms linear all;position:relative;display:block;opacity:0;max-height:0}.abn-tree-animate-enter.abn-tree-animate-enter-active,li.abn-tree-row.ng-enter-active{opacity:1;max-height:30px}.abn-tree-animate-leave,li.abn-tree-row.ng-leave{transition:200ms linear all;position:relative;display:block;height:30px;max-height:30px;opacity:1}.abn-tree-animate-leave.abn-tree-animate-leave-active,li.abn-tree-row.ng-leave-active{height:0;max-height:0;opacity:0}ul.abn-tree li.abn-tree-row{padding:0;margin:0}ul.abn-tree li.abn-tree-row a{padding:3px 10px}ul.abn-tree i.indented{padding:2px 6px}.abn-tree{cursor:pointer}ul.nav.abn-tree .level-1 .indented{position:relative;left:0}ul.nav.abn-tree .level-2 .indented{position:relative;left:16px}ul.nav.abn-tree .level-3 .indented{position:relative;left:40px}ul.nav.abn-tree .level-4 .indented{position:relative;left:60px}ul.nav.abn-tree .level-5 .indented{position:relative;left:80px}ul.nav.abn-tree .level-6 .indented{position:relative;left:100px}ul.nav.nav-list.abn-tree .level-7 .indented{position:relative;left:120px}ul.nav.nav-list.abn-tree .level-8 .indented{position:relative;left:140px}ul.nav.nav-list.abn-tree .level-9 .indented{position:relative;left:160px}"
   );
 
 
@@ -3450,262 +3469,7 @@ angular.module('prototyped.ng.runtime', [
   );
 
 
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/browser/css/urls.min.css',
-    "@import\"http://localhost:8081/test/browser/less/modify-this.css\";@import\"http://localhost:8081/test/browser/less/modify-again.css\";.modify{my-url:url(\"http://localhost:8081/test/browser/less/a.png\")}.modify{my-url:url(\"http://localhost:8081/test/browser/less/b.png\")}@font-face{src:url(\"/fonts/garamond-pro.ttf\");src:local(Futura-Medium),url(http://localhost:8081/test/browser/less/fonts.svg#MyGeometricModern) format(\"svg\")}#shorthands{background:url(\"http://www.lesscss.org/spec.html\") no-repeat 0 4px}#misc{background-image:url(http://localhost:8081/test/browser/less/images/image.jpg)}#data-uri{background:kiVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAD/k kg9C9zwz3gVLMDA/A6P9/AFGGFyjOXZtQAAAAAElFTkSuQmCC);background-image:url(data:image/x-png,f9difSSFIIGFIFJD1f982FSDKAA9==);background-image:url(http://fonts.googleapis.com/css?family=\\\"Rokkitt\\\":\\(400\\),700)}#svg-data-uri{background:transparent url('data:image/svg+xml, <svg version=\"1.1\"><g></g></svg>')}.comma-delimited{background:url(http://localhost:8081/test/browser/less/bg.jpg) no-repeat,url(http://localhost:8081/test/browser/less/bg.png) repeat-x top left,url(http://localhost:8081/test/browser/less/bg)}.values{url:url('http://localhost:8081/test/browser/less/Trebuchet')}#data-uri{uri:url('http://localhost:8081/test/data/image.jpg')}#data-uri-guess{uri:url('http://localhost:8081/test/data/image.jpg')}#data-uri-ascii{uri-1:url('http://localhost:8081/test/data/page.html');uri-2:url('http://localhost:8081/test/data/page.html')}#data-uri-toobig{uri:url('http://localhost:8081/test/data/data-uri-fail.png')}#svg-functions{background-image:url('data:image/svg+xml,<?xml version=\"1.0\" ?><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"100%\" height=\"100%\" viewbox=\"0 0 1 1\" preserveaspectratio=\"none\"><lineargradient id=\"gradient\" gradientunits=\"userSpaceOnUse\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#000000\"><stop offset=\"100%\" stop-color=\"#ffffff\"></lineargradient><rect x=\"0\" y=\"0\" width=\"1\" height=\"1\" fill=\"url(#gradient)\"></svg>');background-image:url('data:image/svg+xml,<?xml version=\"1.0\" ?><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"100%\" height=\"100%\" viewbox=\"0 0 1 1\" preserveaspectratio=\"none\"><lineargradient id=\"gradient\" gradientunits=\"userSpaceOnUse\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#000000\"><stop offset=\"3%\" stop-color=\"#ffa500\"><stop offset=\"100%\" stop-color=\"#ffffff\"></lineargradient><rect x=\"0\" y=\"0\" width=\"1\" height=\"1\" fill=\"url(#gradient)\"></svg>');background-image:url('data:image/svg+xml,<?xml version=\"1.0\" ?><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"100%\" height=\"100%\" viewbox=\"0 0 1 1\" preserveaspectratio=\"none\"><lineargradient id=\"gradient\" gradientunits=\"userSpaceOnUse\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"1%\" stop-color=\"#c4c4c4\"><stop offset=\"3%\" stop-color=\"#ffa500\"><stop offset=\"5%\" stop-color=\"#008000\"><stop offset=\"95%\" stop-color=\"#ffffff\"></lineargradient><rect x=\"0\" y=\"0\" width=\"1\" height=\"1\" fill=\"url(#gradient)\"></svg>')}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/charsets.min.css',
-    "@charset \"UTF-8\";"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/colors.min.css',
-    "#yelow #short{color:#fea}#yelow #long{color:#fea}#yelow #rgba{color:rgba(255,238,170,.1)}#yelow #argb{color:#1affeeaa}#blue #short{color:#00f}#blue #long{color:#00f}#blue #rgba{color:rgba(0,0,255,.1)}#blue #argb{color:#1a0000ff}#alpha #hsla{color:rgba(61,45,41,.6)}#overflow .a{color:#000}#overflow .b{color:#fff}#overflow .c{color:#fff}#overflow .d{color:#0f0}#overflow .e{color:rgba(0,31,255,.42)}#grey{color:#c8c8c8}#333333{color:#333}#808080{color:gray}#00ff00{color:#0f0}.lightenblue{color:#33f}.darkenblue{color:#00c}.unknowncolors{color:blue2;border:2px solid superred}.transparent{color:transparent;background-color:rgba(0,0,0,0)}#alpha #fromvar{opacity:.7}#alpha #short{opacity:1}#alpha #long{opacity:1}#alpha #rgba{opacity:.2}#alpha #hsl{opacity:1}#percentage{color:255;border-color:rgba(255,0,0,.5)}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/comments.min.css',
-    "#comments,.comments{/**/color:red;background-color:#ffa500;font-size:12px;content:\"content\";border:1px solid #000;padding:0;margin:2em}.selector,.lots,.comments{color:gray,#ffa500;-webkit-border-radius:2px;-moz-border-radius:8px}.test{color:1px}.sr-only-focusable{clip:auto}@-webkit-keyframes hover{0%{color:red}}#last{color:#00f}#div{color:#a33}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/css-3.min.css',
-    ".comma-delimited{text-shadow:-1px -1px 1px red,6px 5px 5px #ff0;-moz-box-shadow:0 0 2px rgba(255,255,255,.4) inset,0 4px 6px rgba(255,255,255,.4) inset;-webkit-transform:rotate(0deg)}@font-face{font-family:Headline;unicode-range:U+??????,U+???,U+0-7F,U+A5}.other{-moz-transform:translate(0,11em) rotate(-90deg);transform:rotateX(45deg)}.item[data-cra_zy-attr1b-ut3=bold]{font-weight:bold}p:not([class*=\"lead\"]){color:#000}input[type=\"text\"].class#id[attr=32]:not(1){color:white;}div#id.class[a=1][b=2].class:not(1){color:white;}ul.comma>li:not(:only-child)::after{color:#fff}ol.comma>li:nth-last-child(2)::after{color:#fff}li:nth-child(4n+1),li:nth-child(-5n),li:nth-child(-n+2){color:#fff}a[href^=\"http://\"]{color:#000}a[href$=\"http://\"]{color:#000}form[data-disabled]{color:#000}p::before{color:#000}#issue322{-webkit-animation:anim2 7s infinite ease-in-out}@-webkit-keyframes frames{0%{border:1px}5.5%{border:2px}100%{border:3px}}@keyframes fontbulger1{to{font-size:15px}from,to{font-size:12px}0%,100%{font-size:12px}}.units{font:1.2rem/2rem;font:8vw/9vw;font:10vh/12vh;font:12vm/15vm;font:12vmin/15vmin;font:1.2ch/1.5ch}@supports (box-shadow:2px 2px 2px black)or(-moz-box-shadow:2px 2px 2px black){.outline{box-shadow:2px 2px 2px black;-moz-box-shadow:2px 2px 2px black;}}@-x-document url-prefix(\"\"github.com\"\"){h1{color:red;}}@viewport{font-size:10px;}foo url(http://www.example.com);foo|h1{color:blue}foo|*{color:#ff0}|h1{color:red}*|h1{color:green}h1{color:green}.upper-test{UpperCaseProperties:allowed}@host{div{display:block;}}::distributed(input::placeholder){color:#b3b3b3;}.shadow ^ .dom,body ^^ .shadow{display:done;}:host(.sel .a),:host-context(.sel .b),.sel /deep/ .b,::content .sel{type:shadow-dom;}#issue2066{background:url('/images/icon-team.svg') 0 0/contain}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/css-escapes.min.css',
-    ".escape\\|random\\|char{color:red}.mixin\\!tUp{font-weight:bold}.\\34 04{background:red}.\\34 04 strong{color:#f0f;font-weight:bold}.trailingTest\\+{color:red}blockquote{color:silver}[ng\\:cloak],ng\\:form{display:none}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/css-guards.min.css',
-    ".light{color:green}.see-the{color:green}.hide-the{color:green}.multiple-conditions-1{color:red}.inheritance .test{color:#000}.inheritance:hover{color:#ffc0cb}.clsWithGuard{dispaly:none}.dont-split-me-up{width:1px;color:red;height:1px}+.dont-split-me-up{sibling:true}.scope-check{sub-prop:2px;prop:1px}.scope-check-2{sub-prop:2px;prop:1px}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/css.min.css',
-    "@charset \"utf-8\";div{color:#000}div{width:99%}*{min-width:45em}h1,h2>a>p,h3{color:none}div.class{color:blue}div#id{color:green}.class#id{color:purple}.one.two.three{color:grey}@media print{*{font-size:3em}}@media screen{*{font-size:10px}}@font-face{font-family:'Garamond Pro'}a:hover,a:link{color:#999}p,p:first-child{text-transform:none}q:lang(no){quotes:none}p+h1{font-size:2.2em}#shorthands{border:1px solid #000;font:12px/16px Arial;font:100%/16px Arial;margin:1px 0;padding:0 auto}#more-shorthands{margin:0;padding:1px 0 2px 0;font:normal small/20px 'Trebuchet MS',Verdana,sans-serif;font:0/0 a;border-radius:5px/10px}.misc{-moz-border-radius:2px;display:-moz-inline-stack;width:.1em;background-color:#009998;background:-webkit-gradient(linear,left top,left bottom,from(red),to(#00f));margin:;filter:alpha(opacity=100);width:auto\\9}.misc .nested-multiple{multiple-semi-colons:yes}#important{color:red !important;width:100%!important;height:20px !important}@font-face{font-family:font-a}@font-face{font-family:font-b}.æøå{margin:0}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/detached-rulesets.min.css',
-    ".wrap-selector{color:#000;one:1px;four:magic-frame;visible-one:visible;visible-two:visible}.wrap-selector{color:red;visible-one:visible;visible-two:visible}.wrap-selector{color:#000;background:#fff;visible-one:visible;visible-two:visible}header{background:blue}@media screen and (min-width:1200){header{background:red}}html.lt-ie9 header{background:red}.wrap-selector{test:extra-wrap;visible-one:visible;visible-two:visible}.wrap-selector .wrap-selector{test:wrapped-twice;visible-one:visible;visible-two:visible}.wrap-selector{test-func:90;test-arithmetic:18px;visible-one:visible;visible-two:visible}.without-mixins{b:1}@media(orientation:portrait) andtv{.my-selector{background-color:black;}}@media(orientation:portrait) andwidescreen and print and tv{.triple-wrapped-mq{triple:true;}}@media(orientation:portrait) andwidescreen and tv{.triple-wrapped-mq{triple:true;}}@media(orientation:portrait) andtv{.triple-wrapped-mq{triple:true;}}.a{test:test}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/empty.min.css',
-    ""
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend-chaining.min.css',
-    ".a,.b,.c{color:#000}.f,.e,.d{color:#000}.g.h,.i.j.h,.k.j.h{color:#000}.i.j,.k.j{color:#fff}.l,.m,.n,.o,.p,.q,.r,.s,.t{color:#000}.u,.v.u.v{color:#000}.w,.v.w.v{color:#000}.x,.y,.z{color:x}.y,.z,.x{color:y}.z,.x,.y{color:z}.va,.vb,.vc{color:#000}.vb,.vc{color:#fff}@media tv{.ma,.mb,.mc{color:#000}.md,.ma,.mb,.mc{color:#fff}}@media tv andplasma{.me,.mf{background:red;}}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend-clearfix.min.css',
-    ".clearfix,.foo,.bar{*zoom:1}.clearfix:after,.foo:after,.bar:after{content:'';display:block;clear:both;height:0}.foo{color:red}.bar{color:blue}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend-exact.min.css',
-    ".replace.replace .replace,.c.replace+.replace .replace,.replace.replace .c,.c.replace+.replace .c,.rep_ace{prop:copy-paste-replace}.a .b .c{prop:not_effected}.a,.effected{prop:is_effected}.a .b{prop:not_effected}.a .b.c{prop:not_effected}.c .b .a,.a .b .a,.c .a .a,.a .a .a,.c .b .c,.a .b .c,.c .a .c,.a .a .c{prop:not_effected}.e.e,.dbl{prop:extend-double}.e.e:hover{hover:not-extended}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend-media.min.css',
-    ".ext1 .ext2,.all .ext2{background:#000}@media tv{.ext1 .ext3,.tv-lowres .ext3,.all .ext3{color:#fff}.tv-lowres{background:blue}}@media tv andhires{.ext1 .ext4,.tv-hires .ext4,.all .ext4{color:green;}.tv-hires{background:red;}}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend-nest.min.css',
-    ".sidebar,.sidebar2,.type1 .sidebar3,.type2.sidebar4{width:300px;background:red}.sidebar .box,.sidebar2 .box,.type1 .sidebar3 .box,.type2.sidebar4 .box{background:#fff;border:1px solid #000;margin:10px 0}.sidebar2{background:blue}.type1 .sidebar3{background:green}.type2.sidebar4{background:red}.button,.submit{color:#000}.button:hover,.submit:hover{color:#fff}.button2 :hover{nested:white}.button2 :hover{notnested:black}.amp-test-h,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-a.amp-test-d.amp-test-b.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-a.amp-test-e.amp-test-g,.amp-test-f.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e+.amp-test-c .amp-test-b.amp-test-d.amp-test-b.amp-test-e.amp-test-g{test:extended by masses of selectors}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend-selector.min.css',
-    ".error,.badError{border:1px red;background:#fdd}.error.intrusion,.badError.intrusion{font-size:1.3em;font-weight:bold}.intrusion .error,.intrusion .badError{display:none}.badError{border-width:3px}.foo .bar,.foo .baz,.ext1 .ext2 .bar,.ext1 .ext2 .baz,.ext3 .bar,.ext3 .baz,.ext4 .bar,.ext4 .baz{display:none}div.ext5,.ext6>.ext5,div.ext7,.ext6>.ext7{width:100px}.ext,.a .c,.b .c{test:1}.a,.b{test:2}.a .c,.b .c{test:3}.a .c .d,.b .c .d{test:4}.replace.replace .replace,.c.replace+.replace .replace,.replace.replace .c,.c.replace+.replace .c,.rep_ace.rep_ace .rep_ace,.c.rep_ace+.rep_ace .rep_ace,.rep_ace.rep_ace .c,.c.rep_ace+.rep_ace .c{prop:copy-paste-replace}.attributes [data=\"test\"],.attributes .attributes .attribute-test{extend:attributes}.attributes [data],.attributes .attributes .attribute-test2{extend:attributes2}.attributes [data=\"test3\"],.attributes .attributes .attribute-test{extend:attributes2}.header .header-nav,.footer .footer-nav{background:red}.header .header-nav:before,.footer .footer-nav:before{background:blue}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extend.min.css',
-    ".error,.badError{border:1px red;background:#fdd}.error.intrusion,.badError.intrusion{font-size:1.3em;font-weight:bold}.intrusion .error,.intrusion .badError{display:none}.badError{border-width:3px}.foo .bar,.foo .baz,.ext1 .ext2 .bar,.ext1 .ext2 .baz,.ext3 .bar,.ext3 .baz,.foo .ext3,.ext4 .bar,.ext4 .baz,.foo .ext4{display:none}div.ext5,.ext6>.ext5,div.ext7,.ext6>.ext7{width:100px}.ext8.ext9,.fuu{result:add-foo}.ext8 .ext9,.ext8+.ext9,.ext8>.ext9,.buu,.zap,.zoo{result:bar-matched}.ext8.nomatch{result:none}.ext8 .ext9,.buu{result:match-nested-bar}.ext8.ext9,.fuu{result:match-nested-foo}.aa,.cc{color:#000}.aa .dd,.aa .ee{background:red}.bb,.cc,.ee,.ff{background:red}.bb .bb,.ff .ff{color:#000}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/extract-and-length.min.css',
-    ".multiunit{length:6;extract:abc \"abc\" 1 1px 1% #123}.incorrect-index{v1:extract(a b c,5);v2:extract(a,b,c,-2)}.scalar{var-value:variable;var-length:1;ill-index:extract(variable,2);name-value:name;string-value:\"string\";number-value:12345678;color-value:#00f;rgba-value:rgba(80,160,240,.67);empty-value:;name-length:1;string-length:1;number-length:1;color-length:1;rgba-length:1;empty-length:1}.mixin-arguments-1{length:4;extract:c| b | a}.mixin-arguments-2{length:4;extract:c| b | a}.mixin-arguments-3{length:4;extract:c| b | a}.mixin-arguments-4{length:0;extract:extract(,2)| extract(,1)}.mixin-arguments-2{length:4;extract:c| b | a}.mixin-arguments-3{length:4;extract:c| b | a}.mixin-arguments-4{length:3;extract:c| b}.mixin-arguments-2{length:4;extract:3| 2 | 1}.mixin-arguments-3{length:4;extract:3| 2 | 1}.mixin-arguments-4{length:3;extract:3| 2}.md-space-comma{length-1:3;extract-1:1 2 3;length-2:3;extract-2:2}.md-space-comma-as-args-2{length:3;extract:\"x\" \"y\" \"z\"| 1 2 3 | a b c}.md-space-comma-as-args-3{length:3;extract:\"x\" \"y\" \"z\"| 1 2 3 | a b c}.md-space-comma-as-args-4{length:2;extract:\"x\" \"y\" \"z\"| 1 2 3}.md-cat-space-comma{length-1:3;extract-1:1 2 3;length-2:3;extract-2:2}.md-cat-space-comma-as-args-2{length:3;extract:\"x\" \"y\" \"z\"| 1 2 3 | a b c}.md-cat-space-comma-as-args-3{length:3;extract:\"x\" \"y\" \"z\"| 1 2 3 | a b c}.md-cat-space-comma-as-args-4{length:2;extract:\"x\" \"y\" \"z\"| 1 2 3}.md-cat-comma-space{length-1:3;extract-1:1,2,3;length-2:3;extract-2:2}.md-cat-comma-space-as-args-1{length:3;extract:\"x\",\"y\",\"z\"| 1,2,3 | a,b,c}.md-cat-comma-space-as-args-2{length:3;extract:\"x\",\"y\",\"z\"| 1,2,3 | a,b,c}.md-cat-comma-space-as-args-3{length:3;extract:\"x\",\"y\",\"z\"| 1,2,3 | a,b,c}.md-cat-comma-space-as-args-4{length:0;extract:extract(,2)| extract(,1)}.md-3D{length-1:2;extract-1:a b c d,1 2 3 4;length-2:2;extract-2:5 6 7 8;length-3:4;extract-3:7;length-4:1;extract-4:8}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/functions.min.css',
-    "#functions{color:#600;width:16;height:undefined(\"self\");border-width:5;variable:11;background:linear-gradient(#000,#fff)}#built-in{escaped:-Some::weird(#thing,y);lighten:#fcc;darken:#300;saturate:#203c31;desaturate:#29332f;greyscale:#2e2e2e;hsl-clamp:#fff;spin-p:#bf6a40;spin-n:#bf4055;luma-white:100%;luma-black:0%;luma-black-alpha:0%;luma-red:21.26%;luma-green:71.52%;luma-blue:7.22%;luma-yellow:92.78%;luma-cyan:78.74%;luma-differs-from-luminance:23.89833349%;luminance-white:100%;luminance-black:0%;luminance-black-alpha:0%;luminance-red:21.26%;luminance-differs-from-luma:36.40541176%;contrast-filter:contrast(30%);saturate-filter:saturate(5%);contrast-white:#000;contrast-black:#fff;contrast-red:#fff;contrast-green:#000;contrast-blue:#fff;contrast-yellow:#000;contrast-cyan:#000;contrast-light:#111;contrast-dark:#eee;contrast-wrongorder:#111;contrast-light-thresh:#111;contrast-dark-thresh:#eee;contrast-high-thresh:#eee;contrast-low-thresh:#111;contrast-light-thresh-per:#111;contrast-dark-thresh-per:#eee;contrast-high-thresh-per:#eee;contrast-low-thresh-per:#111;replace:\"Hello, World!\";replace-captured:\"This is a new string.\";replace-with-flags:\"2 + 2 = 4\";replace-single-quoted:'foo-2';replace-escaped-string:bar-2;replace-keyword:baz-2;format:\"rgb(32, 128, 64)\";format-string:\"hello world\";format-multiple:\"hello earth 2\";format-url-encode:\"red is %23ff0000\";format-single-quoted:'hello single world';format-escaped-string:hello escaped world;eformat:#208040;unitless:12;unit:14em;unitpercentage:100%;get-unit:px;get-unit-empty:;hue:98;saturation:12%;lightness:95%;hsvhue:98;hsvsaturation:12%;hsvvalue:95%;red:255;green:255;blue:255;rounded:11;rounded-two:10.67;roundedpx:3px;roundedpx-three:3.333px;rounded-percentage:10%;ceil:11px;floor:12px;sqrt:5px;pi:3.14159265;mod:2m;abs:4%;tan:.90040404;sin:.17364818;cos:.84385396;atan:.1rad;atan:34deg;atan:45deg;pow:64px;pow:64;pow:27;min:0;min:5;min:1pt;min:3mm;max:3;max:5em;percentage:20%;color:#f01;tint:#898989;tint-full:#fff;tint-percent:#898989;tint-negative:#656565;shade:#686868;shade-full:#000;shade-percent:#686868;shade-negative:#868686;fade-out:rgba(255,0,0,.95);fade-in:rgba(255,0,0,.95);hsv:#4d2926;hsva:rgba(77,40,38,.2);mix:#f30;mix-0:#ff0;mix-100:red;mix-weightless:#ff8000;mixt:rgba(255,0,0,.5)}#built-in .is-a{color:true;color1:true;color2:true;color3:true;keyword:true;number:true;string:true;pixel:true;percent:true;em:true;cat:true}#alpha{alpha:rgba(153,94,51,.6);alpha2:.5;alpha3:0}#blendmodes{multiply:#ed0000;screen:#f600f6;overlay:#ed0000;softlight:#fa0000;hardlight:#0000ed;difference:#f600f6;exclusion:#f600f6;average:#7b007b;negation:#d73131}#extract-and-length{extract:3 2 1 C B A;length:6}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/ie-filters.min.css',
-    ".nav{filter:progid:DXImageTransform.Microsoft.Alpha(opacity=20);filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\"#333333\",endColorstr=\"#000000\",GradientType=0)}.evalTest1{filter:progid:DXImageTransform.Microsoft.Alpha(opacity=30);filter:progid:DXImageTransform.Microsoft.Alpha(opacity=5)}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/import-inline.min.css',
-    "#import{color:red}@media(min-width:600px){#css{color:#ff0}}this isn't very valid CSS."
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/import-interpolation.min.css',
-    "body{width:100%}.a{var:test}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/import-once.min.css',
-    "#import{color:red}body{width:100%}.test-f{height:10px}body{width:100%}.test-f{height:10px}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/import-reference.min.css',
-    "input[type=\"text\"].class#id[attr=32]:not(1){color:white;}div#id.class[a=1][b=2].class:not(1){color:white;}@media print{.class{color:blue}.class .sub{width:42}}.visible{color:red}.visible .c{color:green}.visible{color:green}.visible:hover{color:green}.only-with-visible+.visible,.visible+.only-with-visible,.visible+.visible{color:green}.only-with-visible+.visible .sub,.visible+.only-with-visible .sub,.visible+.visible .sub{color:green}.b{color:red;color:green}.b .c{color:green}.b:hover{color:green}.b+.b{color:green}.b+.b .sub{color:green}.y{pulled-in:yes}.visible{extend:test}.test-mediaq-import{color:green;test:340px}@media(max-size:450px){.test-mediaq-import{color:red}}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/import.min.css',
-    "@charset \"UTF-8\";@import url(http://fonts.googleapis.com/css?family=Open+Sans);@import url(/absolute/something.css)screen and (color) and (max-width:600px);@import url(\"//ha.com/file.css\")(min-width:100px);#import-test{height:10px;color:red;width:10px;height:30%}@media screen and (max-width:600px){body{width:100%}}#import{color:red}.mixin{height:10px;color:red}@media screen and (max-width:601px){#css{color:#ff0}}@media screen and (max-width:602px){body{width:100%}}@media screen and (max-width:603px){#css{color:#ff0}}@media print{body{width:100%}}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/javascript.min.css',
-    ".eval{js:42;js:2;js:\"hello world\";js:1,2,3;title:\"string\";ternary:true;multiline:2}.scope{var:42;escaped:7px}.vars{width:8}.escape-interpol{width:hello world}.arrays{ary:\"1, 2, 3\";ary1:\"1, 2, 3\"}.test-tran{1:opacity .3s ease-in .3s,max-height .6s linear,margin-bottom .4s linear;2: [opacity .3s ease-in .3s,max-height .6s linear,margin-bottom .4s linear];3:opacity .3s ease-in .3s,max-height .6s linear,margin-bottom .4s linear}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/lazy-eval.min.css',
-    ".lazy-eval{width:100%}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/media.min.css',
-    "@media print{.class{color:blue}.class .sub{width:42}.top,header>h1{color:#444}}@media screen{body{max-width:480}}@media all and (device-aspect-ratio:16/9){body{max-width:800px}}@media all and (orientation:portrait){aside{float:none}}@media handheld and (min-width:42),screen and (min-width:20em){body{max-width:480px}}@media print{body{padding:20px}body header{background-color:red}}@media print and (orientation:landscape){body{margin-left:20px}}@media screen{.sidebar{width:300px}}@media screen and (orientation:landscape){.sidebar{width:500px}}@media a andb{.first .second .third{width:300px;}.first .second .fourth{width:3;}}@media a andb and c{.first .second .third{width:500px;}}@media a,b andc{body{width:95%;}}@media a andx,b and c and x,a and y,b and c and y{body{width:100%;}}.a{background:#000}@media handheld{.a{background:#fff}}@media handheld and (max-width:100px){.a{background:red}}.b{background:#000}@media handheld{.b{background:#fff}}@media handheld and (max-width:200px){.b{background:red}}@media only screen and (max-width:200px){body{width:480px}}@media print{@page:left{margin:.5cm}@page:right{margin:.5cm}@page Test:first{margin:1cm}@page:first{size:8.5in 11in;@top-left{margin:1cm}@top-left-corner{margin:1cm}@top-center{margin:1cm}@top-right{margin:1cm}@top-right-corner{margin:1cm}@bottom-left{margin:1cm}@bottom-left-corner{margin:1cm}@bottom-center{margin:1cm}@bottom-right{margin:1cm}@bottom-right-corner{margin:1cm}@left-top{margin:1cm}@left-middle{margin:1cm}@left-bottom{margin:1cm}@right-top{margin:1cm}@right-middle{content:\"Page \" counter(page)}@right-bottom{margin:1cm}}}@media(-webkit-min-device-pixel-ratio:2),(min--moz-device-pixel-ratio:2),(-o-min-device-pixel-ratio:2/1),(min-resolution:2dppx),(min-resolution:128dpcm){.b{background:red}}body{background:red}@media(max-width:500px){body{background:green}}@media(max-width:1000px){body{background:red;background:blue}}@media(max-width:1000px) and (max-width:500px){body{background:green}}@media(max-width:1200px){}@media(max-width:1200px) and (max-width:900px){body{font-size:11px}}@media(min-width:480px){.nav-justified>li{display:table-cell}}@media(min-width:768px) and (min-width:480px){.menu>li{display:table-cell}}@media all andtv{.all-and-tv-variables{var:all-and-tv;}}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/merge.min.css',
-    ".test1{transform:rotate(90deg),skew(30deg),scale(2,4)}.test2{transform:rotate(90deg),skew(30deg);transform:scaleX(45deg)}.test3{transform:scaleX(45deg);background:url(data://img1.png)}.test4{transform:rotate(90deg),skew(30deg);transform:scale(2,4) !important}.test5{transform:rotate(90deg),skew(30deg);transform:scale(2,4) !important}.test6{transform:scale(2,4)}.test-interleaved{transform:t1,t2,t3;background:b1,b2,b3}.test-spaced{transform:t1 t2 t3;background:b1 b2,b3}.test-interleaved-with-spaced{transform:t1s,t2 t3s,t4 t5s t6s;background:b1 b2s,b3,b4}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-args.min.css',
-    "#hidden{color:transparent}#hidden1{color:transparent}.two-args{color:blue;width:10px;height:99%;border:2px dotted #000}.one-arg{width:15px;height:49%}.no-parens{width:5px;height:49%}.no-args{width:5px;height:49%}.var-args{width:45;height:17%}.multi-mix{width:10px;height:29%;margin:4;padding:5}body{padding:30px;color:red}.scope-mix{width:8}.content{width:600px}.content .column{margin:600px}#same-var-name{radius:5px}#var-inside{width:10px}.arguments{border:1px solid #000;width:1px}.arguments2{border:0;width:0}.arguments3{border:0;width:0}.arguments4{border:0 1 2 3 4;rest:1 2 3 4;width:0}.edge-case{border:\"{\";width:\"{\"}.slash-vs-math{border-radius:2px/5px;border-radius:5px/10px;border-radius:6px}.comma-vs-semi-colon{one:a;two:b,c;one:d,e;two:f;one:g;one:h;one:i;one:j;one:k;two:l;one:m,n;one:o,p;two:q;one:r,s;two:t}#named-conflict{four:a,11,12,13;four:a,21,22,23}.test-mixin-default-arg{defaults:1px 1px 1px;defaults:2px 2px 2px}.selector{margin:2,2,2,2}.selector2{margin:2,2,2,2}.selector3{margin:4}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-closure.min.css',
-    ".class{width:99px}.overwrite{width:99px}.nested .class{width:5px}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-guards-default-func.min.css',
-    "guard-default-basic-1-1{case:1}guard-default-basic-1-2{default:2}guard-default-basic-2-0{default:0}guard-default-basic-2-2{case:2}guard-default-basic-3-0{default:0}guard-default-basic-3-2{case:2}guard-default-basic-3-3{case:3}guard-default-definition-order-0{default:0}guard-default-definition-order-2{case:2}guard-default-definition-order-2{case:3}guard-default-out-of-guard-0{case-0:default();case-1:1;default:2;case-2:default()}guard-default-out-of-guard-1{default:default()}guard-default-out-of-guard-2{default:default()}guard-default-expr-not-1{case:1;default:1}guard-default-expr-eq-true{case:true}guard-default-expr-eq-false{case:false;default:false}guard-default-expr-or-1{case:1}guard-default-expr-or-2{case:2;default:2}guard-default-expr-or-3{default:3}guard-default-expr-and-1{case:1}guard-default-expr-and-2{case:2}guard-default-expr-and-3{default:3}guard-default-expr-always-1{case:1;default:1}guard-default-expr-always-2{default:2}guard-default-expr-never-1{case:1}guard-default-multi-1-0{case:0}guard-default-multi-1-1{default-1:1}guard-default-multi-2-1{default-1:no}guard-default-multi-2-2{default-2:no}guard-default-multi-2-3{default-3:3}guard-default-multi-3-blue{case-2:#00008b}guard-default-multi-3-green{default-color:green}guard-default-multi-3-foo{case-1:I am 'foo'}guard-default-multi-3-baz{default-string:I am 'baz'}guard-default-multi-4{always:1;always:2;case:2}guard-default-not-ambiguos-2{case:1;not-default:2}guard-default-not-ambiguos-3{case:1;not-default-1:2;not-default-2:2}guard-default-scopes-3{3:when default}guard-default-scopes-1{1:no condition}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-guards.min.css',
-    ".light1{color:#fff;margin:1px}.light2{color:#000;margin:1px}.max1{width:6}.max2{width:8}.glob1{margin:auto auto}.ops1{height:gt-or-eq;height:lt-or-eq;height:lt-or-eq-alias}.ops2{height:gt-or-eq;height:not-eq}.ops3{height:lt-or-eq;height:lt-or-eq-alias;height:not-eq}.default1{content:default}.test1{content:\"true.\"}.test2{content:\"false.\"}.test3{content:\"false.\"}.test4{content:\"false.\"}.test5{content:\"false.\"}.bool1{content:true and true;content:true;content:false,true;content:false and true and true,true;content:false,true and true;content:false,false,true;content:false,true and true and true,false;content:not false;content:not false and false,not false}.equality-units{test:pass}.colorguardtest{content:is red;content:is not #00f its red;content:is not #00f its purple}.stringguardtest{content:\"theme1\" is \"theme1\";content:\"theme1\" is not \"theme2\";content:\"theme1\" is 'theme1';content:\"theme1\" is not 'theme2';content:'theme1' is \"theme1\";content:'theme1' is not \"theme2\";content:'theme1' is 'theme1';content:'theme1' is not 'theme2';content:theme1 is not \"theme2\";content:theme1 is not 'theme2';content:theme1 is theme1}#tryNumberPx{catch:all;declare:4;declare:4px}.call-lock-mixin .call-inner-lock-mixin{a:1;x:1}.mixin-generated-class{a:1}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-important.min.css',
-    ".class{border:1;boxer:1;border-width:1;border:2 !important;boxer:2 !important;border-width:2 !important;border:3;boxer:3;border-width:3;border:4 !important;boxer:4 !important;border-width:4 !important;border:5;boxer:5;border-width:5;border:0 !important;boxer:0 !important;border-width:0 !important;border:9 !important;border:9;boxer:9;border-width:9}.class .inner{test:1}.class .inner{test:2 !important}.class .inner{test:3}.class .inner{test:4 !important}.class .inner{test:5}.class .inner{test:0 !important}.class .inner{test:9}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-interpolated.min.css',
-    ".foo{a:1}.foo{a:2}#foo{a:3}#foo{a:4}mi-test-a{a:1;a:2;a:3;a:4}.b .bb.foo-xxx .yyy-foo#foo .foo.bbb{b:1}mi-test-b{b:1}#foo-foo>.bar .baz{c:c}mi-test-c-1>.bar .baz{c:c}mi-test-c-2 .baz{c:c}mi-test-c-3{c:c}mi-test-d{gender:\"Male\"}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-named-args.min.css',
-    ".named-arg{color:blue;width:5px;height:99%;args:1px 100%;text-align:center}.class{width:5px;height:19%;args:1px 20%}.all-args-wrong-args{width:10px;height:9%;args:2px 10%}.named-args2{width:15px;height:49%;color:#646464}.named-args3{width:5px;height:29%;color:#123456}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-nested.min.css',
-    ".class .inner{height:300}.class .inner .innest{width:30;border-width:60}.class2 .inner{height:600}.class2 .inner .innest{width:60;border-width:120}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins-pattern.min.css',
-    ".zero{variadic:true;named-variadic:true;zero:0;one:1;two:2;three:3}.one{variadic:true;named-variadic:true;one:1;one-req:1;two:2;three:3}.two{variadic:true;named-variadic:true;two:2;three:3}.three{variadic:true;named-variadic:true;three-req:3;three:3}.left{left:1}.right{right:1}.border-right{color:#000;border-right:4px}.border-left{color:#000;border-left:4px}.only-right{right:33}.only-left{left:33}.left-right{both:330}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/mixins.min.css',
-    ".mixin{border:1px solid #000}.mixout{border-color:#ffa500}.borders{border-style:dashed}.mixin>*{border:do not match me}#namespace .borders{border-style:dotted}#namespace .biohazard{content:\"death\"}#namespace .biohazard .man{color:transparent}#theme>.mixin{background-color:grey}#container{color:#000;border:1px solid #000;border-color:#ffa500;background-color:grey}#header .milk{color:#fff;border:1px solid #000;background-color:grey}#header #cookie{border-style:dashed}#header #cookie .chips{border-style:dotted}#header #cookie .chips .calories{color:#000;border:1px solid #000;border-color:#ffa500;background-color:grey}.secure-zone{color:transparent}.direct{border-style:dotted}.bo,.bar{width:100%}.bo{border:1px}.ar.bo.ca{color:#000}.jo.ki{background:none}.amp.support{color:#ffa500}.amp.support .higher{top:0}.amp.support.deeper{height:auto}.extended{width:100%;border:1px;background:none;color:#ffa500;top:0;height:auto}.extended .higher{top:0}.extended.deeper{height:auto}.do .re .mi .fa .sol .la .si{color:#0ff}.mutli-selector-parents{color:#0ff}.foo .bar{width:100%}.underParents{color:red}.parent .underParents{color:red}*+h1{margin-top:25px}legend+h1{margin-top:0}h1+*{margin-top:10px}*+h2{margin-top:20px}legend+h2{margin-top:0}h2+*{margin-top:8px}*+h3{margin-top:15px}legend+h3{margin-top:0}h3+*{margin-top:5px}.error{background-image:\"/a.png\";background-position:center center}.test-rec .recursion{color:#000}.button{padding-left:44px}.button.large{padding-left:40em}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/no-output.min.css',
-    ""
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/operations.min.css',
-    "#operations{color:#111;height:9px;width:3em;substraction:0;division:1}#operations .spacing{height:9px;width:3em}.with-variables{height:16em;width:24em;size:1cm}.with-functions{color:#646464;color:#ff8080;color:#c94a4a}.negative{height:0;width:4px}.shorthands{padding:-1px 2px 0 -4px}.rem-dimensions{font-size:5.5rem}.colors{color:#123;border-color:#345;background-color:#000}.colors .other{color:#222;border-color:#222}.negations{variable:-4px;variable1:0;variable2:0;variable3:8px;variable4:0;paren:-4px;paren2:16px}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/parens.min.css',
-    ".parens{border:2px solid #000;margin:1px 3px 16 3;width:36;padding:2px 36px}.more-parens{padding:8 4 4 4px;width-all:96;width-first:16* 6;width-keep:(4* 4)* 6;height-keep:(7* 7)+ (8 * 8);height-all:113;height-parts:49 + 64;margin-keep:(4* (5 + 5)/ 2)- (4 * 2);margin-parts:20 - 8;margin-all:12;border-radius-keep:4px* (1 + 1)/ 4 + 3px;border-radius-parts:8px/7px;border-radius-all:5px}.negative{neg-var:-1;neg-var-paren:-(1)}.nested-parens{width:2* (4 *(2 +(1 + 6)))- 1;height:((2 + 3)* (2 + 3)/ (9 - 4))+ 1}.mixed-units{margin:2px 4em 1 5pc;padding:6px 1em 2px 2}.test-false-negatives{a:(}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/property-name-interp.min.css',
-    "pi-test{border:0;@not-variable:@not-variable;ufo-width:50%;*-z-border:1px dashed blue;-www-border-top:2px;radius-is-not-a-border:true;border-top-left-radius:2em;border-top-red-radius-:3pt;global-local-mixer-property:strong}pi-test-merge{pre-property-ish:high,middle,low,base;pre-property-ish+:nice try dude}pi-indirect-vars{auto:auto}pi-complex-values{3px rgba(255,255,0,.5),3.141592653589793 3px rgba(255,255,0,.5),3.141592653589793/**/ :none}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/rulesets.min.css',
-    "#first>.one{font-size:2em}#first>.one>#second .two>#deux{width:50%}#first>.one>#second .two>#deux #third{height:100%}#first>.one>#second .two>#deux #third:focus{color:#000}#first>.one>#second .two>#deux #third:focus #fifth>#sixth .seventh #eighth+#ninth{color:purple}#first>.one>#second .two>#deux #fourth,#first>.one>#second .two>#deux #five,#first>.one>#second .two>#deux #six{color:#100}#first>.one>#second .two>#deux #fourth .seven,#first>.one>#second .two>#deux #five .seven,#first>.one>#second .two>#deux #six .seven,#first>.one>#second .two>#deux #fourth .eight>#nine,#first>.one>#second .two>#deux #five .eight>#nine,#first>.one>#second .two>#deux #six .eight>#nine{border:1px solid #000}#first>.one>#second .two>#deux #fourth #ten,#first>.one>#second .two>#deux #five #ten,#first>.one>#second .two>#deux #six #ten{color:red}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/scope.min.css',
-    ".tiny-scope{color:#989}.scope1{color:#00f;border-color:#000}.scope1 .scope2{color:#00f}.scope1 .scope2 .scope3{color:red;border-color:#000;background-color:#fff}.scope{scoped-val:green}.heightIsSet{height:1024px}.useHeightInMixinCall{mixin-height:1024px}.imported{exists:true}.testImported{exists:true}#allAreUsedHere{default:'top level';scope:'top level';sub-scope-only:'inside'}#parentSelectorScope{prop:#fff}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/selectors.min.css',
-    "h1 a:hover,h2 a:hover,h3 a:hover,h1 p:hover,h2 p:hover,h3 p:hover{color:red}#all{color:blue}#the{color:blue}#same{color:blue}ul,li,div,q,blockquote,textarea{margin:0}td{margin:0;padding:0}td,input{line-height:1em}a{color:red}a:hover{color:blue}div a{color:green}p a span{color:#ff0}.foo .bar .qux,.foo .baz .qux{display:block}.qux .foo .bar,.qux .foo .baz{display:inline}.qux.foo .bar,.qux.foo .baz{display:inline-block}.qux .foo .bar .biz,.qux .foo .baz .biz{display:none}.a.b.c{color:red}.c .b.a{color:red}.foo .p.bar{color:red}.foo.p.bar{color:red}.foo+.foo{background:amber}.foo+.foo{background:amber}.foo+.foo,.foo+.bar,.bar+.foo,.bar+.bar{background:amber}.foo a>.foo a,.foo a>.bar a,.foo a>.foo b,.foo a>.bar b,.bar a>.foo a,.bar a>.bar a,.bar a>.foo b,.bar a>.bar b,.foo b>.foo a,.foo b>.bar a,.foo b>.foo b,.foo b>.bar b,.bar b>.foo a,.bar b>.bar a,.bar b>.foo b,.bar b>.bar b{background:amber}.other ::fnord{color:red}.other::fnord{color:red}.other ::bnord{color:red}.other::bnord{color:red}.blood{color:red}.bloodred{color:green}#blood.blood.red.black{color:#000}:nth-child(3){selector:interpolated}.test:nth-child(odd):not(:nth-child(3)){color:red}[prop],[prop=10%],[prop=\"value3\"],[prop*=\"val3\"],[|prop~=\"val3\"],[*|prop$=\"val3\"],[ns|prop^=\"val3\"],[]^=\"val3\"],[3=3],[3]{attributes:yes;}.blood{color:red}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/strings.min.css',
-    "#strings{background-image:url(\"http://son-of-a-banana.com\");quotes:\"~\" \"~\";content:\"#*%:&^,)!.(~*})\";empty:\"\";brackets:\"{\" \"}\";escapes:\"\\\"hello\\\" \\\\world\";escapes2:\"\\\"llo\"}#comments{content:\"/* hello */ // not-so-secret\"}#single-quote{quotes:\"'\" \"'\";content:'\"\"#!&\"\"';empty:'';semi-colon:';'}#escaped{filter:DX.Transform.MS.BS.filter(opacity=50)}#one-line{image:url(http://tooks.com)}#crazy{image:url(http://),\"}\",url(\"http://}\")}#interpolation{url:\"http://lesscss.org/dev/image.jpg\";url2:\"http://lesscss.org/image-256.jpg\";url3:\"http://lesscss.org#445566\";url4:\"http://lesscss.org/hello\";url5:\"http://lesscss.org/54.4px\"}.mix-mul-class{color:#00f;color:red;color:#000;color:#ffa500}.watermark{family:Univers,Arial,Verdana,San-Serif}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/urls.min.css',
-    "@import\"css/background.css\";@import\"import/import-test-d.css\";@import\"file.css\";@font-face{src:url(\"/fonts/garamond-pro.ttf\");src:local(Futura-Medium),url(fonts.svg#MyGeometricModern) format(\"svg\")}#shorthands{background:url(\"http://www.lesscss.org/spec.html\") no-repeat 0 4px;background:url(\"img.jpg\") center/100px;background:#fff url(image.png) center/1px 100px repeat-x scroll content-box padding-box}#misc{background-image:url(images/image.jpg)}#data-uri{background:kiVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAD/k kg9C9zwz3gVLMDA/A6P9/AFGGFyjOXZtQAAAAAElFTkSuQmCC);background-image:url(data:image/x-png,f9difSSFIIGFIFJD1f982FSDKAA9==);background-image:url(http://fonts.googleapis.com/css?family=\\\"Rokkitt\\\":\\(400\\),700);background-image:url(\"http://fonts.googleapis.com/css?family=\\\"Rokkitt\\\":\\(400\\),700\")}#svg-data-uri{background:transparent url('data:image/svg+xml, <svg version=\"1.1\"><g></g></svg>')}.comma-delimited{background:url(bg.jpg) no-repeat,url(bg.png) repeat-x top left,url(bg)}.values{url:url('Trebuchet')}#logo{width:100px;height:100px;background:url('import/assets/logo.png')}@font-face{font-family:xecret;src:url('import/assets/xecret.ttf')}#secret{font-family:xecret,sans-serif}#imported-relative-path{background-image:url(../data/image.jpg);border-image:url('../data/image.jpg')}#relative-url-import{background-image:url(../data/image.jpg);border-image:url('../data/image.jpg')}#data-uri{uri:url(\"data:image/jpeg;base64,bm90IGFjdHVhbGx5IGEganBlZyBmaWxlCg==\");uri-fragment:url(\"data:image/jpeg;base64,bm90IGFjdHVhbGx5IGEganBlZyBmaWxlCg==#fragment\")}#data-uri-guess{uri:url(\"data:image/jpeg;base64,bm90IGFjdHVhbGx5IGEganBlZyBmaWxlCg==\")}#data-uri-ascii{uri-1:url(\"data:text/html,%3Ch1%3EThis%20page%20is%20100%25%20Awesome.%3C%2Fh1%3E%0A\");uri-2:url(\"data:text/html,%3Ch1%3EThis%20page%20is%20100%25%20Awesome.%3C%2Fh1%3E%0A\")}#data-uri-toobig{uri:url('../data/data-uri-fail.png')}#svg-functions{background-image:url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzAwMDAwMCIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2ZmZmZmZiIvPjwvbGluZWFyR3JhZGllbnQ+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkaWVudCkiIC8+PC9zdmc+');background-image:url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzAwMDAwMCIvPjxzdG9wIG9mZnNldD0iMyUiIHN0b3AtY29sb3I9IiNmZmE1MDAiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZmZmZmYiLz48L2xpbmVhckdyYWRpZW50PjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9InVybCgjZ3JhZGllbnQpIiAvPjwvc3ZnPg==');background-image:url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIxJSIgc3RvcC1jb2xvcj0iI2M0YzRjNCIvPjxzdG9wIG9mZnNldD0iMyUiIHN0b3AtY29sb3I9IiNmZmE1MDAiLz48c3RvcCBvZmZzZXQ9IjUlIiBzdG9wLWNvbG9yPSIjMDA4MDAwIi8+PHN0b3Agb2Zmc2V0PSI5NSUiIHN0b3AtY29sb3I9IiNmZmZmZmYiLz48L2xpbmVhckdyYWRpZW50PjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9InVybCgjZ3JhZGllbnQpIiAvPjwvc3ZnPg==')}@font-face{font-family:'MyWebFont';src:url(webfont.eot);src:url('webfont.eot?#iefix') format('embedded-opentype'),url('webfont.woff') format('woff'),format('truetype') url('webfont.ttf'),url('webfont.svg#svgFontName') format('svg')}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/variables-in-at-rules.min.css',
-    "@charset \"UTF-8\";@namespace less \"http://lesscss.org\";@keyframes enlarger{from{font-size:12px}to{font-size:15px}}@-webkit-keyframes reducer{from{font-size:13px}to{font-size:10px}}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/variables.min.css',
-    ".variables{width:14cm}.variables{height:24px;color:#888;font-family:\"Trebuchet MS\",Verdana,sans-serif;quotes:\"~\" \"~\"}.redef{zero:0}.redef .inition{three:3}.values{minus-one:-1;font-family:'Trebuchet','Trebuchet','Trebuchet';color:#888 !important;multi:something 'A',B,C,'Trebuchet'}.variable-names{name:'hello'}.alpha{filter:alpha(opacity=42)}.testPollution{a:'no-pollution'}.units{width:1px;same-unit-as-previously:1px;square-pixel-divided:1px;odd-unit:2;percentage:500%;pixels:500px;conversion-metric-a:30mm;conversion-metric-b:3cm;conversion-imperial:3in;custom-unit:420octocats;custom-unit-cancelling:18dogs;mix-units:2px;invalid-units:1px}"
-  );
-
-
-  $templateCache.put('builder/node_modules/grunt-contrib-less/node_modules/less/test/css/whitespace.min.css',
-    ".whitespace{color:#fff}.whitespace{color:#fff}.whitespace{color:#fff}.whitespace{color:#fff}.whitespace{color:#fff}.white,.space,.mania{color:#fff}.no-semi-column{color:#fff}.no-semi-column{color:#fff;white-space:pre}.no-semi-column{border:2px solid #fff}.newlines{background:the,great,wall;border:2px solid #000}.sel .newline_ws .tab_ws{color:#fff;background-position:45 -23}"
-  );
-
-
   $templateCache.put('modules/editor/styles/css/editor.min.css',
-    ".contents.docked{padding:0 !important;margin:0 !important}.text-editor{display:flex;flex-direction:column;width:100%}.text-area{width:100%;padding:6px;height:100%;min-height:640px}.CodeMirror{border:1px solid #eee;min-height:640px;height:100%}"
+    ".contents.docked{padding:0!important;margin:0!important}.text-editor{width:100%;height:100%;position:relative}.text-area{width:100%;height:100%;padding:6px;max-height:420px;position:relative}.CodeMirror{border:1px solid #eee;min-height:640px;height:100%}"
   );
 }]);

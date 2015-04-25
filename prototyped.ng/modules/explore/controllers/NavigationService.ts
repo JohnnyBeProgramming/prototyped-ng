@@ -71,26 +71,46 @@ module proto.ng.modules.explorer {
 
         public selected: SiteNode;
 
-        private _treeData: any = [];
+        public siteExplorer: SiteNode;
+        public clientStates: SiteNode;
+        public fileSystem: SiteNode;
+
+        private _treeData: TreeNode[] = [];
+        private _treeMap: any = {};
 
         constructor(private $state, private $q) {
-            this.init();            
+            this.init();
         }
 
         public init() {
-            this._treeData = [
-                new proto.ng.modules.explorer.SiteNavigationRoot('Home Page', this.$state.get()),
-            ];
-            /*
-            this.$rootScope.$on('nodeSelect', function (data) {
-                console.warn('nodeSelect', data);
-                //this.selected = data;
-            });
-            */
+            this.siteExplorer = new proto.ng.modules.explorer.SiteNavigationRoot('Site Explorer', this.$state.get()),
+            this.fileSystem = new proto.ng.modules.explorer.SiteNavigationRoot('File System', this.$state.get()),
+            this.clientStates = new proto.ng.modules.explorer.SiteNavigationRoot('Client States', this.$state.get()),
+            this.register(this.siteExplorer)
+                .register(this.fileSystem)
+                .register(this.clientStates);
         }
 
-        public getTreeData() {
-            return this._treeData;
+        public register(node: TreeNode): NavigationService {
+            var ident: string = node.label;
+            if (ident in this._treeMap) return this;
+            this._treeMap[ident] = node;
+            this._treeData.push(node);
+            return this;
+        }
+
+        public getTreeData(ident?: string): TreeNode[] {
+            var ret: TreeNode[] = [];
+            if (!ident && this._treeData) {
+                return this._treeData;
+            } else if (this._treeData.length) {
+                this._treeData.forEach(function (itm, i) {
+                    if (itm.label == ident) {
+                        ret.push(itm);
+                    }
+                });
+            }
+            return ret;
         }
 
     }

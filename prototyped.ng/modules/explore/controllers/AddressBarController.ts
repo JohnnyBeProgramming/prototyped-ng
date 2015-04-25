@@ -2,6 +2,19 @@
 
 module proto.ng.modules.explorer {
 
+    export function AddressBarDirective() : any {
+        return {
+            restrict: 'EA',
+            scope: {
+                target: '=protoAddressBar'
+            },
+            transclude: false,
+            templateUrl: 'modules/explore/views/addressbar.tpl.html',
+            controller: 'proto.ng.modules.explorer.AddressBarController',
+            controllerAs: 'addrBar'
+        };
+    }
+
     export class AddressBarController {
 
         private element: any;
@@ -27,7 +40,7 @@ module proto.ng.modules.explorer {
                 }
             } catch (ex) {
                 // Initialisation failed
-                console.error(ex);
+                console.warn(ex);
             }
             $scope.busy = false;
         }
@@ -49,7 +62,7 @@ module proto.ng.modules.explorer {
                     gui.Shell.openItem(path + '/');
                 }
             } catch (ex) {
-                console.error(ex);
+                console.warn(ex);
             }
             this.generateOutput(path);
         }
@@ -94,6 +107,7 @@ module proto.ng.modules.explorer {
         }
 
         generatePaths(dir_path: string) {
+            if (typeof require === 'undefined') return;
             try {
                 // Get dependecies
                 var path = require('path');

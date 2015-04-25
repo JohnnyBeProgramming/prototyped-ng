@@ -1,0 +1,53 @@
+﻿<ul class="list-group">
+
+    <li class="list-group-item" ui:sref-active="active">
+        <a ui:sref="proto.explore">
+            <i class="fa fa-info-circle"></i>&nbsp; Site Explorer
+        </a>
+    </li>
+    <li class="list-group-item" style="padding: 6px 0" ng-if="state.current.name == 'proto.explore'">
+        <abn:tree tree-data="navigation.siteExplorer"
+                  icon-leaf="fa fa-cog"
+                  icon-expand="fa fa-plus"
+                  icon-collapse="fa fa-minus"
+                  expand-level="2">
+        </abn:tree>
+    </li>
+
+    <li class="list-group-item" ui:sref-active="active">
+        <a ui:sref="proto.browser">
+            <i class="fa fa-cogs"></i>&nbsp; File Browser
+        </a>
+    </li>
+    <li class="list-group-item" style="padding: 6px 0" ng-if="state.current.name == 'proto.browser'">
+        <!-- Ensure styles are loaded -->
+        <style resx:import="assets/css/images.min.css"></style>
+        <div class="info-overview" ng-if="!appNode.active">
+            <div class="panel-icon-lg">
+                <div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px;"></div>
+            </div>
+        </div>
+        <div ng-if="appNode.active">
+            <abn:tree tree-data="navigation.fileSystem"
+                      icon-leaf="fa fa-cog"
+                      icon-expand="fa fa-plus"
+                      icon-collapse="fa fa-minus"
+                      expand-level="2">
+            </abn:tree>
+        </div>
+    </li>
+
+    <li class="list-group-item" ui:sref-active="active">
+        <a ui:sref="proto.routing">
+            <i class="fa fa-info-circle"></i>&nbsp; Routing &amp; State
+        </a>
+    </li>
+    <li class="list-group-item" style="padding: 6px 0" ng-if="state.current.name == 'proto.routing'">
+        <abn:tree tree-data="navigation.clientStates"
+                  icon-leaf="fa fa-cog"
+                  icon-expand="fa fa-plus"
+                  icon-collapse="fa fa-minus"
+                  expand-level="2">
+        </abn:tree>
+    </li>
+</ul>

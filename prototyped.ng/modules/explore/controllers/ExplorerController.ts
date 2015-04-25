@@ -22,7 +22,7 @@ module proto.ng.modules.explorer {
                     }
                 });
             } catch (ex) {
-                console.error(ex);
+                console.warn(ex);
             }
         }
 
@@ -33,49 +33,53 @@ module proto.ng.modules.explorer {
 
         navigate(dir_path: string) {
             var deferred = this.$q.defer();
-            try {
-                // Set busy flag
-                this.$scope.isBusy = true;
-                this.$scope.error = null;
+            if (typeof require === 'undefined') {
+                deferred.reject(new Error('Required libraries not available.'));
+            } else {
+                try {
+                    // Set busy flag
+                    this.$scope.isBusy = true;
+                    this.$scope.error = null;
 
-                // Resolve the full path
-                var path = require('path');
-                dir_path = path.resolve(dir_path);
+                    // Resolve the full path
+                    var path = require('path');
+                    dir_path = path.resolve(dir_path);
 
-                // Read the folder contents (async)
-                var fs = require('fs');
-                fs.readdir(dir_path, (error, files) => {
-                    if (error) {
-                        deferred.reject(error);
-                        return;
-                    }
-
-                    // Split and sort results
-                    var folders = [];
-                    var lsFiles = [];
-                    for (var i = 0; i < files.sort().length; ++i) {
-                        var targ = path.join(dir_path, files[i]);
-                        var stat = this.mimeType(targ);
-                        if (stat.type == 'folder') {
-                            folders.push(stat);
-                        } else {
-                            lsFiles.push(stat);
+                    // Read the folder contents (async)
+                    var fs = require('fs');
+                    fs.readdir(dir_path, (error, files) => {
+                        if (error) {
+                            deferred.reject(error);
+                            return;
                         }
-                    }
 
-                    // Generate the contents
-                    var result = {
-                        path: dir_path,
-                        folders: folders,
-                        files: lsFiles
-                    };
+                        // Split and sort results
+                        var folders = [];
+                        var lsFiles = [];
+                        for (var i = 0; i < files.sort().length; ++i) {
+                            var targ = path.join(dir_path, files[i]);
+                            var stat = this.mimeType(targ);
+                            if (stat.type == 'folder') {
+                                folders.push(stat);
+                            } else {
+                                lsFiles.push(stat);
+                            }
+                        }
 
-                    // Mark promise as resolved
-                    deferred.resolve(result);
-                });
-            } catch (ex) {
-                // Mark promise and rejected
-                deferred.reject(ex);
+                        // Generate the contents
+                        var result = {
+                            path: dir_path,
+                            folders: folders,
+                            files: lsFiles
+                        };
+
+                        // Mark promise as resolved
+                        deferred.resolve(result);
+                    });
+                } catch (ex) {
+                    // Mark promise and rejected
+                    deferred.reject(ex);
+                }
             }
 
             // Handle the result and error conditions
