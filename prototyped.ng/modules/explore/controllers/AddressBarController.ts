@@ -10,7 +10,7 @@ module proto.ng.modules.explorer {
             },
             transclude: false,
             templateUrl: 'modules/explore/views/addressbar.tpl.html',
-            controller: 'proto.ng.modules.explorer.AddressBarController',
+            controller: 'AddressBarController',
             controllerAs: 'addrBar'
         };
     }

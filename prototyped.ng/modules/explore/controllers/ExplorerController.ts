@@ -16,7 +16,6 @@ module proto.ng.modules.explorer {
                 // Hook event for when folder path changes
                 this.$rootScope.$on('event:folder-path:changed', (event, folder) => {
                     if (folder != this.$scope.dir_path) {
-                        console.warn(' - Explorer Navigate: ', folder);
                         this.$scope.dir_path = folder;
                         this.navigate(folder);
                     }

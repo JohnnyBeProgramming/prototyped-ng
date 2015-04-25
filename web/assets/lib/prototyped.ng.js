@@ -2182,7 +2182,7 @@ var proto;
                         },
                         transclude: false,
                         templateUrl: 'modules/explore/views/addressbar.tpl.html',
-                        controller: 'proto.ng.modules.explorer.AddressBarController',
+                        controller: 'AddressBarController',
                         controllerAs: 'addrBar'
                     };
                 }
@@ -2352,7 +2352,6 @@ var proto;
                             // Hook event for when folder path changes
                             this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
                                 if (folder != _this.$scope.dir_path) {
-                                    console.warn(' - Explorer Navigate: ', folder);
                                     _this.$scope.dir_path = folder;
                                     _this.navigate(folder);
                                 }
@@ -2636,14 +2635,20 @@ var proto;
                         this.$state = $state;
                         this.$q = $q;
                         this._treeData = [];
+                        this._treeMap = {};
                         this.init();
                     }
                     NavigationService.prototype.init = function () {
-                        this._treeData = [
-                            new proto.ng.modules.explorer.SiteNavigationRoot('Site Explorer', this.$state.get()),
-                            new proto.ng.modules.explorer.SiteNavigationRoot('File System', this.$state.get()),
-                            new proto.ng.modules.explorer.SiteNavigationRoot('Client States', this.$state.get())
-                        ];
+                        this.siteExplorer = new proto.ng.modules.explorer.SiteNavigationRoot('Site Explorer', this.$state.get()), this.fileSystem = new proto.ng.modules.explorer.SiteNavigationRoot('File System', this.$state.get()), this.clientStates = new proto.ng.modules.explorer.SiteNavigationRoot('Client States', this.$state.get()), this.register(this.siteExplorer).register(this.fileSystem).register(this.clientStates);
+                    };
+
+                    NavigationService.prototype.register = function (node) {
+                        var ident = node.label;
+                        if (ident in this._treeMap)
+                            return this;
+                        this._treeMap[ident] = node;
+                        this._treeData.push(node);
+                        return this;
                     };
 
                     NavigationService.prototype.getTreeData = function (ident) {
@@ -2652,8 +2657,9 @@ var proto;
                             return this._treeData;
                         } else if (this._treeData.length) {
                             this._treeData.forEach(function (itm, i) {
-                                if (itm.label == ident)
+                                if (itm.label == ident) {
                                     ret.push(itm);
+                                }
                             });
                         }
                         return ret;
@@ -2669,6 +2675,9 @@ var proto;
     var ng = proto.ng;
 })(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
+/// <reference path="services/NavigationService.ts" />
+/// <reference path="controllers/ExplorerLeftController.ts" />
+/// <reference path="controllers/ExplorerViewController.ts" />
 angular.module('prototyped.explorer', [
     'prototyped.ng.runtime',
     'ui.router'
@@ -2696,11 +2705,13 @@ angular.module('prototyped.explorer', [
             views: {
                 'left@': {
                     templateUrl: 'modules/explore/views/left.tpl.html',
-                    //controller: 'ExplorerLeftController',
-                    controller: [
-                        '$scope', 'navigationService', function ($scope, navigationService) {
-                            //$scope.navigation = navigationService;
-                        }]
+                    controller: 'ExplorerLeftController',
+                    controllerAs: 'exploreLeftCtrl'
+                },
+                'main@': {
+                    templateUrl: 'modules/explore/views/main.tpl.html',
+                    controller: 'ExplorerViewController',
+                    controllerAs: 'exploreCtrl'
                 }
             }
         }).state('proto.browser', {
@@ -2708,8 +2719,8 @@ angular.module('prototyped.explorer', [
             views: {
                 'left@': { templateUrl: 'modules/explore/views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'modules/explore/views/index.tpl.html',
-                    controller: 'proto.ng.modules.explorer.ExplorerController',
+                    templateUrl: 'modules/explore/views/browser.tpl.html',
+                    controller: 'BrowserViewController',
                     controllerAs: 'ctrlExplorer'
                 }
             }
@@ -2718,10 +2729,8 @@ angular.module('prototyped.explorer', [
             views: {
                 'left@': {
                     templateUrl: 'modules/explore/views/left.tpl.html',
-                    controller: [
-                        '$scope', 'navigationService', function ($scope, navigationService) {
-                            $scope.navigation = navigationService;
-                        }]
+                    controller: 'ExplorerLeftController',
+                    controllerAs: 'exploreLeftCtrl'
                 },
                 'main@': {
                     templateUrl: 'modules/explore/views/main.tpl.html',
@@ -2730,23 +2739,7 @@ angular.module('prototyped.explorer', [
                 }
             }
         });
-    }]).service('navigationService', ['$state', '$q', proto.ng.modules.explorer.NavigationService]).directive('protoAddressBar', [
-    '$q',
-    function ($q) {
-        return {
-            restrict: 'EA',
-            scope: {
-                target: '=protoAddressBar'
-            },
-            transclude: false,
-            templateUrl: 'modules/explore/views/addressbar.tpl.html',
-            controller: 'proto.ng.modules.explorer.AddressBarController',
-            controllerAs: 'addrBar'
-        };
-    }
-]).controller('proto.ng.modules.explorer.AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('proto.ng.modules.explorer.ExplorerController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.ExplorerController]);
-//.controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController])
-//.controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController])
+    }]).service('navigationService', ['$state', '$q', proto.ng.modules.explorer.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.ExplorerController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
@@ -3334,7 +3327,7 @@ angular.module('prototyped.ng.runtime', [
     '                padding: 0;\n' +
     '                margin: 0;\n' +
     '            }</style><a href="" class="btn btn-default pull-right" ng-click=addrBar.openFolder(dir_path) ng-disabled=!dir_parts><i class="glyphicon glyphicon-folder-open"></i></a> <a href="" ng-click=addrBar.back() class="btn btn-default pull-right" ng-disabled=!addrBar.hasHistory()><i class="glyphicon glyphicon-chevron-left"></i></a><div class="input-group input-group-sm"><label class=input-group-addon>Path:</label><div class="form-control nav-address-bar"><ul id=addressbar class=breadcrumb ng-show=dir_parts><li ng-repeat="itm in dir_parts.sequence" data-path={{itm.path}}><a href="" ng-click=addrBar.navigate(itm.path)>{{itm.name}}</a></li></ul><div class=text-error style="padding-left: 8px" ng-show=!dir_parts><i class="glyphicon glyphicon-bullhorn"></i> No access to local file system.</div></div></div></div>');
-  $templateCache.put('modules/explore/views/index.tpl.html',
+  $templateCache.put('modules/explore/views/browser.tpl.html',
     '<div style="width: 100%" ng:cloak><style>.view-selector {\n' +
     '            padding: 3px;\n' +
     '            margin-right: 8px;\n' +
@@ -3344,7 +3337,7 @@ angular.module('prototyped.ng.runtime', [
     '            text-decoration: none;\n' +
     '        }</style><div class="view-selector pull-right" ng-init="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }"><div class="input-group pull-left"><a href="" class=dropdown-toggle data-toggle=dropdown aria-expanded=false><i ng-class=viewMode.css></i> {{ viewMode.desc || \'Default View\' }} <span class=caret></span></a><ul class="pull-right dropdown-menu" role=menu><li><a href="" ng-click="viewMode = { desc:\'Large Icons\', css:\'fa fa-th-large\', view: \'view-large\' }"><i class="fa fa-th-large"></i> Large Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Medium Icons\', css:\'fa fa-th\', view: \'view-med\' }"><i class="fa fa-th"></i> Medium Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Details View\', css:\'fa fa-list\', view: \'view-details\' }"><i class="fa fa-list"></i> Details View</a></li><li class=divider></li><li><a href="" ng-click="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }">Use Default</a></li></ul></div></div><h4>File Browser <small>Explore files and folders on your local system</small></h4><div id=fileExplorer ng-class=viewMode.view><div proto:address-bar></div><div class=loader ng-show=isBusy><br><em style="padding: 24px">Loading...</em></div><div ng-show="!isBusy && dir_path"><div class=folder-contents ng-if="!folders.length && !files.length"><em>No files or folders were found...</em></div><div class=folder-contents ng-if=folders.length><h5>File Folders</h5><div id=files class=files><a href="" class="file centered" ng-click=ctrlExplorer.navigate(itm.path) ng-repeat="itm in folders"><div class=icon><i class="glyphicon glyphicon-folder-open" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div></div><div class=folder-contents ng-if=files.length><h5>Application Files</h5><div id=files class=files><a href="" class="file centered" ng-repeat="itm in files" ng-class="{ \'focus\' : (selected == itm.path)}" ng-click=ctrlExplorer.select(itm.path) ng-dblclick=ctrlExplorer.open(itm.path)><div class=icon ng-switch=itm.type><i ng-switch-default class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=blank class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=text class="fa fa-file-text-o" style="font-size: 32px"></i> <i ng-switch-when=image class="fa fa-file-image-o" style="font-size: 32px"></i> <i ng-switch-when=pdf class="fa fa-file-pdf-o" style="font-size: 32px"></i> <i ng-switch-when=css class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=html class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=word class="fa fa-file-word-o" style="font-size: 32px"></i> <i ng-switch-when=powerpoint class="fa fa-file-powerpoint-o" style="font-size: 32px"></i> <i ng-switch-when=movie class="fa fa-file-movie-o" style="font-size: 32px"></i> <i ng-switch-when=excel class="fa fa-file-excel-o" style="font-size: 32px"></i> <i ng-switch-when=compressed class="fa fa-file-archive-o" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div></div></div><div ng-show="!isBusy && !dir_path"><br><h5><i class="glyphicon glyphicon-warning-sign"></i> Warning <small>All features not available</small></h5><div class="alert alert-warning"><p><b>Please Note:</b> You are running this from a browser window.</p><p>For security reasons, web browsers do not have permission to use the local file system, or other advanced operating system features.</p><p>To use this application with full functionality, you need an elevated runtime (<a href=/about/info>see this how to</a>).</p></div></div></div></div>');
   $templateCache.put('modules/explore/views/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-info-circle"></i>&nbsp; Site Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.explore\'"></li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.browser><i class="fa fa-cogs"></i>&nbsp; File Browser</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.browser\'"><style resx:import=assets/css/images.min.css></style><div class=info-overview ng-if=!appNode.active><div class=panel-icon-lg><div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px"></div></div></div><div ng-if=appNode.active><abn:tree tree-data="navigation.getTreeData(\'File System\')" icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></div></li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.routing><i class="fa fa-info-circle"></i>&nbsp; Routing &amp; State</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.routing\'"><abn:tree tree-data="navigation.getTreeData(\'Client States\')" icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-info-circle"></i>&nbsp; Site Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.explore\'"><abn:tree tree-data=navigation.siteExplorer icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.browser><i class="fa fa-cogs"></i>&nbsp; File Browser</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.browser\'"><style resx:import=assets/css/images.min.css></style><div class=info-overview ng-if=!appNode.active><div class=panel-icon-lg><div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px"></div></div></div><div ng-if=appNode.active><abn:tree tree-data=navigation.fileSystem icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></div></li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.routing><i class="fa fa-info-circle"></i>&nbsp; Routing &amp; State</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.routing\'"><abn:tree tree-data=navigation.clientStates icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
   $templateCache.put('modules/explore/views/main.tpl.html',
     '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail ng-if=exploreCtrl.selected><br><br><div class=row><div class=col-md-9><form class=form-horizontal><div class=form-group><label for=inputState class="col-sm-2 control-label">State</label><div class=col-sm-10><input class=form-control id=inputState placeholder=empty ng-model=exploreCtrl.selected.name readonly></div></div><div class=form-group><label for=inputPath class="col-sm-2 control-label">Path</label><div class=col-sm-10><input class=form-control id=inputPath placeholder="not set" ng-model=exploreCtrl.selected.url readonly></div></div><div class=form-group><div class="col-sm-offset-2 col-sm-10"><div class=checkbox><label><input type=checkbox ng-model=exploreCtrl.selected.abstract> Abstract</label></div></div></div><div class=form-group ng-if=exploreCtrl.selected.name><div class="col-sm-offset-2 col-sm-10"><a class="btn btn-default" ng-class="{ \'btn-primary\': !exploreCtrl.selected.abstract }" ui-sref="{{ exploreCtrl.selected.name }}" ng-disabled=exploreCtrl.selected.abstract>Got to page</a></div></div></form></div><div class=col-md-3>{{ exploreCtrl.selection.views }}</div></div></div></div>');
   $templateCache.put('views/about/connections.tpl.html',
