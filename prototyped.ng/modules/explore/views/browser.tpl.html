@@ -1,107 +1,119 @@
 ﻿<div style="width: 100%" ng:cloak>
     <style>
+        .ui-view-main {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .ui-view-left {
+            margin-right: 0 !important;
+        }
+
         .view-selector {
             padding: 3px;
             margin-right: 8px;
         }
-        .view-selector a {
-            color: #808080;
-            text-decoration: none;
-        }
+
+            .view-selector a {
+                color: #808080;
+                text-decoration: none;
+            }
     </style>
-    <div class="view-selector pull-right" ng-init="viewMode = { desc:'Default View', css:'fa fa-th', view: 'view-med' }">
-        <div class="input-group pull-left">
-            <a href="" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                <i ng-class="viewMode.css"></i> {{ viewMode.desc || 'Default View' }} <span class="caret"></span>
-            </a>
-            <ul class="pull-right dropdown-menu" role="menu">
-                <li>
-                    <a href="" ng-click="viewMode = { desc:'Large Icons', css:'fa fa-th-large', view: 'view-large' }">
-                        <i class="fa fa-th-large"></i> Large Icons
-                    </a>
-                </li>
-                <li>
-                    <a href="" ng-click="viewMode = { desc:'Medium Icons', css:'fa fa-th', view: 'view-med' }">
-                        <i class="fa fa-th"></i> Medium Icons
-                    </a>
-                </li>
-                <li>
-                    <a href="" ng-click="viewMode = { desc:'Details View', css:'fa fa-list', view: 'view-details' }">
-                        <i class="fa fa-list"></i> Details View
-                    </a>
-                </li>
-                <li class="divider"></li>
-                <li><a href="" ng-click="viewMode = { desc:'Default View', css:'fa fa-th', view: 'view-med' }">Use Default</a></li>
-            </ul>
-        </div>
-    </div>
-    <h4>
-        File Browser
-        <small>Explore files and folders on your local system</small>
-    </h4>
-    <div id="fileExplorer" ng-class="viewMode.view">
-        <div proto:address-bar></div>
-        <div class="loader" ng-show="isBusy">
-            <br />
-            <em style="padding: 24px;">Loading...</em>
-        </div>
-        <div ng-show="!isBusy && dir_path">
-            <div class="folder-contents" ng-if="!folders.length && !files.length">
-                <em>No files or folders were found...</em>
+    <div proto:address-bar style="position: relative"></div>
+    <div style="padding: 8px 16px;">
+        <div id="fileExplorer" ng-class="viewMode.view">
+            <div class="loader" ng-show="isBusy">
+                <br />
+                <em style="padding: 24px;">Loading...</em>
             </div>
-            <div class="folder-contents" ng-if="folders.length">
-                <h5>File Folders</h5>
-                <div id="files" class="files">
-                    <a href="" class="file centered" ng-click="ctrlExplorer.navigate(itm.path)" ng-repeat="itm in folders">
-                        <div class="icon">
-                            <i class="glyphicon glyphicon-folder-open" style="font-size: 32px;"></i>
+            <div ng-show="!isBusy && appNode.active">
+                <div class="folder-contents" ng-if="!folders.length && !files.length">
+                    <em>No files or folders were found...</em>
+                </div>
+                <div class="folder-contents">
+                    <div class="view-selector pull-right" ng-init="viewMode = { desc:'Default View', css:'fa fa-th', view: 'view-med' }">
+                        <div class="input-group pull-left">
+                            <a href="" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                <i ng-class="viewMode.css"></i> {{ viewMode.desc || 'Default View' }} <span class="caret"></span>
+                            </a>
+                            <ul class="pull-right dropdown-menu" role="menu">
+                                <li>
+                                    <a href="" ng-click="viewMode = { desc:'Large Icons', css:'fa fa-th-large', view: 'view-large' }">
+                                        <i class="fa fa-th-large"></i> Large Icons
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="" ng-click="viewMode = { desc:'Medium Icons', css:'fa fa-th', view: 'view-med' }">
+                                        <i class="fa fa-th"></i> Medium Icons
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="" ng-click="viewMode = { desc:'Details View', css:'fa fa-list', view: 'view-details' }">
+                                        <i class="fa fa-list"></i> Details View
+                                    </a>
+                                </li>
+                                <li class="divider"></li>
+                                <li><a href="" ng-click="viewMode = { desc:'Default View', css:'fa fa-th', view: 'view-med' }">Use Default</a></li>
+                            </ul>
                         </div>
-                        <div class="name ellipsis">{{ itm.name }}</div>
-                    </a>
+                    </div>
+                    <h5 ng-if="folders.length">
+                        File Folders
+                    </h5>
+                    <div id="files" class="files" ng-if="folders.length">
+                        <a href="" class="file centered" ng-click="ctrlExplorer.navigate(itm.path)" ng-repeat="itm in folders">
+                            <div class="icon">
+                                <i class="glyphicon glyphicon-folder-open" style="font-size: 32px;"></i>
+                            </div>
+                            <div class="name ellipsis">{{ itm.name }}</div>
+                        </a>
+                    </div>
+                    <br style="clear:both" />
+                    <br style="clear:both" />
+                    <h5 ng-if="files.length">
+                        Application Files
+                    </h5>
+                    <div id="files" class="files" ng-if="files.length">
+                        <a href="" class="file centered"
+                           ng-repeat="itm in files"
+                           ng-class="{ 'focus' : (selected == itm.path)}"
+                           ng-click="ctrlExplorer.select(itm.path)"
+                           ng-dblclick="ctrlExplorer.open(itm.path)">
+                            <div class="icon" ng-switch="itm.type">
+                                <i ng-switch-default class="fa fa-file-o" style="font-size: 32px;"></i>
+                                <i ng-switch-when="blank" class="fa fa-file-o" style="font-size: 32px;"></i>
+                                <i ng-switch-when="text" class="fa fa-file-text-o" style="font-size: 32px;"></i>
+                                <i ng-switch-when="image" class="fa fa-file-image-o" style="font-size: 32px;"></i>
+                                <i ng-switch-when="pdf" class="fa fa-file-pdf-o" style="font-size: 32px;"></i>
+                                <i ng-switch-when="css" class="fa fa-file-code-o" style="font-size: 32px;"></i>
+                                <i ng-switch-when="html" class="fa fa-file-code-o" style="font-size: 32px;"></i>
+                                <i ng-switch-when="word" class="fa fa-file-word-o" style="font-size: 32px;"></i>
+                                <i ng-switch-when="powerpoint" class="fa fa-file-powerpoint-o" style="font-size: 32px;"></i>
+                                <i ng-switch-when="movie" class="fa fa-file-movie-o" style="font-size: 32px;"></i>
+                                <i ng-switch-when="excel" class="fa fa-file-excel-o" style="font-size: 32px;"></i>
+                                <i ng-switch-when="compressed" class="fa fa-file-archive-o" style="font-size: 32px;"></i>
+                            </div>
+                            <div class="name ellipsis">{{ itm.name }}</div>
+                        </a>
+                    </div>
                 </div>
             </div>
-            <div class="folder-contents" ng-if="files.length">
-                <h5>Application Files</h5>
-                <div id="files" class="files">
-                    <a href="" class="file centered"
-                       ng-repeat="itm in files"
-                       ng-class="{ 'focus' : (selected == itm.path)}"
-                       ng-click="ctrlExplorer.select(itm.path)"
-                       ng-dblclick="ctrlExplorer.open(itm.path)">
-                        <div class="icon" ng-switch="itm.type">
-                            <i ng-switch-default class="fa fa-file-o" style="font-size: 32px;"></i>
-                            <i ng-switch-when="blank" class="fa fa-file-o" style="font-size: 32px;"></i>
-                            <i ng-switch-when="text" class="fa fa-file-text-o" style="font-size: 32px;"></i>
-                            <i ng-switch-when="image" class="fa fa-file-image-o" style="font-size: 32px;"></i>
-                            <i ng-switch-when="pdf" class="fa fa-file-pdf-o" style="font-size: 32px;"></i>
-                            <i ng-switch-when="css" class="fa fa-file-code-o" style="font-size: 32px;"></i>
-                            <i ng-switch-when="html" class="fa fa-file-code-o" style="font-size: 32px;"></i>
-                            <i ng-switch-when="word" class="fa fa-file-word-o" style="font-size: 32px;"></i>
-                            <i ng-switch-when="powerpoint" class="fa fa-file-powerpoint-o" style="font-size: 32px;"></i>
-                            <i ng-switch-when="movie" class="fa fa-file-movie-o" style="font-size: 32px;"></i>
-                            <i ng-switch-when="excel" class="fa fa-file-excel-o" style="font-size: 32px;"></i>
-                            <i ng-switch-when="compressed" class="fa fa-file-archive-o" style="font-size: 32px;"></i>
-                        </div>
-                        <div class="name ellipsis">{{ itm.name }}</div>
-                    </a>
+            <div ng-show="!isBusy && !appNode.active" class="ng-cloak">
+                <br />
+                <h5>
+                    <i class="glyphicon glyphicon-warning-sign"></i> Warning <small>All features not available</small>
+                </h5>
+                <div class="alert alert-warning">
+                    <p>
+                        <b>Please Note:</b> You are running this from a browser window.
+                    </p>
+                    <p>
+                        For security reasons, web browsers do not have permission to use the local file system, or other advanced operating system features.
+                    </p>
+                    <p>
+                        To use this application with full functionality, you need an elevated runtime (<a href="/about/info">see this how to</a>).
+                    </p>
                 </div>
-            </div>
-        </div>
-        <div ng-show="!isBusy && !dir_path">
-            <br />
-            <h5>
-                <i class="glyphicon glyphicon-warning-sign"></i> Warning <small>All features not available</small>
-            </h5>
-            <div class="alert alert-warning">
-                <p>
-                    <b>Please Note:</b> You are running this from a browser window.
-                </p>
-                <p>
-                    For security reasons, web browsers do not have permission to use the local file system, or other advanced operating system features.
-                </p>
-                <p>
-                    To use this application with full functionality, you need an elevated runtime (<a href="/about/info">see this how to</a>).
-                </p>
             </div>
         </div>
     </div>

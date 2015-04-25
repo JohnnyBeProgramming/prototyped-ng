@@ -85,6 +85,6 @@ angular.module('prototyped.explorer', [
     .directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective])
 
     .controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController])
-    .controller('BrowserViewController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.ExplorerController])
+    .controller('BrowserViewController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.BrowserViewController])
     .controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController])
     .controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController])

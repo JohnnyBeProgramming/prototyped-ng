@@ -24,10 +24,10 @@
 
         <div class="dragable navbar navbar-default navbar-fixed-top" ng:include="'/views/partials/appNavBar.tpl.html'"></div>
         <div class="docked viewport">
-            <div class="sidebar ng-cloak" ui:view="left"
+            <div class="sidebar ng-cloak ui-view-left" ui:view="left"
                  ng:class="{ 'slide-in' : true }"
                  ng:show="state.current.views['left'] || state.current.views['left@']"></div>
-            <div class="contents docked" ui:view="main">
+            <div class="contents docked ui-view-main" ui:view="main">
 
                 <!-- This loader is used as a place-holder for main contents  -->
                 <div id="preLoader" class="app-loading">

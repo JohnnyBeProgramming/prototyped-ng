@@ -83,12 +83,14 @@ module proto.ng.modules.explorer {
         }
 
         public init() {
+
             this.siteExplorer = new proto.ng.modules.explorer.SiteNavigationRoot('Site Explorer', this.$state.get()),
-            this.fileSystem = new proto.ng.modules.explorer.SiteNavigationRoot('File System', this.$state.get()),
             this.clientStates = new proto.ng.modules.explorer.SiteNavigationRoot('Client States', this.$state.get()),
+            this.fileSystem = new proto.ng.modules.explorer.SiteNavigationRoot('File System', this.$state.get()),
+
             this.register(this.siteExplorer)
+                .register(this.clientStates)
                 .register(this.fileSystem)
-                .register(this.clientStates);
         }
 
         public register(node: TreeNode): NavigationService {

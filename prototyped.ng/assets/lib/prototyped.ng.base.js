@@ -2335,8 +2335,8 @@ var proto;
     (function (ng) {
         (function (modules) {
             (function (explorer) {
-                var ExplorerController = (function () {
-                    function ExplorerController($rootScope, $scope, $q) {
+                var BrowserViewController = (function () {
+                    function BrowserViewController($rootScope, $scope, $q) {
                         var _this = this;
                         this.$rootScope = $rootScope;
                         this.$scope = $scope;
@@ -2360,12 +2360,12 @@ var proto;
                             console.warn(ex);
                         }
                     }
-                    ExplorerController.prototype.init = function (dir) {
+                    BrowserViewController.prototype.init = function (dir) {
                         // Resolve the initial folder path
                         this.navigate(dir);
                     };
 
-                    ExplorerController.prototype.navigate = function (dir_path) {
+                    BrowserViewController.prototype.navigate = function (dir_path) {
                         var _this = this;
                         var deferred = this.$q.defer();
                         if (typeof require === 'undefined') {
@@ -2436,18 +2436,18 @@ var proto;
                         return deferred.promise;
                     };
 
-                    ExplorerController.prototype.select = function (filePath) {
+                    BrowserViewController.prototype.select = function (filePath) {
                         this.$scope.selected = filePath;
                     };
 
-                    ExplorerController.prototype.open = function (filePath) {
+                    BrowserViewController.prototype.open = function (filePath) {
                         var req = 'nw.gui';
                         var gui = require(req);
                         if (gui)
                             gui.Shell.openItem(filePath);
                     };
 
-                    ExplorerController.prototype.mimeType = function (filepath) {
+                    BrowserViewController.prototype.mimeType = function (filepath) {
                         var map = {
                             'compressed': ['zip', 'rar', 'gz', '7z'],
                             'text': ['txt', 'md', ''],
@@ -2496,9 +2496,9 @@ var proto;
 
                         return result;
                     };
-                    return ExplorerController;
+                    return BrowserViewController;
                 })();
-                explorer.ExplorerController = ExplorerController;
+                explorer.BrowserViewController = BrowserViewController;
             })(modules.explorer || (modules.explorer = {}));
             var explorer = modules.explorer;
         })(ng.modules || (ng.modules = {}));
@@ -2639,7 +2639,7 @@ var proto;
                         this.init();
                     }
                     NavigationService.prototype.init = function () {
-                        this.siteExplorer = new proto.ng.modules.explorer.SiteNavigationRoot('Site Explorer', this.$state.get()), this.fileSystem = new proto.ng.modules.explorer.SiteNavigationRoot('File System', this.$state.get()), this.clientStates = new proto.ng.modules.explorer.SiteNavigationRoot('Client States', this.$state.get()), this.register(this.siteExplorer).register(this.fileSystem).register(this.clientStates);
+                        this.siteExplorer = new proto.ng.modules.explorer.SiteNavigationRoot('Site Explorer', this.$state.get()), this.clientStates = new proto.ng.modules.explorer.SiteNavigationRoot('Client States', this.$state.get()), this.fileSystem = new proto.ng.modules.explorer.SiteNavigationRoot('File System', this.$state.get()), this.register(this.siteExplorer).register(this.clientStates).register(this.fileSystem);
                     };
 
                     NavigationService.prototype.register = function (node) {
@@ -2739,7 +2739,7 @@ angular.module('prototyped.explorer', [
                 }
             }
         });
-    }]).service('navigationService', ['$state', '$q', proto.ng.modules.explorer.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.ExplorerController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]);
+    }]).service('navigationService', ['$state', '$q', proto.ng.modules.explorer.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.BrowserViewController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />

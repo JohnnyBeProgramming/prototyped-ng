@@ -95,7 +95,7 @@
     <TypeScriptCompile Include="modules\editor\controllers\EditorController.ts" />
     <TypeScriptCompile Include="modules\editor\module.ng.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\AddressBarController.ts" />
-    <TypeScriptCompile Include="modules\explore\controllers\ExplorerController.ts" />
+    <TypeScriptCompile Include="modules\explore\controllers\BrowserViewController.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\ExplorerLeftController.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\ExplorerViewController.ts" />
     <TypeScriptCompile Include="modules\explore\services\NavigationService.ts" />

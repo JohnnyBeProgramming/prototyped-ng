@@ -27,7 +27,7 @@
                 <div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px;"></div>
             </div>
         </div>
-        <div ng-if="appNode.active">
+        <div ng-if="appNode.active && navigation.fileSystem">
             <abn:tree tree-data="navigation.fileSystem"
                       icon-leaf="fa fa-cog"
                       icon-expand="fa fa-plus"
