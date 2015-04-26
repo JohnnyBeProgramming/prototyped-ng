@@ -716,6 +716,19 @@ var proto;
                         }
                         return '';
                     };
+
+                    AppState.prototype.navigate = function (route) {
+                        if (route.state && route.state.name) {
+                            console.debug(' - State: ', route.state);
+                            var state = this.$stateProvider.$get();
+                            if (state) {
+                                state.go(route.state.name);
+                            }
+                        } else if (route.url) {
+                            console.debug(' - Direct Url: ', route.url);
+                            window.location.href = route.url;
+                        }
+                    };
                     return AppState;
                 })();
                 common.AppState = AppState;
@@ -2579,7 +2592,7 @@ var proto;
                         this.state = state;
                         this.data = state;
                     }
-                    SiteNode.prototype.onSelect = function (branch) {
+                    SiteNode.prototype.onSelect = function (node) {
                         //this.$rootScope.$broadcast('nodeSelect', this);
                     };
                     return SiteNode;
@@ -2630,16 +2643,42 @@ var proto;
                 })(SiteNode);
                 explorer.SiteNavigationRoot = SiteNavigationRoot;
 
+                var SiteExplorerRoot = (function (_super) {
+                    __extends(SiteExplorerRoot, _super);
+                    function SiteExplorerRoot(nodeName, appState) {
+                        _super.call(this, nodeName, null);
+                        this.appState = appState;
+                        this.init();
+                    }
+                    SiteExplorerRoot.prototype.init = function () {
+                        var _this = this;
+                        this.children = [];
+                        this.appState.routers.forEach(function (route, i) {
+                            if (route.menuitem) {
+                                var node = new SiteNode(route.menuitem.label, route);
+                                if (node) {
+                                    node.onSelect = function (item) {
+                                        _this.appState.navigate(item.data);
+                                    };
+                                }
+                                _this.children.push(node);
+                            }
+                        });
+                    };
+                    return SiteExplorerRoot;
+                })(SiteNode);
+                explorer.SiteExplorerRoot = SiteExplorerRoot;
+
                 var NavigationService = (function () {
-                    function NavigationService($state, $q) {
+                    function NavigationService($state, appState) {
                         this.$state = $state;
-                        this.$q = $q;
+                        this.appState = appState;
                         this._treeData = [];
                         this._treeMap = {};
                         this.init();
                     }
                     NavigationService.prototype.init = function () {
-                        this.siteExplorer = new proto.ng.modules.explorer.SiteNavigationRoot('Site Explorer', this.$state.get()), this.clientStates = new proto.ng.modules.explorer.SiteNavigationRoot('Client States', this.$state.get()), this.fileSystem = new proto.ng.modules.explorer.SiteNavigationRoot('File System', this.$state.get()), this.register(this.siteExplorer).register(this.clientStates).register(this.fileSystem);
+                        this.siteExplorer = new proto.ng.modules.explorer.SiteExplorerRoot('Site Explorer', this.appState), this.clientStates = new proto.ng.modules.explorer.SiteNavigationRoot('Client States', this.$state.get()), this.fileSystem = new proto.ng.modules.explorer.SiteNavigationRoot('File System', this.$state.get()), this.register(this.siteExplorer).register(this.clientStates).register(this.fileSystem);
                     };
 
                     NavigationService.prototype.register = function (node) {
@@ -2739,7 +2778,7 @@ angular.module('prototyped.explorer', [
                 }
             }
         });
-    }]).service('navigationService', ['$state', '$q', proto.ng.modules.explorer.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.BrowserViewController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]);
+    }]).service('navigationService', ['$state', 'appState', proto.ng.modules.explorer.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.BrowserViewController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />

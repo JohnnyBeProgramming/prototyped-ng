@@ -80,7 +80,7 @@ angular.module('prototyped.explorer', [
 
     }])
 
-    .service('navigationService', ['$state', '$q', proto.ng.modules.explorer.NavigationService])
+    .service('navigationService', ['$state', 'appState', proto.ng.modules.explorer.NavigationService])
 
     .directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective])
 

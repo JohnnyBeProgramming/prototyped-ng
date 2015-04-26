@@ -45,7 +45,7 @@ module proto.ng.modules.common {
             this.title = appConfig.title || 'Prototyped';
             this.version = appConfig.version || '1.0.0';
             this.node = appNodeProvider.$get();
-            this.routers = [];            
+            this.routers = [];
             this.current = {
                 state: null
             };
@@ -89,6 +89,18 @@ module proto.ng.modules.common {
             return '';
         }
 
+        public navigate(route: IAppRoute) {
+            if (route.state && route.state.name) {
+                console.debug(' - State: ', route.state);
+                var state = this.$stateProvider.$get();
+                if (state) {
+                    state.go(route.state.name);
+                }
+            } else if (route.url) {
+                console.debug(' - Direct Url: ', route.url);
+                window.location.href = route.url;
+            }
+        }
     }
 
 }

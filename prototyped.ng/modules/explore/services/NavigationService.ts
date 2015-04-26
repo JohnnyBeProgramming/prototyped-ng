@@ -20,7 +20,7 @@ module proto.ng.modules.explorer {
             this.data = state;
         }
 
-        public onSelect(branch: SiteNode) {
+        public onSelect(node: SiteNode) {
             //this.$rootScope.$broadcast('nodeSelect', this);
         }
     }
@@ -67,6 +67,29 @@ module proto.ng.modules.explorer {
         }
     }
 
+    export class SiteExplorerRoot extends SiteNode {
+
+        constructor(nodeName: string, private appState: proto.ng.modules.common.AppState) {
+            super(nodeName, null);
+            this.init();
+        }
+
+        public init() {
+            this.children = [];
+            this.appState.routers.forEach((route, i) => {
+                if (route.menuitem) {
+                    var node = new SiteNode(route.menuitem.label, route);
+                    if (node) {
+                        node.onSelect = (item: SiteNode) => {
+                            this.appState.navigate(item.data);
+                        }
+                    }
+                    this.children.push(node);
+                }
+            });
+        }
+    }
+
     export class NavigationService {
 
         public selected: SiteNode;
@@ -78,13 +101,13 @@ module proto.ng.modules.explorer {
         private _treeData: TreeNode[] = [];
         private _treeMap: any = {};
 
-        constructor(private $state, private $q) {
+        constructor(private $state, private appState) {
             this.init();
         }
 
         public init() {
 
-            this.siteExplorer = new proto.ng.modules.explorer.SiteNavigationRoot('Site Explorer', this.$state.get()),
+            this.siteExplorer = new proto.ng.modules.explorer.SiteExplorerRoot('Site Explorer', this.appState),
             this.clientStates = new proto.ng.modules.explorer.SiteNavigationRoot('Client States', this.$state.get()),
             this.fileSystem = new proto.ng.modules.explorer.SiteNavigationRoot('File System', this.$state.get()),
 
