@@ -44,6 +44,9 @@ module.exports = function (grunt) {
         //'uglify',
         'concat'
     ]);
+    grunt.registerTask('app-start', [
+        'app-run'
+    ]);
 
     // Define and extent with dynamic configuration(s)
     var configs = require('load-grunt-configs')(grunt);

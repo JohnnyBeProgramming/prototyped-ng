@@ -9,6 +9,9 @@ angular.module('prototyped.ng', [
     'prototyped.ng.views',
     'prototyped.ng.styles',
 
+    'ngRoute',
+    'ui.router',
+
 // Define sub modules
     'prototyped.explorer',
     'prototyped.console',

@@ -1,8 +1,8 @@
 ﻿<div class="top-menu dragable">
-    <div class="top-div pull-left">
+    <div class="top-div pull-left" style="padding-right: 32px">
         <div>
             <div ui:view="menu">
-                <ul class="nav navbar-nav pull-right">
+                <ul class="nav navbar-nav non-dragable pull-right">
                     <li ui:sref-active="hidden">
                         <a ui:sref="default"><i class="fa fa-chevron-left"></i></a>
                     </li>
@@ -20,10 +20,18 @@
             </div>
         </div>
     </div>
-    <div class="top-div pull-right">
-        <ul class="nav navbar-nav pull-left">
+    <div class="top-div pull-right" style="padding-left: 32px">
+        <ul class="nav navbar-nav non-dragable pull-left">
             <li ui:sref-active="open" class="disabled">
                 <a ui:sref="settings" ng:disabled>Settings</a>
+            </li>
+        </ul>
+        <ul class="nav navbar-nav non-dragable pull-right toolbar-ctrls hidden-xs">
+            <li class="ng-cloak"><a app:clean href=""><i class="glyphicon glyphicon-refresh"></i></a></li>
+            <li class="ng-cloak"><a app:debug href=""><i class="glyphicon glyphicon-wrench"></i></a></li>
+            <li class="ng-cloak"><a app:kiosk href=""><i class="glyphicon glyphicon-fullscreen"></i></a></li>
+            <li class="ng-cloak" id="btnCloseWindow">
+                <a app:close href=""><i class="glyphicon glyphicon-remove"></i></a>
             </li>
         </ul>
     </div>

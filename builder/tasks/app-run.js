@@ -5,6 +5,7 @@ module.exports = function (grunt) {
         // Start the web server prior to opening the window
         var httpHost = require('../Server.js');
         var url = httpHost.baseUrl;
+        if (!httpHost.start()) return;
 
         // Start a Node Webkit window and point it to our starting url...
         console.log('-------------------------------------------------------------------------------');

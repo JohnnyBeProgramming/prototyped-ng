@@ -2749,6 +2749,8 @@ angular.module('prototyped.ng', [
     'prototyped.ng.config',
     'prototyped.ng.views',
     'prototyped.ng.styles',
+    'ngRoute',
+    'ui.router',
     'prototyped.explorer',
     'prototyped.console',
     'prototyped.editor',

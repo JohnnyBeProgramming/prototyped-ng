@@ -1,0 +1,26 @@
+{
+    "version": "1.0.3",
+    "name": "Prototyped",
+    "author": "author",
+    "private": true,
+    "main": "http://localhost:8009/",
+    "single-instance": true,
+    "window": {
+        "fullscreen": false,
+        "title": "Prototyped",
+        "toolbar": false,
+        "frame": false,
+        "width": 1024,
+        "height": 768,
+        "position": "center",
+        "show_in_taskbar": true,
+        "transparent": true,
+        "kiosk": false
+    },
+    "webkit": {
+        "plugin": false,
+        "page-cache": false
+    },
+    "node-remote": "<local>",
+    "chromium-args": "--child-clean-exit"
+}

@@ -61,6 +61,7 @@
     <Content Include="builder\config\uglify.js" />
     <Content Include="builder\config\watch.js" />
     <Content Include="builder\Gruntfile.js" />
+    <Content Include="builder\tasks\app-run.js" />
     <Content Include="index.html" />
     <TypeScriptCompile Include="modules\common\AppNode.ts" />
     <TypeScriptCompile Include="modules\common\AppOptions.ts" />
@@ -160,9 +161,7 @@
       <DependentUpon>sandbox.css</DependentUpon>
     </Content>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="builder\tasks\" />
-  </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>
