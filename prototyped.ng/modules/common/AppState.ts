@@ -4,6 +4,7 @@
 module proto.ng.modules.common {
 
     export interface IAppRoute {
+        name?: string;
         url?: string;
         state?: any;
         menuitem?: any;
@@ -38,6 +39,11 @@ module proto.ng.modules.common {
         */
 
         public get config() { return this.appConfig; }
+
+        public get state() { return this._state; }
+        public set state(val: any) { this._state = val; }
+
+        private _state: any;
 
         constructor(private $stateProvider, private appNodeProvider: proto.ng.modules.common.providers.AppNodeProvider, private appConfig) {
             this.logs = [];
@@ -90,12 +96,12 @@ module proto.ng.modules.common {
         }
 
         public navigate(route: IAppRoute) {
-            if (route.state && route.state.name) {
-                console.debug(' - State: ', route.state);
-                var state = this.$stateProvider.$get();
-                if (state) {
-                    state.go(route.state.name);
-                }
+            var hasState = route.name && route.state;
+            if (hasState && route.menuitem && route.menuitem.state) {
+                this.state.go(route.menuitem.state);
+            } else if (hasState && !route.state.abstract) {
+                console.debug(' - State: ' + route.name, route.state);
+                this.state.go(route.name);
             } else if (route.url) {
                 console.debug(' - Direct Url: ', route.url);
                 window.location.href = route.url;

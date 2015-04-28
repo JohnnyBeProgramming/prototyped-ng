@@ -6,8 +6,13 @@ angular.module('prototyped.about', [
 ]).config([
     'appStateProvider', function (appStateProvider) {
         // Define application state
-        appStateProvider.when('/about', '/about/info').define('/about', {
+        appStateProvider.when('/about', '/about/info').define('about', {
+            url: '/about',
             priority: 1000,
+            state: {
+                url: '/about',
+                abstract: true
+            },
             menuitem: {
                 label: 'About',
                 state: 'about.info',
@@ -21,9 +26,6 @@ angular.module('prototyped.about', [
             visible: function () {
                 return appStateProvider.appConfig.options.showAboutPage;
             }
-        }).state('about', {
-            url: '/about',
-            abstract: true
         }).state('about.info', {
             url: '/info',
             views: {
@@ -671,6 +673,17 @@ var proto;
                         configurable: true
                     });
 
+                    Object.defineProperty(AppState.prototype, "state", {
+                        get: function () {
+                            return this._state;
+                        },
+                        set: function (val) {
+                            this._state = val;
+                        },
+                        enumerable: true,
+                        configurable: true
+                    });
+
                     AppState.prototype.getIcon = function () {
                         var icon = (this.node.active) ? 'fa fa-desktop' : 'fa fa-cube';
                         var match = /\/!(\w+)!/i.exec(this.proxy || '');
@@ -718,12 +731,12 @@ var proto;
                     };
 
                     AppState.prototype.navigate = function (route) {
-                        if (route.state && route.state.name) {
-                            console.debug(' - State: ', route.state);
-                            var state = this.$stateProvider.$get();
-                            if (state) {
-                                state.go(route.state.name);
-                            }
+                        var hasState = route.name && route.state;
+                        if (hasState && route.menuitem && route.menuitem.state) {
+                            this.state.go(route.menuitem.state);
+                        } else if (hasState && !route.state.abstract) {
+                            console.debug(' - State: ' + route.name, route.state);
+                            this.state.go(route.name);
                         } else if (route.url) {
                             console.debug(' - Direct Url: ', route.url);
                             window.location.href = route.url;
@@ -1631,10 +1644,13 @@ var proto;
                             return this;
                         };
 
-                        AppStateProvider.prototype.define = function (url, value) {
-                            if (!value.url)
-                                value.url = url;
+                        AppStateProvider.prototype.define = function (name, value) {
                             this.appState.routers.push(value);
+                            if (!value.name)
+                                value.name = name;
+                            if (value.state && value.name) {
+                                this.state(name, value.state);
+                            }
                             return this;
                         };
                         return AppStateProvider;
@@ -2723,9 +2739,24 @@ angular.module('prototyped.explorer', [
 ]).config([
     'appStateProvider', function (appStateProvider) {
         // Define application state
-        appStateProvider.define('/explore', {
+        appStateProvider.define('proto.explore', {
+            url: '/explore',
             priority: 0,
-            state: {},
+            state: {
+                url: '^/explore',
+                views: {
+                    'left@': {
+                        templateUrl: 'modules/explore/views/left.tpl.html',
+                        controller: 'ExplorerLeftController',
+                        controllerAs: 'exploreLeftCtrl'
+                    },
+                    'main@': {
+                        templateUrl: 'modules/explore/views/main.tpl.html',
+                        controller: 'ExplorerViewController',
+                        controllerAs: 'exploreCtrl'
+                    }
+                }
+            },
             menuitem: {
                 label: 'Explore',
                 state: 'proto.explore',
@@ -2738,20 +2769,6 @@ angular.module('prototyped.explorer', [
             },
             visible: function () {
                 return appStateProvider.appConfig.options.showDefaultItems;
-            }
-        }).state('proto.explore', {
-            url: '^/explore',
-            views: {
-                'left@': {
-                    templateUrl: 'modules/explore/views/left.tpl.html',
-                    controller: 'ExplorerLeftController',
-                    controllerAs: 'exploreLeftCtrl'
-                },
-                'main@': {
-                    templateUrl: 'modules/explore/views/main.tpl.html',
-                    controller: 'ExplorerViewController',
-                    controllerAs: 'exploreCtrl'
-                }
             }
         }).state('proto.browser', {
             url: '^/browser',
@@ -3309,6 +3326,9 @@ angular.module('prototyped.ng', [
             state: $state
         });
 
+        // Link the current state instance
+        appState.state = $state;
+
         // Watch for navigation changes
         $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
             if (toState) {
@@ -3521,7 +3541,7 @@ angular.module('prototyped.ng.runtime', [
     '            padding: 0 !important;\n' +
     '            background: #E0E0E0!important;\n' +
     '            -webkit-user-select: none;\n' +
-    '        }</style><div class="slider docked"><a class="arrow prev" href="" ng-show=false ng-click=cardView.showPrev()><i class="glyphicon glyphicon-chevron-left"></i></a> <a class="arrow next" href="" ng-show=false ng-click=cardView.showNext()><i class="glyphicon glyphicon-chevron-right"></i></a><div class=boxed><a class="card fixed-width slide" ng-class="{ \'inactive-gray-25\': route.cardview.ready === false }" ng-repeat="route in cardView.pages | orderBy:\'(priority || 1)\'" ng-if="route.cardview && (!route.visible || route.visible())" ng-href={{route.url}} ng-class="{ \'active\': cardView.isActive($index) }" ng-swipe-right=cardView.showPrev() ng-swipe-left=cardView.showNext()><div class=card-image ng-class=route.cardview.style><div class=banner></div><h2>{{route.cardview.title}}</h2></div><p>{{route.cardview.desc}}</p></a></div><ul class="small-only slider-nav"><li ng-repeat="page in cardView.pages" ng-class="{\'active\':isActive($index)}"><a href="" ng-click=cardView.showItem($index); title={{page.title}}><i class="glyphicon glyphicon-file"></i></a></li></ul></div></div>');
+    '        }</style><div class="slider docked"><a class="arrow prev" href="" ng-show=false ng-click=cardView.showPrev()><i class="glyphicon glyphicon-chevron-left"></i></a> <a class="arrow next" href="" ng-show=false ng-click=cardView.showNext()><i class="glyphicon glyphicon-chevron-right"></i></a><div class=boxed><a class="card fixed-width slide" href="" ng-click=appState.navigate(route) ng-if="route.cardview && (!route.visible || route.visible())" ng-class="{ \'inactive-gray-25\': route.cardview.ready === false }" ng-repeat="route in cardView.pages | orderBy:\'(priority || 1)\'" ng-class="{ \'active\': cardView.isActive($index) }" ng-swipe-right=cardView.showPrev() ng-swipe-left=cardView.showNext()><div class=card-image ng-class=route.cardview.style><div class=banner></div><h2>{{route.cardview.title}}</h2></div><p>{{route.cardview.desc}}</p></a></div><ul class="small-only slider-nav"><li ng-repeat="page in cardView.pages" ng-class="{\'active\':isActive($index)}"><a href="" ng-click=cardView.showItem($index); title={{page.title}}><i class="glyphicon glyphicon-file"></i></a></li></ul></div></div>');
 }]);
 ;angular.module('prototyped.ng.styles', []).run(['$templateCache', function($templateCache) { 
   'use strict';

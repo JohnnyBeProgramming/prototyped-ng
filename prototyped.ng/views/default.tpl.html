@@ -17,11 +17,11 @@
 
         <div class="boxed">
             <!-- enumerate all photos -->
-            <a class="card fixed-width slide"
+            <a class="card fixed-width slide" href=""
+               ng-click="appState.navigate(route)"
+               ng-if="route.cardview && (!route.visible || route.visible())"
                ng-class="{ 'inactive-gray-25': route.cardview.ready === false }"
                ng-repeat="route in cardView.pages | orderBy:'(priority || 1)'"
-               ng-if="route.cardview && (!route.visible || route.visible())"
-               ng-href="{{route.url}}"
                ng-class="{ 'active': cardView.isActive($index) }"
                ng-swipe-right="cardView.showPrev()"
                ng-swipe-left="cardView.showNext()">

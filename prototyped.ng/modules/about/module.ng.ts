@@ -10,8 +10,13 @@ angular.module('prototyped.about', [
         // Define application state
         appStateProvider
             .when('/about', '/about/info')
-            .define('/about', {
+            .define('about', {
+                url: '/about',
                 priority: 1000,
+                state: {
+                    url: '/about',
+                    abstract: true,
+                },
                 menuitem: {
                     label: 'About',
                     state: 'about.info',
@@ -26,10 +31,12 @@ angular.module('prototyped.about', [
                     return appStateProvider.appConfig.options.showAboutPage;
                 },
             })
+            /*
             .state('about', {
                 url: '/about',
                 abstract: true,
             })
+            */
             .state('about.info', {
                 url: '/info',
                 views: {
