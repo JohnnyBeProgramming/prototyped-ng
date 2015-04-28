@@ -19,7 +19,6 @@ angular.module('prototyped.ng', [
     'prototyped.about',
 ])
     .config(['appStateProvider', (appStateProvider: proto.ng.modules.common.providers.AppStateProvider) => {
-
         // Configure module state
         appStateProvider
             .config('prototyped.ng', {
@@ -565,6 +564,10 @@ angular.module('prototyped.ng', [
             startAt: Date.now(),
             state: $state,
         });
+
+        // Link the current state instance
+        appState.state = $state;
+
         // Watch for navigation changes
         $rootScope.$on('$stateChangeSuccess', (event, toState, toParams, fromState, fromParams) => {
             if (toState) {

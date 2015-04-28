@@ -20,7 +20,7 @@
             return this;
         }
 
-        public config(ident: string, options: any) : AppStateProvider {
+        public config(ident: string, options: any): AppStateProvider {
             this.appConfigProvider.config(ident, options);
             return this;
         }
@@ -30,9 +30,12 @@
             return this;
         }
 
-        public define(url: string, value: IAppRoute): AppStateProvider {
-            if (!value.url) value.url = url;
+        public define(name: string, value: IAppRoute): AppStateProvider {
             this.appState.routers.push(value);
+            if (!value.name) value.name = name;
+            if (value.state && value.name) {
+                this.state(name, value.state);
+            }
             return this;
         }
     }

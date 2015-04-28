@@ -11,9 +11,24 @@ angular.module('prototyped.explorer', [
     .config(['appStateProvider', (appStateProvider: proto.ng.modules.common.providers.AppStateProvider) => {
         // Define application state
         appStateProvider
-            .define('/explore', {
+            .define('proto.explore', {
+                url: '/explore',
                 priority: 0,
-                state: {},
+                state: {
+                    url: '^/explore',
+                    views: {
+                        'left@': {
+                            templateUrl: 'modules/explore/views/left.tpl.html',
+                            controller: 'ExplorerLeftController',
+                            controllerAs: 'exploreLeftCtrl',
+                        },
+                        'main@': {
+                            templateUrl: 'modules/explore/views/main.tpl.html',
+                            controller: 'ExplorerViewController',
+                            controllerAs: 'exploreCtrl',
+                        },
+                    }
+                },
                 menuitem: {
                     label: 'Explore',
                     state: 'proto.explore',
@@ -36,6 +51,7 @@ angular.module('prototyped.explorer', [
                 ],
                 */
             })
+            /*
             .state('proto.explore', {
                 url: '^/explore',
                 views: {
@@ -51,6 +67,7 @@ angular.module('prototyped.explorer', [
                     },
                 }
             })
+            */
             .state('proto.browser', {
                 url: '^/browser',
                 views: {

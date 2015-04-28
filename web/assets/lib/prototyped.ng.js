@@ -6,8 +6,13 @@ angular.module('prototyped.about', [
 ]).config([
     'appStateProvider', function (appStateProvider) {
         // Define application state
-        appStateProvider.when('/about', '/about/info').define('/about', {
+        appStateProvider.when('/about', '/about/info').define('about', {
+            url: '/about',
             priority: 1000,
+            state: {
+                url: '/about',
+                abstract: true
+            },
             menuitem: {
                 label: 'About',
                 state: 'about.info',
@@ -21,9 +26,6 @@ angular.module('prototyped.about', [
             visible: function () {
                 return appStateProvider.appConfig.options.showAboutPage;
             }
-        }).state('about', {
-            url: '/about',
-            abstract: true
         }).state('about.info', {
             url: '/info',
             views: {
@@ -718,11 +720,11 @@ var proto;
                     };
 
                     AppState.prototype.navigate = function (route) {
-                        if (route.state && route.state.name) {
-                            console.debug(' - State: ', route.state);
-                            var state = this.$stateProvider.$get();
-                            if (state) {
-                                state.go(route.state.name);
+                        if (route.name && route.state) {
+                            console.debug(' - State: ' + route.name, route.state);
+                            var $state = this.$stateProvider.$get();
+                            if ($state) {
+                                $state.go(route.name);
                             }
                         } else if (route.url) {
                             console.debug(' - Direct Url: ', route.url);
@@ -1631,10 +1633,13 @@ var proto;
                             return this;
                         };
 
-                        AppStateProvider.prototype.define = function (url, value) {
-                            if (!value.url)
-                                value.url = url;
+                        AppStateProvider.prototype.define = function (name, value) {
                             this.appState.routers.push(value);
+                            if (!value.name)
+                                value.name = name;
+                            if (value.state && value.state.name) {
+                                this.state(name, value);
+                            }
                             return this;
                         };
                         return AppStateProvider;
@@ -2723,9 +2728,24 @@ angular.module('prototyped.explorer', [
 ]).config([
     'appStateProvider', function (appStateProvider) {
         // Define application state
-        appStateProvider.define('/explore', {
+        appStateProvider.define('proto.explore', {
+            url: '/explore',
             priority: 0,
-            state: {},
+            state: {
+                url: '^/explore',
+                views: {
+                    'left@': {
+                        templateUrl: 'modules/explore/views/left.tpl.html',
+                        controller: 'ExplorerLeftController',
+                        controllerAs: 'exploreLeftCtrl'
+                    },
+                    'main@': {
+                        templateUrl: 'modules/explore/views/main.tpl.html',
+                        controller: 'ExplorerViewController',
+                        controllerAs: 'exploreCtrl'
+                    }
+                }
+            },
             menuitem: {
                 label: 'Explore',
                 state: 'proto.explore',
@@ -2738,20 +2758,6 @@ angular.module('prototyped.explorer', [
             },
             visible: function () {
                 return appStateProvider.appConfig.options.showDefaultItems;
-            }
-        }).state('proto.explore', {
-            url: '^/explore',
-            views: {
-                'left@': {
-                    templateUrl: 'modules/explore/views/left.tpl.html',
-                    controller: 'ExplorerLeftController',
-                    controllerAs: 'exploreLeftCtrl'
-                },
-                'main@': {
-                    templateUrl: 'modules/explore/views/main.tpl.html',
-                    controller: 'ExplorerViewController',
-                    controllerAs: 'exploreCtrl'
-                }
             }
         }).state('proto.browser', {
             url: '^/browser',
