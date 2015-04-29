@@ -24,11 +24,40 @@ angular.module('myApp', [
   'myApp.modules',
 ])
 
-    .config(['$stateProvider', 'appStateProvider', function ($stateProvider, appStateProvider) {
+    .config(['$urlRouterProvider', function ($urlRouterProvider) {
+        // Set up default routes
+        $urlRouterProvider
+            .when('', '/')
+            .otherwise('error/404')
+    }])
+    .config(['appStateProvider', function (appStateProvider) {
 
         appStateProvider
-            .define('/extend-init', {
+            .define('extend_init', {
                 priority: 99999999,
+                state: {
+                    url: '/extend-init',
+                    views: {
+                        'main@': {
+                            controller: function ($http, $state, $injector, appExtended) {
+                                var modExtend = 'prototyped.ng.extended';
+                                var urlExtend = 'assets/lib/' + modExtend + '.js';
+                                if (!$('head > script[src="' + urlExtend + '"]').length) {
+
+                                    // Try to load the module (async, after bootstrap)
+                                    console.log(' - Loading: ' + urlExtend);
+                                    $.getScript(urlExtend, function (data, textStatus, jqxhr) {
+                                        console.debug(' - Loaded: ' + urlExtend + '...');
+
+                                        appExtended.injectModule($injector, modExtend);
+
+                                        $state.go('default');
+                                    });
+                                }
+                            },
+                        },
+                    },
+                },
                 cardview: {
                     ready: false,
                     style: 'img-extended',
@@ -43,42 +72,7 @@ angular.module('myApp', [
                         }
                     },
                 },
-            });
-
-        $stateProvider
-            .state('extend_init', {
-                url: '/extend-init',
-                views: {
-                    'main@': {
-                        controller: function ($http, $state, $injector, appExtended) {
-                            var modExtend = 'prototyped.ng.extended';
-                            var urlExtend = 'assets/lib/' + modExtend + '.js';
-                            if (!$('head > script[src="' + urlExtend + '"]').length) {
-
-                                // Try to load the module (async, after bootstrap)
-                                console.log(' - Loading: ' + urlExtend);
-                                $.getScript(urlExtend, function (data, textStatus, jqxhr) {
-                                    console.debug(' - Loaded: ' + urlExtend + '...');
-
-                                    appExtended.injectModule($injector, modExtend);
-
-                                    $state.go('default');
-                                });
-                            }
-                        },
-                    },
-                },
             })
-    }])
-
-    .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
-        // Set up default routes
-        $urlRouterProvider
-            .when('', '/')
-            .otherwise('error/404')
-
-        // Now set up the states
-        $stateProvider
             .state('error', {
                 url: '/error',
                 resolve: {
@@ -276,7 +270,6 @@ angular.module('myApp', [
                 $window.location.href = ($window.location.href.indexOf('?') > 0 ? '&' : '?') + 'debug!';
             });
         }
-
 
     }]);
 

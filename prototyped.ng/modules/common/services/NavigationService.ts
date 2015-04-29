@@ -12,18 +12,23 @@ module proto.ng.modules.common.services {
         private _treeData: TreeNode[] = [];
         private _treeMap: any = {};
 
-        constructor(private $state, private appState) {
+        constructor(private $state, private appState: AppState) {
             this.init();
         }
 
         public init() {
-            this.siteExplorer = new SiteExplorerRoot('Site Explorer', this.appState),
-            this.fileSystem = new FileBrowserRoot('File Browser'),
-            this.clientStates = new SiteNavigationRoot('Client States', this.$state.get()),
-
+            this.siteExplorer = new SiteExplorerRoot('Site Explorer', this.appState);
             this.register(this.siteExplorer)
-                .register(this.fileSystem)
-                .register(this.clientStates)
+
+            if (this.appState.node.active) {
+                this.fileSystem = new FileBrowserRoot('File Browser');
+                this.register(this.fileSystem)
+            }
+
+            if (true || this.appState.debug) {
+                this.clientStates = new SiteNavigationRoot('Client States', this.$state.get());
+                this.register(this.clientStates)
+            }
         }
 
         public register(node: TreeNode): NavigationService {

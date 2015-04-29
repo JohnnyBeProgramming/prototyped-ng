@@ -6,15 +6,17 @@ angular.module('prototyped.ng.extended', [
     'prototyped.ng.extended.styles'
 ]).config([
     'appConfigProvider', 'appStateProvider', function (appConfigProvider, appStateProvider) {
-        // Define module configuration
-        appConfigProvider.config('prototyped.ng.extended', {
+        // Define module state
+        appStateProvider.config('prototyped.ng.extended', {
             active: true,
             hideInBrowserMode: true
-        });
-
-        // Define module state
-        appStateProvider.define('/extend', {
+        }).define('extended', {
+            url: '/extend',
             priority: 100,
+            state: {
+                url: '/extend',
+                abstract: true
+            },
             menuitem: {
                 label: 'Extenders',
                 icon: 'fa fa-flask',
@@ -25,13 +27,6 @@ angular.module('prototyped.ng.extended', [
                 title: 'Extended Functionality',
                 desc: 'Dynamically load and extend features. Inject new modules into the current runtime.'
             }
-        });
-    }]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Now set up the states
-        $stateProvider.state('extended', {
-            url: '/extend',
-            abstract: true
         }).state('extended.info', {
             url: '',
             views: {

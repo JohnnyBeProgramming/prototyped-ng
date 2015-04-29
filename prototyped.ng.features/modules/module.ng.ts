@@ -16,18 +16,19 @@ angular.module('prototyped.ng.features', [
 // Extend appConfig with module config
     .config(['appConfigProvider', 'appStateProvider', function (appConfigProvider, appStateProvider) {
 
-        // Define module configuration
-        appConfigProvider
+        // Define module routes
+        appStateProvider
             .config('prototyped.ng.features', {
                 active: true,
                 hideInBrowserMode: true,
-            });
-
-        // Define module routes
-        var opts = appConfigProvider.current.modules['prototyped.ng.features'];
-        appStateProvider
-            .define('/proto/explore', {
+            })
+            .define('features', {
+                url: '/proto/explore',
                 priority: 100,
+                state: {
+                    url: '/features',
+                    abstract: true,
+                },
                 menuitem: {
                     label: 'Features',
                     icon: 'fa fa-flask',
@@ -39,12 +40,14 @@ angular.module('prototyped.ng.features', [
                     desc: 'Samples based on feature detection. Some may not be available for your browser or operating system.'
                 },
                 visible: function () {
+                    var opts = appConfigProvider.current.modules['prototyped.ng.features'];
                     return opts && opts.hideInBrowserMode
                         ? typeof require !== 'undefined'
                         : appConfigProvider.current.options.showDefaultItems || !opts.hideInBrowserMode;
                 },
             })
-            .define('/imports', {
+            .define('proto.imports', {
+                url: '/imports',
                 abstract: true,
                 priority: 100,
                 menuitem: {
@@ -58,18 +61,9 @@ angular.module('prototyped.ng.features', [
                     desc: 'Load from external sources, modify and/or export to an online repository.'
                 },
                 visible: function () {
+                    var opts = appConfigProvider.current.modules['prototyped.ng.features'];
                     return opts && opts.hideInBrowserMode;
                 },
-            });
-
-    }])
-
-    .config(['$stateProvider', function ($stateProvider) {
-        // Now set up the states
-        $stateProvider
-            .state('features', {
-                url: '/features',
-                abstract: true,
             })
             .state('features.info', {
                 url: '',

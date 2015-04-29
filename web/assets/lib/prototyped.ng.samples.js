@@ -3237,14 +3237,15 @@ angular.module('prototyped.ng.samples', [
     'prototyped.ng.samples.compression',
     'prototyped.ng.samples.styles3d'
 ]).config([
-    'appConfigProvider', 'appStateProvider', function (appConfigProvider, appStateProvider) {
-        // Define module configuration
-        appConfigProvider.config('prototyped.ng.samples', {
-            active: true
-        });
-
+    'appStateProvider', function (appStateProvider) {
         // Define module routes
-        appStateProvider.define('/samples', {
+        appStateProvider.config('prototyped.ng.samples', {
+            active: true
+        }).define('samples', {
+            state: {
+                url: '/samples',
+                abstract: true
+            },
             menuitem: {
                 label: 'Samples',
                 icon: 'fa fa-share-alt',
@@ -3255,13 +3256,6 @@ angular.module('prototyped.ng.samples', [
                 title: 'Prototyped Sample Code',
                 desc: 'A selection of samples to test, play and learn about web technologies.'
             }
-        });
-    }]).config([
-    '$stateProvider', function ($stateProvider) {
-        // Now set up the states
-        $stateProvider.state('samples', {
-            url: '/samples',
-            abstract: true
         }).state('samples.info', {
             url: '',
             views: {

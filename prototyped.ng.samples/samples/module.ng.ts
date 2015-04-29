@@ -21,18 +21,18 @@ angular.module('prototyped.ng.samples', [
     'prototyped.ng.samples.styles3d',
 ])
 
-// Extend appConfig with module config
-    .config(['appConfigProvider', 'appStateProvider', function (appConfigProvider, appStateProvider) {
-
-        // Define module configuration
-        appConfigProvider
-            .config('prototyped.ng.samples', {
-                active: true,
-            });
+    .config(['appStateProvider', function (appStateProvider) {
 
         // Define module routes
         appStateProvider
-            .define('/samples', {
+            .config('prototyped.ng.samples', {
+                active: true,
+            })
+            .define('samples', {
+                state: {
+                    url: '/samples',
+                    abstract: true,
+                },
                 menuitem: {
                     label: 'Samples',
                     icon: 'fa fa-share-alt',
@@ -43,15 +43,6 @@ angular.module('prototyped.ng.samples', [
                     title: 'Prototyped Sample Code',
                     desc: 'A selection of samples to test, play and learn about web technologies.'
                 },
-            });
-    }])
-
-    .config(['$stateProvider', function ($stateProvider) {
-        // Now set up the states
-        $stateProvider
-            .state('samples', {
-                url: '/samples',
-                abstract: true,
             })
             .state('samples.info', {
                 url: '',
@@ -63,7 +54,6 @@ angular.module('prototyped.ng.samples', [
                     },
                 }
             })
-
     }])
 
     .controller('sampleViewController', ['$rootScope', '$scope', '$state', function ($rootScope, $scope, $state) {

@@ -27,10 +27,8 @@ module proto.ng.modules.explorer {
                 var elem = $('#addressbar');
                 if (elem) {
                     this.init(elem);
-
                     this.$rootScope.$on('event:folder-path:changed', (event, folder) => {
                         if (folder != this.$scope.dir_path) {
-                            console.warn(' - Addressbar Navigate: ', folder);
                             this.$scope.dir_path = folder;
                             this.navigate(folder);
                         }

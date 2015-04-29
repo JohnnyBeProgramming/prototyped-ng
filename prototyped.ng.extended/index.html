@@ -32,10 +32,33 @@
                     startAt: Date.now(),
                 });
             }],
-            setRoutes: ['$locationProvider', '$urlRouterProvider', '$stateProvider', 'appStateProvider', function ($locationProvider, $urlRouterProvider, $stateProvider, appStateProvider) {
+            setRoutes: ['$locationProvider', '$urlRouterProvider', 'appStateProvider', function ($locationProvider, $urlRouterProvider, appStateProvider) {
                 appStateProvider
-                    .define('/extend-init', {
+                    .when('', '/')
+                    .when('/', '/default')
+                    .when('/index.html', '/')
+                    .define('extend_init', {
                         priority: 99999999,
+                        state: {
+                            url: '/extend-init',
+                            views: {
+                                'main@': {
+                                    controller: function ($http, $state, $injector) {
+                                        var modExtend = 'prototyped.ng.extended';
+                                        var urlExtend = 'assets/lib/' + modExtend + '.js';
+                                        if (!$('head > script[src="' + urlExtend + '"]').length) {
+
+                                            // Try to load the module (async, after bootstrap)
+                                            console.log(' - Loading: ' + urlExtend);
+                                            $.getScript(urlExtend, function (data, textStatus, jqxhr) {
+                                                console.debug(' - Loaded: ' + urlExtend + '...');
+                                                $state.go('default');
+                                            });
+                                        }
+                                    },
+                                },
+                            },
+                        },
                         cardview: {
                             ready: false,
                             style: 'img-extended',
@@ -50,37 +73,10 @@
                                 return true;
                             }
                         },
-                    });
-
-                $stateProvider
-                    .state('extend_init', {
-                        url: '/extend-init',
-                        views: {
-                            'main@': {
-                                controller: function ($http, $state, $injector) {
-                                    var modExtend = 'prototyped.ng.extended';
-                                    var urlExtend = 'assets/lib/' + modExtend + '.js';
-                                    if (!$('head > script[src="' + urlExtend + '"]').length) {
-
-                                        // Try to load the module (async, after bootstrap)
-                                        console.log(' - Loading: ' + urlExtend);
-                                        $.getScript(urlExtend, function (data, textStatus, jqxhr) {
-                                            console.debug(' - Loaded: ' + urlExtend + '...');
-                                            $state.go('default');
-                                        });
-                                    }
-                                },
-                            },
-                        },
                     })
 
-            }
                 $locationProvider.html5Mode(true); // Configure HTML5 mode
-        $urlRouterProvider // Set up default routes
-            .when('', '/')
-            .when('/', '/default')
-            .when('/index.html', '/')
-        }],
+            }],
         };
     </script>
 </head>
