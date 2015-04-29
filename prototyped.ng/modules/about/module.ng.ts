@@ -27,16 +27,17 @@ angular.module('prototyped.about', [
                     title: 'About this software',
                     desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
                 },
-                visible: () => {
-                    return appStateProvider.appConfig.options.showAboutPage;
-                },
+                visible: () => { return appStateProvider.appConfig.options.showAboutPage; },
+                children: [
+                    /*
+                    {
+                        name: '',
+                        state: {
+                        },
+                    },
+                    */
+                ],
             })
-            /*
-            .state('about', {
-                url: '/about',
-                abstract: true,
-            })
-            */
             .state('about.info', {
                 url: '/info',
                 views: {

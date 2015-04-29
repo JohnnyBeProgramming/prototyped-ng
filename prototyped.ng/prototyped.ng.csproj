@@ -90,6 +90,7 @@
     <TypeScriptCompile Include="modules\common\providers\AppConfigProvider.ts" />
     <TypeScriptCompile Include="modules\common\providers\AppNodeProvider.ts" />
     <TypeScriptCompile Include="modules\common\providers\AppStateProvider.ts" />
+    <TypeScriptCompile Include="modules\common\services\NavigationService.ts" />
     <TypeScriptCompile Include="modules\config.ng.ts" />
     <TypeScriptCompile Include="modules\console\controllers\ConsoleController.ts" />
     <TypeScriptCompile Include="modules\console\module.ng.ts" />
@@ -99,7 +100,6 @@
     <TypeScriptCompile Include="modules\explore\controllers\BrowserViewController.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\ExplorerLeftController.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\ExplorerViewController.ts" />
-    <TypeScriptCompile Include="modules\explore\services\NavigationService.ts" />
     <TypeScriptCompile Include="modules\explore\module.ng.ts" />
     <Content Include="modules\console\views\logs.tpl.html" />
     <Content Include="modules\editor\styles\css\editor.css" />

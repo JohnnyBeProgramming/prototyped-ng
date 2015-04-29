@@ -25,7 +25,8 @@ angular.module('prototyped.about', [
             },
             visible: function () {
                 return appStateProvider.appConfig.options.showAboutPage;
-            }
+            },
+            children: []
         }).state('about.info', {
             url: '/info',
             views: {
@@ -1665,6 +1666,265 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (services) {
+                    var NavigationService = (function () {
+                        function NavigationService($state, appState) {
+                            this.$state = $state;
+                            this.appState = appState;
+                            this._treeData = [];
+                            this._treeMap = {};
+                            this.init();
+                        }
+                        NavigationService.prototype.init = function () {
+                            this.siteExplorer = new SiteExplorerRoot('Site Explorer', this.appState), this.fileSystem = new FileBrowserRoot('File Browser'), this.clientStates = new SiteNavigationRoot('Client States', this.$state.get()), this.register(this.siteExplorer).register(this.fileSystem).register(this.clientStates);
+                        };
+
+                        NavigationService.prototype.register = function (node) {
+                            var ident = node.label;
+                            if (ident in this._treeMap)
+                                return this;
+                            this._treeMap[ident] = node;
+                            this._treeData.push(node);
+                            return this;
+                        };
+
+                        NavigationService.prototype.getTreeData = function (ident) {
+                            var ret = [];
+                            if (!ident && this._treeData) {
+                                return this._treeData;
+                            } else if (this._treeData.length) {
+                                this._treeData.forEach(function (itm, i) {
+                                    if (itm.label == ident) {
+                                        ret.push(itm);
+                                    }
+                                });
+                            }
+                            return ret;
+                        };
+                        return NavigationService;
+                    })();
+                    services.NavigationService = NavigationService;
+
+                    var TreeNode = (function () {
+                        function TreeNode(nodeName) {
+                            this.children = [];
+                            this.classes = [];
+                            this.label = nodeName;
+                        }
+                        return TreeNode;
+                    })();
+                    services.TreeNode = TreeNode;
+
+                    var SiteNode = (function (_super) {
+                        __extends(SiteNode, _super);
+                        function SiteNode(nodeName, state) {
+                            _super.call(this, nodeName);
+                            this.state = state;
+                            this.data = state;
+                        }
+                        SiteNode.prototype.onSelect = function (node) {
+                            //this.$rootScope.$broadcast('nodeSelect', this);
+                        };
+                        return SiteNode;
+                    })(TreeNode);
+                    services.SiteNode = SiteNode;
+
+                    var SiteExplorerRoot = (function (_super) {
+                        __extends(SiteExplorerRoot, _super);
+                        function SiteExplorerRoot(nodeName, appState) {
+                            _super.call(this, nodeName, null);
+                            this.appState = appState;
+                            this.init();
+                        }
+                        SiteExplorerRoot.prototype.init = function () {
+                            var _this = this;
+                            this.children = [];
+                            this.appState.routers.forEach(function (route, i) {
+                                if (route.menuitem) {
+                                    var node = new SiteNode(route.menuitem.label, route);
+                                    if (node) {
+                                        node.onSelect = function (item) {
+                                            _this.appState.navigate(item.data);
+                                        };
+                                    }
+                                    _this.children.push(node);
+                                }
+                            });
+                        };
+                        return SiteExplorerRoot;
+                    })(SiteNode);
+                    services.SiteExplorerRoot = SiteExplorerRoot;
+
+                    var FileBrowserRoot = (function (_super) {
+                        __extends(FileBrowserRoot, _super);
+                        function FileBrowserRoot(nodeName) {
+                            _super.call(this, nodeName, './');
+                            this.init();
+                        }
+                        FileBrowserRoot.prototype.init = function () {
+                            var _this = this;
+                            this.children = [];
+                            try  {
+                                if (typeof require === 'undefined')
+                                    return;
+
+                                // Resolve the full path
+                                var path = require('path');
+                                var target = path.resolve(this.data);
+                                var pattern = /[^\\]+\\?$/i;
+                                if (!pattern.test(target) || target == '' || target.indexOf('\\') < 0) {
+                                    this.label = target || 'Drive Root';
+                                    this.populateItem(this, target);
+                                } else {
+                                    var links = [];
+                                    var cwd = target;
+                                    while (pattern.test(cwd) && cwd != '') {
+                                        var label = pattern.exec(cwd)[0];
+                                        var folder = cwd.replace(pattern, '');
+                                        if (label) {
+                                            if (label.lastIndexOf('\\') == label.length - 1)
+                                                label = label.substring(0, label.length - 1);
+                                            var linked = new SiteNode(label, cwd);
+                                            linked.onSelect = function (itm) {
+                                                _this.selectItem(itm);
+                                            };
+                                            links.push(linked);
+                                        }
+                                        cwd = folder;
+                                    }
+                                    var last = this;
+                                    while (links.length) {
+                                        var node = links.pop();
+                                        last.children.push(node);
+                                        last = node;
+                                        last.expanded = true;
+                                        this.populateItem(node, node.data);
+                                    }
+                                }
+                            } catch (ex) {
+                                throw ex;
+                            }
+                        };
+
+                        FileBrowserRoot.prototype.populateItem = function (parentNode, target) {
+                            var _this = this;
+                            if (!target)
+                                return;
+                            try  {
+                                // Read the folder contents
+                                var fs = require('fs');
+                                var path = require('path');
+                                fs.readdir(target, function (error, files) {
+                                    if (error) {
+                                        console.warn('Could not read from filesystem: ', error);
+                                        return;
+                                    }
+
+                                    for (var i = 0; i < files.sort().length; ++i) {
+                                        try  {
+                                            var targ = path.join(target, files[i]);
+                                            if (!parentNode.children.some(function (val) {
+                                                return val.label == files[i];
+                                            })) {
+                                                var stat = fs.statSync(targ);
+                                                if (stat.isDirectory()) {
+                                                    // Folder item
+                                                    var name = path.basename(targ);
+                                                    var linked = new SiteNode(name, targ);
+                                                    linked.onSelect = function (itm) {
+                                                        _this.selectItem(itm);
+                                                    };
+                                                    parentNode.children.push(linked);
+                                                } else {
+                                                    // File item
+                                                }
+                                            }
+                                        } catch (ex) {
+                                        }
+                                    }
+
+                                    parentNode.children.sort(function (a, b) {
+                                        return a.label == b.label ? 0 : (a.label > b.label ? 1 : -1);
+                                    });
+                                    parentNode.data.cached = true;
+                                });
+                            } catch (ex) {
+                                console.warn(ex.message);
+                            }
+                        };
+
+                        FileBrowserRoot.prototype.selectItem = function (node) {
+                            if (!node.data.cached) {
+                                this.populateItem(node, node.data);
+                            }
+                        };
+                        return FileBrowserRoot;
+                    })(SiteNode);
+                    services.FileBrowserRoot = FileBrowserRoot;
+
+                    var SiteNavigationRoot = (function (_super) {
+                        __extends(SiteNavigationRoot, _super);
+                        function SiteNavigationRoot(nodeName, states) {
+                            _super.call(this, nodeName, null);
+                            this.states = states;
+                            this.stateCache = {};
+                            this.init();
+                        }
+                        SiteNavigationRoot.prototype.init = function () {
+                            var _this = this;
+                            this.children = [];
+                            this.states.forEach(function (state, i) {
+                                if (state.url == '^' || state.name == '') {
+                                    _this.data = state; // Root node
+                                } else if (state.name.indexOf('.') < 0) {
+                                    _this.addItem(_this, [state.name], state);
+                                } else {
+                                    var parts = state.name.split('.');
+                                    _this.addItem(_this, parts, state);
+                                }
+                            });
+                        };
+
+                        SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
+                            if (paths && paths.length) {
+                                var ident = paths[0];
+                                var parts = paths.splice(1);
+                                var node = this.stateCache[ident];
+                                if (!node) {
+                                    node = new SiteNode(ident, null);
+                                    this.stateCache[ident] = node;
+                                    parentNode.children.push(node);
+                                }
+                                if (!parts.length) {
+                                    node.data = state;
+                                } else {
+                                    this.addItem(node, parts, state);
+                                }
+                            }
+                        };
+                        return SiteNavigationRoot;
+                    })(SiteNode);
+                    services.SiteNavigationRoot = SiteNavigationRoot;
+                })(common.services || (common.services = {}));
+                var services = common.services;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../imports.d.ts" />
 // Constant object with default values
 angular.module('prototyped.ng.config', []).constant('appDefaultConfig', new proto.ng.modules.common.AppConfig()).constant('appConfigLoader', new proto.ng.modules.common.providers.AppConfigLoader()).provider('appConfig', ['appDefaultConfig', proto.ng.modules.common.providers.AppConfigProvider]);
@@ -2365,11 +2625,12 @@ var proto;
         (function (modules) {
             (function (explorer) {
                 var BrowserViewController = (function () {
-                    function BrowserViewController($rootScope, $scope, $q) {
+                    function BrowserViewController($rootScope, $scope, $q, navigation) {
                         var _this = this;
                         this.$rootScope = $rootScope;
                         this.$scope = $scope;
                         this.$q = $q;
+                        this.navigation = navigation;
                         var dir = './';
                         try  {
                             // Hook up to the current scope
@@ -2536,6 +2797,7 @@ var proto;
     var ng = proto.ng;
 })(proto || (proto = {}));
 ///<reference path="../../../imports.d.ts"/>
+///<reference path="../../common/services/NavigationService.ts"/>
 var proto;
 (function (proto) {
     (function (ng) {
@@ -2558,6 +2820,8 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
+///<reference path="../../common/services/NavigationService.ts"/>
 var proto;
 (function (proto) {
     (function (ng) {
@@ -2580,157 +2844,8 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (explorer) {
-                var TreeNode = (function () {
-                    function TreeNode(nodeName) {
-                        this.children = [];
-                        this.classes = [];
-                        this.label = nodeName;
-                    }
-                    return TreeNode;
-                })();
-                explorer.TreeNode = TreeNode;
-
-                var SiteNode = (function (_super) {
-                    __extends(SiteNode, _super);
-                    function SiteNode(nodeName, state) {
-                        _super.call(this, nodeName);
-                        this.state = state;
-                        this.data = state;
-                    }
-                    SiteNode.prototype.onSelect = function (node) {
-                        //this.$rootScope.$broadcast('nodeSelect', this);
-                    };
-                    return SiteNode;
-                })(TreeNode);
-                explorer.SiteNode = SiteNode;
-
-                var SiteNavigationRoot = (function (_super) {
-                    __extends(SiteNavigationRoot, _super);
-                    function SiteNavigationRoot(nodeName, states) {
-                        _super.call(this, nodeName, null);
-                        this.states = states;
-                        this.stateCache = {};
-                        this.init();
-                    }
-                    SiteNavigationRoot.prototype.init = function () {
-                        var _this = this;
-                        this.children = [];
-                        this.states.forEach(function (state, i) {
-                            if (state.url == '^' || state.name == '') {
-                                _this.data = state; // Root node
-                            } else if (state.name.indexOf('.') < 0) {
-                                _this.addItem(_this, [state.name], state);
-                            } else {
-                                var parts = state.name.split('.');
-                                _this.addItem(_this, parts, state);
-                            }
-                        });
-                    };
-
-                    SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
-                        if (paths && paths.length) {
-                            var ident = paths[0];
-                            var parts = paths.splice(1);
-                            var node = this.stateCache[ident];
-                            if (!node) {
-                                node = new SiteNode(ident, null);
-                                this.stateCache[ident] = node;
-                                parentNode.children.push(node);
-                            }
-                            if (!parts.length) {
-                                node.data = state;
-                            } else {
-                                this.addItem(node, parts, state);
-                            }
-                        }
-                    };
-                    return SiteNavigationRoot;
-                })(SiteNode);
-                explorer.SiteNavigationRoot = SiteNavigationRoot;
-
-                var SiteExplorerRoot = (function (_super) {
-                    __extends(SiteExplorerRoot, _super);
-                    function SiteExplorerRoot(nodeName, appState) {
-                        _super.call(this, nodeName, null);
-                        this.appState = appState;
-                        this.init();
-                    }
-                    SiteExplorerRoot.prototype.init = function () {
-                        var _this = this;
-                        this.children = [];
-                        this.appState.routers.forEach(function (route, i) {
-                            if (route.menuitem) {
-                                var node = new SiteNode(route.menuitem.label, route);
-                                if (node) {
-                                    node.onSelect = function (item) {
-                                        _this.appState.navigate(item.data);
-                                    };
-                                }
-                                _this.children.push(node);
-                            }
-                        });
-                    };
-                    return SiteExplorerRoot;
-                })(SiteNode);
-                explorer.SiteExplorerRoot = SiteExplorerRoot;
-
-                var NavigationService = (function () {
-                    function NavigationService($state, appState) {
-                        this.$state = $state;
-                        this.appState = appState;
-                        this._treeData = [];
-                        this._treeMap = {};
-                        this.init();
-                    }
-                    NavigationService.prototype.init = function () {
-                        this.siteExplorer = new proto.ng.modules.explorer.SiteExplorerRoot('Site Explorer', this.appState), this.clientStates = new proto.ng.modules.explorer.SiteNavigationRoot('Client States', this.$state.get()), this.fileSystem = new proto.ng.modules.explorer.SiteNavigationRoot('File System', this.$state.get()), this.register(this.siteExplorer).register(this.clientStates).register(this.fileSystem);
-                    };
-
-                    NavigationService.prototype.register = function (node) {
-                        var ident = node.label;
-                        if (ident in this._treeMap)
-                            return this;
-                        this._treeMap[ident] = node;
-                        this._treeData.push(node);
-                        return this;
-                    };
-
-                    NavigationService.prototype.getTreeData = function (ident) {
-                        var ret = [];
-                        if (!ident && this._treeData) {
-                            return this._treeData;
-                        } else if (this._treeData.length) {
-                            this._treeData.forEach(function (itm, i) {
-                                if (itm.label == ident) {
-                                    ret.push(itm);
-                                }
-                            });
-                        }
-                        return ret;
-                    };
-                    return NavigationService;
-                })();
-                explorer.NavigationService = NavigationService;
-            })(modules.explorer || (modules.explorer = {}));
-            var explorer = modules.explorer;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
-/// <reference path="services/NavigationService.ts" />
+/// <reference path="../common/services/NavigationService.ts"/>
 /// <reference path="controllers/ExplorerLeftController.ts" />
 /// <reference path="controllers/ExplorerViewController.ts" />
 angular.module('prototyped.explorer', [
@@ -2773,7 +2888,11 @@ angular.module('prototyped.explorer', [
         }).state('proto.browser', {
             url: '^/browser',
             views: {
-                'left@': { templateUrl: 'modules/explore/views/left.tpl.html' },
+                'left@': {
+                    templateUrl: 'modules/explore/views/left.tpl.html',
+                    controller: 'ExplorerLeftController',
+                    controllerAs: 'exploreLeftCtrl'
+                },
                 'main@': {
                     templateUrl: 'modules/explore/views/browser.tpl.html',
                     controller: 'BrowserViewController',
@@ -2795,7 +2914,7 @@ angular.module('prototyped.explorer', [
                 }
             }
         });
-    }]).service('navigationService', ['$state', 'appState', proto.ng.modules.explorer.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.BrowserViewController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]);
+    }]).service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.BrowserViewController]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />

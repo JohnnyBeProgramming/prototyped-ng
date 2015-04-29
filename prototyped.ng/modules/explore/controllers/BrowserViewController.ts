@@ -4,7 +4,7 @@ module proto.ng.modules.explorer {
 
     export class BrowserViewController {
 
-        constructor(private $rootScope: any, private $scope: any, private $q: any) {
+        constructor(private $rootScope: any, private $scope: any, private $q: any, public navigation: proto.ng.modules.common.services.NavigationService) {
             var dir = './';
             try {
                 // Hook up to the current scope

@@ -28,10 +28,10 @@
             </div>
         </div>
         <div ng-if="appNode.active && navigation.fileSystem">
-            <abn:tree tree-data="navigation.fileSystem"
-                      icon-leaf="fa fa-cog"
-                      icon-expand="fa fa-plus"
-                      icon-collapse="fa fa-minus"
+            <abn:tree tree-data="navigation.fileSystem.children"
+                      icon-leaf="fa fa-folder"
+                      icon-expand="fa fa-folder"
+                      icon-collapse="fa fa-folder-open"
                       expand-level="2">
             </abn:tree>
         </div>

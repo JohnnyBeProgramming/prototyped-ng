@@ -1,5 +1,5 @@
 /// <reference path="../../imports.d.ts" />
-/// <reference path="services/NavigationService.ts" />
+/// <reference path="../common/services/NavigationService.ts"/>
 /// <reference path="controllers/ExplorerLeftController.ts" />
 /// <reference path="controllers/ExplorerViewController.ts" />
 
@@ -71,7 +71,11 @@ angular.module('prototyped.explorer', [
             .state('proto.browser', {
                 url: '^/browser',
                 views: {
-                    'left@': { templateUrl: 'modules/explore/views/left.tpl.html' },
+                    'left@': {
+                        templateUrl: 'modules/explore/views/left.tpl.html',
+                        controller: 'ExplorerLeftController',
+                        controllerAs: 'exploreLeftCtrl',
+                    },
                     'main@': {
                         templateUrl: 'modules/explore/views/browser.tpl.html',
                         controller: 'BrowserViewController',
@@ -97,11 +101,11 @@ angular.module('prototyped.explorer', [
 
     }])
 
-    .service('navigationService', ['$state', 'appState', proto.ng.modules.explorer.NavigationService])
+    .service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService])
 
     .directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective])
 
     .controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController])
-    .controller('BrowserViewController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.BrowserViewController])
     .controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController])
     .controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController])
+    .controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.BrowserViewController])

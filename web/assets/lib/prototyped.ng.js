@@ -25,7 +25,8 @@ angular.module('prototyped.about', [
             },
             visible: function () {
                 return appStateProvider.appConfig.options.showAboutPage;
-            }
+            },
+            children: []
         }).state('about.info', {
             url: '/info',
             views: {
@@ -1665,6 +1666,261 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (services) {
+                    var NavigationService = (function () {
+                        function NavigationService($state, appState) {
+                            this.$state = $state;
+                            this.appState = appState;
+                            this._treeData = [];
+                            this._treeMap = {};
+                            this.init();
+                        }
+                        NavigationService.prototype.init = function () {
+                            this.siteExplorer = new SiteExplorerRoot('Site Explorer', this.appState), this.fileSystem = new FileBrowserRoot('File Browser'), this.clientStates = new SiteNavigationRoot('Client States', this.$state.get()), this.register(this.siteExplorer).register(this.fileSystem).register(this.clientStates);
+                        };
+
+                        NavigationService.prototype.register = function (node) {
+                            var ident = node.label;
+                            if (ident in this._treeMap)
+                                return this;
+                            this._treeMap[ident] = node;
+                            this._treeData.push(node);
+                            return this;
+                        };
+
+                        NavigationService.prototype.getTreeData = function (ident) {
+                            var ret = [];
+                            if (!ident && this._treeData) {
+                                return this._treeData;
+                            } else if (this._treeData.length) {
+                                this._treeData.forEach(function (itm, i) {
+                                    if (itm.label == ident) {
+                                        ret.push(itm);
+                                    }
+                                });
+                            }
+                            return ret;
+                        };
+                        return NavigationService;
+                    })();
+                    services.NavigationService = NavigationService;
+
+                    var TreeNode = (function () {
+                        function TreeNode(nodeName) {
+                            this.children = [];
+                            this.classes = [];
+                            this.label = nodeName;
+                        }
+                        return TreeNode;
+                    })();
+                    services.TreeNode = TreeNode;
+
+                    var SiteNode = (function (_super) {
+                        __extends(SiteNode, _super);
+                        function SiteNode(nodeName, state) {
+                            _super.call(this, nodeName);
+                            this.state = state;
+                            this.data = state;
+                        }
+                        SiteNode.prototype.onSelect = function (node) {
+                            //this.$rootScope.$broadcast('nodeSelect', this);
+                        };
+                        return SiteNode;
+                    })(TreeNode);
+                    services.SiteNode = SiteNode;
+
+                    var SiteExplorerRoot = (function (_super) {
+                        __extends(SiteExplorerRoot, _super);
+                        function SiteExplorerRoot(nodeName, appState) {
+                            _super.call(this, nodeName, null);
+                            this.appState = appState;
+                            this.init();
+                        }
+                        SiteExplorerRoot.prototype.init = function () {
+                            var _this = this;
+                            this.children = [];
+                            this.appState.routers.forEach(function (route, i) {
+                                if (route.menuitem) {
+                                    var node = new SiteNode(route.menuitem.label, route);
+                                    if (node) {
+                                        node.onSelect = function (item) {
+                                            _this.appState.navigate(item.data);
+                                        };
+                                    }
+                                    _this.children.push(node);
+                                }
+                            });
+                        };
+                        return SiteExplorerRoot;
+                    })(SiteNode);
+                    services.SiteExplorerRoot = SiteExplorerRoot;
+
+                    var FileBrowserRoot = (function (_super) {
+                        __extends(FileBrowserRoot, _super);
+                        function FileBrowserRoot(nodeName) {
+                            _super.call(this, nodeName, './');
+                            this.init();
+                        }
+                        FileBrowserRoot.prototype.init = function () {
+                            this.children = [];
+                            try  {
+                                if (typeof require === 'undefined')
+                                    return;
+
+                                // Resolve the full path
+                                var path = require('path');
+                                var target = path.resolve(this.data);
+                                var pattern = /[^\\]+\\?$/i;
+                                if (!pattern.test(target) || target == '' || target.indexOf('\\') < 0) {
+                                    this.label = target || 'Drive Root';
+                                    this.populateItem(this, target);
+                                } else {
+                                    var links = [];
+                                    var cwd = target;
+                                    while (pattern.test(cwd) && cwd != '') {
+                                        var label = pattern.exec(cwd)[0];
+                                        var folder = cwd.replace(pattern, '');
+                                        if (label) {
+                                            if (label.lastIndexOf('\\') == label.length - 1)
+                                                label = label.substring(0, label.length - 1);
+                                            var linked = new SiteNode(label, cwd);
+                                            links.push(linked);
+                                        }
+                                        cwd = folder;
+                                    }
+                                    var last = this;
+                                    while (links.length) {
+                                        var node = links.pop();
+                                        last.children.push(node);
+                                        last = node;
+                                        last.expanded = true;
+                                        this.populateItem(node, node.data);
+                                    }
+                                }
+                            } catch (ex) {
+                                throw ex;
+                            }
+                        };
+
+                        FileBrowserRoot.prototype.populateItem = function (parentNode, target) {
+                            if (!target)
+                                return;
+                            try  {
+                                // Read the folder contents
+                                var fs = require('fs');
+                                var path = require('path');
+                                fs.readdir(target, function (error, files) {
+                                    if (error) {
+                                        console.warn('Could not read from filesystem: ', error);
+                                        return;
+                                    }
+
+                                    // Split and sort results
+                                    var folders = [];
+                                    var lsFiles = [];
+                                    for (var i = 0; i < files.sort().length; ++i) {
+                                        try  {
+                                            var targ = path.join(target, files[i]);
+                                            if (!parentNode.children.some(function (val) {
+                                                return val.data == targ;
+                                            })) {
+                                                console.debug(' - targ: ', targ);
+                                                var stat = fs.statSync(targ);
+                                                if (stat.isDirectory()) {
+                                                    // Folder item
+                                                    var name = path.basename(targ);
+                                                    var linked = new SiteNode(name, targ);
+                                                    parentNode.children.push(linked);
+                                                } else {
+                                                    // File item
+                                                }
+                                            }
+                                        } catch (ex) {
+                                        }
+                                    }
+                                });
+                            } catch (ex) {
+                                console.warn(ex.message);
+                            }
+                        };
+
+                        FileBrowserRoot.prototype.addItem = function (name, path) {
+                            var node = new SiteNode(name, path);
+                            console.debug(' - Add Item: ', node);
+                            this.children.push(node);
+                        };
+
+                        FileBrowserRoot.prototype.onSelect = function (filePath) {
+                            console.debug(' - Expanding: ' + filePath);
+                            this.expanded = true;
+                        };
+                        return FileBrowserRoot;
+                    })(SiteNode);
+                    services.FileBrowserRoot = FileBrowserRoot;
+
+                    var SiteNavigationRoot = (function (_super) {
+                        __extends(SiteNavigationRoot, _super);
+                        function SiteNavigationRoot(nodeName, states) {
+                            _super.call(this, nodeName, null);
+                            this.states = states;
+                            this.stateCache = {};
+                            this.init();
+                        }
+                        SiteNavigationRoot.prototype.init = function () {
+                            var _this = this;
+                            this.children = [];
+                            this.states.forEach(function (state, i) {
+                                if (state.url == '^' || state.name == '') {
+                                    _this.data = state; // Root node
+                                } else if (state.name.indexOf('.') < 0) {
+                                    _this.addItem(_this, [state.name], state);
+                                } else {
+                                    var parts = state.name.split('.');
+                                    _this.addItem(_this, parts, state);
+                                }
+                            });
+                        };
+
+                        SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
+                            if (paths && paths.length) {
+                                var ident = paths[0];
+                                var parts = paths.splice(1);
+                                var node = this.stateCache[ident];
+                                if (!node) {
+                                    node = new SiteNode(ident, null);
+                                    this.stateCache[ident] = node;
+                                    parentNode.children.push(node);
+                                }
+                                if (!parts.length) {
+                                    node.data = state;
+                                } else {
+                                    this.addItem(node, parts, state);
+                                }
+                            }
+                        };
+                        return SiteNavigationRoot;
+                    })(SiteNode);
+                    services.SiteNavigationRoot = SiteNavigationRoot;
+                })(common.services || (common.services = {}));
+                var services = common.services;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../imports.d.ts" />
 // Constant object with default values
 angular.module('prototyped.ng.config', []).constant('appDefaultConfig', new proto.ng.modules.common.AppConfig()).constant('appConfigLoader', new proto.ng.modules.common.providers.AppConfigLoader()).provider('appConfig', ['appDefaultConfig', proto.ng.modules.common.providers.AppConfigProvider]);
@@ -2365,11 +2621,12 @@ var proto;
         (function (modules) {
             (function (explorer) {
                 var BrowserViewController = (function () {
-                    function BrowserViewController($rootScope, $scope, $q) {
+                    function BrowserViewController($rootScope, $scope, $q, navigation) {
                         var _this = this;
                         this.$rootScope = $rootScope;
                         this.$scope = $scope;
                         this.$q = $q;
+                        this.navigation = navigation;
                         var dir = './';
                         try  {
                             // Hook up to the current scope
@@ -2536,6 +2793,7 @@ var proto;
     var ng = proto.ng;
 })(proto || (proto = {}));
 ///<reference path="../../../imports.d.ts"/>
+///<reference path="../../common/services/NavigationService.ts"/>
 var proto;
 (function (proto) {
     (function (ng) {
@@ -2558,6 +2816,8 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
+///<reference path="../../common/services/NavigationService.ts"/>
 var proto;
 (function (proto) {
     (function (ng) {
@@ -2580,157 +2840,8 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (explorer) {
-                var TreeNode = (function () {
-                    function TreeNode(nodeName) {
-                        this.children = [];
-                        this.classes = [];
-                        this.label = nodeName;
-                    }
-                    return TreeNode;
-                })();
-                explorer.TreeNode = TreeNode;
-
-                var SiteNode = (function (_super) {
-                    __extends(SiteNode, _super);
-                    function SiteNode(nodeName, state) {
-                        _super.call(this, nodeName);
-                        this.state = state;
-                        this.data = state;
-                    }
-                    SiteNode.prototype.onSelect = function (node) {
-                        //this.$rootScope.$broadcast('nodeSelect', this);
-                    };
-                    return SiteNode;
-                })(TreeNode);
-                explorer.SiteNode = SiteNode;
-
-                var SiteNavigationRoot = (function (_super) {
-                    __extends(SiteNavigationRoot, _super);
-                    function SiteNavigationRoot(nodeName, states) {
-                        _super.call(this, nodeName, null);
-                        this.states = states;
-                        this.stateCache = {};
-                        this.init();
-                    }
-                    SiteNavigationRoot.prototype.init = function () {
-                        var _this = this;
-                        this.children = [];
-                        this.states.forEach(function (state, i) {
-                            if (state.url == '^' || state.name == '') {
-                                _this.data = state; // Root node
-                            } else if (state.name.indexOf('.') < 0) {
-                                _this.addItem(_this, [state.name], state);
-                            } else {
-                                var parts = state.name.split('.');
-                                _this.addItem(_this, parts, state);
-                            }
-                        });
-                    };
-
-                    SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
-                        if (paths && paths.length) {
-                            var ident = paths[0];
-                            var parts = paths.splice(1);
-                            var node = this.stateCache[ident];
-                            if (!node) {
-                                node = new SiteNode(ident, null);
-                                this.stateCache[ident] = node;
-                                parentNode.children.push(node);
-                            }
-                            if (!parts.length) {
-                                node.data = state;
-                            } else {
-                                this.addItem(node, parts, state);
-                            }
-                        }
-                    };
-                    return SiteNavigationRoot;
-                })(SiteNode);
-                explorer.SiteNavigationRoot = SiteNavigationRoot;
-
-                var SiteExplorerRoot = (function (_super) {
-                    __extends(SiteExplorerRoot, _super);
-                    function SiteExplorerRoot(nodeName, appState) {
-                        _super.call(this, nodeName, null);
-                        this.appState = appState;
-                        this.init();
-                    }
-                    SiteExplorerRoot.prototype.init = function () {
-                        var _this = this;
-                        this.children = [];
-                        this.appState.routers.forEach(function (route, i) {
-                            if (route.menuitem) {
-                                var node = new SiteNode(route.menuitem.label, route);
-                                if (node) {
-                                    node.onSelect = function (item) {
-                                        _this.appState.navigate(item.data);
-                                    };
-                                }
-                                _this.children.push(node);
-                            }
-                        });
-                    };
-                    return SiteExplorerRoot;
-                })(SiteNode);
-                explorer.SiteExplorerRoot = SiteExplorerRoot;
-
-                var NavigationService = (function () {
-                    function NavigationService($state, appState) {
-                        this.$state = $state;
-                        this.appState = appState;
-                        this._treeData = [];
-                        this._treeMap = {};
-                        this.init();
-                    }
-                    NavigationService.prototype.init = function () {
-                        this.siteExplorer = new proto.ng.modules.explorer.SiteExplorerRoot('Site Explorer', this.appState), this.clientStates = new proto.ng.modules.explorer.SiteNavigationRoot('Client States', this.$state.get()), this.fileSystem = new proto.ng.modules.explorer.SiteNavigationRoot('File System', this.$state.get()), this.register(this.siteExplorer).register(this.clientStates).register(this.fileSystem);
-                    };
-
-                    NavigationService.prototype.register = function (node) {
-                        var ident = node.label;
-                        if (ident in this._treeMap)
-                            return this;
-                        this._treeMap[ident] = node;
-                        this._treeData.push(node);
-                        return this;
-                    };
-
-                    NavigationService.prototype.getTreeData = function (ident) {
-                        var ret = [];
-                        if (!ident && this._treeData) {
-                            return this._treeData;
-                        } else if (this._treeData.length) {
-                            this._treeData.forEach(function (itm, i) {
-                                if (itm.label == ident) {
-                                    ret.push(itm);
-                                }
-                            });
-                        }
-                        return ret;
-                    };
-                    return NavigationService;
-                })();
-                explorer.NavigationService = NavigationService;
-            })(modules.explorer || (modules.explorer = {}));
-            var explorer = modules.explorer;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
-/// <reference path="services/NavigationService.ts" />
+/// <reference path="../common/services/NavigationService.ts"/>
 /// <reference path="controllers/ExplorerLeftController.ts" />
 /// <reference path="controllers/ExplorerViewController.ts" />
 angular.module('prototyped.explorer', [
@@ -2773,7 +2884,11 @@ angular.module('prototyped.explorer', [
         }).state('proto.browser', {
             url: '^/browser',
             views: {
-                'left@': { templateUrl: 'modules/explore/views/left.tpl.html' },
+                'left@': {
+                    templateUrl: 'modules/explore/views/left.tpl.html',
+                    controller: 'ExplorerLeftController',
+                    controllerAs: 'exploreLeftCtrl'
+                },
                 'main@': {
                     templateUrl: 'modules/explore/views/browser.tpl.html',
                     controller: 'BrowserViewController',
@@ -2795,7 +2910,7 @@ angular.module('prototyped.explorer', [
                 }
             }
         });
-    }]).service('navigationService', ['$state', 'appState', proto.ng.modules.explorer.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.BrowserViewController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]);
+    }]).service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.BrowserViewController]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
@@ -3408,7 +3523,7 @@ angular.module('prototyped.ng.runtime', [
     '                text-decoration: none;\n' +
     '            }</style><div proto:address-bar style="position: relative"></div><div style="padding: 8px 16px"><div id=fileExplorer ng-class=viewMode.view><div class=loader ng-show=isBusy><br><em style="padding: 24px">Loading...</em></div><div ng-show="!isBusy && appNode.active"><div class=folder-contents ng-if="!folders.length && !files.length"><em>No files or folders were found...</em></div><div class=folder-contents><div class="view-selector pull-right" ng-init="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }"><div class="input-group pull-left"><a href="" class=dropdown-toggle data-toggle=dropdown aria-expanded=false><i ng-class=viewMode.css></i> {{ viewMode.desc || \'Default View\' }} <span class=caret></span></a><ul class="pull-right dropdown-menu" role=menu><li><a href="" ng-click="viewMode = { desc:\'Large Icons\', css:\'fa fa-th-large\', view: \'view-large\' }"><i class="fa fa-th-large"></i> Large Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Medium Icons\', css:\'fa fa-th\', view: \'view-med\' }"><i class="fa fa-th"></i> Medium Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Details View\', css:\'fa fa-list\', view: \'view-details\' }"><i class="fa fa-list"></i> Details View</a></li><li class=divider></li><li><a href="" ng-click="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }">Use Default</a></li></ul></div></div><h5 ng-if=folders.length>File Folders</h5><div id=files class=files ng-if=folders.length><a href="" class="file centered" ng-click=ctrlExplorer.navigate(itm.path) ng-repeat="itm in folders"><div class=icon><i class="glyphicon glyphicon-folder-open" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div><br style="clear:both"><br style="clear:both"><h5 ng-if=files.length>Application Files</h5><div id=files class=files ng-if=files.length><a href="" class="file centered" ng-repeat="itm in files" ng-class="{ \'focus\' : (selected == itm.path)}" ng-click=ctrlExplorer.select(itm.path) ng-dblclick=ctrlExplorer.open(itm.path)><div class=icon ng-switch=itm.type><i ng-switch-default class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=blank class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=text class="fa fa-file-text-o" style="font-size: 32px"></i> <i ng-switch-when=image class="fa fa-file-image-o" style="font-size: 32px"></i> <i ng-switch-when=pdf class="fa fa-file-pdf-o" style="font-size: 32px"></i> <i ng-switch-when=css class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=html class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=word class="fa fa-file-word-o" style="font-size: 32px"></i> <i ng-switch-when=powerpoint class="fa fa-file-powerpoint-o" style="font-size: 32px"></i> <i ng-switch-when=movie class="fa fa-file-movie-o" style="font-size: 32px"></i> <i ng-switch-when=excel class="fa fa-file-excel-o" style="font-size: 32px"></i> <i ng-switch-when=compressed class="fa fa-file-archive-o" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div></div></div><div ng-show="!isBusy && !appNode.active" class=ng-cloak><br><h5><i class="glyphicon glyphicon-warning-sign"></i> Warning <small>All features not available</small></h5><div class="alert alert-warning"><p><b>Please Note:</b> You are running this from a browser window.</p><p>For security reasons, web browsers do not have permission to use the local file system, or other advanced operating system features.</p><p>To use this application with full functionality, you need an elevated runtime (<a href=/about/info>see this how to</a>).</p></div></div></div></div></div>');
   $templateCache.put('modules/explore/views/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-info-circle"></i>&nbsp; Site Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.explore\'"><abn:tree tree-data=navigation.siteExplorer.children icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.browser><i class="fa fa-cogs"></i>&nbsp; File Browser</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.browser\'"><style resx:import=assets/css/images.min.css></style><div class=info-overview ng-if=!appNode.active><div class=panel-icon-lg><div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px"></div></div></div><div ng-if="appNode.active && navigation.fileSystem"><abn:tree tree-data=navigation.fileSystem icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></div></li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.routing><i class="fa fa-info-circle"></i>&nbsp; Routing &amp; State</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.routing\'"><abn:tree tree-data=navigation.clientStates icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-info-circle"></i>&nbsp; Site Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.explore\'"><abn:tree tree-data=navigation.siteExplorer.children icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.browser><i class="fa fa-cogs"></i>&nbsp; File Browser</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.browser\'"><style resx:import=assets/css/images.min.css></style><div class=info-overview ng-if=!appNode.active><div class=panel-icon-lg><div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px"></div></div></div><div ng-if="appNode.active && navigation.fileSystem"><abn:tree tree-data=navigation.fileSystem.children icon-leaf="fa fa-folder" icon-expand="fa fa-folder" icon-collapse="fa fa-folder-open" expand-level=2></abn:tree></div></li><li class=list-group-item ui:sref-active=active><a ui:sref=proto.routing><i class="fa fa-info-circle"></i>&nbsp; Routing &amp; State</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.routing\'"><abn:tree tree-data=navigation.clientStates icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
   $templateCache.put('modules/explore/views/main.tpl.html',
     '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail ng-if=exploreCtrl.selected><br><br><div class=row><div class=col-md-9><form class=form-horizontal><div class=form-group><label for=inputState class="col-sm-2 control-label">State</label><div class=col-sm-10><input class=form-control id=inputState placeholder=empty ng-model=exploreCtrl.selected.name readonly></div></div><div class=form-group><label for=inputPath class="col-sm-2 control-label">Path</label><div class=col-sm-10><input class=form-control id=inputPath placeholder="not set" ng-model=exploreCtrl.selected.url readonly></div></div><div class=form-group><div class="col-sm-offset-2 col-sm-10"><div class=checkbox><label><input type=checkbox ng-model=exploreCtrl.selected.abstract> Abstract</label></div></div></div><div class=form-group ng-if=exploreCtrl.selected.name><div class="col-sm-offset-2 col-sm-10"><a class="btn btn-default" ng-class="{ \'btn-primary\': !exploreCtrl.selected.abstract }" ui-sref="{{ exploreCtrl.selected.name }}" ng-disabled=exploreCtrl.selected.abstract>Got to page</a></div></div></form></div><div class=col-md-3>{{ exploreCtrl.selection.views }}</div></div></div></div>');
   $templateCache.put('views/about/connections.tpl.html',
@@ -3562,7 +3677,7 @@ angular.module('prototyped.ng.runtime', [
 
 
   $templateCache.put('assets/css/sandbox.min.css',
-    "@import url(https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css);@import url(https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.2.0/animate.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css);body{color:#333;font-size:11px;font-family:Verdana,Geneva,Tahoma,sans-serif;display:flex;flex-direction:column}#menu{margin:6px;padding:3px;display:block}#menu ul{margin:0;padding:0}#menu ul li{margin:0;padding:0;display:inline;list-style:none}#menu ul li a{text-decoration:none}#contents{display:flex;flex-direction:row;min-height:520px}#left{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:210px}#main{margin:6px;padding:3px;flex-grow:1;flex-shrink:1}#main h2{margin:0;padding:3px 0;font-size:18px;font-weight:700}#main h5{margin:0 0 6px;padding:3px;border-bottom:solid 1px #f2f2f2;font-weight:bolder}#main h5 small{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#main hr{margin:8px 0}#main .centered{text-align:center}#footer{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:24px;border:dotted 1px gray}body .top-menu{top:0;left:0;right:0;position:absolute;max-height:32px;overflow:hidden;background-color:#FFF}body .top-menu a{padding:6px 12px;color:#000}body .top-menu .top-div{width:50%;padding:0;margin:0}body .top-menu .top-div .nav.navbar-nav{float:right}body .top-spacer{width:100%;margin:32px auto 0;position:absolute}body .top-spacer .mask{overflow:hidden;height:20px}body .top-spacer .mask:after{content:'';display:block;margin:-28px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}body .top-spacer .top-spacer-icon{width:50px;height:50px;position:absolute;bottom:100%;margin-bottom:-25px;left:50%;margin-left:-25px;border-radius:100%;box-shadow:0 2px 4px #999;background:#fff;z-index:200}body .top-spacer .top-spacer-icon i{position:absolute;top:4px;bottom:4px;left:4px;right:4px;border-radius:100%;border:1px dashed #aaa;text-align:center;line-height:40px;font-style:normal;color:#999;z-index:1000}body .main-view-area{position:absolute;top:32px;left:0;right:0;bottom:24px}body .main-view-area .contents{width:100%;height:100%}body .ui-view-left{border-right:dotted 1px #ddd}body .ui-view-left .list-group-item.active{color:#000;background-color:#d8e1e8}body .ui-view-left .nav-pills>li.active>a,body .ui-view-left .nav-pills>li.active>a:focus,body .ui-view-left .nav-pills>li.active>a:hover{color:#000;background-color:#d8e1e8;border-radius:0}body .ui-view-main{overflow:auto}body .vertical-spacer{width:200px;left:0;top:32px;bottom:16px;position:absolute;display:block;overflow:auto}body .vertical-spacer .mask{overflow:hidden;width:20px;height:100%}body .vertical-spacer.left .mask:after{content:'';display:block;margin-left:-20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .vertical-spacer.right .mask{float:right}body .vertical-spacer.right .mask:before{content:'';display:block;margin-left:20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .main-contents{top:32px;left:200px;right:0;bottom:16px;position:absolute;z-index:100;overflow:auto}body .bottom-spacer{bottom:0;margin:0;padding:0;font-size:10px;color:gray;width:100%;height:24px;position:fixed;background-color:#FFF;z-index:200}body .bottom-spacer .mask{margin:0 auto;overflow:hidden;height:24px;width:100%;position:absolute}body .bottom-spacer .mask:after{content:'';display:block;margin:-25px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}"
+    "@import url(https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css);@import url(https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.2.0/animate.min.css);@import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css);body{color:#333;font-size:11px;font-family:Verdana,Geneva,Tahoma,sans-serif;display:flex;flex-direction:column}#menu{margin:6px;padding:3px;display:block}#menu ul{margin:0;padding:0}#menu ul li{margin:0;padding:0;display:inline;list-style:none}#menu ul li a{text-decoration:none}#contents{display:flex;flex-direction:row;min-height:520px}#left{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:210px}#main{margin:6px;padding:3px;flex-grow:1;flex-shrink:1}#main h2{margin:0;padding:3px 0;font-size:18px;font-weight:700}#main h5{margin:0 0 6px;padding:3px;border-bottom:solid 1px #f2f2f2;font-weight:bolder}#main h5 small{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#main hr{margin:8px 0}#main .centered{text-align:center}#footer{margin:6px;padding:3px;flex-grow:0;flex-shrink:0;flex-basis:24px;border:dotted 1px gray}body .top-menu{top:0;left:0;right:0;position:absolute;max-height:32px;overflow:hidden;background-color:#FFF}body .top-menu a{padding:6px 12px;color:#000}body .top-menu .top-div{width:50%;padding:0;margin:0}body .top-menu .top-div .nav.navbar-nav{float:right}body .top-spacer{width:100%;margin:32px auto 0;position:absolute}body .top-spacer .mask{overflow:hidden;height:20px}body .top-spacer .mask:after{content:'';display:block;margin:-28px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}body .top-spacer .top-spacer-icon{width:50px;height:50px;position:absolute;bottom:100%;margin-bottom:-25px;left:50%;margin-left:-25px;border-radius:100%;box-shadow:0 2px 4px #999;background:#fff;z-index:200}body .top-spacer .top-spacer-icon i{position:absolute;top:4px;bottom:4px;left:4px;right:4px;border-radius:100%;border:1px dashed #aaa;text-align:center;line-height:40px;font-style:normal;color:#999;z-index:1000}body .main-view-area{position:absolute;top:32px;left:0;right:0;bottom:24px}body .main-view-area .contents{width:100%;height:100%}body .ui-view-left{padding-top:0;border-right:dotted 1px #ddd}body .ui-view-left .list-group-item.active{color:#000;background-color:#d8e1e8}body .ui-view-left .nav-pills>li.active>a,body .ui-view-left .nav-pills>li.active>a:focus,body .ui-view-left .nav-pills>li.active>a:hover{color:#000;background-color:#d8e1e8;border-radius:0}body .ui-view-main{overflow:auto}body .vertical-spacer{width:200px;left:0;top:32px;bottom:16px;position:absolute;display:block;overflow:auto}body .vertical-spacer .mask{overflow:hidden;width:20px;height:100%}body .vertical-spacer.left .mask:after{content:'';display:block;margin-left:-20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .vertical-spacer.right .mask{float:right}body .vertical-spacer.right .mask:before{content:'';display:block;margin-left:20px;width:20px;height:100%;border-radius:.1px;box-shadow:0 0 8px #000}body .main-contents{top:32px;left:200px;right:0;bottom:16px;position:absolute;z-index:100;overflow:auto}body .bottom-spacer{bottom:0;margin:0;padding:0;font-size:10px;color:gray;width:100%;height:24px;position:fixed;background-color:#FFF;z-index:200}body .bottom-spacer .mask{margin:0 auto;overflow:hidden;height:24px;width:100%;position:absolute}body .bottom-spacer .mask:after{content:'';display:block;margin:-25px auto 0;width:50%;height:25px;border-radius:10.42px;box-shadow:0 0 8px #000}"
   );
 
 

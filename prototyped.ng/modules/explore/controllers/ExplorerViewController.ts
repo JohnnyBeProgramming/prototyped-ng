@@ -1,10 +1,13 @@
-﻿module proto.ng.modules.explorer {
+﻿///<reference path="../../../imports.d.ts"/>
+///<reference path="../../common/services/NavigationService.ts"/>
+
+module proto.ng.modules.explorer {
 
     export class ExplorerViewController {
 
-        public selected: SiteNode;
+        public selected: proto.ng.modules.common.services.SiteNode;
 
-        constructor(private $rootScope, private $scope, private $q, public navigation: NavigationService) {
+        constructor(private $rootScope, private $scope, private $q, public navigation: proto.ng.modules.common.services.NavigationService) {
         }
 
     }
