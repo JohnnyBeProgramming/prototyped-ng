@@ -38,14 +38,14 @@ module proto.ng.modules.common {
         },
         */
 
-        public get config() { return this.appConfig; }
+        public get config(): AppConfig { return this.appConfig; }
 
         public get state() { return this._state; }
         public set state(val: any) { this._state = val; }
 
         private _state: any;
 
-        constructor(private $stateProvider, private appNodeProvider: proto.ng.modules.common.providers.AppNodeProvider, private appConfig) {
+        constructor(private $stateProvider, private appNodeProvider: proto.ng.modules.common.providers.AppNodeProvider, private appConfig: AppConfig) {
             this.logs = [];
             this.html5 = true;
             this.title = appConfig.title || 'Prototyped';
@@ -100,10 +100,8 @@ module proto.ng.modules.common {
             if (hasState && route.menuitem && route.menuitem.state) {
                 this.state.go(route.menuitem.state);
             } else if (hasState && !route.state.abstract) {
-                console.debug(' - State: ' + route.name, route.state);
                 this.state.go(route.name);
             } else if (route.url) {
-                console.debug(' - Direct Url: ', route.url);
                 window.location.href = route.url;
             }
         }
@@ -118,6 +116,9 @@ module proto.ng.modules.common {
             }
         }
 
+        public proxyActive(ident): boolean {
+            return this.proxy == '/!' + ident + '!';
+        }
         public setProxy(ident: string) {
             var loc = window.location;
             var match = /#\/!\w+!\//i.exec(loc.hash);
@@ -127,8 +128,8 @@ module proto.ng.modules.common {
                 console.log(' - Change Proxy: ', url);
                 window.location.href = url;
             } else {
-                console.log(' - Set Proxy: ', url);
                 var url = loc.protocol + '//' + loc.host + '/#/!' + ident + '!' + (loc.pathname || '/');
+                console.log(' - Set Proxy: ', url);
                 window.location.href = url;
             }
         }
@@ -137,8 +138,8 @@ module proto.ng.modules.common {
             var loc = window.location;
             var match = /#\/!\w+!\//i.exec(loc.hash);
             if (match) {
-                console.log(' - Cancel Proxy: ', match);
                 var url = loc.protocol + '//' + loc.host + (loc.pathname || '/') + loc.hash.substring(match[0].length);
+                console.log(' - Cancel Proxy: ', url);
                 window.location.href = url;
             }
         }

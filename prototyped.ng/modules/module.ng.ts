@@ -73,6 +73,7 @@ angular.module('prototyped.ng', [
     .filter('listReverse', [proto.ng.modules.common.filters.ListReverseFilter])
     .filter('toBytes', [proto.ng.modules.common.filters.ToByteFilter])
     .filter('parseBytes', [proto.ng.modules.common.filters.ParseBytesFilter])
+    .filter('trustedUrl', ['$sce', proto.ng.modules.common.filters.TrustedUrlFilter])
 
     .directive('abnTree', ['$timeout', function ($timeout) {
         return {

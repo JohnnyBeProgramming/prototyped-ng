@@ -2,7 +2,7 @@
 
     <li class="list-group-item" ui:sref-active="active">
         <a ui:sref="proto.explore">
-            <i class="fa fa-info-circle"></i>&nbsp; Site Explorer
+            <i class="fa fa-arrow-circle-left"></i>&nbsp; Site Map Explorer
         </a>
     </li>
     <li class="list-group-item" style="padding: 6px 0" ng-if="state.current.name == 'proto.explore'">
@@ -14,9 +14,24 @@
         </abn:tree>
     </li>
 
+    <li class="list-group-item" ui:sref-active="active" ng-if="navigation.externalLinks">
+        <a ui:sref="proto.links">
+            <i class="fa fa-globe"></i>&nbsp; External Links
+        </a>
+    </li>
+    <li class="list-group-item" style="padding: 6px 0; overflow-x:hidden;" 
+        ng-if="navigation.externalLinks && state.current.name == 'proto.links'">
+        <abn:tree tree-data="navigation.externalLinks.children"
+                  icon-leaf="fa fa-globe"
+                  icon-expand="fa fa-plus"
+                  icon-collapse="fa fa-minus"
+                  expand-level="2">
+        </abn:tree>
+    </li>
+
     <li class="list-group-item" ui:sref-active="active" ng-if="navigation.fileSystem">
         <a ui:sref="proto.browser">
-            <i class="fa fa-cogs"></i>&nbsp; File Browser
+            <i class="fa fa-hdd-o"></i>&nbsp; File System Browser
         </a>
     </li>
     <li class="list-group-item" style="padding: 6px 0" ng-if="navigation.fileSystem && state.current.name == 'proto.browser'">
@@ -39,7 +54,7 @@
 
     <li class="list-group-item" ui:sref-active="active" ng-if="navigation.clientStates">
         <a ui:sref="proto.routing">
-            <i class="fa fa-info-circle"></i>&nbsp; Routing &amp; State
+            <i class="fa fa-tasks"></i>&nbsp; UI State &amp; Routing
         </a>
     </li>
     <li class="list-group-item" style="padding: 6px 0" ng-if="navigation.clientStates && state.current.name == 'proto.routing'">

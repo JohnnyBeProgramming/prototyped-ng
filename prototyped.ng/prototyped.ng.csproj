@@ -86,6 +86,7 @@
     <TypeScriptCompile Include="modules\common\filters\ListReverseFilter.ts" />
     <TypeScriptCompile Include="modules\common\filters\ParseBytesFilter.ts" />
     <TypeScriptCompile Include="modules\common\filters\ToByteFilter.ts" />
+    <TypeScriptCompile Include="modules\common\filters\TrustedUrlFilter.ts" />
     <TypeScriptCompile Include="modules\common\filters\TypeCountFilter.ts" />
     <TypeScriptCompile Include="modules\common\providers\AppConfigProvider.ts" />
     <TypeScriptCompile Include="modules\common\providers\AppNodeProvider.ts" />
@@ -100,6 +101,7 @@
     <TypeScriptCompile Include="modules\explore\controllers\BrowserViewController.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\ExplorerLeftController.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\ExplorerViewController.ts" />
+    <TypeScriptCompile Include="modules\explore\controllers\ExternalLinksViewController.ts" />
     <TypeScriptCompile Include="modules\explore\module.ng.ts" />
     <Content Include="modules\console\views\logs.tpl.html" />
     <Content Include="modules\editor\styles\css\editor.css" />
@@ -109,6 +111,7 @@
     <Content Include="modules\explore\views\addressbar.tpl.html" />
     <Content Include="modules\explore\views\browser.tpl.html" />
     <Content Include="modules\editor\views\main.tpl.html" />
+    <Content Include="modules\explore\views\externals.tpl.html" />
     <Content Include="views\about\connections.tpl.html" />
     <Content Include="views\about\contact.tpl.html" />
     <Content Include="views\about\info.tpl.html" />

@@ -199,7 +199,7 @@ angular.module('myApp', [
         };
     }])
 
-    .run(['$rootScope', '$state', '$window', 'appNode', function ($rootScope, $state, $window, appNode) {
+    .run(['$rootScope', '$state', '$window', 'appState', function ($rootScope, $state, $window, appState) {
 
         angular.extend($rootScope, {
             state: $state,
@@ -210,11 +210,11 @@ angular.module('myApp', [
         if (typeof Mousetrap !== 'undefined') {
             Mousetrap.bind('p r o t o t e s t', function () {
                 console.log(' - Entering test mode!');
-                $window.location.href = ($window.location.href.indexOf('?') > 0 ? '&' : '?') + 'test!';
+                appState.setProxy('test');
             });
             Mousetrap.bind('p r o t o d e b u g', function () {
                 console.log(' - Entering debug mode!');
-                $window.location.href = ($window.location.href.indexOf('?') > 0 ? '&' : '?') + 'debug!';
+                appState.setProxy('debug');
             });
         }
 

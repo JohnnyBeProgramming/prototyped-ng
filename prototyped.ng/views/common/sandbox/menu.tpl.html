@@ -28,12 +28,16 @@
                 </a>
             </li>
             <li ui:sref-active="open" ng-class="{ 'disabled': !appState.proxyAvailable('test')}">
-                <a href="" ng:click="appState.setProxy('test')" ng:disabled="!appState.proxyAvailable('test')">
-                    <i class="fa fa-flask"></i> Testing
+                <a href="" ng:click="appState.setProxy('test')"
+                   ng:class="{ 'glow-blue glow-animated':appState.proxyActive('test') }"
+                   ng:disabled="!appState.proxyAvailable('test')">
+                    <i class="fa fa-flask"></i> Testing 
                 </a>
             </li>
             <li ui:sref-active="open" ng-class="{ 'disabled': !appState.proxyAvailable('debug')}">
-                <a href="" ng:click="appState.setProxy('debug')" ng:disabled="!appState.proxyAvailable('debug')">
+                <a href="" ng:click="appState.setProxy('debug')"
+                   ng:class="{ 'glow-orange glow-animated':appState.proxyActive('debug') }"
+                   ng:disabled="!appState.proxyAvailable('debug')">
                     <i class="fa fa-bug"></i> Debugger
                 </a>
             </li>

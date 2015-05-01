@@ -1,0 +1,31 @@
+<div class="external-links" style="width: 100%;">
+    <style>
+        .ui-view-main {
+            margin:0!important;
+            padding:0!important;
+        }
+        .ui-view-left {
+            margin-right:0!important;
+        }
+
+        .external-links {
+        }
+    </style>
+    <div ng-if="linksCtrl.selected" class="panel panel-default" style="margin:0; padding: 0; height: 100%;">
+        <div class="panel-heading">
+            <b class="panel-title">
+                <i class="glyphicon glyphicon-globe"></i>
+                <a target="_blank" href="{{ linksCtrl.selected.data }}">{{ linksCtrl.selected.data || 'Location not set...' }}</a>
+            </b>
+        </div>
+        <div class="panel-body info-row iframe-body" style="position:relative; height: 100%; margin: 0;">
+            <iframe id="ExternalExplorerPanel" frameborder="0"
+                    style="min-height: 540px; height: 100%; margin:0;"
+                    class="info-col-primary"
+                    onerror="console.error(event)"
+                    ng-src="{{ linksCtrl.selected.data | trustedUrl }}">
+                IFrame not available
+            </iframe>
+        </div>
+    </div>
+</div>

@@ -5,9 +5,10 @@ module proto.ng.modules.common.services {
 
         public selected: SiteNode;
 
-        public siteExplorer: SiteNode;
-        public clientStates: SiteNode;
-        public fileSystem: SiteNode;
+        public siteExplorer: SiteExplorerRoot;
+        public externalLinks: ExternalLinksRoot;
+        public clientStates: SiteNavigationRoot;
+        public fileSystem: FileBrowserRoot;
 
         private _treeData: TreeNode[] = [];
         private _treeMap: any = {};
@@ -19,6 +20,9 @@ module proto.ng.modules.common.services {
         public init() {
             this.siteExplorer = new SiteExplorerRoot('Site Explorer', this.appState);
             this.register(this.siteExplorer)
+
+            this.externalLinks = new ExternalLinksRoot('External Links', this.appState);
+            this.register(this.externalLinks);
 
             if (this.appState.node.active) {
                 this.fileSystem = new FileBrowserRoot('File Browser');
@@ -37,6 +41,14 @@ module proto.ng.modules.common.services {
             this._treeMap[ident] = node;
             this._treeData.push(node);
             return this;
+        }
+
+        public findByLabel(ident: string): SiteNode {
+            var node: SiteNode;
+            this._treeData.forEach((itm: SiteNode) => {
+                if (itm.label == ident) node = itm;
+            });
+            return node;
         }
 
         public getTreeData(ident?: string): TreeNode[] {
@@ -239,6 +251,91 @@ module proto.ng.modules.common.services {
                     this.addItem(node, parts, state);
                 }
             }
+        }
+    }
+
+    export class ExternalLinksRoot extends SiteNode {
+
+        public OnSelect: (node: SiteNode) => void;
+        public UpdateUI: () => void;
+
+        constructor(nodeName: string, private appState: proto.ng.modules.common.AppState) {
+            super(nodeName, '[externals]');
+            this.init();
+        }
+
+        public init() {
+            this.children = [];
+            /*
+            this.addGroup(this, 'Local Resources', [
+                window.location.protocol + '//' + window.location.host + '/',
+                window.location.protocol + '//' + window.location.host + '?/#/!test!/',
+                window.location.protocol + '//' + window.location.host + '?/#/!debug!/',
+            ]).expanded = false;
+            */
+            this.addGroup(this, 'Online Resources', [
+                'https://www.wikipedia.org',
+                'http://www.wolframalpha.com/',
+                'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286',
+                'http://hisz.rsoe.hu/alertmap/index2.php',
+                //'http://map.ipviking.com/',
+                //'https://maps.google.com',
+                //'http://www.flightradar24.com',
+            ]);
+            this.addGroup(this, 'Design Resources', [
+                'http://css3generator.com/',
+                //'http://getbootstrap.com/',
+                'http://fontawesome.io/icons/',
+            ]).expanded = false;
+            /*
+            this.addGroup(this, 'Additional Resources', [
+                'http://www.databaseanswers.org/data_models/',
+                'http://brunoimbrizi.com/experiments/#/07',
+                'http://brunoimbrizi.com/experiments/#/03',
+            ]).expanded = false;
+            this.addGroup(this, 'Popular Websites', [
+                'https://www.google.com',
+                'https://www.facebook.com',
+                'https://www.twitter.com',
+                'https://www.reddit.com',
+            ]).expanded = false;
+            */
+        }
+
+        public addGroup(parent: proto.ng.modules.common.services.SiteNode, name: string, urls: string[]): proto.ng.modules.common.services.SiteNode {
+            var node = new SiteNode(name, urls);
+            if (urls) {
+                urls.forEach((url: string) => {
+                    node.children.push(this.createLink(url))
+                });
+            }
+            if (parent) {
+                parent.children.push(node);
+            }
+            return node;
+        }
+
+        public createLink(url: string, label?: string): SiteNode {
+            var node = new SiteNode(label || url, url);
+            if (node) {
+                node.onSelect = (item) => {
+                    if (this.OnSelect) {
+                        this.OnSelect(item);
+                    }
+                };
+
+                var hostname = <string>(<any>$('<a href="' + node.data + '"></a>')[0]).hostname;
+                node.label = 'Loading: ' + hostname.replace('www.', '');
+                $.getJSON('http://whateverorigin.org/get?url=' + encodeURIComponent(node.data) + '&callback=?', (data) => {
+                    var match = /\<title\>(.+)\<\/title\>/i.exec(data.contents);
+                    if (match && match.length > 1) {
+                        node.label = match[1];
+                    }
+                    if (this.UpdateUI) this.UpdateUI();
+                });
+
+            }
+            return node;
         }
     }
 

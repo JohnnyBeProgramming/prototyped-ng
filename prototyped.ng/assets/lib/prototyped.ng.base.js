@@ -736,10 +736,8 @@ var proto;
                         if (hasState && route.menuitem && route.menuitem.state) {
                             this.state.go(route.menuitem.state);
                         } else if (hasState && !route.state.abstract) {
-                            console.debug(' - State: ' + route.name, route.state);
                             this.state.go(route.name);
                         } else if (route.url) {
-                            console.debug(' - Direct Url: ', route.url);
                             window.location.href = route.url;
                         }
                     };
@@ -758,6 +756,9 @@ var proto;
                         }
                     };
 
+                    AppState.prototype.proxyActive = function (ident) {
+                        return this.proxy == '/!' + ident + '!';
+                    };
                     AppState.prototype.setProxy = function (ident) {
                         var loc = window.location;
                         var match = /#\/!\w+!\//i.exec(loc.hash);
@@ -767,8 +768,8 @@ var proto;
                             console.log(' - Change Proxy: ', url);
                             window.location.href = url;
                         } else {
-                            console.log(' - Set Proxy: ', url);
                             var url = loc.protocol + '//' + loc.host + '/#/!' + ident + '!' + (loc.pathname || '/');
+                            console.log(' - Set Proxy: ', url);
                             window.location.href = url;
                         }
                     };
@@ -777,8 +778,8 @@ var proto;
                         var loc = window.location;
                         var match = /#\/!\w+!\//i.exec(loc.hash);
                         if (match) {
-                            console.log(' - Cancel Proxy: ', match);
                             var url = loc.protocol + '//' + loc.host + (loc.pathname || '/') + loc.hash.substring(match[0].length);
+                            console.log(' - Cancel Proxy: ', url);
                             window.location.href = url;
                         }
                     };
@@ -1515,6 +1516,27 @@ var proto;
         (function (modules) {
             (function (common) {
                 (function (filters) {
+                    function TrustedUrlFilter($sce) {
+                        return function (url) {
+                            return $sce.trustAsResourceUrl(url);
+                        };
+                    }
+                    filters.TrustedUrlFilter = TrustedUrlFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
                     function TypeCountFilter() {
                         return function (input, type) {
                             var count = 0;
@@ -1812,6 +1834,9 @@ var proto;
                             this.siteExplorer = new SiteExplorerRoot('Site Explorer', this.appState);
                             this.register(this.siteExplorer);
 
+                            this.externalLinks = new ExternalLinksRoot('External Links', this.appState);
+                            this.register(this.externalLinks);
+
                             if (this.appState.node.active) {
                                 this.fileSystem = new FileBrowserRoot('File Browser');
                                 this.register(this.fileSystem);
@@ -1830,6 +1855,15 @@ var proto;
                             this._treeMap[ident] = node;
                             this._treeData.push(node);
                             return this;
+                        };
+
+                        NavigationService.prototype.findByLabel = function (ident) {
+                            var node;
+                            this._treeData.forEach(function (itm) {
+                                if (itm.label == ident)
+                                    node = itm;
+                            });
+                            return node;
                         };
 
                         NavigationService.prototype.getTreeData = function (ident) {
@@ -2049,6 +2083,89 @@ var proto;
                         return SiteNavigationRoot;
                     })(SiteNode);
                     services.SiteNavigationRoot = SiteNavigationRoot;
+
+                    var ExternalLinksRoot = (function (_super) {
+                        __extends(ExternalLinksRoot, _super);
+                        function ExternalLinksRoot(nodeName, appState) {
+                            _super.call(this, nodeName, '[externals]');
+                            this.appState = appState;
+                            this.init();
+                        }
+                        ExternalLinksRoot.prototype.init = function () {
+                            this.children = [];
+
+                            /*
+                            this.addGroup(this, 'Local Resources', [
+                            window.location.protocol + '//' + window.location.host + '/',
+                            window.location.protocol + '//' + window.location.host + '?/#/!test!/',
+                            window.location.protocol + '//' + window.location.host + '?/#/!debug!/',
+                            ]).expanded = false;
+                            */
+                            this.addGroup(this, 'Online Resources', [
+                                'https://www.wikipedia.org',
+                                'http://www.wolframalpha.com/',
+                                'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286',
+                                'http://hisz.rsoe.hu/alertmap/index2.php'
+                            ]);
+                            this.addGroup(this, 'Design Resources', [
+                                'http://css3generator.com/',
+                                'http://fontawesome.io/icons/'
+                            ]).expanded = false;
+                            /*
+                            this.addGroup(this, 'Additional Resources', [
+                            'http://www.databaseanswers.org/data_models/',
+                            'http://brunoimbrizi.com/experiments/#/07',
+                            'http://brunoimbrizi.com/experiments/#/03',
+                            ]).expanded = false;
+                            this.addGroup(this, 'Popular Websites', [
+                            'https://www.google.com',
+                            'https://www.facebook.com',
+                            'https://www.twitter.com',
+                            'https://www.reddit.com',
+                            ]).expanded = false;
+                            */
+                        };
+
+                        ExternalLinksRoot.prototype.addGroup = function (parent, name, urls) {
+                            var _this = this;
+                            var node = new SiteNode(name, urls);
+                            if (urls) {
+                                urls.forEach(function (url) {
+                                    node.children.push(_this.createLink(url));
+                                });
+                            }
+                            if (parent) {
+                                parent.children.push(node);
+                            }
+                            return node;
+                        };
+
+                        ExternalLinksRoot.prototype.createLink = function (url, label) {
+                            var _this = this;
+                            var node = new SiteNode(label || url, url);
+                            if (node) {
+                                node.onSelect = function (item) {
+                                    if (_this.OnSelect) {
+                                        _this.OnSelect(item);
+                                    }
+                                };
+
+                                var hostname = $('<a href="' + node.data + '"></a>')[0].hostname;
+                                node.label = 'Loading: ' + hostname.replace('www.', '');
+                                $.getJSON('http://whateverorigin.org/get?url=' + encodeURIComponent(node.data) + '&callback=?', function (data) {
+                                    var match = /\<title\>(.+)\<\/title\>/i.exec(data.contents);
+                                    if (match && match.length > 1) {
+                                        node.label = match[1];
+                                    }
+                                    if (_this.UpdateUI)
+                                        _this.UpdateUI();
+                                });
+                            }
+                            return node;
+                        };
+                        return ExternalLinksRoot;
+                    })(SiteNode);
+                    services.ExternalLinksRoot = ExternalLinksRoot;
                 })(common.services || (common.services = {}));
                 var services = common.services;
             })(modules.common || (modules.common = {}));
@@ -2975,6 +3092,51 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
+///<reference path="../../common/services/NavigationService.ts"/>
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (explorer) {
+                var ExternalLinksViewController = (function () {
+                    function ExternalLinksViewController($rootScope, $sce, $q, navigation) {
+                        this.$rootScope = $rootScope;
+                        this.$sce = $sce;
+                        this.$q = $q;
+                        this.navigation = navigation;
+                        this.init();
+                    }
+                    ExternalLinksViewController.prototype.init = function () {
+                        var _this = this;
+                        if (this.navigation.externalLinks) {
+                            this.navigation.externalLinks.UpdateUI = function () {
+                                _this.$rootScope.$applyAsync(function () {
+                                });
+                            };
+                            this.navigation.externalLinks.OnSelect = function (node) {
+                                _this.$rootScope.$applyAsync(function () {
+                                    console.log(' - Loading: ' + node.data);
+                                    _this.selected = node;
+                                });
+                            };
+                        }
+                        this.$sce.trustAsHtml($('#ExternalExplorerPanel')[0]);
+                    };
+
+                    ExternalLinksViewController.prototype.trustSrc = function (src) {
+                        return this.$sce.trustAsResourceUrl(src);
+                    };
+                    return ExternalLinksViewController;
+                })();
+                explorer.ExternalLinksViewController = ExternalLinksViewController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 /// <reference path="../common/services/NavigationService.ts"/>
 /// <reference path="controllers/ExplorerLeftController.ts" />
@@ -3030,6 +3192,20 @@ angular.module('prototyped.explorer', [
                     controllerAs: 'ctrlExplorer'
                 }
             }
+        }).state('proto.links', {
+            url: '^/externals',
+            views: {
+                'left@': {
+                    templateUrl: 'modules/explore/views/left.tpl.html',
+                    controller: 'ExplorerLeftController',
+                    controllerAs: 'exploreLeftCtrl'
+                },
+                'main@': {
+                    templateUrl: 'modules/explore/views/externals.tpl.html',
+                    controller: 'ExternalLinksViewController',
+                    controllerAs: 'linksCtrl'
+                }
+            }
         }).state('proto.routing', {
             url: '^/routing',
             views: {
@@ -3045,7 +3221,14 @@ angular.module('prototyped.explorer', [
                 }
             }
         });
-    }]).service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.BrowserViewController]);
+    }]).config([
+    '$sceDelegateProvider', function ($sceDelegateProvider) {
+        $sceDelegateProvider.resourceUrlWhitelist([
+            'self'
+        ]);
+
+        $sceDelegateProvider.resourceUrlWhitelist(['**']);
+    }]).service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.BrowserViewController]).controller('ExternalLinksViewController', ['$rootScope', '$sce', '$q', 'navigationService', proto.ng.modules.explorer.ExternalLinksViewController]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
@@ -3085,7 +3268,7 @@ angular.module('prototyped.ng', [
     '$state',
     'appState',
     proto.ng.modules.common.directives.AppCleanDirective
-]).directive('appClose', ['appNode', proto.ng.modules.common.directives.AppCloseDirective]).directive('appDebug', ['appNode', proto.ng.modules.common.directives.AppDebugDirective]).directive('appKiosk', ['appNode', proto.ng.modules.common.directives.AppKioskDirective]).directive('appFullscreen', ['appNode', proto.ng.modules.common.directives.AppFullScreenDirective]).directive('appVersion', ['appState', proto.ng.modules.common.directives.AppVersionDirective]).directive('eatClickIf', ['$parse', '$rootScope', proto.ng.modules.common.directives.EatClickIfDirective]).directive('toHtml', ['$sce', '$filter', proto.ng.modules.common.directives.ToHtmlDirective]).directive('domReplace', [proto.ng.modules.common.directives.DomReplaceDirective]).directive('resxInclude', ['$templateCache', proto.ng.modules.common.directives.ResxIncludeDirective]).directive('resxImport', ['$templateCache', '$document', proto.ng.modules.common.directives.ResxImportDirective]).filter('toXml', [proto.ng.modules.common.filters.ToXmlFilter]).filter('interpolate', ['appState', proto.ng.modules.common.filters.InterpolateFilter]).filter('fromNow', ['$filter', proto.ng.modules.common.filters.FromNowFilter]).filter('isArray', [proto.ng.modules.common.filters.IsArrayFilter]).filter('isNotArray', [proto.ng.modules.common.filters.IsNotArrayFilter]).filter('typeCount', [proto.ng.modules.common.filters.TypeCountFilter]).filter('listReverse', [proto.ng.modules.common.filters.ListReverseFilter]).filter('toBytes', [proto.ng.modules.common.filters.ToByteFilter]).filter('parseBytes', [proto.ng.modules.common.filters.ParseBytesFilter]).directive('abnTree', [
+]).directive('appClose', ['appNode', proto.ng.modules.common.directives.AppCloseDirective]).directive('appDebug', ['appNode', proto.ng.modules.common.directives.AppDebugDirective]).directive('appKiosk', ['appNode', proto.ng.modules.common.directives.AppKioskDirective]).directive('appFullscreen', ['appNode', proto.ng.modules.common.directives.AppFullScreenDirective]).directive('appVersion', ['appState', proto.ng.modules.common.directives.AppVersionDirective]).directive('eatClickIf', ['$parse', '$rootScope', proto.ng.modules.common.directives.EatClickIfDirective]).directive('toHtml', ['$sce', '$filter', proto.ng.modules.common.directives.ToHtmlDirective]).directive('domReplace', [proto.ng.modules.common.directives.DomReplaceDirective]).directive('resxInclude', ['$templateCache', proto.ng.modules.common.directives.ResxIncludeDirective]).directive('resxImport', ['$templateCache', '$document', proto.ng.modules.common.directives.ResxImportDirective]).filter('toXml', [proto.ng.modules.common.filters.ToXmlFilter]).filter('interpolate', ['appState', proto.ng.modules.common.filters.InterpolateFilter]).filter('fromNow', ['$filter', proto.ng.modules.common.filters.FromNowFilter]).filter('isArray', [proto.ng.modules.common.filters.IsArrayFilter]).filter('isNotArray', [proto.ng.modules.common.filters.IsNotArrayFilter]).filter('typeCount', [proto.ng.modules.common.filters.TypeCountFilter]).filter('listReverse', [proto.ng.modules.common.filters.ListReverseFilter]).filter('toBytes', [proto.ng.modules.common.filters.ToByteFilter]).filter('parseBytes', [proto.ng.modules.common.filters.ParseBytesFilter]).filter('trustedUrl', ['$sce', proto.ng.modules.common.filters.TrustedUrlFilter]).directive('abnTree', [
     '$timeout', function ($timeout) {
         return {
             restrict: 'E',

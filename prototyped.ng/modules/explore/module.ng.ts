@@ -50,24 +50,7 @@ angular.module('prototyped.explorer', [
                     { label: 'Clean & Exit', icon: 'fa fa-recycle', state: 'modules.clear', },
                 ],
                 */
-            })
-            /*
-            .state('proto.explore', {
-                url: '^/explore',
-                views: {
-                    'left@': {
-                        templateUrl: 'modules/explore/views/left.tpl.html',
-                        controller: 'ExplorerLeftController',
-                        controllerAs: 'exploreLeftCtrl',
-                    },
-                    'main@': {
-                        templateUrl: 'modules/explore/views/main.tpl.html',
-                        controller: 'ExplorerViewController',
-                        controllerAs: 'exploreCtrl',
-                    },
-                }
-            })
-            */
+            })            
             .state('proto.browser', {
                 url: '^/browser',
                 views: {
@@ -80,6 +63,21 @@ angular.module('prototyped.explorer', [
                         templateUrl: 'modules/explore/views/browser.tpl.html',
                         controller: 'BrowserViewController',
                         controllerAs: 'ctrlExplorer'
+                    },
+                }
+            })
+            .state('proto.links', {
+                url: '^/externals',
+                views: {
+                    'left@': {
+                        templateUrl: 'modules/explore/views/left.tpl.html',
+                        controller: 'ExplorerLeftController',
+                        controllerAs: 'exploreLeftCtrl',
+                    },
+                    'main@': {
+                        templateUrl: 'modules/explore/views/externals.tpl.html',
+                        controller: 'ExternalLinksViewController',
+                        controllerAs: 'linksCtrl',
                     },
                 }
             })
@@ -100,6 +98,14 @@ angular.module('prototyped.explorer', [
             })
 
     }])
+    .config(['$sceDelegateProvider', function ($sceDelegateProvider) {
+        $sceDelegateProvider.resourceUrlWhitelist([
+            // Allow same origin resource loads.
+            'self',
+        ]);
+
+        $sceDelegateProvider.resourceUrlWhitelist(['**']);
+    }])
 
     .service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService])
 
@@ -109,3 +115,4 @@ angular.module('prototyped.explorer', [
     .controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController])
     .controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController])
     .controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.BrowserViewController])
+    .controller('ExternalLinksViewController', ['$rootScope', '$sce', '$q', 'navigationService', proto.ng.modules.explorer.ExternalLinksViewController])
