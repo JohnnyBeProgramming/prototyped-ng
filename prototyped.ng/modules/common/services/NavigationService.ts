@@ -274,18 +274,30 @@ module proto.ng.modules.common.services {
             ]).expanded = false;
             */
             this.addGroup(this, 'Online Resources', [
-                'https://www.wikipedia.org',
-                'http://www.wolframalpha.com/',
-                'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286',
-                'http://hisz.rsoe.hu/alertmap/index2.php',
+                {
+                    name: 'Wikipedia', url: 'https://www.wikipedia.org'
+                },
+                {
+                    name: 'Wolfram Alpha', url: 'http://www.wolframalpha.com/',
+                },
+                {
+                    name: 'Global Wind Maps', url: 'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286',
+                },
+                {
+                    name: 'Disaster Info Map', url: 'http://hisz.rsoe.hu/alertmap/index2.php',
+                }
                 //'http://map.ipviking.com/',
                 //'https://maps.google.com',
                 //'http://www.flightradar24.com',
             ]);
             this.addGroup(this, 'Design Resources', [
-                'http://css3generator.com/',
+                {
+                    name: 'CSS3 Generator', url: 'http://css3generator.com/',
+                },
+                {
+                    name: 'Font Awesome', url: 'http://fontawesome.io/icons/',
+                },
                 //'http://getbootstrap.com/',
-                'http://fontawesome.io/icons/',
             ]).expanded = false;
             /*
             this.addGroup(this, 'Additional Resources', [
@@ -302,11 +314,15 @@ module proto.ng.modules.common.services {
             */
         }
 
-        public addGroup(parent: proto.ng.modules.common.services.SiteNode, name: string, urls: string[]): proto.ng.modules.common.services.SiteNode {
+        public addGroup(parent: proto.ng.modules.common.services.SiteNode, name: string, urls: any[]): proto.ng.modules.common.services.SiteNode {
             var node = new SiteNode(name, urls);
             if (urls) {
-                urls.forEach((url: string) => {
-                    node.children.push(this.createLink(url))
+                urls.forEach((info: any) => {
+                    if (typeof info == 'string') {
+                        node.children.push(this.createLink(info));
+                    } else {
+                        node.children.push(this.createLink(info.url, info.name));
+                    }
                 });
             }
             if (parent) {
@@ -324,16 +340,17 @@ module proto.ng.modules.common.services {
                     }
                 };
 
-                var hostname = <string>(<any>$('<a href="' + node.data + '"></a>')[0]).hostname;
-                node.label = 'Loading: ' + hostname.replace('www.', '');
-                $.getJSON('http://whateverorigin.org/get?url=' + encodeURIComponent(node.data) + '&callback=?', (data) => {
-                    var match = /\<title\>(.+)\<\/title\>/i.exec(data.contents);
-                    if (match && match.length > 1) {
-                        node.label = match[1];
-                    }
-                    if (this.UpdateUI) this.UpdateUI();
-                });
-
+                if (!label) {
+                    var hostname = <string>(<any>$('<a href="' + node.data + '"></a>')[0]).hostname;
+                    node.label = 'Loading: ' + hostname.replace('www.', '');
+                    $.getJSON('http://whateverorigin.org/get?url=' + encodeURIComponent(node.data) + '&callback=?', (data) => {
+                        var match = /\<title\>(.+)\<\/title\>/i.exec(data.contents);
+                        if (match && match.length > 1) {
+                            node.label = match[1];
+                        }
+                        if (this.UpdateUI) this.UpdateUI();
+                    });
+                }
             }
             return node;
         }

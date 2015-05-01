@@ -2102,14 +2102,26 @@ var proto;
                             ]).expanded = false;
                             */
                             this.addGroup(this, 'Online Resources', [
-                                'https://www.wikipedia.org',
-                                'http://www.wolframalpha.com/',
-                                'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286',
-                                'http://hisz.rsoe.hu/alertmap/index2.php'
+                                {
+                                    name: 'Wikipedia', url: 'https://www.wikipedia.org'
+                                },
+                                {
+                                    name: 'Wolfram Alpha', url: 'http://www.wolframalpha.com/'
+                                },
+                                {
+                                    name: 'Global Wind Maps', url: 'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286'
+                                },
+                                {
+                                    name: 'Disaster Info Map', url: 'http://hisz.rsoe.hu/alertmap/index2.php'
+                                }
                             ]);
                             this.addGroup(this, 'Design Resources', [
-                                'http://css3generator.com/',
-                                'http://fontawesome.io/icons/'
+                                {
+                                    name: 'CSS3 Generator', url: 'http://css3generator.com/'
+                                },
+                                {
+                                    name: 'Font Awesome', url: 'http://fontawesome.io/icons/'
+                                }
                             ]).expanded = false;
                             /*
                             this.addGroup(this, 'Additional Resources', [
@@ -2130,8 +2142,12 @@ var proto;
                             var _this = this;
                             var node = new SiteNode(name, urls);
                             if (urls) {
-                                urls.forEach(function (url) {
-                                    node.children.push(_this.createLink(url));
+                                urls.forEach(function (info) {
+                                    if (typeof info == 'string') {
+                                        node.children.push(_this.createLink(info));
+                                    } else {
+                                        node.children.push(_this.createLink(info.url, info.name));
+                                    }
                                 });
                             }
                             if (parent) {
@@ -2150,16 +2166,18 @@ var proto;
                                     }
                                 };
 
-                                var hostname = $('<a href="' + node.data + '"></a>')[0].hostname;
-                                node.label = 'Loading: ' + hostname.replace('www.', '');
-                                $.getJSON('http://whateverorigin.org/get?url=' + encodeURIComponent(node.data) + '&callback=?', function (data) {
-                                    var match = /\<title\>(.+)\<\/title\>/i.exec(data.contents);
-                                    if (match && match.length > 1) {
-                                        node.label = match[1];
-                                    }
-                                    if (_this.UpdateUI)
-                                        _this.UpdateUI();
-                                });
+                                if (!label) {
+                                    var hostname = $('<a href="' + node.data + '"></a>')[0].hostname;
+                                    node.label = 'Loading: ' + hostname.replace('www.', '');
+                                    $.getJSON('http://whateverorigin.org/get?url=' + encodeURIComponent(node.data) + '&callback=?', function (data) {
+                                        var match = /\<title\>(.+)\<\/title\>/i.exec(data.contents);
+                                        if (match && match.length > 1) {
+                                            node.label = match[1];
+                                        }
+                                        if (_this.UpdateUI)
+                                            _this.UpdateUI();
+                                    });
+                                }
                             }
                             return node;
                         };
