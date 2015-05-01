@@ -24,15 +24,11 @@ angular.module('myApp', [
   'myApp.modules',
 ])
 
-    .config(['$urlRouterProvider', function ($urlRouterProvider) {
-        // Set up default routes
-        $urlRouterProvider
-            .when('', '/')
-            .otherwise('error/404')
-    }])
     .config(['appStateProvider', function (appStateProvider) {
 
         appStateProvider
+            .when('', '/')
+            .otherwise('error/404')
             .define('extend_init', {
                 priority: 99999999,
                 state: {
@@ -90,55 +86,6 @@ angular.module('myApp', [
                     'main@': { templateUrl: 'views/status/404.jade' },
                 }
             })
-
-    }])
-
-    .config(['$locationProvider', 'appStateProvider', function ($locationProvider, appStateProvider) {
-        var appState = appStateProvider.$get();
-
-        // Try and figure out router mode from the initial url
-        var pageLocation = typeof window !== 'undefined' ? window.location.href : '';
-        if (pageLocation.indexOf('#') >= 0) {
-            var routePrefix = '';
-            var routeProxies = [
-                '/!test!',
-                '/!debug!',
-            ];
-
-            // Check for specific routing prefixes
-            routeProxies.forEach(function (name) {
-                if (pageLocation.indexOf('#' + name) >= 0) {
-                    routePrefix = name;
-                    return;
-                }
-            });
-
-            // Override the default behaviour (only if required)
-            if (routePrefix) {
-                $locationProvider.hashPrefix(routePrefix);
-            }
-
-            appState.proxy = routePrefix;
-            appState.html5 = !routePrefix;
-
-            // Show a hint message to the  user
-            var proxyName = appState.proxy;
-            if (proxyName) {
-                var checkName = /\/!(\w+)!/.exec(proxyName);
-                if (checkName) proxyName = checkName[1];
-
-                console.debug(' - Proxy Active: ' + proxyName);
-
-                var text = '<b>Warning:</b> Proxy router is active: <b>' + proxyName + '</b>.';
-                var icon = '<i class="glyphicon glyphicon-warning-sign"></i> ';
-                var link = '<a href="./" class="pull-right glyphicon glyphicon-remove" style="text-decoration: none; padding: 3px;"></a>';
-                var span = '<span class="tab alert alert-warning">' + link + icon + text + '</span>';
-                var div = $(document.body).append('<div class="top-hint">' + span + '</div>');
-            }
-        }
-
-        // Configure the pretty urls for HTML5 mode
-        $locationProvider.html5Mode(appState.html5);
 
     }])
 

@@ -23,7 +23,19 @@
     <div class="top-div pull-right" style="padding-left: 32px">
         <ul class="nav navbar-nav non-dragable pull-left">
             <li ui:sref-active="open" class="disabled">
-                <a ui:sref="settings" ng:disabled>Settings</a>
+                <a ui:sref="settings" ng:disabled>
+                    <i class="fa fa-cogs"></i> Settings
+                </a>
+            </li>
+            <li ui:sref-active="open" ng-class="{ 'disabled': !appState.proxyAvailable('test')}">
+                <a href="" ng:click="appState.setProxy('test')" ng:disabled="!appState.proxyAvailable('test')">
+                    <i class="fa fa-flask"></i> Testing
+                </a>
+            </li>
+            <li ui:sref-active="open" ng-class="{ 'disabled': !appState.proxyAvailable('debug')}">
+                <a href="" ng:click="appState.setProxy('debug')" ng:disabled="!appState.proxyAvailable('debug')">
+                    <i class="fa fa-bug"></i> Debugger
+                </a>
             </li>
         </ul>
         <ul class="nav navbar-nav non-dragable pull-right toolbar-ctrls hidden-xs">

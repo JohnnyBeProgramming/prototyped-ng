@@ -11,6 +11,7 @@ angular.module('prototyped.ng.runtime', [
     ])
     .provider('appState', [
         '$stateProvider',
+        '$locationProvider',
         '$urlRouterProvider',
         'appConfigProvider',
         'appNodeProvider',

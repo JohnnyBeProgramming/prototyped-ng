@@ -25,7 +25,7 @@ module proto.ng.modules.common.services {
                 this.register(this.fileSystem)
             }
 
-            if (true || this.appState.debug) {
+            if (this.appState.debug) {
                 this.clientStates = new SiteNavigationRoot('Client States', this.$state.get());
                 this.register(this.clientStates)
             }

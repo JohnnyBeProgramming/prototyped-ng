@@ -62,7 +62,7 @@ module proto.ng.modules.common {
             var match = /\/!(\w+)!/i.exec(this.proxy || '');
             if (match && match.length > 1) {
                 switch (match[1]) {
-                    case 'test': return 'fa fa-puzzle-piece glow-blue animate-glow';
+                    case 'test': return 'fa fa-flask glow-blue animate-glow';
                     case 'debug': return 'fa fa-bug glow-orange animate-glow';
                 }
             }
@@ -105,6 +105,41 @@ module proto.ng.modules.common {
             } else if (route.url) {
                 console.debug(' - Direct Url: ', route.url);
                 window.location.href = route.url;
+            }
+        }
+
+        public proxyAvailable(ident): boolean {
+            var loc = window.location;
+            if (loc.pathname == '/' && !loc.hash) return false;
+            switch (ident) {
+                case 'debug': return true;
+                case 'test': return true;
+                default: false;
+            }
+        }
+
+        public setProxy(ident: string) {
+            var loc = window.location;
+            var match = /#\/!\w+!\//i.exec(loc.hash);
+            if (match) {
+                var sep = loc.href.indexOf('?') < 0 ? '?' : '';
+                var url = loc.protocol + '//' + loc.host + sep + '/#/!' + ident + '!' + (loc.pathname || '/') + loc.hash.substring(match[0].length);
+                console.log(' - Change Proxy: ', url);
+                window.location.href = url;
+            } else {
+                console.log(' - Set Proxy: ', url);
+                var url = loc.protocol + '//' + loc.host + '/#/!' + ident + '!' + (loc.pathname || '/');
+                window.location.href = url;
+            }
+        }
+
+        public cancelProxy() {
+            var loc = window.location;
+            var match = /#\/!\w+!\//i.exec(loc.hash);
+            if (match) {
+                console.log(' - Cancel Proxy: ', match);
+                var url = loc.protocol + '//' + loc.host + (loc.pathname || '/') + loc.hash.substring(match[0].length);
+                window.location.href = url;
             }
         }
     }
