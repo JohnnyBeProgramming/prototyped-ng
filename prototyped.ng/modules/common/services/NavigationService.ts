@@ -116,6 +116,9 @@ module proto.ng.modules.common.services {
 
     export class FileBrowserRoot extends SiteNode {
 
+        public OnSelect: (node: SiteNode) => void;
+        public UpdateUI: () => void;
+
         constructor(nodeName: string) {
             super(nodeName, './');
             this.init();
@@ -198,6 +201,10 @@ module proto.ng.modules.common.services {
 
                     parentNode.children.sort((a: SiteNode, b: SiteNode) => a.label == b.label ? 0 : (a.label > b.label ? 1 : -1));
                     parentNode.data.cached = true;
+
+                    if (this.UpdateUI) {
+                        this.UpdateUI();
+                    }
                 });
 
             } catch (ex) {
@@ -208,6 +215,9 @@ module proto.ng.modules.common.services {
         public selectItem(node: SiteNode) {
             if (!node.data.cached) {
                 this.populateItem(node, node.data);
+            }
+            if (this.OnSelect) {
+                this.OnSelect(node);
             }
         }
     }
@@ -290,12 +300,21 @@ module proto.ng.modules.common.services {
                 //'https://maps.google.com',
                 //'http://www.flightradar24.com',
             ]);
-            this.addGroup(this, 'Design Resources', [
+            this.addGroup(this, 'Development Resources', [
+                {
+                    name: 'Javascript Fiddler', url: 'https://jsfiddle.net/',
+                },
+                {
+                    name: 'Microsoft.net Fiddler', url: 'https://dotnetfiddle.net/',
+                },
+                {
+                    name: 'Font Awesome', url: 'http://fontawesome.io/icons/',
+                },
                 {
                     name: 'CSS3 Generator', url: 'http://css3generator.com/',
                 },
                 {
-                    name: 'Font Awesome', url: 'http://fontawesome.io/icons/',
+                    name: 'Regular Expressions', url: 'https://regex101.com/',
                 },
                 //'http://getbootstrap.com/',
             ]).expanded = false;

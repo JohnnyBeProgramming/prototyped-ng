@@ -26,6 +26,19 @@ module proto.ng.modules.explorer {
         }
 
         init(dir: string) {
+            // Hook site navigation nodes
+            this.navigation.fileSystem.UpdateUI = () => {
+                this.$rootScope.$applyAsync(() => {
+                });
+            }
+            this.navigation.fileSystem.OnSelect = (node: proto.ng.modules.common.services.SiteNode) => {
+                var folder = node.data;
+                if (folder != this.$scope.dir_path) {
+                    this.$scope.dir_path = folder;
+                    this.navigate(folder);
+                }
+            }
+
             // Resolve the initial folder path
             this.navigate(dir);
         }

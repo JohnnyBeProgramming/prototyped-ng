@@ -79,6 +79,7 @@
     <TypeScriptCompile Include="modules\common\directives\ResxImportDirective.ts" />
     <TypeScriptCompile Include="modules\common\directives\ResxIncludeDirective.ts" />
     <TypeScriptCompile Include="modules\common\directives\ToHtmlDirective.ts" />
+    <TypeScriptCompile Include="modules\common\directives\TreeViewDirective.ts" />
     <TypeScriptCompile Include="modules\common\filters\ToXmlFilter.ts" />
     <TypeScriptCompile Include="modules\common\filters\FromNowFilter.ts" />
     <TypeScriptCompile Include="modules\common\filters\InterpolateFilter.ts" />

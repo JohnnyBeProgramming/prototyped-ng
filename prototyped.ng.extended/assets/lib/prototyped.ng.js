@@ -1,3 +1,509 @@
+/// <reference path="../../imports.d.ts" />
+angular.module('prototyped.about', [
+    'prototyped.ng.runtime',
+    'prototyped.ng.views',
+    'prototyped.ng.styles'
+]).config([
+    'appStateProvider', function (appStateProvider) {
+        // Define application state
+        appStateProvider.when('/about', '/about/info').define('about', {
+            url: '/about',
+            priority: 1000,
+            state: {
+                url: '/about',
+                abstract: true
+            },
+            menuitem: {
+                label: 'About',
+                state: 'about.info',
+                icon: 'fa fa-info-circle'
+            },
+            cardview: {
+                style: 'img-about',
+                title: 'About this software',
+                desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
+            },
+            visible: function () {
+                return appStateProvider.appConfig.options.showAboutPage;
+            },
+            children: []
+        }).state('about.info', {
+            url: '/info',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/info.tpl.html',
+                    controller: 'AboutInfoController'
+                }
+            }
+        }).state('about.online', {
+            url: '^/contact',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': { templateUrl: 'views/about/contact.tpl.html' }
+            }
+        }).state('about.conection', {
+            url: '/conection',
+            views: {
+                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/about/connections.tpl.html',
+                    controller: 'AboutConnectionController'
+                }
+            }
+        });
+    }]).controller('AboutInfoController', [
+    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
+        function css(a) {
+            var sheets = document.styleSheets, o = [];
+            for (var i in sheets) {
+                var rules = sheets[i].rules || sheets[i].cssRules;
+                for (var r in rules) {
+                    if (a.is(rules[r].selectorText)) {
+                        o.push(rules[r].selectorText);
+                    }
+                }
+            }
+            return o;
+        }
+
+        function selectorExists(selector) {
+            return false;
+            //var ret = css($(selector));
+            //return ret;
+        }
+
+        function getVersionInfo(ident) {
+            try  {
+                if (typeof process !== 'undefined' && process.versions) {
+                    return process.versions[ident];
+                }
+            } catch (ex) {
+            }
+            return null;
+        }
+
+        // Define a function to detect the capabilities
+        $scope.detectBrowserInfo = function () {
+            var info = {
+                about: null,
+                versions: {
+                    ie: null,
+                    html: null,
+                    jqry: null,
+                    css: null,
+                    js: null,
+                    ng: null,
+                    nw: null,
+                    njs: null,
+                    v8: null,
+                    openssl: null,
+                    chromium: null
+                },
+                detects: {
+                    jqry: false,
+                    less: false,
+                    bootstrap: false,
+                    ngAnimate: false,
+                    ngUiRouter: false,
+                    ngUiUtils: false,
+                    ngUiBootstrap: false
+                },
+                css: {
+                    boostrap2: null,
+                    boostrap3: null
+                },
+                codeName: navigator.appCodeName,
+                userAgent: navigator.userAgent
+            };
+
+            try  {
+                // Get IE version (if defined)
+                if (!!window['ActiveXObject']) {
+                    info.versions.ie = 10;
+                }
+
+                // Sanitize codeName and userAgentt
+                var cn = info.codeName;
+                var ua = info.userAgent;
+                if (ua) {
+                    // Remove start of string in UAgent upto CName or end of string if not found.
+                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
+
+                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
+                    ua = ua.substring(cn.length);
+
+                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
+                        ua = ua.substring(1);
+                    }
+
+                    // Remove the end of the string from first characrer that is not a number or point etc.
+                    var pointer = 0;
+                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
+                        pointer = pointer + 1;
+                    }
+                    ua = ua.substring(0, pointer);
+
+                    if (!window.isNaN(ua)) {
+                        if (parseInt(ua) > 0) {
+                            info.versions.html = ua;
+                        }
+                        if (parseFloat(ua) >= 5) {
+                            info.versions.css = '3.x';
+                            info.versions.js = '5.x';
+                        }
+                    }
+                }
+                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
+                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
+                info.versions.nw = getVersionInfo('node-webkit');
+                info.versions.njs = getVersionInfo('node');
+                info.versions.v8 = getVersionInfo('v8');
+                info.versions.openssl = getVersionInfo('openssl');
+                info.versions.chromium = getVersionInfo('chromium');
+
+                // Check for CSS extensions
+                info.css.boostrap2 = selectorExists('hero-unit');
+                info.css.boostrap3 = selectorExists('jumbotron');
+
+                // Detect selected features and availability
+                info.about = {
+                    protocol: $location.$$protocol,
+                    browser: {},
+                    server: {
+                        active: undefined,
+                        url: $location.$$absUrl
+                    },
+                    os: {},
+                    hdd: { type: null }
+                };
+
+                // Detect the operating system
+                var osName = 'Unknown OS';
+                var appVer = navigator.appVersion;
+                if (appVer) {
+                    if (appVer.indexOf("Win") != -1)
+                        osName = 'Windows';
+                    if (appVer.indexOf("Mac") != -1)
+                        osName = 'MacOS';
+                    if (appVer.indexOf("X11") != -1)
+                        osName = 'UNIX';
+                    if (appVer.indexOf("Linux") != -1)
+                        osName = 'Linux';
+                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
+                }
+                info.about.os.name = osName;
+
+                // Check for jQuery
+                info.detects.jqry = typeof jQuery !== 'undefined';
+
+                // Check for general header and body scripts
+                $("script").each(function () {
+                    var src = $(this).attr("src");
+                    if (src) {
+                        // Fast check on known script names
+                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
+                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
+                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
+                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
+                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
+                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
+                    }
+                });
+
+                // Get the client browser details (build a url string)
+                var detectUrl = (function () {
+                    var p = [], w = window, d = document, e = 0, f = 0;
+                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
+                    e |= w.ActiveXObject ? 1 : 0;
+                    e |= w.opera ? 2 : 0;
+                    e |= w.chrome ? 4 : 0;
+                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
+                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
+                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
+                    p.push('e=' + e);
+                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
+                    f |= 'WebSocket' in w ? 2 : 0;
+                    f |= w.Worker ? 4 : 0;
+                    f |= w.applicationCache ? 8 : 0;
+                    f |= w.history && history.pushState ? 16 : 0;
+                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
+                    f |= 'FileReader' in w ? 64 : 0;
+                    p.push('f=' + f);
+                    p.push('r=' + Math.random().toString(36).substring(7));
+                    p.push('w=' + screen.width);
+                    p.push('h=' + screen.height);
+                    var s = d.createElement('script');
+                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
+                })();
+
+                // Send a loaded package to a server to detect more features
+                $.getScript(detectUrl).done(function (script, textStatus) {
+                    $rootScope.$applyAsync(function () {
+                        // Browser info and details loaded
+                        var browserInfo = new window.WhichBrowser();
+                        angular.extend(info.about, browserInfo);
+                    });
+                }).fail(function (jqxhr, settings, exception) {
+                    console.error(exception);
+                });
+
+                // Set browser name to IE (if defined)
+                if (navigator.appName == 'Microsoft Internet Explorer') {
+                    info.about.browser.name = 'Internet Explorer';
+                }
+
+                // Check if the browser supports web db's
+                var webDB = info.about.webdb = {
+                    db: null,
+                    version: '1',
+                    active: null,
+                    size: 5 * 1024 * 1024,
+                    test: function (name, desc, dbVer, dbSize) {
+                        try  {
+                            // Try and open a web db
+                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
+                            webDB.onSuccess(null, null);
+                        } catch (ex) {
+                            // Nope, something went wrong
+                            webDB.onError(null, null);
+                        }
+                    },
+                    onSuccess: function (tx, r) {
+                        if (tx) {
+                            if (r) {
+                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
+                            }
+                            if (tx) {
+                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
+                            }
+                        }
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = true;
+                            webDB.used = JSON.stringify(webDB.db).length;
+                        });
+                    },
+                    onError: function (tx, e) {
+                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
+                        $rootScope.$applyAsync(function () {
+                            webDB.active = false;
+                        });
+                    }
+                };
+                info.about.webdb.test();
+            } catch (ex) {
+                console.error(ex);
+            }
+
+            // Return the preliminary info
+            return info;
+        };
+
+        // Define the state
+        $scope.info = $scope.detectBrowserInfo();
+    }]).controller('AboutConnectionController', [
+    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
+        $scope.result = null;
+        $scope.status = null;
+        $scope.state = {
+            editMode: false,
+            location: $location.$$absUrl,
+            protocol: $location.$$protocol,
+            requireHttps: ($location.$$protocol == 'https')
+        };
+        $scope.detect = function () {
+            var target = $scope.state.location;
+            var started = Date.now();
+            $scope.result = null;
+            $scope.latency = null;
+            $scope.status = { code: 0, desc: '', style: 'label-default' };
+            $.ajax({
+                url: target,
+                crossDomain: true,
+                /*
+                username: 'user',
+                password: 'pass',
+                xhrFields: {
+                withCredentials: true
+                }
+                */
+                beforeSend: function (xhr) {
+                    $timeout(function () {
+                        //$scope.status.code = xhr.status;
+                        $scope.status.desc = 'sending';
+                        $scope.status.style = 'label-info';
+                    });
+                },
+                success: function (data, textStatus, xhr) {
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-success';
+                        $scope.result = {
+                            valid: true,
+                            info: data,
+                            sent: started,
+                            received: Date.now()
+                        };
+                    });
+                },
+                error: function (xhr, textStatus, error) {
+                    xhr.ex = error;
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                        $scope.status.style = 'label-danger';
+                        $scope.result = {
+                            valid: false,
+                            info: xhr,
+                            sent: started,
+                            error: xhr.statusText,
+                            received: Date.now()
+                        };
+                    });
+                },
+                complete: function (xhr, textStatus) {
+                    console.debug(' - Status Code: ' + xhr.status);
+                    $timeout(function () {
+                        $scope.status.code = xhr.status;
+                        $scope.status.desc = textStatus;
+                    });
+                }
+            }).always(function (xhr) {
+                $timeout(function () {
+                    $scope.latency = $scope.getLatencyInfo();
+                });
+            });
+        };
+        $scope.setProtocol = function (protocol) {
+            var val = $scope.state.location;
+            var pos = val.indexOf('://');
+            if (pos > 0) {
+                val = protocol + val.substring(pos);
+            }
+            $scope.state.protocol = protocol;
+            $scope.state.location = val;
+            $scope.detect();
+        };
+        $scope.getProtocolStyle = function (protocol, activeStyle) {
+            var cssRes = '';
+            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
+            if (isValid) {
+                if (!$scope.result) {
+                    cssRes += 'btn-primary';
+                } else if ($scope.result.valid && activeStyle) {
+                    cssRes += activeStyle;
+                } else if ($scope.result) {
+                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
+                }
+            }
+            return cssRes;
+        };
+        $scope.getStatusIcon = function (activeStyle) {
+            var cssRes = '';
+            if (!$scope.result) {
+                cssRes += 'glyphicon-refresh';
+            } else if (activeStyle && $scope.result.valid) {
+                cssRes += activeStyle;
+            } else {
+                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
+            }
+            return cssRes;
+        };
+        $scope.submitForm = function () {
+            $scope.state.editMode = false;
+            if ($scope.state.requireHttps) {
+                $scope.setProtocol('https');
+            } else {
+                $scope.detect();
+            }
+        };
+        $scope.getStatusColor = function () {
+            var cssRes = $scope.getStatusIcon() + ' ';
+            if (!$scope.result) {
+                cssRes += 'busy';
+            } else if ($scope.result.valid) {
+                cssRes += 'success';
+            } else {
+                cssRes += 'error';
+            }
+            return cssRes;
+        };
+        $scope.getLatencyInfo = function () {
+            var cssNone = 'text-muted';
+            var cssHigh = 'text-success';
+            var cssMedium = 'text-warning';
+            var cssLow = 'text-danger';
+            var info = {
+                desc: '',
+                style: cssNone
+            };
+
+            if (!$scope.result) {
+                return info;
+            }
+
+            if (!$scope.result.valid) {
+                info.style = 'text-muted';
+                info.desc = 'Connection Failed';
+                return info;
+            }
+
+            var totalMs = $scope.result.received - $scope.result.sent;
+            if (totalMs > 2 * 60 * 1000) {
+                info.style = cssNone;
+                info.desc = 'Timed out';
+            } else if (totalMs > 1 * 60 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Impossibly slow';
+            } else if (totalMs > 30 * 1000) {
+                info.style = cssLow;
+                info.desc = 'Very slow';
+            } else if (totalMs > 1 * 1000) {
+                info.style = cssMedium;
+                info.desc = 'Relatively slow';
+            } else if (totalMs > 500) {
+                info.style = cssMedium;
+                info.desc = 'Moderately slow';
+            } else if (totalMs > 250) {
+                info.style = cssMedium;
+                info.desc = 'Barely Responsive';
+            } else if (totalMs > 150) {
+                info.style = cssHigh;
+                info.desc = 'Average Response Time';
+            } else if (totalMs > 50) {
+                info.style = cssHigh;
+                info.desc = 'Responsive Enough';
+            } else if (totalMs > 15) {
+                info.style = cssHigh;
+                info.desc = 'Very Responsive';
+            } else {
+                info.style = cssHigh;
+                info.desc = 'Optimal';
+            }
+            return info;
+        };
+    }]);
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                var AppConfig = (function () {
+                    function AppConfig() {
+                        this.modules = {};
+                        this.options = new common.AppOptions();
+                    }
+                    return AppConfig;
+                })();
+                common.AppConfig = AppConfig;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 var proto;
 (function (proto) {
     (function (ng) {
@@ -280,26 +786,6 @@ var proto;
                     return AppState;
                 })();
                 common.AppState = AppState;
-            })(modules.common || (modules.common = {}));
-            var common = modules.common;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (common) {
-                var AppConfig = (function () {
-                    function AppConfig() {
-                        this.modules = {};
-                        this.options = new common.AppOptions();
-                    }
-                    return AppConfig;
-                })();
-                common.AppConfig = AppConfig;
             })(modules.common || (modules.common = {}));
             var common = modules.common;
         })(ng.modules || (ng.modules = {}));
@@ -786,63 +1272,490 @@ var proto;
     (function (ng) {
         (function (modules) {
             (function (common) {
-                (function (filters) {
-                    function ToXmlFilter($parse, $rootScope) {
-                        function toXmlString(name, input, expanded, childExpanded) {
-                            var val = '';
-                            var sep = '';
-                            var attr = '';
-                            if ($.isArray(input)) {
-                                if (expanded) {
-                                    for (var i = 0; i < input.length; i++) {
-                                        val += toXmlString(null, input[i], childExpanded);
-                                    }
-                                } else {
-                                    name = 'Array';
-                                    attr += sep + ' length="' + input.length + '"';
-                                    val = 'Array[' + input.length + ']';
+                (function (directives) {
+                    function TreeViewDirective($timeout) {
+                        return {
+                            restrict: 'E',
+                            template: "<ul class=\"nav nav-list nav-pills nav-stacked abn-tree\">\n  <li ng-repeat=\"row in tree_rows | filter:{visible:true} track by row.branch.uid\" ng-animate=\"'abn-tree-animate'\" ng-class=\"'level-' + {{ row.level }} + (row.branch.selected ? ' active':'') + ' ' +row.classes.join(' ')\" class=\"abn-tree-row\"><a ng-click=\"user_clicks_branch(row.branch)\"><i ng-class=\"row.tree_icon\" ng-click=\"row.branch.expanded = !row.branch.expanded\" class=\"indented tree-icon\"> </i><span class=\"indented tree-label\">{{ row.label }} </span></a></li>\n</ul>",
+                            replace: true,
+                            scope: {
+                                treeData: '=',
+                                onSelect: '&',
+                                initialSelection: '@',
+                                treeControl: '='
+                            },
+                            link: function (scope, element, attrs) {
+                                var error, expand_all_parents, expand_level, for_all_ancestors, for_each_branch, get_parent, n, on_treeData_change, select_branch, selected_branch, tree;
+                                error = function (s) {
+                                    console.log('ERROR:' + s);
+                                    debugger;
+                                    return void 0;
+                                };
+                                if (attrs.iconExpand == null) {
+                                    attrs.iconExpand = 'icon-plus  glyphicon glyphicon-plus  fa fa-plus';
                                 }
-                            } else if ($.isPlainObject(input)) {
-                                if (expanded) {
-                                    for (var id in input) {
-                                        if (input.hasOwnProperty(id)) {
-                                            var child = input[id];
-                                            if ($.isArray(child) || $.isPlainObject(child)) {
-                                                val = toXmlString(id, child, childExpanded);
-                                            } else {
-                                                sep = ' ';
-                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                if (attrs.iconCollapse == null) {
+                                    attrs.iconCollapse = 'icon-minus glyphicon glyphicon-minus fa fa-minus';
+                                }
+                                if (attrs.iconLeaf == null) {
+                                    attrs.iconLeaf = 'icon-file  glyphicon glyphicon-file  fa fa-file';
+                                }
+                                if (attrs.expandLevel == null) {
+                                    attrs.expandLevel = '3';
+                                }
+                                expand_level = parseInt(attrs.expandLevel, 10);
+                                if (!scope.treeData) {
+                                    alert('no treeData defined for the tree!');
+                                    return;
+                                }
+                                if (scope.treeData.length == null) {
+                                    if (scope.treeData.label != null) {
+                                        scope.treeData = [scope.treeData];
+                                    } else {
+                                        alert('treeData should be an array of root branches');
+                                        return;
+                                    }
+                                }
+                                for_each_branch = function (f) {
+                                    var do_f, root_branch, _i, _len, _ref, _results;
+                                    do_f = function (branch, level) {
+                                        var child, _i, _len, _ref, _results;
+                                        f(branch, level);
+                                        if (branch.children != null) {
+                                            _ref = branch.children;
+                                            _results = [];
+                                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                                child = _ref[_i];
+                                                _results.push(do_f(child, level + 1));
+                                            }
+                                            return _results;
+                                        }
+                                    };
+                                    _ref = scope.treeData;
+                                    _results = [];
+                                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                        root_branch = _ref[_i];
+                                        _results.push(do_f(root_branch, 1));
+                                    }
+                                    return _results;
+                                };
+                                selected_branch = null;
+                                select_branch = function (branch) {
+                                    if (!branch) {
+                                        if (selected_branch != null) {
+                                            selected_branch.selected = false;
+                                        }
+                                        selected_branch = null;
+                                        return;
+                                    }
+                                    if (branch !== selected_branch) {
+                                        if (selected_branch != null) {
+                                            selected_branch.selected = false;
+                                        }
+                                        branch.selected = true;
+                                        selected_branch = branch;
+                                        expand_all_parents(branch);
+                                        if (branch.onSelect != null) {
+                                            return $timeout(function () {
+                                                return branch.onSelect(branch);
+                                            });
+                                        } else {
+                                            if (scope.onSelect != null) {
+                                                return $timeout(function () {
+                                                    return scope.onSelect({
+                                                        branch: branch
+                                                    });
+                                                });
                                             }
                                         }
                                     }
-                                } else {
-                                    name = 'Object';
-                                    for (var id in input) {
-                                        if (input.hasOwnProperty(id)) {
-                                            var child = input[id];
-                                            if ($.isArray(child) || $.isPlainObject(child)) {
-                                                val += toXmlString(id, child, childExpanded);
+                                };
+                                scope.user_clicks_branch = function (branch) {
+                                    if (branch !== selected_branch) {
+                                        return select_branch(branch);
+                                    }
+                                };
+                                get_parent = function (child) {
+                                    var parent;
+                                    parent = void 0;
+                                    if (child.parent_uid) {
+                                        for_each_branch(function (b) {
+                                            if (b.uid === child.parent_uid) {
+                                                return parent = b;
+                                            }
+                                        });
+                                    }
+                                    return parent;
+                                };
+                                for_all_ancestors = function (child, fn) {
+                                    var parent;
+                                    parent = get_parent(child);
+                                    if (parent != null) {
+                                        fn(parent);
+                                        return for_all_ancestors(parent, fn);
+                                    }
+                                };
+                                expand_all_parents = function (child) {
+                                    return for_all_ancestors(child, function (b) {
+                                        return b.expanded = true;
+                                    });
+                                };
+                                scope.tree_rows = [];
+                                on_treeData_change = function () {
+                                    var add_branch_to_list, root_branch, _i, _len, _ref, _results;
+                                    for_each_branch(function (b, level) {
+                                        if (!b.uid) {
+                                            return b.uid = "" + Math.random();
+                                        }
+                                    });
+                                    for_each_branch(function (b) {
+                                        var child, _i, _len, _ref, _results;
+                                        if (angular.isArray(b.children)) {
+                                            _ref = b.children;
+                                            _results = [];
+                                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                                child = _ref[_i];
+                                                _results.push(child.parent_uid = b.uid);
+                                            }
+                                            return _results;
+                                        }
+                                    });
+                                    scope.tree_rows = [];
+                                    for_each_branch(function (branch) {
+                                        var child, f;
+                                        if (branch.children) {
+                                            if (branch.children.length > 0) {
+                                                f = function (e) {
+                                                    if (typeof e === 'string') {
+                                                        return {
+                                                            label: e,
+                                                            children: []
+                                                        };
+                                                    } else {
+                                                        return e;
+                                                    }
+                                                };
+                                                return branch.children = (function () {
+                                                    var _i, _len, _ref, _results;
+                                                    _ref = branch.children;
+                                                    _results = [];
+                                                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                                        child = _ref[_i];
+                                                        _results.push(f(child));
+                                                    }
+                                                    return _results;
+                                                })();
+                                            }
+                                        } else {
+                                            return branch.children = [];
+                                        }
+                                    });
+                                    add_branch_to_list = function (level, branch, visible) {
+                                        var child, child_visible, tree_icon, _i, _len, _ref, _results;
+                                        if (branch.expanded == null) {
+                                            branch.expanded = false;
+                                        }
+                                        if (branch.classes == null) {
+                                            branch.classes = [];
+                                        }
+                                        if (!branch.noLeaf && (!branch.children || branch.children.length === 0)) {
+                                            tree_icon = attrs.iconLeaf;
+                                            if (branch.classes.indexOf("leaf") < 0) {
+                                                branch.classes.push("leaf");
+                                            }
+                                        } else {
+                                            if (branch.expanded) {
+                                                tree_icon = attrs.iconCollapse;
                                             } else {
-                                                sep = ' ';
-                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                                tree_icon = attrs.iconExpand;
                                             }
                                         }
+                                        scope.tree_rows.push({
+                                            level: level,
+                                            branch: branch,
+                                            label: branch.label,
+                                            classes: branch.classes,
+                                            tree_icon: tree_icon,
+                                            visible: visible
+                                        });
+                                        if (branch.children != null) {
+                                            _ref = branch.children;
+                                            _results = [];
+                                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                                child = _ref[_i];
+                                                child_visible = visible && branch.expanded;
+                                                _results.push(add_branch_to_list(level + 1, child, child_visible));
+                                            }
+                                            return _results;
+                                        }
+                                    };
+                                    _ref = scope.treeData;
+                                    _results = [];
+                                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                                        root_branch = _ref[_i];
+                                        _results.push(add_branch_to_list(1, root_branch, true));
                                     }
-                                    //val = 'Object[ ' + JSON.stringify(input) + ' ]';
+                                    return _results;
+                                };
+                                scope.$watch('treeData', on_treeData_change, true);
+                                if (attrs.initialSelection != null) {
+                                    for_each_branch(function (b) {
+                                        if (b.label === attrs.initialSelection) {
+                                            return $timeout(function () {
+                                                return select_branch(b);
+                                            });
+                                        }
+                                    });
+                                }
+                                n = scope.treeData.length;
+                                for_each_branch(function (b, level) {
+                                    b.level = level;
+                                    return b.expanded = b.level < expand_level;
+                                });
+                                if (scope.treeControl != null) {
+                                    if (angular.isObject(scope.treeControl)) {
+                                        tree = scope.treeControl;
+                                        tree.expand_all = function () {
+                                            return for_each_branch(function (b, level) {
+                                                return b.expanded = true;
+                                            });
+                                        };
+                                        tree.collapse_all = function () {
+                                            return for_each_branch(function (b, level) {
+                                                return b.expanded = false;
+                                            });
+                                        };
+                                        tree.get_first_branch = function () {
+                                            n = scope.treeData.length;
+                                            if (n > 0) {
+                                                return scope.treeData[0];
+                                            }
+                                        };
+                                        tree.select_first_branch = function () {
+                                            var b;
+                                            b = tree.get_first_branch();
+                                            return tree.select_branch(b);
+                                        };
+                                        tree.get_selected_branch = function () {
+                                            return selected_branch;
+                                        };
+                                        tree.get_parent_branch = function (b) {
+                                            return get_parent(b);
+                                        };
+                                        tree.select_branch = function (b) {
+                                            select_branch(b);
+                                            return b;
+                                        };
+                                        tree.get_children = function (b) {
+                                            return b.children;
+                                        };
+                                        tree.select_parent_branch = function (b) {
+                                            var p;
+                                            if (b == null) {
+                                                b = tree.get_selected_branch();
+                                            }
+                                            if (b != null) {
+                                                p = tree.get_parent_branch(b);
+                                                if (p != null) {
+                                                    tree.select_branch(p);
+                                                    return p;
+                                                }
+                                            }
+                                        };
+                                        tree.add_branch = function (parent, new_branch) {
+                                            if (parent != null) {
+                                                parent.children.push(new_branch);
+                                                parent.expanded = true;
+                                            } else {
+                                                scope.treeData.push(new_branch);
+                                            }
+                                            return new_branch;
+                                        };
+                                        tree.add_root_branch = function (new_branch) {
+                                            tree.add_branch(null, new_branch);
+                                            return new_branch;
+                                        };
+                                        tree.expand_branch = function (b) {
+                                            if (b == null) {
+                                                b = tree.get_selected_branch();
+                                            }
+                                            if (b != null) {
+                                                b.expanded = true;
+                                                return b;
+                                            }
+                                        };
+                                        tree.collapse_branch = function (b) {
+                                            if (b == null) {
+                                                b = selected_branch;
+                                            }
+                                            if (b != null) {
+                                                b.expanded = false;
+                                                return b;
+                                            }
+                                        };
+                                        tree.get_siblings = function (b) {
+                                            var p, siblings;
+                                            if (b == null) {
+                                                b = selected_branch;
+                                            }
+                                            if (b != null) {
+                                                p = tree.get_parent_branch(b);
+                                                if (p) {
+                                                    siblings = p.children;
+                                                } else {
+                                                    siblings = scope.treeData;
+                                                }
+                                                return siblings;
+                                            }
+                                        };
+                                        tree.get_next_sibling = function (b) {
+                                            var i, siblings;
+                                            if (b == null) {
+                                                b = selected_branch;
+                                            }
+                                            if (b != null) {
+                                                siblings = tree.get_siblings(b);
+                                                n = siblings.length;
+                                                i = siblings.indexOf(b);
+                                                if (i < n) {
+                                                    return siblings[i + 1];
+                                                }
+                                            }
+                                        };
+                                        tree.get_prev_sibling = function (b) {
+                                            var i, siblings;
+                                            if (b == null) {
+                                                b = selected_branch;
+                                            }
+                                            siblings = tree.get_siblings(b);
+                                            n = siblings.length;
+                                            i = siblings.indexOf(b);
+                                            if (i > 0) {
+                                                return siblings[i - 1];
+                                            }
+                                        };
+                                        tree.select_next_sibling = function (b) {
+                                            var next;
+                                            if (b == null) {
+                                                b = selected_branch;
+                                            }
+                                            if (b != null) {
+                                                next = tree.get_next_sibling(b);
+                                                if (next != null) {
+                                                    return tree.select_branch(next);
+                                                }
+                                            }
+                                        };
+                                        tree.select_prev_sibling = function (b) {
+                                            var prev;
+                                            if (b == null) {
+                                                b = selected_branch;
+                                            }
+                                            if (b != null) {
+                                                prev = tree.get_prev_sibling(b);
+                                                if (prev != null) {
+                                                    return tree.select_branch(prev);
+                                                }
+                                            }
+                                        };
+                                        tree.get_first_child = function (b) {
+                                            var _ref;
+                                            if (b == null) {
+                                                b = selected_branch;
+                                            }
+                                            if (b != null) {
+                                                if (((_ref = b.children) != null ? _ref.length : void 0) > 0) {
+                                                    return b.children[0];
+                                                }
+                                            }
+                                        };
+                                        tree.get_closest_ancestor_next_sibling = function (b) {
+                                            var next, parent;
+                                            next = tree.get_next_sibling(b);
+                                            if (next != null) {
+                                                return next;
+                                            } else {
+                                                parent = tree.get_parent_branch(b);
+                                                return tree.get_closest_ancestor_next_sibling(parent);
+                                            }
+                                        };
+                                        tree.get_next_branch = function (b) {
+                                            var next;
+                                            if (b == null) {
+                                                b = selected_branch;
+                                            }
+                                            if (b != null) {
+                                                next = tree.get_first_child(b);
+                                                if (next != null) {
+                                                    return next;
+                                                } else {
+                                                    next = tree.get_closest_ancestor_next_sibling(b);
+                                                    return next;
+                                                }
+                                            }
+                                        };
+                                        tree.select_next_branch = function (b) {
+                                            var next;
+                                            if (b == null) {
+                                                b = selected_branch;
+                                            }
+                                            if (b != null) {
+                                                next = tree.get_next_branch(b);
+                                                if (next != null) {
+                                                    tree.select_branch(next);
+                                                    return next;
+                                                }
+                                            }
+                                        };
+                                        tree.last_descendant = function (b) {
+                                            var last_child;
+                                            if (b == null) {
+                                                debugger;
+                                            }
+                                            n = b.children.length;
+                                            if (n === 0) {
+                                                return b;
+                                            } else {
+                                                last_child = b.children[n - 1];
+                                                return tree.last_descendant(last_child);
+                                            }
+                                        };
+                                        tree.get_prev_branch = function (b) {
+                                            var parent, prev_sibling;
+                                            if (b == null) {
+                                                b = selected_branch;
+                                            }
+                                            if (b != null) {
+                                                prev_sibling = tree.get_prev_sibling(b);
+                                                if (prev_sibling != null) {
+                                                    return tree.last_descendant(prev_sibling);
+                                                } else {
+                                                    parent = tree.get_parent_branch(b);
+                                                    return parent;
+                                                }
+                                            }
+                                        };
+                                        return tree.select_prev_branch = function (b) {
+                                            var prev;
+                                            if (b == null) {
+                                                b = selected_branch;
+                                            }
+                                            if (b != null) {
+                                                prev = tree.get_prev_branch(b);
+                                                if (prev != null) {
+                                                    tree.select_branch(prev);
+                                                    return prev;
+                                                }
+                                            }
+                                        };
+                                    }
                                 }
                             }
-                            if (name) {
-                                val = '<' + name + '' + attr + '>' + val + '</' + name + '>';
-                            }
-                            return val;
-                        }
-                        return function (input, rootName) {
-                            return toXmlString(rootName || 'xml', input, true);
                         };
                     }
-                    filters.ToXmlFilter = ToXmlFilter;
-                })(common.filters || (common.filters = {}));
-                var filters = common.filters;
+                    directives.TreeViewDirective = TreeViewDirective;
+                })(common.directives || (common.directives = {}));
+                var directives = common.directives;
             })(modules.common || (modules.common = {}));
             var common = modules.common;
         })(ng.modules || (ng.modules = {}));
@@ -1015,6 +1928,75 @@ var proto;
                         };
                     }
                     filters.ToByteFilter = ToByteFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
+                    function ToXmlFilter($parse, $rootScope) {
+                        function toXmlString(name, input, expanded, childExpanded) {
+                            var val = '';
+                            var sep = '';
+                            var attr = '';
+                            if ($.isArray(input)) {
+                                if (expanded) {
+                                    for (var i = 0; i < input.length; i++) {
+                                        val += toXmlString(null, input[i], childExpanded);
+                                    }
+                                } else {
+                                    name = 'Array';
+                                    attr += sep + ' length="' + input.length + '"';
+                                    val = 'Array[' + input.length + ']';
+                                }
+                            } else if ($.isPlainObject(input)) {
+                                if (expanded) {
+                                    for (var id in input) {
+                                        if (input.hasOwnProperty(id)) {
+                                            var child = input[id];
+                                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                                val = toXmlString(id, child, childExpanded);
+                                            } else {
+                                                sep = ' ';
+                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    name = 'Object';
+                                    for (var id in input) {
+                                        if (input.hasOwnProperty(id)) {
+                                            var child = input[id];
+                                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                                val += toXmlString(id, child, childExpanded);
+                                            } else {
+                                                sep = ' ';
+                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                            }
+                                        }
+                                    }
+                                    //val = 'Object[ ' + JSON.stringify(input) + ' ]';
+                                }
+                            }
+                            if (name) {
+                                val = '<' + name + '' + attr + '>' + val + '</' + name + '>';
+                            }
+                            return val;
+                        }
+                        return function (input, rootName) {
+                            return toXmlString(rootName || 'xml', input, true);
+                        };
+                    }
+                    filters.ToXmlFilter = ToXmlFilter;
                 })(common.filters || (common.filters = {}));
                 var filters = common.filters;
             })(modules.common || (modules.common = {}));
@@ -1539,6 +2521,10 @@ var proto;
                                         return a.label == b.label ? 0 : (a.label > b.label ? 1 : -1);
                                     });
                                     parentNode.data.cached = true;
+
+                                    if (_this.UpdateUI) {
+                                        _this.UpdateUI();
+                                    }
                                 });
                             } catch (ex) {
                                 console.warn(ex.message);
@@ -1548,6 +2534,9 @@ var proto;
                         FileBrowserRoot.prototype.selectItem = function (node) {
                             if (!node.data.cached) {
                                 this.populateItem(node, node.data);
+                            }
+                            if (this.OnSelect) {
+                                this.OnSelect(node);
                             }
                         };
                         return FileBrowserRoot;
@@ -1616,13 +2605,35 @@ var proto;
                             ]).expanded = false;
                             */
                             this.addGroup(this, 'Online Resources', [
-                                'https://www.wikipedia.org',
-                                'http://www.wolframalpha.com/',
-                                'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286'
+                                {
+                                    name: 'Wikipedia', url: 'https://www.wikipedia.org'
+                                },
+                                {
+                                    name: 'Wolfram Alpha', url: 'http://www.wolframalpha.com/'
+                                },
+                                {
+                                    name: 'Global Wind Maps', url: 'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286'
+                                },
+                                {
+                                    name: 'Disaster Info Map', url: 'http://hisz.rsoe.hu/alertmap/index2.php'
+                                }
                             ]);
-                            this.addGroup(this, 'Design Resources', [
-                                'http://css3generator.com/',
-                                'http://fontawesome.io/icons/'
+                            this.addGroup(this, 'Development Resources', [
+                                {
+                                    name: 'Javascript Fiddler', url: 'https://jsfiddle.net/'
+                                },
+                                {
+                                    name: 'Microsoft.net Fiddler', url: 'https://dotnetfiddle.net/'
+                                },
+                                {
+                                    name: 'Font Awesome', url: 'http://fontawesome.io/icons/'
+                                },
+                                {
+                                    name: 'CSS3 Generator', url: 'http://css3generator.com/'
+                                },
+                                {
+                                    name: 'Regular Expressions', url: 'https://regex101.com/'
+                                }
                             ]).expanded = false;
                             /*
                             this.addGroup(this, 'Additional Resources', [
@@ -1643,8 +2654,12 @@ var proto;
                             var _this = this;
                             var node = new SiteNode(name, urls);
                             if (urls) {
-                                urls.forEach(function (url) {
-                                    node.children.push(_this.createLink(url));
+                                urls.forEach(function (info) {
+                                    if (typeof info == 'string') {
+                                        node.children.push(_this.createLink(info));
+                                    } else {
+                                        node.children.push(_this.createLink(info.url, info.name));
+                                    }
                                 });
                             }
                             if (parent) {
@@ -1663,16 +2678,18 @@ var proto;
                                     }
                                 };
 
-                                var hostname = $('<a href="' + node.data + '"></a>')[0].hostname;
-                                node.label = 'Loading: ' + hostname.replace('www.', '');
-                                $.getJSON('http://whateverorigin.org/get?url=' + encodeURIComponent(node.data) + '&callback=?', function (data) {
-                                    var match = /\<title\>(.+)\<\/title\>/i.exec(data.contents);
-                                    if (match && match.length > 1) {
-                                        node.label = match[1];
-                                    }
-                                    if (_this.UpdateUI)
-                                        _this.UpdateUI();
-                                });
+                                if (!label) {
+                                    var hostname = $('<a href="' + node.data + '"></a>')[0].hostname;
+                                    node.label = 'Loading: ' + hostname.replace('www.', '');
+                                    $.getJSON('http://whateverorigin.org/get?url=' + encodeURIComponent(node.data) + '&callback=?', function (data) {
+                                        var match = /\<title\>(.+)\<\/title\>/i.exec(data.contents);
+                                        if (match && match.length > 1) {
+                                            node.label = match[1];
+                                        }
+                                        if (_this.UpdateUI)
+                                            _this.UpdateUI();
+                                    });
+                                }
                             }
                             return node;
                         };
@@ -2412,6 +3429,20 @@ var proto;
                         }
                     }
                     BrowserViewController.prototype.init = function (dir) {
+                        var _this = this;
+                        // Hook site navigation nodes
+                        this.navigation.fileSystem.UpdateUI = function () {
+                            _this.$rootScope.$applyAsync(function () {
+                            });
+                        };
+                        this.navigation.fileSystem.OnSelect = function (node) {
+                            var folder = node.data;
+                            if (folder != _this.$scope.dir_path) {
+                                _this.$scope.dir_path = folder;
+                                _this.navigate(folder);
+                            }
+                        };
+
                         // Resolve the initial folder path
                         this.navigate(dir);
                     };
@@ -2640,6 +3671,21 @@ var proto;
                     ExternalLinksViewController.prototype.trustSrc = function (src) {
                         return this.$sce.trustAsResourceUrl(src);
                     };
+
+                    ExternalLinksViewController.prototype.openExternal = function () {
+                        if (this.selected) {
+                            window.open(this.selected.data, this.selected.label);
+                        }
+                    };
+
+                    ExternalLinksViewController.prototype.refreshExternal = function () {
+                        var _this = this;
+                        if (this.selected) {
+                            $('#ExternalExplorerPanel').attr('src', function (i, val) {
+                                return _this.trustSrc(val);
+                            });
+                        }
+                    };
                     return ExternalLinksViewController;
                 })();
                 explorer.ExternalLinksViewController = ExternalLinksViewController;
@@ -2743,508 +3789,6 @@ angular.module('prototyped.explorer', [
         $sceDelegateProvider.resourceUrlWhitelist(['**']);
     }]).service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.BrowserViewController]).controller('ExternalLinksViewController', ['$rootScope', '$sce', '$q', 'navigationService', proto.ng.modules.explorer.ExternalLinksViewController]);
 /// <reference path="../imports.d.ts" />
-/// <reference path="config.ng.ts" />
-// Define common runtime modules (shared)
-angular.module('prototyped.ng.runtime', [
-    'prototyped.ng.config',
-    'ui.router'
-]).provider('appNode', [
-    proto.ng.modules.common.providers.AppNodeProvider
-]).provider('appState', [
-    '$stateProvider',
-    '$locationProvider',
-    '$urlRouterProvider',
-    'appConfigProvider',
-    'appNodeProvider',
-    proto.ng.modules.common.providers.AppStateProvider
-]);
-/// <reference path="../../imports.d.ts" />
-angular.module('prototyped.about', [
-    'prototyped.ng.runtime',
-    'prototyped.ng.views',
-    'prototyped.ng.styles'
-]).config([
-    'appStateProvider', function (appStateProvider) {
-        // Define application state
-        appStateProvider.when('/about', '/about/info').define('about', {
-            url: '/about',
-            priority: 1000,
-            state: {
-                url: '/about',
-                abstract: true
-            },
-            menuitem: {
-                label: 'About',
-                state: 'about.info',
-                icon: 'fa fa-info-circle'
-            },
-            cardview: {
-                style: 'img-about',
-                title: 'About this software',
-                desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
-            },
-            visible: function () {
-                return appStateProvider.appConfig.options.showAboutPage;
-            },
-            children: []
-        }).state('about.info', {
-            url: '/info',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/about/info.tpl.html',
-                    controller: 'AboutInfoController'
-                }
-            }
-        }).state('about.online', {
-            url: '^/contact',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': { templateUrl: 'views/about/contact.tpl.html' }
-            }
-        }).state('about.conection', {
-            url: '/conection',
-            views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/about/connections.tpl.html',
-                    controller: 'AboutConnectionController'
-                }
-            }
-        });
-    }]).controller('AboutInfoController', [
-    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
-        function css(a) {
-            var sheets = document.styleSheets, o = [];
-            for (var i in sheets) {
-                var rules = sheets[i].rules || sheets[i].cssRules;
-                for (var r in rules) {
-                    if (a.is(rules[r].selectorText)) {
-                        o.push(rules[r].selectorText);
-                    }
-                }
-            }
-            return o;
-        }
-
-        function selectorExists(selector) {
-            return false;
-            //var ret = css($(selector));
-            //return ret;
-        }
-
-        function getVersionInfo(ident) {
-            try  {
-                if (typeof process !== 'undefined' && process.versions) {
-                    return process.versions[ident];
-                }
-            } catch (ex) {
-            }
-            return null;
-        }
-
-        // Define a function to detect the capabilities
-        $scope.detectBrowserInfo = function () {
-            var info = {
-                about: null,
-                versions: {
-                    ie: null,
-                    html: null,
-                    jqry: null,
-                    css: null,
-                    js: null,
-                    ng: null,
-                    nw: null,
-                    njs: null,
-                    v8: null,
-                    openssl: null,
-                    chromium: null
-                },
-                detects: {
-                    jqry: false,
-                    less: false,
-                    bootstrap: false,
-                    ngAnimate: false,
-                    ngUiRouter: false,
-                    ngUiUtils: false,
-                    ngUiBootstrap: false
-                },
-                css: {
-                    boostrap2: null,
-                    boostrap3: null
-                },
-                codeName: navigator.appCodeName,
-                userAgent: navigator.userAgent
-            };
-
-            try  {
-                // Get IE version (if defined)
-                if (!!window['ActiveXObject']) {
-                    info.versions.ie = 10;
-                }
-
-                // Sanitize codeName and userAgentt
-                var cn = info.codeName;
-                var ua = info.userAgent;
-                if (ua) {
-                    // Remove start of string in UAgent upto CName or end of string if not found.
-                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
-
-                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
-                    ua = ua.substring(cn.length);
-
-                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
-                        ua = ua.substring(1);
-                    }
-
-                    // Remove the end of the string from first characrer that is not a number or point etc.
-                    var pointer = 0;
-                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
-                        pointer = pointer + 1;
-                    }
-                    ua = ua.substring(0, pointer);
-
-                    if (!window.isNaN(ua)) {
-                        if (parseInt(ua) > 0) {
-                            info.versions.html = ua;
-                        }
-                        if (parseFloat(ua) >= 5) {
-                            info.versions.css = '3.x';
-                            info.versions.js = '5.x';
-                        }
-                    }
-                }
-                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
-                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
-                info.versions.nw = getVersionInfo('node-webkit');
-                info.versions.njs = getVersionInfo('node');
-                info.versions.v8 = getVersionInfo('v8');
-                info.versions.openssl = getVersionInfo('openssl');
-                info.versions.chromium = getVersionInfo('chromium');
-
-                // Check for CSS extensions
-                info.css.boostrap2 = selectorExists('hero-unit');
-                info.css.boostrap3 = selectorExists('jumbotron');
-
-                // Detect selected features and availability
-                info.about = {
-                    protocol: $location.$$protocol,
-                    browser: {},
-                    server: {
-                        active: undefined,
-                        url: $location.$$absUrl
-                    },
-                    os: {},
-                    hdd: { type: null }
-                };
-
-                // Detect the operating system
-                var osName = 'Unknown OS';
-                var appVer = navigator.appVersion;
-                if (appVer) {
-                    if (appVer.indexOf("Win") != -1)
-                        osName = 'Windows';
-                    if (appVer.indexOf("Mac") != -1)
-                        osName = 'MacOS';
-                    if (appVer.indexOf("X11") != -1)
-                        osName = 'UNIX';
-                    if (appVer.indexOf("Linux") != -1)
-                        osName = 'Linux';
-                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
-                }
-                info.about.os.name = osName;
-
-                // Check for jQuery
-                info.detects.jqry = typeof jQuery !== 'undefined';
-
-                // Check for general header and body scripts
-                $("script").each(function () {
-                    var src = $(this).attr("src");
-                    if (src) {
-                        // Fast check on known script names
-                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
-                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
-                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
-                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
-                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
-                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
-                    }
-                });
-
-                // Get the client browser details (build a url string)
-                var detectUrl = (function () {
-                    var p = [], w = window, d = document, e = 0, f = 0;
-                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
-                    e |= w.ActiveXObject ? 1 : 0;
-                    e |= w.opera ? 2 : 0;
-                    e |= w.chrome ? 4 : 0;
-                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
-                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
-                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
-                    p.push('e=' + e);
-                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
-                    f |= 'WebSocket' in w ? 2 : 0;
-                    f |= w.Worker ? 4 : 0;
-                    f |= w.applicationCache ? 8 : 0;
-                    f |= w.history && history.pushState ? 16 : 0;
-                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
-                    f |= 'FileReader' in w ? 64 : 0;
-                    p.push('f=' + f);
-                    p.push('r=' + Math.random().toString(36).substring(7));
-                    p.push('w=' + screen.width);
-                    p.push('h=' + screen.height);
-                    var s = d.createElement('script');
-                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
-                })();
-
-                // Send a loaded package to a server to detect more features
-                $.getScript(detectUrl).done(function (script, textStatus) {
-                    $rootScope.$applyAsync(function () {
-                        // Browser info and details loaded
-                        var browserInfo = new window.WhichBrowser();
-                        angular.extend(info.about, browserInfo);
-                    });
-                }).fail(function (jqxhr, settings, exception) {
-                    console.error(exception);
-                });
-
-                // Set browser name to IE (if defined)
-                if (navigator.appName == 'Microsoft Internet Explorer') {
-                    info.about.browser.name = 'Internet Explorer';
-                }
-
-                // Check if the browser supports web db's
-                var webDB = info.about.webdb = {
-                    db: null,
-                    version: '1',
-                    active: null,
-                    size: 5 * 1024 * 1024,
-                    test: function (name, desc, dbVer, dbSize) {
-                        try  {
-                            // Try and open a web db
-                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
-                            webDB.onSuccess(null, null);
-                        } catch (ex) {
-                            // Nope, something went wrong
-                            webDB.onError(null, null);
-                        }
-                    },
-                    onSuccess: function (tx, r) {
-                        if (tx) {
-                            if (r) {
-                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
-                            }
-                            if (tx) {
-                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
-                            }
-                        }
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = true;
-                            webDB.used = JSON.stringify(webDB.db).length;
-                        });
-                    },
-                    onError: function (tx, e) {
-                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = false;
-                        });
-                    }
-                };
-                info.about.webdb.test();
-            } catch (ex) {
-                console.error(ex);
-            }
-
-            // Return the preliminary info
-            return info;
-        };
-
-        // Define the state
-        $scope.info = $scope.detectBrowserInfo();
-    }]).controller('AboutConnectionController', [
-    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
-        $scope.result = null;
-        $scope.status = null;
-        $scope.state = {
-            editMode: false,
-            location: $location.$$absUrl,
-            protocol: $location.$$protocol,
-            requireHttps: ($location.$$protocol == 'https')
-        };
-        $scope.detect = function () {
-            var target = $scope.state.location;
-            var started = Date.now();
-            $scope.result = null;
-            $scope.latency = null;
-            $scope.status = { code: 0, desc: '', style: 'label-default' };
-            $.ajax({
-                url: target,
-                crossDomain: true,
-                /*
-                username: 'user',
-                password: 'pass',
-                xhrFields: {
-                withCredentials: true
-                }
-                */
-                beforeSend: function (xhr) {
-                    $timeout(function () {
-                        //$scope.status.code = xhr.status;
-                        $scope.status.desc = 'sending';
-                        $scope.status.style = 'label-info';
-                    });
-                },
-                success: function (data, textStatus, xhr) {
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-success';
-                        $scope.result = {
-                            valid: true,
-                            info: data,
-                            sent: started,
-                            received: Date.now()
-                        };
-                    });
-                },
-                error: function (xhr, textStatus, error) {
-                    xhr.ex = error;
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-danger';
-                        $scope.result = {
-                            valid: false,
-                            info: xhr,
-                            sent: started,
-                            error: xhr.statusText,
-                            received: Date.now()
-                        };
-                    });
-                },
-                complete: function (xhr, textStatus) {
-                    console.debug(' - Status Code: ' + xhr.status);
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                    });
-                }
-            }).always(function (xhr) {
-                $timeout(function () {
-                    $scope.latency = $scope.getLatencyInfo();
-                });
-            });
-        };
-        $scope.setProtocol = function (protocol) {
-            var val = $scope.state.location;
-            var pos = val.indexOf('://');
-            if (pos > 0) {
-                val = protocol + val.substring(pos);
-            }
-            $scope.state.protocol = protocol;
-            $scope.state.location = val;
-            $scope.detect();
-        };
-        $scope.getProtocolStyle = function (protocol, activeStyle) {
-            var cssRes = '';
-            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
-            if (isValid) {
-                if (!$scope.result) {
-                    cssRes += 'btn-primary';
-                } else if ($scope.result.valid && activeStyle) {
-                    cssRes += activeStyle;
-                } else if ($scope.result) {
-                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
-                }
-            }
-            return cssRes;
-        };
-        $scope.getStatusIcon = function (activeStyle) {
-            var cssRes = '';
-            if (!$scope.result) {
-                cssRes += 'glyphicon-refresh';
-            } else if (activeStyle && $scope.result.valid) {
-                cssRes += activeStyle;
-            } else {
-                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
-            }
-            return cssRes;
-        };
-        $scope.submitForm = function () {
-            $scope.state.editMode = false;
-            if ($scope.state.requireHttps) {
-                $scope.setProtocol('https');
-            } else {
-                $scope.detect();
-            }
-        };
-        $scope.getStatusColor = function () {
-            var cssRes = $scope.getStatusIcon() + ' ';
-            if (!$scope.result) {
-                cssRes += 'busy';
-            } else if ($scope.result.valid) {
-                cssRes += 'success';
-            } else {
-                cssRes += 'error';
-            }
-            return cssRes;
-        };
-        $scope.getLatencyInfo = function () {
-            var cssNone = 'text-muted';
-            var cssHigh = 'text-success';
-            var cssMedium = 'text-warning';
-            var cssLow = 'text-danger';
-            var info = {
-                desc: '',
-                style: cssNone
-            };
-
-            if (!$scope.result) {
-                return info;
-            }
-
-            if (!$scope.result.valid) {
-                info.style = 'text-muted';
-                info.desc = 'Connection Failed';
-                return info;
-            }
-
-            var totalMs = $scope.result.received - $scope.result.sent;
-            if (totalMs > 2 * 60 * 1000) {
-                info.style = cssNone;
-                info.desc = 'Timed out';
-            } else if (totalMs > 1 * 60 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Impossibly slow';
-            } else if (totalMs > 30 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Very slow';
-            } else if (totalMs > 1 * 1000) {
-                info.style = cssMedium;
-                info.desc = 'Relatively slow';
-            } else if (totalMs > 500) {
-                info.style = cssMedium;
-                info.desc = 'Moderately slow';
-            } else if (totalMs > 250) {
-                info.style = cssMedium;
-                info.desc = 'Barely Responsive';
-            } else if (totalMs > 150) {
-                info.style = cssHigh;
-                info.desc = 'Average Response Time';
-            } else if (totalMs > 50) {
-                info.style = cssHigh;
-                info.desc = 'Responsive Enough';
-            } else if (totalMs > 15) {
-                info.style = cssHigh;
-                info.desc = 'Very Responsive';
-            } else {
-                info.style = cssHigh;
-                info.desc = 'Optimal';
-            }
-            return info;
-        };
-    }]);
-/// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
 // Define main module with all dependencies
@@ -3277,493 +3821,7 @@ angular.module('prototyped.ng', [
                 }
             }
         });
-    }]).controller('CardViewController', ['appState', proto.ng.modules.common.controllers.CardViewController]).directive('appClean', [
-    '$window',
-    '$route',
-    '$state',
-    'appState',
-    proto.ng.modules.common.directives.AppCleanDirective
-]).directive('appClose', ['appNode', proto.ng.modules.common.directives.AppCloseDirective]).directive('appDebug', ['appNode', proto.ng.modules.common.directives.AppDebugDirective]).directive('appKiosk', ['appNode', proto.ng.modules.common.directives.AppKioskDirective]).directive('appFullscreen', ['appNode', proto.ng.modules.common.directives.AppFullScreenDirective]).directive('appVersion', ['appState', proto.ng.modules.common.directives.AppVersionDirective]).directive('eatClickIf', ['$parse', '$rootScope', proto.ng.modules.common.directives.EatClickIfDirective]).directive('toHtml', ['$sce', '$filter', proto.ng.modules.common.directives.ToHtmlDirective]).directive('domReplace', [proto.ng.modules.common.directives.DomReplaceDirective]).directive('resxInclude', ['$templateCache', proto.ng.modules.common.directives.ResxIncludeDirective]).directive('resxImport', ['$templateCache', '$document', proto.ng.modules.common.directives.ResxImportDirective]).filter('toXml', [proto.ng.modules.common.filters.ToXmlFilter]).filter('interpolate', ['appState', proto.ng.modules.common.filters.InterpolateFilter]).filter('fromNow', ['$filter', proto.ng.modules.common.filters.FromNowFilter]).filter('isArray', [proto.ng.modules.common.filters.IsArrayFilter]).filter('isNotArray', [proto.ng.modules.common.filters.IsNotArrayFilter]).filter('typeCount', [proto.ng.modules.common.filters.TypeCountFilter]).filter('listReverse', [proto.ng.modules.common.filters.ListReverseFilter]).filter('toBytes', [proto.ng.modules.common.filters.ToByteFilter]).filter('parseBytes', [proto.ng.modules.common.filters.ParseBytesFilter]).filter('trustedUrl', ['$sce', proto.ng.modules.common.filters.TrustedUrlFilter]).directive('abnTree', [
-    '$timeout', function ($timeout) {
-        return {
-            restrict: 'E',
-            template: "<ul class=\"nav nav-list nav-pills nav-stacked abn-tree\">\n  <li ng-repeat=\"row in tree_rows | filter:{visible:true} track by row.branch.uid\" ng-animate=\"'abn-tree-animate'\" ng-class=\"'level-' + {{ row.level }} + (row.branch.selected ? ' active':'') + ' ' +row.classes.join(' ')\" class=\"abn-tree-row\"><a ng-click=\"user_clicks_branch(row.branch)\"><i ng-class=\"row.tree_icon\" ng-click=\"row.branch.expanded = !row.branch.expanded\" class=\"indented tree-icon\"> </i><span class=\"indented tree-label\">{{ row.label }} </span></a></li>\n</ul>",
-            replace: true,
-            scope: {
-                treeData: '=',
-                onSelect: '&',
-                initialSelection: '@',
-                treeControl: '='
-            },
-            link: function (scope, element, attrs) {
-                var error, expand_all_parents, expand_level, for_all_ancestors, for_each_branch, get_parent, n, on_treeData_change, select_branch, selected_branch, tree;
-                error = function (s) {
-                    console.log('ERROR:' + s);
-                    debugger;
-                    return void 0;
-                };
-                if (attrs.iconExpand == null) {
-                    attrs.iconExpand = 'icon-plus  glyphicon glyphicon-plus  fa fa-plus';
-                }
-                if (attrs.iconCollapse == null) {
-                    attrs.iconCollapse = 'icon-minus glyphicon glyphicon-minus fa fa-minus';
-                }
-                if (attrs.iconLeaf == null) {
-                    attrs.iconLeaf = 'icon-file  glyphicon glyphicon-file  fa fa-file';
-                }
-                if (attrs.expandLevel == null) {
-                    attrs.expandLevel = '3';
-                }
-                expand_level = parseInt(attrs.expandLevel, 10);
-                if (!scope.treeData) {
-                    alert('no treeData defined for the tree!');
-                    return;
-                }
-                if (scope.treeData.length == null) {
-                    if (scope.treeData.label != null) {
-                        scope.treeData = [scope.treeData];
-                    } else {
-                        alert('treeData should be an array of root branches');
-                        return;
-                    }
-                }
-                for_each_branch = function (f) {
-                    var do_f, root_branch, _i, _len, _ref, _results;
-                    do_f = function (branch, level) {
-                        var child, _i, _len, _ref, _results;
-                        f(branch, level);
-                        if (branch.children != null) {
-                            _ref = branch.children;
-                            _results = [];
-                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                                child = _ref[_i];
-                                _results.push(do_f(child, level + 1));
-                            }
-                            return _results;
-                        }
-                    };
-                    _ref = scope.treeData;
-                    _results = [];
-                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                        root_branch = _ref[_i];
-                        _results.push(do_f(root_branch, 1));
-                    }
-                    return _results;
-                };
-                selected_branch = null;
-                select_branch = function (branch) {
-                    if (!branch) {
-                        if (selected_branch != null) {
-                            selected_branch.selected = false;
-                        }
-                        selected_branch = null;
-                        return;
-                    }
-                    if (branch !== selected_branch) {
-                        if (selected_branch != null) {
-                            selected_branch.selected = false;
-                        }
-                        branch.selected = true;
-                        selected_branch = branch;
-                        expand_all_parents(branch);
-                        if (branch.onSelect != null) {
-                            return $timeout(function () {
-                                return branch.onSelect(branch);
-                            });
-                        } else {
-                            if (scope.onSelect != null) {
-                                return $timeout(function () {
-                                    return scope.onSelect({
-                                        branch: branch
-                                    });
-                                });
-                            }
-                        }
-                    }
-                };
-                scope.user_clicks_branch = function (branch) {
-                    if (branch !== selected_branch) {
-                        return select_branch(branch);
-                    }
-                };
-                get_parent = function (child) {
-                    var parent;
-                    parent = void 0;
-                    if (child.parent_uid) {
-                        for_each_branch(function (b) {
-                            if (b.uid === child.parent_uid) {
-                                return parent = b;
-                            }
-                        });
-                    }
-                    return parent;
-                };
-                for_all_ancestors = function (child, fn) {
-                    var parent;
-                    parent = get_parent(child);
-                    if (parent != null) {
-                        fn(parent);
-                        return for_all_ancestors(parent, fn);
-                    }
-                };
-                expand_all_parents = function (child) {
-                    return for_all_ancestors(child, function (b) {
-                        return b.expanded = true;
-                    });
-                };
-                scope.tree_rows = [];
-                on_treeData_change = function () {
-                    var add_branch_to_list, root_branch, _i, _len, _ref, _results;
-                    for_each_branch(function (b, level) {
-                        if (!b.uid) {
-                            return b.uid = "" + Math.random();
-                        }
-                    });
-                    for_each_branch(function (b) {
-                        var child, _i, _len, _ref, _results;
-                        if (angular.isArray(b.children)) {
-                            _ref = b.children;
-                            _results = [];
-                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                                child = _ref[_i];
-                                _results.push(child.parent_uid = b.uid);
-                            }
-                            return _results;
-                        }
-                    });
-                    scope.tree_rows = [];
-                    for_each_branch(function (branch) {
-                        var child, f;
-                        if (branch.children) {
-                            if (branch.children.length > 0) {
-                                f = function (e) {
-                                    if (typeof e === 'string') {
-                                        return {
-                                            label: e,
-                                            children: []
-                                        };
-                                    } else {
-                                        return e;
-                                    }
-                                };
-                                return branch.children = (function () {
-                                    var _i, _len, _ref, _results;
-                                    _ref = branch.children;
-                                    _results = [];
-                                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                                        child = _ref[_i];
-                                        _results.push(f(child));
-                                    }
-                                    return _results;
-                                })();
-                            }
-                        } else {
-                            return branch.children = [];
-                        }
-                    });
-                    add_branch_to_list = function (level, branch, visible) {
-                        var child, child_visible, tree_icon, _i, _len, _ref, _results;
-                        if (branch.expanded == null) {
-                            branch.expanded = false;
-                        }
-                        if (branch.classes == null) {
-                            branch.classes = [];
-                        }
-                        if (!branch.noLeaf && (!branch.children || branch.children.length === 0)) {
-                            tree_icon = attrs.iconLeaf;
-                            if (branch.classes.indexOf("leaf") < 0) {
-                                branch.classes.push("leaf");
-                            }
-                        } else {
-                            if (branch.expanded) {
-                                tree_icon = attrs.iconCollapse;
-                            } else {
-                                tree_icon = attrs.iconExpand;
-                            }
-                        }
-                        scope.tree_rows.push({
-                            level: level,
-                            branch: branch,
-                            label: branch.label,
-                            classes: branch.classes,
-                            tree_icon: tree_icon,
-                            visible: visible
-                        });
-                        if (branch.children != null) {
-                            _ref = branch.children;
-                            _results = [];
-                            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                                child = _ref[_i];
-                                child_visible = visible && branch.expanded;
-                                _results.push(add_branch_to_list(level + 1, child, child_visible));
-                            }
-                            return _results;
-                        }
-                    };
-                    _ref = scope.treeData;
-                    _results = [];
-                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                        root_branch = _ref[_i];
-                        _results.push(add_branch_to_list(1, root_branch, true));
-                    }
-                    return _results;
-                };
-                scope.$watch('treeData', on_treeData_change, true);
-                if (attrs.initialSelection != null) {
-                    for_each_branch(function (b) {
-                        if (b.label === attrs.initialSelection) {
-                            return $timeout(function () {
-                                return select_branch(b);
-                            });
-                        }
-                    });
-                }
-                n = scope.treeData.length;
-                for_each_branch(function (b, level) {
-                    b.level = level;
-                    return b.expanded = b.level < expand_level;
-                });
-                if (scope.treeControl != null) {
-                    if (angular.isObject(scope.treeControl)) {
-                        tree = scope.treeControl;
-                        tree.expand_all = function () {
-                            return for_each_branch(function (b, level) {
-                                return b.expanded = true;
-                            });
-                        };
-                        tree.collapse_all = function () {
-                            return for_each_branch(function (b, level) {
-                                return b.expanded = false;
-                            });
-                        };
-                        tree.get_first_branch = function () {
-                            n = scope.treeData.length;
-                            if (n > 0) {
-                                return scope.treeData[0];
-                            }
-                        };
-                        tree.select_first_branch = function () {
-                            var b;
-                            b = tree.get_first_branch();
-                            return tree.select_branch(b);
-                        };
-                        tree.get_selected_branch = function () {
-                            return selected_branch;
-                        };
-                        tree.get_parent_branch = function (b) {
-                            return get_parent(b);
-                        };
-                        tree.select_branch = function (b) {
-                            select_branch(b);
-                            return b;
-                        };
-                        tree.get_children = function (b) {
-                            return b.children;
-                        };
-                        tree.select_parent_branch = function (b) {
-                            var p;
-                            if (b == null) {
-                                b = tree.get_selected_branch();
-                            }
-                            if (b != null) {
-                                p = tree.get_parent_branch(b);
-                                if (p != null) {
-                                    tree.select_branch(p);
-                                    return p;
-                                }
-                            }
-                        };
-                        tree.add_branch = function (parent, new_branch) {
-                            if (parent != null) {
-                                parent.children.push(new_branch);
-                                parent.expanded = true;
-                            } else {
-                                scope.treeData.push(new_branch);
-                            }
-                            return new_branch;
-                        };
-                        tree.add_root_branch = function (new_branch) {
-                            tree.add_branch(null, new_branch);
-                            return new_branch;
-                        };
-                        tree.expand_branch = function (b) {
-                            if (b == null) {
-                                b = tree.get_selected_branch();
-                            }
-                            if (b != null) {
-                                b.expanded = true;
-                                return b;
-                            }
-                        };
-                        tree.collapse_branch = function (b) {
-                            if (b == null) {
-                                b = selected_branch;
-                            }
-                            if (b != null) {
-                                b.expanded = false;
-                                return b;
-                            }
-                        };
-                        tree.get_siblings = function (b) {
-                            var p, siblings;
-                            if (b == null) {
-                                b = selected_branch;
-                            }
-                            if (b != null) {
-                                p = tree.get_parent_branch(b);
-                                if (p) {
-                                    siblings = p.children;
-                                } else {
-                                    siblings = scope.treeData;
-                                }
-                                return siblings;
-                            }
-                        };
-                        tree.get_next_sibling = function (b) {
-                            var i, siblings;
-                            if (b == null) {
-                                b = selected_branch;
-                            }
-                            if (b != null) {
-                                siblings = tree.get_siblings(b);
-                                n = siblings.length;
-                                i = siblings.indexOf(b);
-                                if (i < n) {
-                                    return siblings[i + 1];
-                                }
-                            }
-                        };
-                        tree.get_prev_sibling = function (b) {
-                            var i, siblings;
-                            if (b == null) {
-                                b = selected_branch;
-                            }
-                            siblings = tree.get_siblings(b);
-                            n = siblings.length;
-                            i = siblings.indexOf(b);
-                            if (i > 0) {
-                                return siblings[i - 1];
-                            }
-                        };
-                        tree.select_next_sibling = function (b) {
-                            var next;
-                            if (b == null) {
-                                b = selected_branch;
-                            }
-                            if (b != null) {
-                                next = tree.get_next_sibling(b);
-                                if (next != null) {
-                                    return tree.select_branch(next);
-                                }
-                            }
-                        };
-                        tree.select_prev_sibling = function (b) {
-                            var prev;
-                            if (b == null) {
-                                b = selected_branch;
-                            }
-                            if (b != null) {
-                                prev = tree.get_prev_sibling(b);
-                                if (prev != null) {
-                                    return tree.select_branch(prev);
-                                }
-                            }
-                        };
-                        tree.get_first_child = function (b) {
-                            var _ref;
-                            if (b == null) {
-                                b = selected_branch;
-                            }
-                            if (b != null) {
-                                if (((_ref = b.children) != null ? _ref.length : void 0) > 0) {
-                                    return b.children[0];
-                                }
-                            }
-                        };
-                        tree.get_closest_ancestor_next_sibling = function (b) {
-                            var next, parent;
-                            next = tree.get_next_sibling(b);
-                            if (next != null) {
-                                return next;
-                            } else {
-                                parent = tree.get_parent_branch(b);
-                                return tree.get_closest_ancestor_next_sibling(parent);
-                            }
-                        };
-                        tree.get_next_branch = function (b) {
-                            var next;
-                            if (b == null) {
-                                b = selected_branch;
-                            }
-                            if (b != null) {
-                                next = tree.get_first_child(b);
-                                if (next != null) {
-                                    return next;
-                                } else {
-                                    next = tree.get_closest_ancestor_next_sibling(b);
-                                    return next;
-                                }
-                            }
-                        };
-                        tree.select_next_branch = function (b) {
-                            var next;
-                            if (b == null) {
-                                b = selected_branch;
-                            }
-                            if (b != null) {
-                                next = tree.get_next_branch(b);
-                                if (next != null) {
-                                    tree.select_branch(next);
-                                    return next;
-                                }
-                            }
-                        };
-                        tree.last_descendant = function (b) {
-                            var last_child;
-                            if (b == null) {
-                                debugger;
-                            }
-                            n = b.children.length;
-                            if (n === 0) {
-                                return b;
-                            } else {
-                                last_child = b.children[n - 1];
-                                return tree.last_descendant(last_child);
-                            }
-                        };
-                        tree.get_prev_branch = function (b) {
-                            var parent, prev_sibling;
-                            if (b == null) {
-                                b = selected_branch;
-                            }
-                            if (b != null) {
-                                prev_sibling = tree.get_prev_sibling(b);
-                                if (prev_sibling != null) {
-                                    return tree.last_descendant(prev_sibling);
-                                } else {
-                                    parent = tree.get_parent_branch(b);
-                                    return parent;
-                                }
-                            }
-                        };
-                        return tree.select_prev_branch = function (b) {
-                            var prev;
-                            if (b == null) {
-                                b = selected_branch;
-                            }
-                            if (b != null) {
-                                prev = tree.get_prev_branch(b);
-                                if (prev != null) {
-                                    tree.select_branch(prev);
-                                    return prev;
-                                }
-                            }
-                        };
-                    }
-                }
-            }
-        };
-    }]).run([
+    }]).controller('CardViewController', ['appState', proto.ng.modules.common.controllers.CardViewController]).directive('appClean', ['$window', '$route', '$state', 'appState', proto.ng.modules.common.directives.AppCleanDirective]).directive('appClose', ['appNode', proto.ng.modules.common.directives.AppCloseDirective]).directive('appDebug', ['appNode', proto.ng.modules.common.directives.AppDebugDirective]).directive('appKiosk', ['appNode', proto.ng.modules.common.directives.AppKioskDirective]).directive('appFullscreen', ['appNode', proto.ng.modules.common.directives.AppFullScreenDirective]).directive('appVersion', ['appState', proto.ng.modules.common.directives.AppVersionDirective]).directive('eatClickIf', ['$parse', '$rootScope', proto.ng.modules.common.directives.EatClickIfDirective]).directive('toHtml', ['$sce', '$filter', proto.ng.modules.common.directives.ToHtmlDirective]).directive('domReplace', [proto.ng.modules.common.directives.DomReplaceDirective]).directive('resxInclude', ['$templateCache', proto.ng.modules.common.directives.ResxIncludeDirective]).directive('resxImport', ['$templateCache', '$document', proto.ng.modules.common.directives.ResxImportDirective]).directive('abnTree', ['$timeout', proto.ng.modules.common.directives.TreeViewDirective]).filter('toXml', [proto.ng.modules.common.filters.ToXmlFilter]).filter('interpolate', ['appState', proto.ng.modules.common.filters.InterpolateFilter]).filter('fromNow', ['$filter', proto.ng.modules.common.filters.FromNowFilter]).filter('isArray', [proto.ng.modules.common.filters.IsArrayFilter]).filter('isNotArray', [proto.ng.modules.common.filters.IsNotArrayFilter]).filter('typeCount', [proto.ng.modules.common.filters.TypeCountFilter]).filter('listReverse', [proto.ng.modules.common.filters.ListReverseFilter]).filter('toBytes', [proto.ng.modules.common.filters.ToByteFilter]).filter('parseBytes', [proto.ng.modules.common.filters.ParseBytesFilter]).filter('trustedUrl', ['$sce', proto.ng.modules.common.filters.TrustedUrlFilter]).run([
     '$rootScope', '$state', 'appConfig', 'appState', function ($rootScope, $state, appConfig, appState) {
         // Extend root scope with (global) contexts
         angular.extend($rootScope, {
@@ -3786,6 +3844,22 @@ angular.module('prototyped.ng', [
 
         console.debug(' - Current Config: ', appConfig);
     }]);
+/// <reference path="../imports.d.ts" />
+/// <reference path="config.ng.ts" />
+// Define common runtime modules (shared)
+angular.module('prototyped.ng.runtime', [
+    'prototyped.ng.config',
+    'ui.router'
+]).provider('appNode', [
+    proto.ng.modules.common.providers.AppNodeProvider
+]).provider('appState', [
+    '$stateProvider',
+    '$locationProvider',
+    '$urlRouterProvider',
+    'appConfigProvider',
+    'appNodeProvider',
+    proto.ng.modules.common.providers.AppStateProvider
+]);
 ;angular.module('prototyped.ng.views', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('modules/console/views/logs.tpl.html',
     '<div class=container style=width:100%><span class=pull-right style="padding: 3px"><a href="" ng-click="">Refresh</a> | <a href="" ng-click="appState.logs = []">Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appState.logs.length><td colspan=3><em>No events have been logged...</em></td></tr><tr ng-repeat="row in appState.logs" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td class=ellipsis style="width: auto; overflow: hidden; white-space: pre">{{ row.desc }}</td></tr></tbody></table></div>');
@@ -3842,15 +3916,31 @@ angular.module('prototyped.ng', [
     '            }</style><div proto:address-bar style="position: relative"></div><div style="padding: 8px 16px"><div id=fileExplorer ng-class=viewMode.view><div class=loader ng-show=isBusy><br><em style="padding: 24px">Loading...</em></div><div ng-show="!isBusy && appNode.active"><div class=folder-contents ng-if="!folders.length && !files.length"><em>No files or folders were found...</em></div><div class=folder-contents><div class="view-selector pull-right" ng-init="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }"><div class="input-group pull-left"><a href="" class=dropdown-toggle data-toggle=dropdown aria-expanded=false><i ng-class=viewMode.css></i> {{ viewMode.desc || \'Default View\' }} <span class=caret></span></a><ul class="pull-right dropdown-menu" role=menu><li><a href="" ng-click="viewMode = { desc:\'Large Icons\', css:\'fa fa-th-large\', view: \'view-large\' }"><i class="fa fa-th-large"></i> Large Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Medium Icons\', css:\'fa fa-th\', view: \'view-med\' }"><i class="fa fa-th"></i> Medium Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Details View\', css:\'fa fa-list\', view: \'view-details\' }"><i class="fa fa-list"></i> Details View</a></li><li class=divider></li><li><a href="" ng-click="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }">Use Default</a></li></ul></div></div><h5 ng-if=folders.length>File Folders</h5><div id=files class=files ng-if=folders.length><a href="" class="file centered" ng-click=ctrlExplorer.navigate(itm.path) ng-repeat="itm in folders"><div class=icon><i class="glyphicon glyphicon-folder-open" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div><br style="clear:both"><br style="clear:both"><h5 ng-if=files.length>Application Files</h5><div id=files class=files ng-if=files.length><a href="" class="file centered" ng-repeat="itm in files" ng-class="{ \'focus\' : (selected == itm.path)}" ng-click=ctrlExplorer.select(itm.path) ng-dblclick=ctrlExplorer.open(itm.path)><div class=icon ng-switch=itm.type><i ng-switch-default class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=blank class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=text class="fa fa-file-text-o" style="font-size: 32px"></i> <i ng-switch-when=image class="fa fa-file-image-o" style="font-size: 32px"></i> <i ng-switch-when=pdf class="fa fa-file-pdf-o" style="font-size: 32px"></i> <i ng-switch-when=css class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=html class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=word class="fa fa-file-word-o" style="font-size: 32px"></i> <i ng-switch-when=powerpoint class="fa fa-file-powerpoint-o" style="font-size: 32px"></i> <i ng-switch-when=movie class="fa fa-file-movie-o" style="font-size: 32px"></i> <i ng-switch-when=excel class="fa fa-file-excel-o" style="font-size: 32px"></i> <i ng-switch-when=compressed class="fa fa-file-archive-o" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div></div></div><div ng-show="!isBusy && !appNode.active" class=ng-cloak><br><h5><i class="glyphicon glyphicon-warning-sign"></i> Warning <small>All features not available</small></h5><div class="alert alert-warning"><p><b>Please Note:</b> You are running this from a browser window.</p><p>For security reasons, web browsers do not have permission to use the local file system, or other advanced operating system features.</p><p>To use this application with full functionality, you need an elevated runtime (<a href=/about/info>see this how to</a>).</p></div></div></div></div></div>');
   $templateCache.put('modules/explore/views/externals.tpl.html',
     '<div class=external-links style="width: 100%"><style>.ui-view-main {\n' +
-    '            margin:0!important;\n' +
-    '            padding:0!important;\n' +
+    '            margin: 0 !important;\n' +
+    '            padding: 0 !important;\n' +
+    '            position: relative;\n' +
     '        }\n' +
+    '\n' +
     '        .ui-view-left {\n' +
-    '            margin-right:0!important;\n' +
+    '            margin-right: 0 !important;\n' +
     '        }\n' +
     '\n' +
     '        .external-links {\n' +
-    '        }</style><div ng-if=linksCtrl.selected class="panel panel-default" style="margin:0; padding: 0; height: 100%"><div class=panel-heading><b class=panel-title><i class="glyphicon glyphicon-globe"></i> <a target=_blank href="{{ linksCtrl.selected.data }}">{{ linksCtrl.selected.data || \'Location not set...\' }}</a></b></div><div class="panel-body info-row iframe-body" style="position:relative; height: 100%; margin: 0"><iframe id=ExternalExplorerPanel frameborder=0 style="min-height: 540px; height: 100%; margin:0" class=info-col-primary onerror=console.error(event) ng-src="{{ linksCtrl.selected.data | trustedUrl }}">IFrame not available</iframe></div></div></div>');
+    '            margin:0;\n' +
+    '            left:0;\n' +
+    '            right:0;\n' +
+    '            bottom:0;\n' +
+    '            top:0;\n' +
+    '            display:flex;\n' +
+    '            position: absolute;\n' +
+    '            flex-direction:column;\n' +
+    '        }\n' +
+    '        .external-iframe {\n' +
+    '            margin:0;\n' +
+    '            width: 100%; \n' +
+    '            flex-grow: 1;\n' +
+    '            flex-shrink: 0;\n' +
+    '        }</style><div class="btn-group btn-group-sm dock-tight"><div class="input-group input-group-sm"><label for=txtFileName class=input-group-addon><i class="fa fa-globe"></i></label><input id=txtExternalUrl class="cmd-input form-control" tabindex=1 value="{{ linksCtrl.selected.data }}" placeholder="Location not set..." ng-readonly="true || !linksCtrl.selected.data" ng-changed="alert(this)"> <a href="" class="btn btn-default input-group-addon" ng-click=linksCtrl.refreshExternal() ng-disabled=!linksCtrl.selected><i class="fa fa-refresh"></i></a> <a href="" class="btn btn-default input-group-addon" ng-click=linksCtrl.openExternal() ng-disabled=!linksCtrl.selected><i class="fa fa-external-link"></i></a></div></div><iframe id=ExternalExplorerPanel frameborder=0 class=external-iframe ng-if=linksCtrl.selected onerror=console.error(event) ng-src="{{ linksCtrl.selected.data | trustedUrl }}">IFrame not available</iframe></div>');
   $templateCache.put('modules/explore/views/left.tpl.html',
     '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-arrow-circle-left"></i>&nbsp; Site Map Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.explore\'"><abn:tree tree-data=navigation.siteExplorer.children icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.externalLinks><a ui:sref=proto.links><i class="fa fa-globe"></i>&nbsp; External Links</a></li><li class=list-group-item style="padding: 6px 0; overflow-x:hidden" ng-if="navigation.externalLinks && state.current.name == \'proto.links\'"><abn:tree tree-data=navigation.externalLinks.children icon-leaf="fa fa-globe" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.fileSystem><a ui:sref=proto.browser><i class="fa fa-hdd-o"></i>&nbsp; File System Browser</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.fileSystem && state.current.name == \'proto.browser\'"><style resx:import=assets/css/images.min.css></style><div class=info-overview ng-if=!appNode.active><div class=panel-icon-lg><div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px"></div></div></div><div ng-if="appNode.active && navigation.fileSystem"><abn:tree tree-data=navigation.fileSystem.children icon-leaf="fa fa-folder" icon-expand="fa fa-folder" icon-collapse="fa fa-folder-open" expand-level=2></abn:tree></div></li><li class=list-group-item ui:sref-active=active ng-if=navigation.clientStates><a ui:sref=proto.routing><i class="fa fa-tasks"></i>&nbsp; UI State &amp; Routing</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.clientStates && state.current.name == \'proto.routing\'"><abn:tree tree-data=navigation.clientStates icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
   $templateCache.put('modules/explore/views/main.tpl.html',
@@ -3964,7 +4054,7 @@ angular.module('prototyped.ng', [
   $templateCache.put('views/about/info.tpl.html',
     '<div id=about-info class=container style="width: 100%"><style resx:import=assets/css/images.min.css></style><div class=row><div class="col-lg-8 col-md-12 info-overview"><h4>About <small>your current status and application architecture</small></h4><hr><div class=row><div class="col-md-3 panel-left"><h5><i class="fa fa-gear"></i> My Client <small><span ng-if=true class=ng-cloak><b app:version ng-class="{ \'text-success glow-green\': appInfo.version }">loading...</b></span> <span ng-if=false><b class="text-danger glow-red"><i class="glyphicon glyphicon-remove"></i> Offline</b></span></small></h5><div ng:if=true><a class="panel-icon-lg img-terminal"><div ng:if="info.about.browser.name == \'Chrome\'" class="panel-icon-inner img-chrome"></div><div ng:if="info.about.browser.name == \'Chromium\'" class="panel-icon-inner img-chromium"></div><div ng:if="info.about.browser.name == \'Firefox\'" class="panel-icon-inner img-firefox"></div><div ng:if="info.about.browser.name == \'Internet Explorer\'" class="panel-icon-inner img-iexplore"></div><div ng:if="info.about.browser.name == \'Opera\'" class="panel-icon-inner img-opera"></div><div ng:if="info.about.browser.name == \'Safari\'" class="panel-icon-inner img-safari"></div><div ng:if="info.about.browser.name == \'SeaMonkey\'" class="panel-icon-inner img-seamonkey"></div><div ng:if="info.about.browser.name == \'Spartan\'" class="panel-icon-inner img-spartan"></div><div ng:if="info.about.os.name == \'Windows\'" class="panel-icon-overlay img-windows"></div><div ng:if="info.about.os.name == \'MacOS\'" class="panel-icon-overlay img-mac-os"></div><div ng:if="info.about.os.name == \'Apple\'" class="panel-icon-overlay img-apple"></div><div ng:if="info.about.os.name == \'UNIX\'" class="panel-icon-overlay img-unix"></div><div ng:if="info.about.os.name == \'Linux\'" class="panel-icon-overlay img-linux"></div><div ng:if="info.about.os.name == \'Ubuntu\'" class="panel-icon-overlay img-ubuntu"></div></a><p class=panel-label title="{{ info.about.os.name }} @ {{ info.about.os.version.alias }}">Host System: <b ng:if=info.about.os.name>{{ info.about.os.name }}</b> <em ng:if=!info.about.os.name>checking...</em> <span ng:if=info.about.os.version.alias>@ {{ info.about.os.version.alias }}</span></p><p class=panel-label title="{{ info.about.browser.name }} @ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? \'.\' + info.about.browser.version.build : \'\' }}">User Agent: <b ng:if=info.about.browser.name>{{ info.about.browser.name }}</b> <em ng:if=!info.about.browser.name>detecting...</em> <span ng:if=info.about.browser.version>@ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? \'.\' + info.about.browser.version.build : \'\' }}</span></p></div><div ng-switch=info.about.hdd.type class=panel-icon-lg><a ng-switch-default class="panel-icon-lg inactive-gray img-drive"></a> <a ng-switch-when=true class="panel-icon-lg img-drive-default"></a> <a ng-switch-when=onl class="panel-icon-lg img-drive-onl"></a> <a ng-switch-when=usb class="panel-icon-lg img-drive-usb"></a> <a ng-switch-when=ssd class="panel-icon-lg img-drive-ssd"></a> <a ng-switch-when=web class="panel-icon-lg img-drive-web"></a> <a ng-switch-when=mac class="panel-icon-lg img-drive-mac"></a> <a ng-switch-when=warn class="panel-icon-lg img-drive-warn"></a> <a ng-switch-when=hist class="panel-icon-lg img-drive-hist"></a> <a ng-switch-when=wifi class="panel-icon-lg img-drive-wifi"></a><div ng:if=info.about.webdb.active class="panel-icon-inset-bl img-webdb"></div></div><p ng:if=info.about.webdb.active class="panel-label ellipsis">Local databsse is <b class=glow-green>Online</b></p><p ng:if=!info.about.webdb.active class="panel-label text-muted ellipsis"><em>No local storage found</em></p><p ng:if=!info.about.webdb.active class="panel-label text-muted"><div class=progress ng-style="{ height: \'10px\' }" title="{{(100 * progA) + \'%\'}} ( {{info.about.webdb.used}} / {{info.about.webdb.size}} )"><div ng:init="progA = (info.about.webdb.size > 0) ? (info.about.webdb.used||0)/info.about.webdb.size : 0" class=progress-bar ng-class="\'progress-bar-info\'" role=progressbar aria-valuenow="{{ progA }}" aria-valuemin=0 aria-valuemax=100 ng-style="{width: (100 * progA) + \'%\'}" aria-valuetext="{{ (100.0 * progA) + \' %\' }}%"></div></div></p></div><div ng-init="tabOverviewMain = 0" ng-switch=tabOverviewMain class="col-md-6 panel-mid"><h5><span ng-if="info.about.server.active == undefined">Checking...</span> <span ng-if="info.about.server.active != undefined">Current Status</span> <small><span ng-if=!info.about.server><em class=text-muted>checking...</em></span> <span ng-if="info.about.server.active === false"><b class="text-danger glow-red">Offline</b>, faulty or disconnected.</span> <span ng-if="info.about.server.active && appState.node.active">Connected via <b class="text-warning glow-orange">web client</b>.</span> <span ng-if="info.about.server.active && !appState.node.active"><b class="text-success glow-green">Online</b> and fully operational.</span></small></h5><p class=ellipsis ng:if=info.about.server.url>Server Url: <a target=_blank ng-class="{ \'glow-green\':appState.node.active || info.about.protocol == \'https\', \'glow-blue\':!appState.node.active && info.about.protocol == \'http\', \'glow-red\':info.about.protocol == \'file\' }" ng-href="{{ info.about.server.url }}">{{ info.about.server.url }}</a></p><p><a href="" ng-click="tabOverviewMain = 0">Summary</a> | <a href="" ng-click="tabOverviewMain = 1">Details</a></p><div><div ng-switch-default><em>Loading...</em></div><div ng-switch-when=0><p>...</p></div><div ng-switch-when=1><pre>OS: {{ info.about.os }}</pre><pre>Browser: {{ info.about.browser }}</pre><pre>Server: {{ info.about.server }}</pre><pre>WebDB: {{ info.about.webdb }}</pre><pre>HDD: {{ info.about.hdd }}</pre></div></div></div><div class="col-md-3 panel-right"><h5><i class="fa fa-gear"></i> Web Server <small><span class=ng-cloak><b ng-class="{ \'text-success glow-green\': info.about.server.active, \'text-danger glow-red\': info.about.server.active == false }" app:version=server default-text="{{ info.about.server.active ? (info.about.server.active ? \'Online\' : \'Offline\') : \'n.a.\' }}">requesting...</b></span></small></h5><div ng:if=info.about.server.local><a class="panel-icon-lg img-server-local"></a></div><div ng:if=!info.about.server.local ng-class="{ \'inactive-gray\': true || info.versions.jqry }"><a class="panel-icon-lg img-server"><div ng:if="info.about.server.type == \'iis\'" class="panel-icon-inset img-iis"></div><div ng:if="info.about.server.type == \'node\'" class="panel-icon-inset img-node"></div><div ng:if="info.about.server.type == \'apache\'" class="panel-icon-inset img-apache"></div><div ng:if="info.about.server.name == \'Windows\'" class="panel-icon-overlay img-windows"></div><div ng:if="info.about.server.name == \'MacOS\'" class="panel-icon-overlay img-mac-os"></div><div ng:if="info.about.server.name == \'Apple\'" class="panel-icon-overlay img-apple"></div><div ng:if="info.about.server.name == \'UNIX\'" class="panel-icon-overlay img-unix"></div><div ng:if="info.about.server.name == \'Linux\'" class="panel-icon-overlay img-linux"></div></a><div ng:if=info.about.sql class="panel-icon-lg img-sqldb"></div></div></div></div><hr></div><div class="col-lg-4 hidden-md" ng:init="info.showUnavailable = false"><h4>Inspirations <small>come from great ideas</small></h4><hr><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.ng }" ng:hide="!info.showUnavailable && !info.versions.ng"><a class=app-info-icon target=_blank href="https://angularjs.org/"><div ng:if=true class="img-clipper img-angular"></div></a><div class=app-info-info><h5>Angular JS <small><span ng:if=info.versions.ng>@ v{{info.versions.ng}}</span> <span ng:if=!info.versions.ng><em>not found</em></span></small></h5><p ng:if=!info.versions.ng class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href="https://angularjs.org//">angularjs.org</a> for more info.</p><p ng:if=info.detects.ngUiUtils class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Utils found.</p><p ng:if=info.detects.ngUiRouter class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Router found.</p><p ng:if=info.detects.ngUiBootstrap class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Bootrap found.</p><p ng:if=info.detects.ngAnimate class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular Animations active.</p></div></div><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.nw }" ng:hide="!info.showUnavailable && !info.versions.nw"><a class=app-info-icon target=_blank href="http://nwjs.io/"><div ng:if=true class="img-clipper img-nodewebkit"></div></a><div class=app-info-info><h5>Node Webkit <small><span ng:if=info.versions.nw>@ v{{info.versions.nw}}</span> <span ng:if=!info.versions.nw><em>not available</em></span></small></h5><p ng:if=!info.versions.nw class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href="http://nwjs.io/">nwjs.io</a> for more info.</p><p ng:if=info.versions.nw class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are connected to node webkit.</p><p ng:if=info.versions.chromium class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running Chromium @ {{ info.versions.chromium }}.</p></div></div><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.njs }" ng:hide="!info.showUnavailable && !info.versions.njs"><a class=app-info-icon target=_blank href=http://www.nodejs.org><div ng:if=true class="img-clipper img-nodejs"></div></a><div class=app-info-info><h5>Node JS <small><span ng:if=info.versions.njs>@ v{{info.versions.njs}}</span> <span ng:if=!info.versions.njs><em>not available</em></span></small></h5><p ng:if=!info.versions.njs class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href=http://www.nodejs.org>NodeJS.org</a> for more info.</p><p ng:if=info.versions.njs class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are inside a node js runtime.</p><p ng:if=info.versions.v8 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running V8 @ {{ info.versions.v8 }}.</p><p ng:if=info.versions.openssl class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running OpenSSL @ {{ info.versions.openssl }}.</p></div></div><div class="app-aside-collapser centered" ng-if=!appState.node.active><a href="" ng:show=!info.showUnavailable ng-click="info.showUnavailable = !info.showUnavailable">Show More</a> <a href="" ng:show=info.showUnavailable ng-click="info.showUnavailable = !info.showUnavailable">Hide Inactive</a></div><hr><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.html }"><div class=app-info-icon><div ng:if="info.about.browser.name != \'Internet Explorer\'" class="img-clipper img-html5"></div><div ng:if="info.about.browser.name == \'Internet Explorer\'" class="img-clipper img-html5-ie"></div></div><div class=app-info-info><h5>HTML Rendering Mode <small><span ng-if=info.versions.html>@ v{{ info.versions.html }}</span> <span ng-if=!info.versions.html><em>unknown</em></span></small></h5><p ng:if="info.versions.html >= \'5.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running a modern browser.</p><p ng:if="info.versions.html < \'5.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> Your browser is out of date. Try upgrading.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.js }"><div class=app-info-icon><div ng:if=!info.versions.v8 class="img-clipper img-js-default"></div><div ng:if=info.versions.v8 class="img-clipper img-js-v8"></div></div><div class=app-info-info><h5>Javascript Engine<small><span ng:if=info.versions.js>@ v{{ info.versions.js }}</span> <span ng:if=!info.versions.js><em>not found</em></span></small></h5><p ng:if="info.versions.js >= \'5.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You have a modern javascript engine.</p><p ng:if="info.versions.js < \'5.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> Javascript is out of date or unavailable.</p><p ng:if=info.versions.v8 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Javascript V8 engine, build v{{info.versions.v8}}.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.css }"><div class=app-info-icon><div ng:if=true class="img-clipper img-css3"></div></div><div class=app-info-info><h5>Cascading Styles <small><span ng:if=info.versions.css>@ v{{ info.versions.css }}</span> <span ng:if=!info.versions.css><em class=text-muted>not found</em></span></small></h5><p ng:if="info.versions.css >= \'3.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>You have an up-to-date style engine.</span></p><p ng:if="info.versions.css < \'3.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <span>CSS out of date. Styling might be broken.</span></p><p ng:if=info.css.boostrap2 class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <span>Bootstrap 2 is depricated. Upgrade to 3.x.</span></p><p ng:if=info.css.boostrap3 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>Bootstrap and/or UI componets found.</span></p><p ng:if=info.detects.less class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>Support for LESS has been detected.</span></p><p ng:if=info.detects.bootstrap class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Bootstrap and/or UI Componets found.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.jqry }"><div class=app-info-icon><div ng:if=true class="img-clipper img-jquery"></div></div><div class=app-info-info><h5>jQuery <small><span ng:if=info.versions.jqry>@ v{{ info.versions.jqry }}</span> <span ng:if=!info.versions.jqry><em>not found</em></span></small></h5><p ng:if=info.versions.jqry class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> jQuery or jqLite is loaded.</p><p ng:if="info.versions.jqry < \'1.10\'" class=text-danger><i class="glyphicon glyphicon-warning-sign glow-orange"></i> jQuery is out of date!</p></div></div><hr></div></div></div>');
   $templateCache.put('views/about/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.info><i class="fa fa-info-circle"></i>&nbsp; About this app</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.online><i class="fa fa-globe"></i>&nbsp; Visit us online</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.conection><i class="fa fa-plug"></i>&nbsp; Check Connectivity</a></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.info><i class="fa fa-info-circle"></i>&nbsp; About this app</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.conection><i class="fa fa-plug"></i>&nbsp; Check Connectivity</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.online><i class="fa fa-globe"></i>&nbsp; Visit us online</a></li></ul>');
   $templateCache.put('views/common/components/contents.tpl.html',
     '<div id=contents class=contents><div id=left class="ui-view-left ng-cloak" ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div><div id=main class=ui-view-main ui:view=main><em class=inactive-fill-text ng:if=false><i class="fa fa-spinner fa-spin"></i> Loading...</em> <b class="inactive-fill-text ng-cloak" ng:if="!(state.current.views[\'main\'] || state.current.views[\'main@\'])"><i class="fa fa-exclamation-triangle faa-flash glow-orange"></i> Page not found</b></div></div>');
   $templateCache.put('views/common/components/footer.tpl.html',

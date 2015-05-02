@@ -1,31 +1,58 @@
 <div class="external-links" style="width: 100%;">
     <style>
         .ui-view-main {
-            margin:0!important;
-            padding:0!important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: relative;
         }
+
         .ui-view-left {
-            margin-right:0!important;
+            margin-right: 0 !important;
         }
 
         .external-links {
+            margin:0;
+            left:0;
+            right:0;
+            bottom:0;
+            top:0;
+            display:flex;
+            position: absolute;
+            flex-direction:column;
+        }
+        .external-iframe {
+            margin:0;
+            width: 100%; 
+            flex-grow: 1;
+            flex-shrink: 0;
         }
     </style>
-    <div ng-if="linksCtrl.selected" class="panel panel-default" style="margin:0; padding: 0; height: 100%;">
-        <div class="panel-heading">
-            <b class="panel-title">
-                <i class="glyphicon glyphicon-globe"></i>
-                <a target="_blank" href="{{ linksCtrl.selected.data }}">{{ linksCtrl.selected.data || 'Location not set...' }}</a>
-            </b>
-        </div>
-        <div class="panel-body info-row iframe-body" style="position:relative; height: 100%; margin: 0;">
-            <iframe id="ExternalExplorerPanel" frameborder="0"
-                    style="min-height: 540px; height: 100%; margin:0;"
-                    class="info-col-primary"
-                    onerror="console.error(event)"
-                    ng-src="{{ linksCtrl.selected.data | trustedUrl }}">
-                IFrame not available
-            </iframe>
+    <div class="btn-group btn-group-sm dock-tight">
+        <div class="input-group input-group-sm">
+            <label for="txtFileName" class="input-group-addon">
+                <i class="fa fa-globe"></i>
+            </label>
+            <input id="txtExternalUrl" type="text" class="cmd-input form-control" tabindex="1"
+                   value="{{ linksCtrl.selected.data }}"
+                   placeholder="Location not set..."
+                   ng-readonly="true || !linksCtrl.selected.data" 
+                   ng-changed="alert(this)"
+                   />
+            <a href="" class="btn btn-default input-group-addon"
+               ng-click="linksCtrl.refreshExternal()" ng-disabled="!linksCtrl.selected">
+                <i class="fa fa-refresh"></i>
+            </a>
+            <a href="" class="btn btn-default input-group-addon"
+               ng-click="linksCtrl.openExternal()" ng-disabled="!linksCtrl.selected">
+                <i class="fa fa-external-link"></i>
+            </a>
         </div>
     </div>
+    <iframe id="ExternalExplorerPanel" frameborder="0"
+            class="external-iframe"
+            ng-if="linksCtrl.selected"
+            onerror="console.error(event)"
+            ng-src="{{ linksCtrl.selected.data | trustedUrl }}">
+        IFrame not available
+    </iframe>
 </div>

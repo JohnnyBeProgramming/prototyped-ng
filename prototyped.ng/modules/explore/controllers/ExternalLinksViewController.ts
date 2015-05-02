@@ -29,6 +29,20 @@ module proto.ng.modules.explorer {
         public trustSrc(src: string): string {
             return this.$sce.trustAsResourceUrl(src);
         }
+
+        public openExternal() {
+            if (this.selected) {
+                window.open(this.selected.data, this.selected.label);
+            }
+        }
+
+        public refreshExternal() {
+            if (this.selected) {
+                $('#ExternalExplorerPanel').attr('src', (i, val) => {
+                    return this.trustSrc(val);
+                });
+            }
+        }
     }
 
 } 
