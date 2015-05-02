@@ -63,6 +63,8 @@
     <Content Include="builder\Gruntfile.js" />
     <Content Include="builder\tasks\app-run.js" />
     <Content Include="index.html" />
+    <TypeScriptCompile Include="modules\about\controllers\AboutInfoController.ts" />
+    <TypeScriptCompile Include="modules\common\AppInfo.ts" />
     <TypeScriptCompile Include="modules\common\AppNode.ts" />
     <TypeScriptCompile Include="modules\common\AppOptions.ts" />
     <TypeScriptCompile Include="modules\common\AppState.ts" />
@@ -90,6 +92,7 @@
     <TypeScriptCompile Include="modules\common\filters\TrustedUrlFilter.ts" />
     <TypeScriptCompile Include="modules\common\filters\TypeCountFilter.ts" />
     <TypeScriptCompile Include="modules\common\providers\AppConfigProvider.ts" />
+    <TypeScriptCompile Include="modules\common\providers\AppInfoProvider.ts" />
     <TypeScriptCompile Include="modules\common\providers\AppNodeProvider.ts" />
     <TypeScriptCompile Include="modules\common\providers\AppStateProvider.ts" />
     <TypeScriptCompile Include="modules\common\services\NavigationService.ts" />
@@ -99,11 +102,15 @@
     <TypeScriptCompile Include="modules\editor\controllers\EditorController.ts" />
     <TypeScriptCompile Include="modules\editor\module.ng.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\AddressBarController.ts" />
-    <TypeScriptCompile Include="modules\explore\controllers\BrowserViewController.ts" />
+    <TypeScriptCompile Include="modules\explore\controllers\FileBrowserViewController.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\ExplorerLeftController.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\ExplorerViewController.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\ExternalLinksViewController.ts" />
     <TypeScriptCompile Include="modules\explore\module.ng.ts" />
+    <Content Include="modules\about\views\connections.tpl.html" />
+    <Content Include="modules\about\views\contact.tpl.html" />
+    <Content Include="modules\about\views\info.tpl.html" />
+    <Content Include="modules\about\views\left.tpl.html" />
     <Content Include="modules\console\views\logs.tpl.html" />
     <Content Include="modules\editor\styles\css\editor.css" />
     <Content Include="modules\editor\styles\css\editor.min.css">
@@ -113,10 +120,6 @@
     <Content Include="modules\explore\views\browser.tpl.html" />
     <Content Include="modules\editor\views\main.tpl.html" />
     <Content Include="modules\explore\views\externals.tpl.html" />
-    <Content Include="views\about\connections.tpl.html" />
-    <Content Include="views\about\contact.tpl.html" />
-    <Content Include="views\about\info.tpl.html" />
-    <Content Include="views\about\left.tpl.html" />
     <Content Include="modules\console\views\main.tpl.html" />
     <Content Include="views\common\components\contents.tpl.html" />
     <Content Include="views\common\components\footer.tpl.html" />

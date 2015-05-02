@@ -17,3 +17,13 @@ angular.module('prototyped.ng.runtime', [
         'appNodeProvider',
         proto.ng.modules.common.providers.AppStateProvider
     ])
+    .provider('appInfo', [
+        'appStateProvider',
+        proto.ng.modules.common.providers.AppInfoProvider
+    ])
+    .run(['$rootScope', 'appState', ($rootScope, appState: proto.ng.modules.common.AppState) => {
+        appState.setUpdateAction((action) => {
+            $rootScope.$applyAsync(action);
+        });
+    }])
+

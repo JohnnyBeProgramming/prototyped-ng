@@ -44,6 +44,7 @@ module proto.ng.modules.common {
         public set state(val: any) { this._state = val; }
 
         private _state: any;
+        private _updateUI: (action?: () => void) => void;
 
         constructor(private $stateProvider, private appNodeProvider: proto.ng.modules.common.providers.AppNodeProvider, private appConfig: AppConfig) {
             this.logs = [];
@@ -104,6 +105,21 @@ module proto.ng.modules.common {
             } else if (route.url) {
                 window.location.href = route.url;
             }
+        }
+
+        public updateUI(action: () => void) {
+            if (this._updateUI) {
+                this._updateUI(action);
+            } else {
+                try {
+                    if (action) action();
+                } catch (ex) {
+                    throw ex;
+                }
+            }
+        }
+        public setUpdateAction(eventWrapper: (action?: () => void) => void) {
+            this._updateUI = eventWrapper;
         }
 
         public proxyAvailable(ident): boolean {

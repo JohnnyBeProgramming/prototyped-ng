@@ -1,4 +1,287 @@
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (about) {
+                (function (controllers) {
+                    var AboutInfoController = (function () {
+                        function AboutInfoController($rootScope, $scope, $location, info) {
+                            this.$rootScope = $rootScope;
+                            this.$scope = $scope;
+                            this.$location = $location;
+                            this.info = info;
+                            //this.info = new proto.ng.modules.common.AppInfo(navigator.appCodeName, navigator.userAgent);
+                            console.debug(' - Info: ', info);
+                            this.init();
+                        }
+                        AboutInfoController.prototype.init = function () {
+                            // Define the state
+                            this.$scope.detectBrowserInfo = this.detectBrowserInfo;
+                            this.$scope.info = this.detectBrowserInfo();
+                        };
+
+                        AboutInfoController.prototype.detectBrowserInfo = function () {
+                            var _this = this;
+                            var info = this.info;
+                            try  {
+                                // Get IE version (if defined)
+                                if (!!window['ActiveXObject']) {
+                                    info.versions.ie = 10;
+                                }
+
+                                // Sanitize codeName and userAgent
+                                this.resolveUserAgent(info);
+                                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
+                                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
+                                info.versions.nw = this.getVersionInfo('node-webkit');
+                                info.versions.njs = this.getVersionInfo('node');
+                                info.versions.v8 = this.getVersionInfo('v8');
+                                info.versions.openssl = this.getVersionInfo('openssl');
+                                info.versions.chromium = this.getVersionInfo('chromium');
+
+                                // Check for CSS extensions
+                                info.css.boostrap2 = this.selectorExists('hero-unit');
+                                info.css.boostrap3 = this.selectorExists('jumbotron');
+
+                                // Update location settings
+                                angular.extend(info.about, {
+                                    protocol: this.$location.$$protocol,
+                                    server: {
+                                        url: this.$location.$$absUrl
+                                    }
+                                });
+
+                                // Detect the operating system name
+                                info.about.os.name = this.detectOSName();
+
+                                // Check for jQuery
+                                info.detects.jqry = typeof jQuery !== 'undefined';
+
+                                // Check for general header and body scripts
+                                var sources = [];
+                                $("script").each(function (i, elem) {
+                                    var src = $(elem).attr("src");
+                                    if (src)
+                                        sources.push(src);
+                                });
+
+                                // Fast check on known script names
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
+                                });
+
+                                // Get the client browser details (build a url string)
+                                var detectUrl = this.getDetectUrl();
+
+                                // Send a loaded package to a server to detect more features
+                                $.getScript(detectUrl).done(function (script, textStatus) {
+                                    _this.$rootScope.$applyAsync(function () {
+                                        // Browser info and details loaded
+                                        var browserInfo = new window.WhichBrowser();
+                                        angular.extend(info.about, browserInfo);
+                                    });
+                                }).fail(function (jqxhr, settings, exception) {
+                                    console.error(exception);
+                                });
+
+                                // Set browser name to IE (if defined)
+                                if (navigator.appName == 'Microsoft Internet Explorer') {
+                                    info.about.browser.name = 'Internet Explorer';
+                                }
+
+                                // Check if the browser supports web db's
+                                var webDB = info.about.webdb = this.getWebDBInfo();
+                                info.about.webdb.test();
+                            } catch (ex) {
+                                console.error(ex);
+                            }
+
+                            // Return the preliminary info
+                            return info;
+                        };
+
+                        AboutInfoController.prototype.detectOSName = function () {
+                            var osName = 'Unknown OS';
+                            var appVer = navigator.appVersion;
+                            if (appVer) {
+                                if (appVer.indexOf("Win") != -1)
+                                    osName = 'Windows';
+                                if (appVer.indexOf("Mac") != -1)
+                                    osName = 'MacOS';
+                                if (appVer.indexOf("X11") != -1)
+                                    osName = 'UNIX';
+                                if (appVer.indexOf("Linux") != -1)
+                                    osName = 'Linux';
+                                //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
+                            }
+                            return osName;
+                        };
+
+                        AboutInfoController.prototype.getWebDBInfo = function () {
+                            var _this = this;
+                            var webDB = {
+                                db: null,
+                                version: '1',
+                                active: null,
+                                used: undefined,
+                                size: 5 * 1024 * 1024,
+                                test: function (name, desc, dbVer, dbSize) {
+                                    try  {
+                                        // Try and open a web db
+                                        webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
+                                        webDB.onSuccess(null, null);
+                                    } catch (ex) {
+                                        // Nope, something went wrong
+                                        webDB.onError(null, null);
+                                    }
+                                },
+                                onSuccess: function (tx, r) {
+                                    if (tx) {
+                                        if (r) {
+                                            console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
+                                        }
+                                        if (tx) {
+                                            console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
+                                        }
+                                    }
+                                    _this.$rootScope.$applyAsync(function () {
+                                        webDB.active = true;
+                                        webDB.used = JSON.stringify(webDB.db).length;
+                                    });
+                                },
+                                onError: function (tx, e) {
+                                    console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
+                                    _this.$rootScope.$applyAsync(function () {
+                                        webDB.active = false;
+                                    });
+                                }
+                            };
+                            return webDB;
+                        };
+
+                        AboutInfoController.prototype.checkScriptLoaded = function (sources, filter) {
+                            sources.forEach(function (src) {
+                                filter(src);
+                            });
+                        };
+
+                        AboutInfoController.prototype.getDetectUrl = function () {
+                            return (function () {
+                                var p = [], w = window, d = document, e = 0, f = 0;
+                                p.push('ua=' + encodeURIComponent(navigator.userAgent));
+                                e |= w.ActiveXObject ? 1 : 0;
+                                e |= w.opera ? 2 : 0;
+                                e |= w.chrome ? 4 : 0;
+                                e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
+                                e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
+                                e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
+                                p.push('e=' + e);
+                                f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
+                                f |= 'WebSocket' in w ? 2 : 0;
+                                f |= w.Worker ? 4 : 0;
+                                f |= w.applicationCache ? 8 : 0;
+                                f |= w.history && history.pushState ? 16 : 0;
+                                f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
+                                f |= 'FileReader' in w ? 64 : 0;
+                                p.push('f=' + f);
+                                p.push('r=' + Math.random().toString(36).substring(7));
+                                p.push('w=' + screen.width);
+                                p.push('h=' + screen.height);
+                                var s = d.createElement('script');
+                                return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
+                            })();
+                        };
+
+                        AboutInfoController.prototype.resolveUserAgent = function (info) {
+                            var cn = info.codeName;
+                            var ua = info.userAgent;
+                            if (ua) {
+                                // Remove start of string in UAgent upto CName or end of string if not found.
+                                ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
+
+                                // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
+                                ua = ua.substring(cn.length);
+
+                                while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
+                                    ua = ua.substring(1);
+                                }
+
+                                // Remove the end of the string from first characrer that is not a number or point etc.
+                                var pointer = 0;
+                                while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
+                                    pointer = pointer + 1;
+                                }
+                                ua = ua.substring(0, pointer);
+
+                                if (!window.isNaN(ua)) {
+                                    if (parseInt(ua) > 0) {
+                                        info.versions.html = ua;
+                                    }
+                                    if (parseFloat(ua) >= 5) {
+                                        info.versions.css = '3.x';
+                                        info.versions.js = '5.x';
+                                    }
+                                }
+                            }
+                        };
+
+                        AboutInfoController.prototype.getVersionInfo = function (ident) {
+                            try  {
+                                if (typeof process !== 'undefined' && process.versions) {
+                                    return process.versions[ident];
+                                }
+                            } catch (ex) {
+                            }
+                            return null;
+                        };
+
+                        AboutInfoController.prototype.selectorExists = function (selector) {
+                            return false;
+                            //var ret = css($(selector));
+                            //return ret;
+                        };
+
+                        AboutInfoController.prototype.css = function (a) {
+                            var sheets = document.styleSheets, o = [];
+                            for (var i in sheets) {
+                                var rules = sheets[i].rules || sheets[i].cssRules;
+                                for (var r in rules) {
+                                    if (a.is(rules[r].selectorText)) {
+                                        o.push(rules[r].selectorText);
+                                    }
+                                }
+                            }
+                            return o;
+                        };
+                        return AboutInfoController;
+                    })();
+                    controllers.AboutInfoController = AboutInfoController;
+                })(about.controllers || (about.controllers = {}));
+                var controllers = about.controllers;
+            })(modules.about || (modules.about = {}));
+            var about = modules.about;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
+/// <reference path="../common/providers/AppInfoProvider.ts" />
 angular.module('prototyped.about', [
     'prototyped.ng.runtime',
     'prototyped.ng.views',
@@ -30,278 +313,35 @@ angular.module('prototyped.about', [
         }).state('about.info', {
             url: '/info',
             views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'views/about/info.tpl.html',
+                    templateUrl: 'modules/about/views/info.tpl.html',
                     controller: 'AboutInfoController'
                 }
             }
         }).state('about.online', {
             url: '^/contact',
             views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
-                'main@': { templateUrl: 'views/about/contact.tpl.html' }
+                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
+                'main@': { templateUrl: 'modules/about/views/contact.tpl.html' }
             }
         }).state('about.conection', {
             url: '/conection',
             views: {
-                'left@': { templateUrl: 'views/about/left.tpl.html' },
+                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
                 'main@': {
-                    templateUrl: 'views/about/connections.tpl.html',
+                    templateUrl: 'modules/about/views/connections.tpl.html',
                     controller: 'AboutConnectionController'
                 }
             }
         });
-    }]).controller('AboutInfoController', [
-    '$rootScope', '$scope', '$location', function ($rootScope, $scope, $location) {
-        function css(a) {
-            var sheets = document.styleSheets, o = [];
-            for (var i in sheets) {
-                var rules = sheets[i].rules || sheets[i].cssRules;
-                for (var r in rules) {
-                    if (a.is(rules[r].selectorText)) {
-                        o.push(rules[r].selectorText);
-                    }
-                }
-            }
-            return o;
-        }
-
-        function selectorExists(selector) {
-            return false;
-            //var ret = css($(selector));
-            //return ret;
-        }
-
-        function getVersionInfo(ident) {
-            try  {
-                if (typeof process !== 'undefined' && process.versions) {
-                    return process.versions[ident];
-                }
-            } catch (ex) {
-            }
-            return null;
-        }
-
-        // Define a function to detect the capabilities
-        $scope.detectBrowserInfo = function () {
-            var info = {
-                about: null,
-                versions: {
-                    ie: null,
-                    html: null,
-                    jqry: null,
-                    css: null,
-                    js: null,
-                    ng: null,
-                    nw: null,
-                    njs: null,
-                    v8: null,
-                    openssl: null,
-                    chromium: null
-                },
-                detects: {
-                    jqry: false,
-                    less: false,
-                    bootstrap: false,
-                    ngAnimate: false,
-                    ngUiRouter: false,
-                    ngUiUtils: false,
-                    ngUiBootstrap: false
-                },
-                css: {
-                    boostrap2: null,
-                    boostrap3: null
-                },
-                codeName: navigator.appCodeName,
-                userAgent: navigator.userAgent
-            };
-
-            try  {
-                // Get IE version (if defined)
-                if (!!window['ActiveXObject']) {
-                    info.versions.ie = 10;
-                }
-
-                // Sanitize codeName and userAgentt
-                var cn = info.codeName;
-                var ua = info.userAgent;
-                if (ua) {
-                    // Remove start of string in UAgent upto CName or end of string if not found.
-                    ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
-
-                    // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
-                    ua = ua.substring(cn.length);
-
-                    while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
-                        ua = ua.substring(1);
-                    }
-
-                    // Remove the end of the string from first characrer that is not a number or point etc.
-                    var pointer = 0;
-                    while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
-                        pointer = pointer + 1;
-                    }
-                    ua = ua.substring(0, pointer);
-
-                    if (!window.isNaN(ua)) {
-                        if (parseInt(ua) > 0) {
-                            info.versions.html = ua;
-                        }
-                        if (parseFloat(ua) >= 5) {
-                            info.versions.css = '3.x';
-                            info.versions.js = '5.x';
-                        }
-                    }
-                }
-                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
-                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
-                info.versions.nw = getVersionInfo('node-webkit');
-                info.versions.njs = getVersionInfo('node');
-                info.versions.v8 = getVersionInfo('v8');
-                info.versions.openssl = getVersionInfo('openssl');
-                info.versions.chromium = getVersionInfo('chromium');
-
-                // Check for CSS extensions
-                info.css.boostrap2 = selectorExists('hero-unit');
-                info.css.boostrap3 = selectorExists('jumbotron');
-
-                // Detect selected features and availability
-                info.about = {
-                    protocol: $location.$$protocol,
-                    browser: {},
-                    server: {
-                        active: undefined,
-                        url: $location.$$absUrl
-                    },
-                    os: {},
-                    hdd: { type: null }
-                };
-
-                // Detect the operating system
-                var osName = 'Unknown OS';
-                var appVer = navigator.appVersion;
-                if (appVer) {
-                    if (appVer.indexOf("Win") != -1)
-                        osName = 'Windows';
-                    if (appVer.indexOf("Mac") != -1)
-                        osName = 'MacOS';
-                    if (appVer.indexOf("X11") != -1)
-                        osName = 'UNIX';
-                    if (appVer.indexOf("Linux") != -1)
-                        osName = 'Linux';
-                    //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
-                }
-                info.about.os.name = osName;
-
-                // Check for jQuery
-                info.detects.jqry = typeof jQuery !== 'undefined';
-
-                // Check for general header and body scripts
-                $("script").each(function () {
-                    var src = $(this).attr("src");
-                    if (src) {
-                        // Fast check on known script names
-                        info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
-                        info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
-                        info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
-                        info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
-                        info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
-                        info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
-                    }
-                });
-
-                // Get the client browser details (build a url string)
-                var detectUrl = (function () {
-                    var p = [], w = window, d = document, e = 0, f = 0;
-                    p.push('ua=' + encodeURIComponent(navigator.userAgent));
-                    e |= w.ActiveXObject ? 1 : 0;
-                    e |= w.opera ? 2 : 0;
-                    e |= w.chrome ? 4 : 0;
-                    e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
-                    e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
-                    e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
-                    p.push('e=' + e);
-                    f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
-                    f |= 'WebSocket' in w ? 2 : 0;
-                    f |= w.Worker ? 4 : 0;
-                    f |= w.applicationCache ? 8 : 0;
-                    f |= w.history && history.pushState ? 16 : 0;
-                    f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
-                    f |= 'FileReader' in w ? 64 : 0;
-                    p.push('f=' + f);
-                    p.push('r=' + Math.random().toString(36).substring(7));
-                    p.push('w=' + screen.width);
-                    p.push('h=' + screen.height);
-                    var s = d.createElement('script');
-                    return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
-                })();
-
-                // Send a loaded package to a server to detect more features
-                $.getScript(detectUrl).done(function (script, textStatus) {
-                    $rootScope.$applyAsync(function () {
-                        // Browser info and details loaded
-                        var browserInfo = new window.WhichBrowser();
-                        angular.extend(info.about, browserInfo);
-                    });
-                }).fail(function (jqxhr, settings, exception) {
-                    console.error(exception);
-                });
-
-                // Set browser name to IE (if defined)
-                if (navigator.appName == 'Microsoft Internet Explorer') {
-                    info.about.browser.name = 'Internet Explorer';
-                }
-
-                // Check if the browser supports web db's
-                var webDB = info.about.webdb = {
-                    db: null,
-                    version: '1',
-                    active: null,
-                    size: 5 * 1024 * 1024,
-                    test: function (name, desc, dbVer, dbSize) {
-                        try  {
-                            // Try and open a web db
-                            webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
-                            webDB.onSuccess(null, null);
-                        } catch (ex) {
-                            // Nope, something went wrong
-                            webDB.onError(null, null);
-                        }
-                    },
-                    onSuccess: function (tx, r) {
-                        if (tx) {
-                            if (r) {
-                                console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
-                            }
-                            if (tx) {
-                                console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
-                            }
-                        }
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = true;
-                            webDB.used = JSON.stringify(webDB.db).length;
-                        });
-                    },
-                    onError: function (tx, e) {
-                        console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
-                        $rootScope.$applyAsync(function () {
-                            webDB.active = false;
-                        });
-                    }
-                };
-                info.about.webdb.test();
-            } catch (ex) {
-                console.error(ex);
-            }
-
-            // Return the preliminary info
-            return info;
-        };
-
-        // Define the state
-        $scope.info = $scope.detectBrowserInfo();
-    }]).controller('AboutConnectionController', [
+    }]).provider('appInfoProvider', ['appStateProvider', proto.ng.modules.common.providers.AppInfoProvider]).run([
+    '$rootScope', 'appState', function ($rootScope, appState) {
+        console.debug(' - appState.setUpdateAction: ', appState.setUpdateAction);
+        appState.setUpdateAction(function (action) {
+            $rootScope.$applyAsync(action);
+        });
+    }]).controller('AboutInfoController', ['$rootScope', '$scope', '$location', 'appInfo', proto.ng.modules.about.controllers.AboutInfoController]).controller('AboutConnectionController', [
     '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
         $scope.result = null;
         $scope.status = null;
@@ -501,6 +541,62 @@ var proto;
             var common = modules.common;
         })(ng.modules || (ng.modules = {}));
         var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (_ng) {
+        (function (modules) {
+            (function (common) {
+                var AppInfo = (function () {
+                    function AppInfo(codeName, userAgent) {
+                        this.codeName = codeName;
+                        this.userAgent = userAgent;
+                        this.versions = {
+                            ie: null,
+                            html: null,
+                            jqry: null,
+                            css: null,
+                            js: null,
+                            ng: null,
+                            nw: null,
+                            njs: null,
+                            v8: null,
+                            openssl: null,
+                            chromium: null
+                        };
+                        this.about = {
+                            protocol: null,
+                            browser: {},
+                            server: {
+                                url: null,
+                                active: null
+                            },
+                            os: {},
+                            hdd: { type: null }
+                        };
+                        this.detects = {
+                            jqry: false,
+                            less: false,
+                            bootstrap: false,
+                            ngAnimate: false,
+                            ngUiRouter: false,
+                            ngUiUtils: false,
+                            ngUiBootstrap: false
+                        };
+                        this.css = {
+                            boostrap2: null,
+                            boostrap3: null
+                        };
+                    }
+                    return AppInfo;
+                })();
+                common.AppInfo = AppInfo;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(_ng.modules || (_ng.modules = {}));
+        var modules = _ng.modules;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
@@ -740,6 +836,22 @@ var proto;
                         } else if (route.url) {
                             window.location.href = route.url;
                         }
+                    };
+
+                    AppState.prototype.updateUI = function (action) {
+                        if (this._updateUI) {
+                            this._updateUI(action);
+                        } else {
+                            try  {
+                                if (action)
+                                    action();
+                            } catch (ex) {
+                                throw ex;
+                            }
+                        }
+                    };
+                    AppState.prototype.setUpdateAction = function (eventWrapper) {
+                        this._updateUI = eventWrapper;
                     };
 
                     AppState.prototype.proxyAvailable = function (ident) {
@@ -2165,6 +2277,292 @@ var proto;
         (function (modules) {
             (function (common) {
                 (function (providers) {
+                    var AppInfoProvider = (function () {
+                        function AppInfoProvider(appStateProvider) {
+                            this.appStateProvider = appStateProvider;
+                            this.appState = appStateProvider.appState;
+                            this.appInfo = new proto.ng.modules.common.AppInfo(navigator.appCodeName, navigator.userAgent);
+                            this.init();
+                        }
+                        AppInfoProvider.prototype.init = function () {
+                            // Define the state
+                            this.detectBrowserInfo();
+                        };
+
+                        AppInfoProvider.prototype.$get = function () {
+                            return this.appInfo;
+                        };
+
+                        AppInfoProvider.prototype.refreshUI = function (action) {
+                            this.appState.updateUI(action);
+                        };
+
+                        AppInfoProvider.prototype.detectBrowserInfo = function () {
+                            var _this = this;
+                            var info = this.appInfo;
+                            try  {
+                                // Get IE version (if defined)
+                                if (!!window['ActiveXObject']) {
+                                    info.versions.ie = 10;
+                                }
+
+                                // Sanitize codeName and userAgent
+                                this.resolveUserAgent(info);
+                                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
+                                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
+                                info.versions.nw = this.getVersionInfo('node-webkit');
+                                info.versions.njs = this.getVersionInfo('node');
+                                info.versions.v8 = this.getVersionInfo('v8');
+                                info.versions.openssl = this.getVersionInfo('openssl');
+                                info.versions.chromium = this.getVersionInfo('chromium');
+
+                                // Check for CSS extensions
+                                info.css.boostrap2 = this.selectorExists('hero-unit');
+                                info.css.boostrap3 = this.selectorExists('jumbotron');
+
+                                // Update location settings
+                                angular.extend(info.about, {
+                                    protocol: window.location.protocol,
+                                    server: {
+                                        url: window.location.href
+                                    }
+                                });
+
+                                // Detect the operating system name
+                                info.about.os.name = this.detectOSName();
+
+                                // Check for jQuery
+                                info.detects.jqry = typeof jQuery !== 'undefined';
+
+                                // Check for general header and body scripts
+                                var sources = [];
+                                $("script").each(function (i, elem) {
+                                    var src = $(elem).attr("src");
+                                    if (src)
+                                        sources.push(src);
+                                });
+
+                                // Fast check on known script names
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
+                                });
+
+                                // Get the client browser details (build a url string)
+                                var detectUrl = this.getDetectUrl();
+
+                                // Send a loaded package to a server to detect more features
+                                $.getScript(detectUrl).done(function (script, textStatus) {
+                                    _this.refreshUI(function () {
+                                        // Browser info and details loaded
+                                        var browserInfo = new window.WhichBrowser();
+                                        angular.extend(info.about, browserInfo);
+                                    });
+                                }).fail(function (jqxhr, settings, exception) {
+                                    console.error(exception);
+                                });
+
+                                // Set browser name to IE (if defined)
+                                if (navigator.appName == 'Microsoft Internet Explorer') {
+                                    info.about.browser.name = 'Internet Explorer';
+                                }
+
+                                // Check if the browser supports web db's
+                                var webDB = info.about.webdb = this.getWebDBInfo();
+                                info.about.webdb.test();
+                            } catch (ex) {
+                                console.error(ex);
+                            }
+
+                            // Return the preliminary info
+                            return info;
+                        };
+
+                        AppInfoProvider.prototype.detectOSName = function () {
+                            var osName = 'Unknown OS';
+                            var appVer = navigator.appVersion;
+                            if (appVer) {
+                                if (appVer.indexOf("Win") != -1)
+                                    osName = 'Windows';
+                                if (appVer.indexOf("Mac") != -1)
+                                    osName = 'MacOS';
+                                if (appVer.indexOf("X11") != -1)
+                                    osName = 'UNIX';
+                                if (appVer.indexOf("Linux") != -1)
+                                    osName = 'Linux';
+                                //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
+                            }
+                            return osName;
+                        };
+
+                        AppInfoProvider.prototype.getWebDBInfo = function () {
+                            var _this = this;
+                            var webDB = {
+                                db: null,
+                                version: '1',
+                                active: null,
+                                used: undefined,
+                                size: 5 * 1024 * 1024,
+                                test: function (name, desc, dbVer, dbSize) {
+                                    try  {
+                                        // Try and open a web db
+                                        webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
+                                        webDB.onSuccess(null, null);
+                                    } catch (ex) {
+                                        // Nope, something went wrong
+                                        webDB.onError(null, null);
+                                    }
+                                },
+                                onSuccess: function (tx, r) {
+                                    if (tx) {
+                                        if (r) {
+                                            console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
+                                        }
+                                        if (tx) {
+                                            console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
+                                        }
+                                    }
+                                    _this.refreshUI(function () {
+                                        webDB.active = true;
+                                        webDB.used = JSON.stringify(webDB.db).length;
+                                    });
+                                },
+                                onError: function (tx, e) {
+                                    console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
+                                    _this.refreshUI(function () {
+                                        webDB.active = false;
+                                    });
+                                }
+                            };
+                            return webDB;
+                        };
+
+                        AppInfoProvider.prototype.checkScriptLoaded = function (sources, filter) {
+                            sources.forEach(function (src) {
+                                filter(src);
+                            });
+                        };
+
+                        AppInfoProvider.prototype.getDetectUrl = function () {
+                            return (function () {
+                                var p = [], w = window, d = document, e = 0, f = 0;
+                                p.push('ua=' + encodeURIComponent(navigator.userAgent));
+                                e |= w.ActiveXObject ? 1 : 0;
+                                e |= w.opera ? 2 : 0;
+                                e |= w.chrome ? 4 : 0;
+                                e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
+                                e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
+                                e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
+                                p.push('e=' + e);
+                                f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
+                                f |= 'WebSocket' in w ? 2 : 0;
+                                f |= w.Worker ? 4 : 0;
+                                f |= w.applicationCache ? 8 : 0;
+                                f |= w.history && history.pushState ? 16 : 0;
+                                f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
+                                f |= 'FileReader' in w ? 64 : 0;
+                                p.push('f=' + f);
+                                p.push('r=' + Math.random().toString(36).substring(7));
+                                p.push('w=' + screen.width);
+                                p.push('h=' + screen.height);
+                                var s = d.createElement('script');
+                                return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
+                            })();
+                        };
+
+                        AppInfoProvider.prototype.resolveUserAgent = function (info) {
+                            var cn = info.codeName;
+                            var ua = info.userAgent;
+                            if (ua) {
+                                // Remove start of string in UAgent upto CName or end of string if not found.
+                                ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
+
+                                // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
+                                ua = ua.substring(cn.length);
+
+                                while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
+                                    ua = ua.substring(1);
+                                }
+
+                                // Remove the end of the string from first characrer that is not a number or point etc.
+                                var pointer = 0;
+                                while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
+                                    pointer = pointer + 1;
+                                }
+                                ua = ua.substring(0, pointer);
+
+                                if (!window.isNaN(ua)) {
+                                    if (parseInt(ua) > 0) {
+                                        info.versions.html = ua;
+                                    }
+                                    if (parseFloat(ua) >= 5) {
+                                        info.versions.css = '3.x';
+                                        info.versions.js = '5.x';
+                                    }
+                                }
+                            }
+                        };
+
+                        AppInfoProvider.prototype.getVersionInfo = function (ident) {
+                            try  {
+                                if (typeof process !== 'undefined' && process.versions) {
+                                    return process.versions[ident];
+                                }
+                            } catch (ex) {
+                            }
+                            return null;
+                        };
+
+                        AppInfoProvider.prototype.selectorExists = function (selector) {
+                            return false;
+                            //var ret = css($(selector));
+                            //return ret;
+                        };
+
+                        AppInfoProvider.prototype.css = function (a) {
+                            var sheets = document.styleSheets, o = [];
+                            for (var i in sheets) {
+                                var rules = sheets[i].rules || sheets[i].cssRules;
+                                for (var r in rules) {
+                                    if (a.is(rules[r].selectorText)) {
+                                        o.push(rules[r].selectorText);
+                                    }
+                                }
+                            }
+                            return o;
+                        };
+                        return AppInfoProvider;
+                    })();
+                    providers.AppInfoProvider = AppInfoProvider;
+                })(common.providers || (common.providers = {}));
+                var providers = common.providers;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (providers) {
                     var AppStateProvider = (function () {
                         function AppStateProvider($stateProvider, $locationProvider, $urlRouterProvider, appConfigProvider, appNodeProvider) {
                             this.$stateProvider = $stateProvider;
@@ -3397,198 +3795,6 @@ var proto;
     var ng = proto.ng;
 })(proto || (proto = {}));
 ///<reference path="../../../imports.d.ts"/>
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (explorer) {
-                var BrowserViewController = (function () {
-                    function BrowserViewController($rootScope, $scope, $q, navigation) {
-                        var _this = this;
-                        this.$rootScope = $rootScope;
-                        this.$scope = $scope;
-                        this.$q = $q;
-                        this.navigation = navigation;
-                        var dir = './';
-                        try  {
-                            // Hook up to the current scope
-                            this.$scope.isBusy = true;
-
-                            // Initialize the cotroller
-                            this.init(dir);
-
-                            // Hook event for when folder path changes
-                            this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
-                                if (folder != _this.$scope.dir_path) {
-                                    _this.$scope.dir_path = folder;
-                                    _this.navigate(folder);
-                                }
-                            });
-                        } catch (ex) {
-                            console.warn(ex);
-                        }
-                    }
-                    BrowserViewController.prototype.init = function (dir) {
-                        var _this = this;
-                        // Hook site navigation nodes
-                        this.navigation.fileSystem.UpdateUI = function () {
-                            _this.$rootScope.$applyAsync(function () {
-                            });
-                        };
-                        this.navigation.fileSystem.OnSelect = function (node) {
-                            var folder = node.data;
-                            if (folder != _this.$scope.dir_path) {
-                                _this.$scope.dir_path = folder;
-                                _this.navigate(folder);
-                            }
-                        };
-
-                        // Resolve the initial folder path
-                        this.navigate(dir);
-                    };
-
-                    BrowserViewController.prototype.navigate = function (dir_path) {
-                        var _this = this;
-                        var deferred = this.$q.defer();
-                        if (typeof require === 'undefined') {
-                            deferred.reject(new Error('Required libraries not available.'));
-                        } else {
-                            try  {
-                                // Set busy flag
-                                this.$scope.isBusy = true;
-                                this.$scope.error = null;
-
-                                // Resolve the full path
-                                var path = require('path');
-                                dir_path = path.resolve(dir_path);
-
-                                // Read the folder contents (async)
-                                var fs = require('fs');
-                                fs.readdir(dir_path, function (error, files) {
-                                    if (error) {
-                                        deferred.reject(error);
-                                        return;
-                                    }
-
-                                    // Split and sort results
-                                    var folders = [];
-                                    var lsFiles = [];
-                                    for (var i = 0; i < files.sort().length; ++i) {
-                                        var targ = path.join(dir_path, files[i]);
-                                        var stat = _this.mimeType(targ);
-                                        if (stat.type == 'folder') {
-                                            folders.push(stat);
-                                        } else {
-                                            lsFiles.push(stat);
-                                        }
-                                    }
-
-                                    // Generate the contents
-                                    var result = {
-                                        path: dir_path,
-                                        folders: folders,
-                                        files: lsFiles
-                                    };
-
-                                    // Mark promise as resolved
-                                    deferred.resolve(result);
-                                });
-                            } catch (ex) {
-                                // Mark promise and rejected
-                                deferred.reject(ex);
-                            }
-                        }
-
-                        // Handle the result and error conditions
-                        deferred.promise.then(function (result) {
-                            // Clear busy flag
-                            _this.$scope.isBusy = false;
-                            _this.$scope.dir_path = result.path;
-                            _this.$scope.files = result.files;
-                            _this.$scope.folders = result.folders;
-
-                            // Breadcast event that path has changed
-                            _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
-                        }, function (error) {
-                            // Clear busy flag
-                            _this.$scope.isBusy = false;
-                            _this.$scope.error = error;
-                        });
-
-                        return deferred.promise;
-                    };
-
-                    BrowserViewController.prototype.select = function (filePath) {
-                        this.$scope.selected = filePath;
-                    };
-
-                    BrowserViewController.prototype.open = function (filePath) {
-                        var req = 'nw.gui';
-                        var gui = require(req);
-                        if (gui)
-                            gui.Shell.openItem(filePath);
-                    };
-
-                    BrowserViewController.prototype.mimeType = function (filepath) {
-                        var map = {
-                            'compressed': ['zip', 'rar', 'gz', '7z'],
-                            'text': ['txt', 'md', ''],
-                            'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
-                            'pdf': ['pdf'],
-                            'css': ['css'],
-                            'excel': ['csv', 'xls', 'xlsx'],
-                            'html': ['html'],
-                            'word': ['doc', 'docx'],
-                            'powerpoint': ['ppt', 'pptx'],
-                            'movie': ['mkv', 'avi', 'rmvb']
-                        };
-                        var cached = {};
-
-                        var fs = require('fs');
-                        var path = require('path');
-                        var result = {
-                            name: path.basename(filepath),
-                            path: filepath,
-                            type: null
-                        };
-
-                        try  {
-                            var stat = fs.statSync(filepath);
-                            if (stat.isDirectory()) {
-                                result.type = 'folder';
-                            } else {
-                                var ext = path.extname(filepath).substr(1);
-                                result.type = cached[ext];
-                                if (!result.type) {
-                                    for (var key in map) {
-                                        var arr = map[key];
-                                        if (arr.length > 0 && arr.indexOf(ext) >= 0) {
-                                            cached[ext] = result.type = key;
-                                            break;
-                                        }
-                                    }
-
-                                    if (!result.type)
-                                        result.type = 'blank';
-                                }
-                            }
-                        } catch (e) {
-                            console.error(e);
-                        }
-
-                        return result;
-                    };
-                    return BrowserViewController;
-                })();
-                explorer.BrowserViewController = BrowserViewController;
-            })(modules.explorer || (modules.explorer = {}));
-            var explorer = modules.explorer;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-///<reference path="../../../imports.d.ts"/>
 ///<reference path="../../common/services/NavigationService.ts"/>
 var proto;
 (function (proto) {
@@ -3696,6 +3902,198 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (explorer) {
+                var FileBrowserViewController = (function () {
+                    function FileBrowserViewController($rootScope, $scope, $q, navigation) {
+                        var _this = this;
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.$q = $q;
+                        this.navigation = navigation;
+                        var dir = './';
+                        try  {
+                            // Hook up to the current scope
+                            this.$scope.isBusy = true;
+
+                            // Initialize the cotroller
+                            this.init(dir);
+
+                            // Hook event for when folder path changes
+                            this.$rootScope.$on('event:folder-path:changed', function (event, folder) {
+                                if (folder != _this.$scope.dir_path) {
+                                    _this.$scope.dir_path = folder;
+                                    _this.navigate(folder);
+                                }
+                            });
+                        } catch (ex) {
+                            console.warn(ex);
+                        }
+                    }
+                    FileBrowserViewController.prototype.init = function (dir) {
+                        var _this = this;
+                        // Hook site navigation nodes
+                        this.navigation.fileSystem.UpdateUI = function () {
+                            _this.$rootScope.$applyAsync(function () {
+                            });
+                        };
+                        this.navigation.fileSystem.OnSelect = function (node) {
+                            var folder = node.data;
+                            if (folder != _this.$scope.dir_path) {
+                                _this.$scope.dir_path = folder;
+                                _this.navigate(folder);
+                            }
+                        };
+
+                        // Resolve the initial folder path
+                        this.navigate(dir);
+                    };
+
+                    FileBrowserViewController.prototype.navigate = function (dir_path) {
+                        var _this = this;
+                        var deferred = this.$q.defer();
+                        if (typeof require === 'undefined') {
+                            deferred.reject(new Error('Required libraries not available.'));
+                        } else {
+                            try  {
+                                // Set busy flag
+                                this.$scope.isBusy = true;
+                                this.$scope.error = null;
+
+                                // Resolve the full path
+                                var path = require('path');
+                                dir_path = path.resolve(dir_path);
+
+                                // Read the folder contents (async)
+                                var fs = require('fs');
+                                fs.readdir(dir_path, function (error, files) {
+                                    if (error) {
+                                        deferred.reject(error);
+                                        return;
+                                    }
+
+                                    // Split and sort results
+                                    var folders = [];
+                                    var lsFiles = [];
+                                    for (var i = 0; i < files.sort().length; ++i) {
+                                        var targ = path.join(dir_path, files[i]);
+                                        var stat = _this.mimeType(targ);
+                                        if (stat.type == 'folder') {
+                                            folders.push(stat);
+                                        } else {
+                                            lsFiles.push(stat);
+                                        }
+                                    }
+
+                                    // Generate the contents
+                                    var result = {
+                                        path: dir_path,
+                                        folders: folders,
+                                        files: lsFiles
+                                    };
+
+                                    // Mark promise as resolved
+                                    deferred.resolve(result);
+                                });
+                            } catch (ex) {
+                                // Mark promise and rejected
+                                deferred.reject(ex);
+                            }
+                        }
+
+                        // Handle the result and error conditions
+                        deferred.promise.then(function (result) {
+                            // Clear busy flag
+                            _this.$scope.isBusy = false;
+                            _this.$scope.dir_path = result.path;
+                            _this.$scope.files = result.files;
+                            _this.$scope.folders = result.folders;
+
+                            // Breadcast event that path has changed
+                            _this.$rootScope.$broadcast('event:folder-path:changed', _this.$scope.dir_path);
+                        }, function (error) {
+                            // Clear busy flag
+                            _this.$scope.isBusy = false;
+                            _this.$scope.error = error;
+                        });
+
+                        return deferred.promise;
+                    };
+
+                    FileBrowserViewController.prototype.select = function (filePath) {
+                        this.$scope.selected = filePath;
+                    };
+
+                    FileBrowserViewController.prototype.open = function (filePath) {
+                        var req = 'nw.gui';
+                        var gui = require(req);
+                        if (gui)
+                            gui.Shell.openItem(filePath);
+                    };
+
+                    FileBrowserViewController.prototype.mimeType = function (filepath) {
+                        var map = {
+                            'compressed': ['zip', 'rar', 'gz', '7z'],
+                            'text': ['txt', 'md', ''],
+                            'image': ['jpg', 'jpge', 'png', 'gif', 'bmp'],
+                            'pdf': ['pdf'],
+                            'css': ['css'],
+                            'excel': ['csv', 'xls', 'xlsx'],
+                            'html': ['html'],
+                            'word': ['doc', 'docx'],
+                            'powerpoint': ['ppt', 'pptx'],
+                            'movie': ['mkv', 'avi', 'rmvb']
+                        };
+                        var cached = {};
+
+                        var fs = require('fs');
+                        var path = require('path');
+                        var result = {
+                            name: path.basename(filepath),
+                            path: filepath,
+                            type: null
+                        };
+
+                        try  {
+                            var stat = fs.statSync(filepath);
+                            if (stat.isDirectory()) {
+                                result.type = 'folder';
+                            } else {
+                                var ext = path.extname(filepath).substr(1);
+                                result.type = cached[ext];
+                                if (!result.type) {
+                                    for (var key in map) {
+                                        var arr = map[key];
+                                        if (arr.length > 0 && arr.indexOf(ext) >= 0) {
+                                            cached[ext] = result.type = key;
+                                            break;
+                                        }
+                                    }
+
+                                    if (!result.type)
+                                        result.type = 'blank';
+                                }
+                            }
+                        } catch (e) {
+                            console.error(e);
+                        }
+
+                        return result;
+                    };
+                    return FileBrowserViewController;
+                })();
+                explorer.FileBrowserViewController = FileBrowserViewController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 /// <reference path="../common/services/NavigationService.ts"/>
 /// <reference path="controllers/ExplorerLeftController.ts" />
@@ -3787,7 +4185,7 @@ angular.module('prototyped.explorer', [
         ]);
 
         $sceDelegateProvider.resourceUrlWhitelist(['**']);
-    }]).service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.BrowserViewController]).controller('ExternalLinksViewController', ['$rootScope', '$sce', '$q', 'navigationService', proto.ng.modules.explorer.ExternalLinksViewController]);
+    }]).service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.FileBrowserViewController]).controller('ExternalLinksViewController', ['$rootScope', '$sce', '$q', 'navigationService', proto.ng.modules.explorer.ExternalLinksViewController]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />
@@ -3861,91 +4259,7 @@ angular.module('prototyped.ng.runtime', [
     proto.ng.modules.common.providers.AppStateProvider
 ]);
 ;angular.module('prototyped.ng.views', []).run(['$templateCache', function($templateCache) {
-  $templateCache.put('modules/console/views/logs.tpl.html',
-    '<div class=container style=width:100%><span class=pull-right style="padding: 3px"><a href="" ng-click="">Refresh</a> | <a href="" ng-click="appState.logs = []">Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appState.logs.length><td colspan=3><em>No events have been logged...</em></td></tr><tr ng-repeat="row in appState.logs" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td class=ellipsis style="width: auto; overflow: hidden; white-space: pre">{{ row.desc }}</td></tr></tbody></table></div>');
-  $templateCache.put('modules/console/views/main.tpl.html',
-    '<div class=console><style>.contents {\n' +
-    '            padding: 0 !important;\n' +
-    '            margin: 0 !important;\n' +
-    '        }\n' +
-    '\n' +
-    '        .console {\n' +
-    '            display: flex;\n' +
-    '            flex-direction: column;\n' +
-    '            width: 100%;\n' +
-    '        }\n' +
-    '\n' +
-    '        .cmd-output {\n' +
-    '            width: 100%;\n' +
-    '            padding: 6px;\n' +
-    '        }</style><div class="cmd-output dock-fill"><div class=cmd-line ng-repeat="ln in lines"><span class=text-{{ln.type}}><i class=glyphicon title="{{ln.time | date:\'hh:mm:ss\'}}" ng-class="{ \'glyphicon-chevron-right\':ln.type==\'info\', \'glyphicon-ok-sign\':ln.type==\'success\', \'glyphicon-warning-sign\':ln.type==\'warning\', \'glyphicon-exclamation-sign\':ln.type==\'error\' }"></i> <span class=cmd-text>{{ln.text}}</span></span></div></div><div class="btn-group btn-group-xs" style="position: absolute; bottom: 0; left: 0; right: 0"><div class="btn-group btn-group-xs pull-left dropup"><a href="" class="btn btn-primary dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-chevron-right"></i> {{ myConsole.getProxyName() }}</a><ul class="dropdown-menu dropup" role=menu><li ng-repeat="itm in myConsole.getProxies()"><a href="" ng-click=myConsole.setProxy(itm.ProxyName)>Switch to {{ itm.ProxyName }}</a></li></ul></div><div class="input-group input-group-xs"><input id=txtInput tabindex=1 class=form-control ng-model=txtInput ng-keypress="($event.which === 13)?myConsole.command(txtInput):0" placeholder="Enter Command Here"> <a href="" class="input-group-addon btn btn-default" ng-click=myConsole.clear()><i class="glyphicon glyphicon-trash"></i></a></div></div></div>');
-  $templateCache.put('modules/editor/views/main.tpl.html',
-    '<div class=text-editor ng-init=myWriter.init()><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/codemirror.min.js></script><link href=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/codemirror.min.css rel=stylesheet><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/xml/xml.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/css/css.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/javascript/javascript.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/htmlmixed/htmlmixed.min.js></script><style>.contents {\n' +
-    '            margin: 0 !important;\n' +
-    '            padding: 0 !important;\n' +
-    '        }</style><style resx:import=modules/editor/styles/css/editor.min.css></style><div class="btn-group btn-group-sm dock-tight"><a href="" class="btn btn-default pull-left" ng-click=myWriter.newFile()><i class="glyphicon glyphicon-file"></i></a> <a href="" class="btn btn-default pull-left" ng-click=myWriter.openFile() ng-disabled=!myWriter.HasFileSys><i class="glyphicon glyphicon-folder-open"></i></a><div class="btn-group btn-group-sm pull-right"><a href="" ng-disabled=!myWriter.FileLocation class="btn btn-default dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-save"></i> <span class=caret></span></a><ul class=dropdown-menu role=menu><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileContents}"><a href="" ng-click=myWriter.saveFileAs()><i class="glyphicon glyphicon-floppy-disk"></i> Save file as...</a></li><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileLocation}"><a href="" ng-click=myWriter.openFileLocation() ng-disabled="!myWriter.HasFileSys || !myWriter.FileLocation"><i class="glyphicon glyphicon-save"></i>Open file...</a></li></ul></div><a href="" class="btn btn-default pull-right" ng-click=myWriter.saveFile() ng-disabled="!(myWriter.HasFileSys && myWriter.HasChanges)"><i class="glyphicon glyphicon-floppy-disk"></i></a><div class="input-group input-group-sm"><label for=txtFileName class=input-group-addon>File:</label><input id=txtFileName class="cmd-input form-control" tabindex=1 value={{myWriter.FileLocation}} placeholder="{{ myWriter.FileLocation || \'Create new or open existing...\' }}" ng-readonly="true"></div></div><textarea id=FileContents class=text-area ng-disabled="myWriter.FileContents == null" ng-model=myWriter.FileContents></textarea><input style=display:none id=fileDialog type=file accept=".txt,.json"> <input style=display:none id=saveDialog type=file accept=.txt nwsaveas></div>');
-  $templateCache.put('modules/explore/views/addressbar.tpl.html',
-    '<div class="view-toolbar btn-group btn-group-sm"><style>#addressbar {\n' +
-    '            background: none;\n' +
-    '            padding: 0;\n' +
-    '            margin: 0;\n' +
-    '        }\n' +
-    '\n' +
-    '            #addressbar li {\n' +
-    '                padding: 0;\n' +
-    '                margin: 0;\n' +
-    '            }</style><a href="" class="btn btn-default pull-right" ng-click=addrBar.openFolder(dir_path) ng-disabled=!dir_parts><i class="glyphicon glyphicon-folder-open"></i></a> <a href="" ng-click=addrBar.back() class="btn btn-default pull-right" ng-disabled=!addrBar.hasHistory()><i class="glyphicon glyphicon-chevron-left"></i></a><div class="input-group input-group-sm"><label class=input-group-addon>Path:</label><div class="form-control nav-address-bar"><ul id=addressbar class=breadcrumb ng-show=dir_parts><li ng-repeat="itm in dir_parts.sequence" data-path={{itm.path}}><a href="" ng-click=addrBar.navigate(itm.path)>{{itm.name}}</a></li></ul><div class=text-error style="padding-left: 8px" ng-show=!dir_parts><i class="glyphicon glyphicon-bullhorn"></i> No access to local file system.</div></div></div></div>');
-  $templateCache.put('modules/explore/views/browser.tpl.html',
-    '<div style="width: 100%" ng:cloak><style>.ui-view-main {\n' +
-    '            margin: 0 !important;\n' +
-    '            padding: 0 !important;\n' +
-    '        }\n' +
-    '\n' +
-    '        .ui-view-left {\n' +
-    '            margin-right: 0 !important;\n' +
-    '        }\n' +
-    '\n' +
-    '        .view-selector {\n' +
-    '            padding: 3px;\n' +
-    '            margin-right: 8px;\n' +
-    '        }\n' +
-    '\n' +
-    '            .view-selector a {\n' +
-    '                color: #808080;\n' +
-    '                text-decoration: none;\n' +
-    '            }</style><div proto:address-bar style="position: relative"></div><div style="padding: 8px 16px"><div id=fileExplorer ng-class=viewMode.view><div class=loader ng-show=isBusy><br><em style="padding: 24px">Loading...</em></div><div ng-show="!isBusy && appNode.active"><div class=folder-contents ng-if="!folders.length && !files.length"><em>No files or folders were found...</em></div><div class=folder-contents><div class="view-selector pull-right" ng-init="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }"><div class="input-group pull-left"><a href="" class=dropdown-toggle data-toggle=dropdown aria-expanded=false><i ng-class=viewMode.css></i> {{ viewMode.desc || \'Default View\' }} <span class=caret></span></a><ul class="pull-right dropdown-menu" role=menu><li><a href="" ng-click="viewMode = { desc:\'Large Icons\', css:\'fa fa-th-large\', view: \'view-large\' }"><i class="fa fa-th-large"></i> Large Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Medium Icons\', css:\'fa fa-th\', view: \'view-med\' }"><i class="fa fa-th"></i> Medium Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Details View\', css:\'fa fa-list\', view: \'view-details\' }"><i class="fa fa-list"></i> Details View</a></li><li class=divider></li><li><a href="" ng-click="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }">Use Default</a></li></ul></div></div><h5 ng-if=folders.length>File Folders</h5><div id=files class=files ng-if=folders.length><a href="" class="file centered" ng-click=ctrlExplorer.navigate(itm.path) ng-repeat="itm in folders"><div class=icon><i class="glyphicon glyphicon-folder-open" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div><br style="clear:both"><br style="clear:both"><h5 ng-if=files.length>Application Files</h5><div id=files class=files ng-if=files.length><a href="" class="file centered" ng-repeat="itm in files" ng-class="{ \'focus\' : (selected == itm.path)}" ng-click=ctrlExplorer.select(itm.path) ng-dblclick=ctrlExplorer.open(itm.path)><div class=icon ng-switch=itm.type><i ng-switch-default class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=blank class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=text class="fa fa-file-text-o" style="font-size: 32px"></i> <i ng-switch-when=image class="fa fa-file-image-o" style="font-size: 32px"></i> <i ng-switch-when=pdf class="fa fa-file-pdf-o" style="font-size: 32px"></i> <i ng-switch-when=css class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=html class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=word class="fa fa-file-word-o" style="font-size: 32px"></i> <i ng-switch-when=powerpoint class="fa fa-file-powerpoint-o" style="font-size: 32px"></i> <i ng-switch-when=movie class="fa fa-file-movie-o" style="font-size: 32px"></i> <i ng-switch-when=excel class="fa fa-file-excel-o" style="font-size: 32px"></i> <i ng-switch-when=compressed class="fa fa-file-archive-o" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div></div></div><div ng-show="!isBusy && !appNode.active" class=ng-cloak><br><h5><i class="glyphicon glyphicon-warning-sign"></i> Warning <small>All features not available</small></h5><div class="alert alert-warning"><p><b>Please Note:</b> You are running this from a browser window.</p><p>For security reasons, web browsers do not have permission to use the local file system, or other advanced operating system features.</p><p>To use this application with full functionality, you need an elevated runtime (<a href=/about/info>see this how to</a>).</p></div></div></div></div></div>');
-  $templateCache.put('modules/explore/views/externals.tpl.html',
-    '<div class=external-links style="width: 100%"><style>.ui-view-main {\n' +
-    '            margin: 0 !important;\n' +
-    '            padding: 0 !important;\n' +
-    '            position: relative;\n' +
-    '        }\n' +
-    '\n' +
-    '        .ui-view-left {\n' +
-    '            margin-right: 0 !important;\n' +
-    '        }\n' +
-    '\n' +
-    '        .external-links {\n' +
-    '            margin:0;\n' +
-    '            left:0;\n' +
-    '            right:0;\n' +
-    '            bottom:0;\n' +
-    '            top:0;\n' +
-    '            display:flex;\n' +
-    '            position: absolute;\n' +
-    '            flex-direction:column;\n' +
-    '        }\n' +
-    '        .external-iframe {\n' +
-    '            margin:0;\n' +
-    '            width: 100%; \n' +
-    '            flex-grow: 1;\n' +
-    '            flex-shrink: 0;\n' +
-    '        }</style><div class="btn-group btn-group-sm dock-tight"><div class="input-group input-group-sm"><label for=txtFileName class=input-group-addon><i class="fa fa-globe"></i></label><input id=txtExternalUrl class="cmd-input form-control" tabindex=1 value="{{ linksCtrl.selected.data }}" placeholder="Location not set..." ng-readonly="true || !linksCtrl.selected.data" ng-changed="alert(this)"> <a href="" class="btn btn-default input-group-addon" ng-click=linksCtrl.refreshExternal() ng-disabled=!linksCtrl.selected><i class="fa fa-refresh"></i></a> <a href="" class="btn btn-default input-group-addon" ng-click=linksCtrl.openExternal() ng-disabled=!linksCtrl.selected><i class="fa fa-external-link"></i></a></div></div><iframe id=ExternalExplorerPanel frameborder=0 class=external-iframe ng-if=linksCtrl.selected onerror=console.error(event) ng-src="{{ linksCtrl.selected.data | trustedUrl }}">IFrame not available</iframe></div>');
-  $templateCache.put('modules/explore/views/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-arrow-circle-left"></i>&nbsp; Site Map Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.explore\'"><abn:tree tree-data=navigation.siteExplorer.children icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.externalLinks><a ui:sref=proto.links><i class="fa fa-globe"></i>&nbsp; External Links</a></li><li class=list-group-item style="padding: 6px 0; overflow-x:hidden" ng-if="navigation.externalLinks && state.current.name == \'proto.links\'"><abn:tree tree-data=navigation.externalLinks.children icon-leaf="fa fa-globe" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.fileSystem><a ui:sref=proto.browser><i class="fa fa-hdd-o"></i>&nbsp; File System Browser</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.fileSystem && state.current.name == \'proto.browser\'"><style resx:import=assets/css/images.min.css></style><div class=info-overview ng-if=!appNode.active><div class=panel-icon-lg><div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px"></div></div></div><div ng-if="appNode.active && navigation.fileSystem"><abn:tree tree-data=navigation.fileSystem.children icon-leaf="fa fa-folder" icon-expand="fa fa-folder" icon-collapse="fa fa-folder-open" expand-level=2></abn:tree></div></li><li class=list-group-item ui:sref-active=active ng-if=navigation.clientStates><a ui:sref=proto.routing><i class="fa fa-tasks"></i>&nbsp; UI State &amp; Routing</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.clientStates && state.current.name == \'proto.routing\'"><abn:tree tree-data=navigation.clientStates icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
-  $templateCache.put('modules/explore/views/main.tpl.html',
-    '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail ng-if=exploreCtrl.selected><br><br><div class=row><div class=col-md-9><form class=form-horizontal><div class=form-group><label for=inputState class="col-sm-2 control-label">State</label><div class=col-sm-10><input class=form-control id=inputState placeholder=empty ng-model=exploreCtrl.selected.name readonly></div></div><div class=form-group><label for=inputPath class="col-sm-2 control-label">Path</label><div class=col-sm-10><input class=form-control id=inputPath placeholder="not set" ng-model=exploreCtrl.selected.url readonly></div></div><div class=form-group><div class="col-sm-offset-2 col-sm-10"><div class=checkbox><label><input type=checkbox ng-model=exploreCtrl.selected.abstract> Abstract</label></div></div></div><div class=form-group ng-if=exploreCtrl.selected.name><div class="col-sm-offset-2 col-sm-10"><a class="btn btn-default" ng-class="{ \'btn-primary\': !exploreCtrl.selected.abstract }" ui-sref="{{ exploreCtrl.selected.name }}" ng-disabled=exploreCtrl.selected.abstract>Got to page</a></div></div></form></div><div class=col-md-3>{{ exploreCtrl.selection.views }}</div></div></div></div>');
-  $templateCache.put('views/about/connections.tpl.html',
+  $templateCache.put('modules/about/views/connections.tpl.html',
     '<div ng:cloak style="width: 100%"><div ng-if=!state.showRaw class=results ng-init=detect()><div class="icon pull-left left"><i class="glyphicon glyphicon-globe"></i> <i class="sub-icon glyphicon" ng-class=getStatusColor()></i></div><div class="info pull-left"><div><div class=pull-right><a class=ctrl-sm ng-click="state.editMode = true" href=""><i class="glyphicon glyphicon-pencil"></i></a></div><h4 ng-if=!state.editMode><a href="{{ state.location }}">{{ state.location }}</a></h4></div><div ng-if=!state.editMode><div ng-if=state.location><p class=info-row><div class="info-col-primary pull-left">Protocol: <span class="btn-group btn-group-xs" role=group aria-label=...><button type=button ng-disabled=state.requireHttps class="btn btn-default" ng-click="setProtocol(\'http\')" ng-class="state.requireHttps ? \'disabled\' : getProtocolStyle(\'http\', \'btn-warning\')"><i class=glyphicon ng-class="getStatusIcon(\'glyphicon-eye-open\')" ng-if="state.location.indexOf(\'http://\') == 0"></i> HTTP</button> <button type=button class="btn btn-default" ng-click="setProtocol(\'https\')" ng-class="getProtocolStyle(\'https\')"><i class=glyphicon ng-class="getStatusIcon(\'glyphicon-eye-close\')" ng-if="state.location.indexOf(\'https://\') == 0"></i> HTTPS</button></span></div><div class="info-col-secondary pull-right"><span class="btn-group btn-group-xs" role=group><a ng-if=result.info class="btn btn-default" href="" ng-click="state.activeTab = (state.activeTab == \'result\') ? null : \'result\'" ng-class="{\'btn-info\':(state.activeTab == \'result\'), \'btn-default\':(state.activeTab != \'result\')}"><i class="glyphicon glyphicon-file"></i> View Result</a> <a ng-if=state.location class=btn href="" ng-click="state.activeTab = (state.activeTab == \'preview\') ? null : \'preview\'" ng-class="{\'btn-info\':(state.activeTab == \'preview\'), \'btn-default\':(state.activeTab != \'preview\')}"><i class=glyphicon ng-class="{\'glyphicon-eye-close\':state.showPreview, \'glyphicon-eye-open\':!state.showPreview}"></i> {{ state.showPreview ? \'Hide\' : \'Show\' }} Preview</a></span></div><br class="clearfix"></p><p class=info-row><div class="info-col-primary pull-left" ng-if=result><div class=info-col-ellipse>Latency: {{ result.received - result.sent }}ms <span ng-if=latency.desc ng-class=latency.style>(<em>{{ latency.desc }}</em>)</span></div></div><div class="info-col-primary pull-left" ng-if=!result><em>Checking...</em></div><div class="info-col-secondary pull-right"><span ng-if="status.code >= 0" class="pull-right label" ng-class=status.style title="Status: {{ status.desc }}, Code: {{ status.code }}">{{ status.desc }}: {{ status.code }}</span></div><br class="clearfix"></p></div><div ng-if="result != null"><p><div class="alert alert-warning" ng-if="result.valid && state.protocol == \'http\'"><i class="glyphicon glyphicon-eye-open"></i> <b>Warning:</b> The web connection <b class=text-danger>is not secure</b>, use <a href="" ng-click="setProtocol(\'https\')">HTTPS</a>.</div><div class="alert alert-success" ng-if="result.valid && state.protocol == \'https\'"><i class="glyphicon glyphicon-ok"></i> <b>Validated:</b> The web connection looks secure.</div><div class="alert alert-danger" ng-if="!result.valid && result.error && result.error != \'error\'"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Failed:</b> {{ result.error }}</div><div class="alert alert-danger" ng-if="!result.valid && !(result.error && result.error != \'error\')"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Offline:</b> Connection could not be established.</div></p></div></div><form ng-if=state.editMode><div class=form-group><h4 class=control-label for=txtTarget>Enter the website URL to connect to:</h4><input class=form-control id=txtTarget ng-model=state.location></div><div class=form-group><div class=checkbox><label><input type=checkbox ng-model=state.requireHttps> Require secure connection</label></div><div class=checkbox ng-class="\'disabled text-muted\'" ng-if=state.requireHttps><label><input type=checkbox ng-model=state.requireCert ng-disabled=true> Requires Client Certificate</label></div></div><div class=form-group ng-show=state.requireCert><label for=exampleInputFile>Select Client Certificate:</label><input type=file id=exampleInputFile><p class=help-block>This must be a valid client certificate.</p></div><button type=submit class="btn btn-primary" ng-click=submitForm()>Update</button></form></div></div><div ng-if="state.activeTab == \'preview\'" class="panel panel-default"><div class=panel-heading><b class=panel-title><i class="glyphicon glyphicon-globe"></i> <a target=_blank href="{{ state.location }}">{{ state.location }}</a></b></div><div class="panel-body info-row iframe-body" style="min-height: 480px"><iframe class=info-col-primary ng-src="{{ state.location }}" frameborder=0>IFrame not available</iframe></div></div><div ng-if="state.activeTab == \'result\'" class=source><span class=pull-right><a class="btn btn-sm btn-primary" ng-click="state.activeTab = null">Close</a></span> <samp><pre>{{ result.info }}</pre></samp></div></div><style>.results {\n' +
     '        min-width: 480px;\n' +
     '        display: flex;\n' +
@@ -4049,12 +4363,96 @@ angular.module('prototyped.ng.runtime', [
     '            margin: 0;\n' +
     '            padding: 0;\n' +
     '        }</style>');
-  $templateCache.put('views/about/contact.tpl.html',
+  $templateCache.put('modules/about/views/contact.tpl.html',
     '<div style="width: 100%"><h4>About <small>Contact Us Online</small></h4><hr><div><i class="fa fa-home"></i> Visit our home page - <a href=http://www.prototyped.info>www.prototyped.info</a></div><hr></div>');
-  $templateCache.put('views/about/info.tpl.html',
+  $templateCache.put('modules/about/views/info.tpl.html',
     '<div id=about-info class=container style="width: 100%"><style resx:import=assets/css/images.min.css></style><div class=row><div class="col-lg-8 col-md-12 info-overview"><h4>About <small>your current status and application architecture</small></h4><hr><div class=row><div class="col-md-3 panel-left"><h5><i class="fa fa-gear"></i> My Client <small><span ng-if=true class=ng-cloak><b app:version ng-class="{ \'text-success glow-green\': appInfo.version }">loading...</b></span> <span ng-if=false><b class="text-danger glow-red"><i class="glyphicon glyphicon-remove"></i> Offline</b></span></small></h5><div ng:if=true><a class="panel-icon-lg img-terminal"><div ng:if="info.about.browser.name == \'Chrome\'" class="panel-icon-inner img-chrome"></div><div ng:if="info.about.browser.name == \'Chromium\'" class="panel-icon-inner img-chromium"></div><div ng:if="info.about.browser.name == \'Firefox\'" class="panel-icon-inner img-firefox"></div><div ng:if="info.about.browser.name == \'Internet Explorer\'" class="panel-icon-inner img-iexplore"></div><div ng:if="info.about.browser.name == \'Opera\'" class="panel-icon-inner img-opera"></div><div ng:if="info.about.browser.name == \'Safari\'" class="panel-icon-inner img-safari"></div><div ng:if="info.about.browser.name == \'SeaMonkey\'" class="panel-icon-inner img-seamonkey"></div><div ng:if="info.about.browser.name == \'Spartan\'" class="panel-icon-inner img-spartan"></div><div ng:if="info.about.os.name == \'Windows\'" class="panel-icon-overlay img-windows"></div><div ng:if="info.about.os.name == \'MacOS\'" class="panel-icon-overlay img-mac-os"></div><div ng:if="info.about.os.name == \'Apple\'" class="panel-icon-overlay img-apple"></div><div ng:if="info.about.os.name == \'UNIX\'" class="panel-icon-overlay img-unix"></div><div ng:if="info.about.os.name == \'Linux\'" class="panel-icon-overlay img-linux"></div><div ng:if="info.about.os.name == \'Ubuntu\'" class="panel-icon-overlay img-ubuntu"></div></a><p class=panel-label title="{{ info.about.os.name }} @ {{ info.about.os.version.alias }}">Host System: <b ng:if=info.about.os.name>{{ info.about.os.name }}</b> <em ng:if=!info.about.os.name>checking...</em> <span ng:if=info.about.os.version.alias>@ {{ info.about.os.version.alias }}</span></p><p class=panel-label title="{{ info.about.browser.name }} @ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? \'.\' + info.about.browser.version.build : \'\' }}">User Agent: <b ng:if=info.about.browser.name>{{ info.about.browser.name }}</b> <em ng:if=!info.about.browser.name>detecting...</em> <span ng:if=info.about.browser.version>@ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? \'.\' + info.about.browser.version.build : \'\' }}</span></p></div><div ng-switch=info.about.hdd.type class=panel-icon-lg><a ng-switch-default class="panel-icon-lg inactive-gray img-drive"></a> <a ng-switch-when=true class="panel-icon-lg img-drive-default"></a> <a ng-switch-when=onl class="panel-icon-lg img-drive-onl"></a> <a ng-switch-when=usb class="panel-icon-lg img-drive-usb"></a> <a ng-switch-when=ssd class="panel-icon-lg img-drive-ssd"></a> <a ng-switch-when=web class="panel-icon-lg img-drive-web"></a> <a ng-switch-when=mac class="panel-icon-lg img-drive-mac"></a> <a ng-switch-when=warn class="panel-icon-lg img-drive-warn"></a> <a ng-switch-when=hist class="panel-icon-lg img-drive-hist"></a> <a ng-switch-when=wifi class="panel-icon-lg img-drive-wifi"></a><div ng:if=info.about.webdb.active class="panel-icon-inset-bl img-webdb"></div></div><p ng:if=info.about.webdb.active class="panel-label ellipsis">Local databsse is <b class=glow-green>Online</b></p><p ng:if=!info.about.webdb.active class="panel-label text-muted ellipsis"><em>No local storage found</em></p><p ng:if=!info.about.webdb.active class="panel-label text-muted"><div class=progress ng-style="{ height: \'10px\' }" title="{{(100 * progA) + \'%\'}} ( {{info.about.webdb.used}} / {{info.about.webdb.size}} )"><div ng:init="progA = (info.about.webdb.size > 0) ? (info.about.webdb.used||0)/info.about.webdb.size : 0" class=progress-bar ng-class="\'progress-bar-info\'" role=progressbar aria-valuenow="{{ progA }}" aria-valuemin=0 aria-valuemax=100 ng-style="{width: (100 * progA) + \'%\'}" aria-valuetext="{{ (100.0 * progA) + \' %\' }}%"></div></div></p></div><div ng-init="tabOverviewMain = 0" ng-switch=tabOverviewMain class="col-md-6 panel-mid"><h5><span ng-if="info.about.server.active == undefined">Checking...</span> <span ng-if="info.about.server.active != undefined">Current Status</span> <small><span ng-if=!info.about.server><em class=text-muted>checking...</em></span> <span ng-if="info.about.server.active === false"><b class="text-danger glow-red">Offline</b>, faulty or disconnected.</span> <span ng-if="info.about.server.active && appState.node.active">Connected via <b class="text-warning glow-orange">web client</b>.</span> <span ng-if="info.about.server.active && !appState.node.active"><b class="text-success glow-green">Online</b> and fully operational.</span></small></h5><p class=ellipsis ng:if=info.about.server.url>Server Url: <a target=_blank ng-class="{ \'glow-green\':appState.node.active || info.about.protocol == \'https\', \'glow-blue\':!appState.node.active && info.about.protocol == \'http\', \'glow-red\':info.about.protocol == \'file\' }" ng-href="{{ info.about.server.url }}">{{ info.about.server.url }}</a></p><p><a href="" ng-click="tabOverviewMain = 0">Summary</a> | <a href="" ng-click="tabOverviewMain = 1">Details</a></p><div><div ng-switch-default><em>Loading...</em></div><div ng-switch-when=0><p>...</p></div><div ng-switch-when=1><pre>OS: {{ info.about.os }}</pre><pre>Browser: {{ info.about.browser }}</pre><pre>Server: {{ info.about.server }}</pre><pre>WebDB: {{ info.about.webdb }}</pre><pre>HDD: {{ info.about.hdd }}</pre></div></div></div><div class="col-md-3 panel-right"><h5><i class="fa fa-gear"></i> Web Server <small><span class=ng-cloak><b ng-class="{ \'text-success glow-green\': info.about.server.active, \'text-danger glow-red\': info.about.server.active == false }" app:version=server default-text="{{ info.about.server.active ? (info.about.server.active ? \'Online\' : \'Offline\') : \'n.a.\' }}">requesting...</b></span></small></h5><div ng:if=info.about.server.local><a class="panel-icon-lg img-server-local"></a></div><div ng:if=!info.about.server.local ng-class="{ \'inactive-gray\': true || info.versions.jqry }"><a class="panel-icon-lg img-server"><div ng:if="info.about.server.type == \'iis\'" class="panel-icon-inset img-iis"></div><div ng:if="info.about.server.type == \'node\'" class="panel-icon-inset img-node"></div><div ng:if="info.about.server.type == \'apache\'" class="panel-icon-inset img-apache"></div><div ng:if="info.about.server.name == \'Windows\'" class="panel-icon-overlay img-windows"></div><div ng:if="info.about.server.name == \'MacOS\'" class="panel-icon-overlay img-mac-os"></div><div ng:if="info.about.server.name == \'Apple\'" class="panel-icon-overlay img-apple"></div><div ng:if="info.about.server.name == \'UNIX\'" class="panel-icon-overlay img-unix"></div><div ng:if="info.about.server.name == \'Linux\'" class="panel-icon-overlay img-linux"></div></a><div ng:if=info.about.sql class="panel-icon-lg img-sqldb"></div></div></div></div><hr></div><div class="col-lg-4 hidden-md" ng:init="info.showUnavailable = false"><h4>Inspirations <small>come from great ideas</small></h4><hr><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.ng }" ng:hide="!info.showUnavailable && !info.versions.ng"><a class=app-info-icon target=_blank href="https://angularjs.org/"><div ng:if=true class="img-clipper img-angular"></div></a><div class=app-info-info><h5>Angular JS <small><span ng:if=info.versions.ng>@ v{{info.versions.ng}}</span> <span ng:if=!info.versions.ng><em>not found</em></span></small></h5><p ng:if=!info.versions.ng class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href="https://angularjs.org//">angularjs.org</a> for more info.</p><p ng:if=info.detects.ngUiUtils class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Utils found.</p><p ng:if=info.detects.ngUiRouter class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Router found.</p><p ng:if=info.detects.ngUiBootstrap class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Bootrap found.</p><p ng:if=info.detects.ngAnimate class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular Animations active.</p></div></div><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.nw }" ng:hide="!info.showUnavailable && !info.versions.nw"><a class=app-info-icon target=_blank href="http://nwjs.io/"><div ng:if=true class="img-clipper img-nodewebkit"></div></a><div class=app-info-info><h5>Node Webkit <small><span ng:if=info.versions.nw>@ v{{info.versions.nw}}</span> <span ng:if=!info.versions.nw><em>not available</em></span></small></h5><p ng:if=!info.versions.nw class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href="http://nwjs.io/">nwjs.io</a> for more info.</p><p ng:if=info.versions.nw class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are connected to node webkit.</p><p ng:if=info.versions.chromium class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running Chromium @ {{ info.versions.chromium }}.</p></div></div><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.njs }" ng:hide="!info.showUnavailable && !info.versions.njs"><a class=app-info-icon target=_blank href=http://www.nodejs.org><div ng:if=true class="img-clipper img-nodejs"></div></a><div class=app-info-info><h5>Node JS <small><span ng:if=info.versions.njs>@ v{{info.versions.njs}}</span> <span ng:if=!info.versions.njs><em>not available</em></span></small></h5><p ng:if=!info.versions.njs class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href=http://www.nodejs.org>NodeJS.org</a> for more info.</p><p ng:if=info.versions.njs class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are inside a node js runtime.</p><p ng:if=info.versions.v8 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running V8 @ {{ info.versions.v8 }}.</p><p ng:if=info.versions.openssl class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running OpenSSL @ {{ info.versions.openssl }}.</p></div></div><div class="app-aside-collapser centered" ng-if=!appState.node.active><a href="" ng:show=!info.showUnavailable ng-click="info.showUnavailable = !info.showUnavailable">Show More</a> <a href="" ng:show=info.showUnavailable ng-click="info.showUnavailable = !info.showUnavailable">Hide Inactive</a></div><hr><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.html }"><div class=app-info-icon><div ng:if="info.about.browser.name != \'Internet Explorer\'" class="img-clipper img-html5"></div><div ng:if="info.about.browser.name == \'Internet Explorer\'" class="img-clipper img-html5-ie"></div></div><div class=app-info-info><h5>HTML Rendering Mode <small><span ng-if=info.versions.html>@ v{{ info.versions.html }}</span> <span ng-if=!info.versions.html><em>unknown</em></span></small></h5><p ng:if="info.versions.html >= \'5.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running a modern browser.</p><p ng:if="info.versions.html < \'5.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> Your browser is out of date. Try upgrading.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.js }"><div class=app-info-icon><div ng:if=!info.versions.v8 class="img-clipper img-js-default"></div><div ng:if=info.versions.v8 class="img-clipper img-js-v8"></div></div><div class=app-info-info><h5>Javascript Engine<small><span ng:if=info.versions.js>@ v{{ info.versions.js }}</span> <span ng:if=!info.versions.js><em>not found</em></span></small></h5><p ng:if="info.versions.js >= \'5.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You have a modern javascript engine.</p><p ng:if="info.versions.js < \'5.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> Javascript is out of date or unavailable.</p><p ng:if=info.versions.v8 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Javascript V8 engine, build v{{info.versions.v8}}.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.css }"><div class=app-info-icon><div ng:if=true class="img-clipper img-css3"></div></div><div class=app-info-info><h5>Cascading Styles <small><span ng:if=info.versions.css>@ v{{ info.versions.css }}</span> <span ng:if=!info.versions.css><em class=text-muted>not found</em></span></small></h5><p ng:if="info.versions.css >= \'3.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>You have an up-to-date style engine.</span></p><p ng:if="info.versions.css < \'3.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <span>CSS out of date. Styling might be broken.</span></p><p ng:if=info.css.boostrap2 class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <span>Bootstrap 2 is depricated. Upgrade to 3.x.</span></p><p ng:if=info.css.boostrap3 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>Bootstrap and/or UI componets found.</span></p><p ng:if=info.detects.less class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>Support for LESS has been detected.</span></p><p ng:if=info.detects.bootstrap class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Bootstrap and/or UI Componets found.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.jqry }"><div class=app-info-icon><div ng:if=true class="img-clipper img-jquery"></div></div><div class=app-info-info><h5>jQuery <small><span ng:if=info.versions.jqry>@ v{{ info.versions.jqry }}</span> <span ng:if=!info.versions.jqry><em>not found</em></span></small></h5><p ng:if=info.versions.jqry class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> jQuery or jqLite is loaded.</p><p ng:if="info.versions.jqry < \'1.10\'" class=text-danger><i class="glyphicon glyphicon-warning-sign glow-orange"></i> jQuery is out of date!</p></div></div><hr></div></div></div>');
-  $templateCache.put('views/about/left.tpl.html',
+  $templateCache.put('modules/about/views/left.tpl.html',
     '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.info><i class="fa fa-info-circle"></i>&nbsp; About this app</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.conection><i class="fa fa-plug"></i>&nbsp; Check Connectivity</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.online><i class="fa fa-globe"></i>&nbsp; Visit us online</a></li></ul>');
+  $templateCache.put('modules/console/views/logs.tpl.html',
+    '<div class=container style=width:100%><span class=pull-right style="padding: 3px"><a href="" ng-click="">Refresh</a> | <a href="" ng-click="appState.logs = []">Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appState.logs.length><td colspan=3><em>No events have been logged...</em></td></tr><tr ng-repeat="row in appState.logs" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td class=ellipsis style="width: auto; overflow: hidden; white-space: pre">{{ row.desc }}</td></tr></tbody></table></div>');
+  $templateCache.put('modules/console/views/main.tpl.html',
+    '<div class=console><style>.contents {\n' +
+    '            padding: 0 !important;\n' +
+    '            margin: 0 !important;\n' +
+    '        }\n' +
+    '\n' +
+    '        .console {\n' +
+    '            display: flex;\n' +
+    '            flex-direction: column;\n' +
+    '            width: 100%;\n' +
+    '        }\n' +
+    '\n' +
+    '        .cmd-output {\n' +
+    '            width: 100%;\n' +
+    '            padding: 6px;\n' +
+    '        }</style><div class="cmd-output dock-fill"><div class=cmd-line ng-repeat="ln in lines"><span class=text-{{ln.type}}><i class=glyphicon title="{{ln.time | date:\'hh:mm:ss\'}}" ng-class="{ \'glyphicon-chevron-right\':ln.type==\'info\', \'glyphicon-ok-sign\':ln.type==\'success\', \'glyphicon-warning-sign\':ln.type==\'warning\', \'glyphicon-exclamation-sign\':ln.type==\'error\' }"></i> <span class=cmd-text>{{ln.text}}</span></span></div></div><div class="btn-group btn-group-xs" style="position: absolute; bottom: 0; left: 0; right: 0"><div class="btn-group btn-group-xs pull-left dropup"><a href="" class="btn btn-primary dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-chevron-right"></i> {{ myConsole.getProxyName() }}</a><ul class="dropdown-menu dropup" role=menu><li ng-repeat="itm in myConsole.getProxies()"><a href="" ng-click=myConsole.setProxy(itm.ProxyName)>Switch to {{ itm.ProxyName }}</a></li></ul></div><div class="input-group input-group-xs"><input id=txtInput tabindex=1 class=form-control ng-model=txtInput ng-keypress="($event.which === 13)?myConsole.command(txtInput):0" placeholder="Enter Command Here"> <a href="" class="input-group-addon btn btn-default" ng-click=myConsole.clear()><i class="glyphicon glyphicon-trash"></i></a></div></div></div>');
+  $templateCache.put('modules/editor/views/main.tpl.html',
+    '<div class=text-editor ng-init=myWriter.init()><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/codemirror.min.js></script><link href=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/codemirror.min.css rel=stylesheet><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/xml/xml.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/css/css.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/javascript/javascript.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.1.0/mode/htmlmixed/htmlmixed.min.js></script><style>.contents {\n' +
+    '            margin: 0 !important;\n' +
+    '            padding: 0 !important;\n' +
+    '        }</style><style resx:import=modules/editor/styles/css/editor.min.css></style><div class="btn-group btn-group-sm dock-tight"><a href="" class="btn btn-default pull-left" ng-click=myWriter.newFile()><i class="glyphicon glyphicon-file"></i></a> <a href="" class="btn btn-default pull-left" ng-click=myWriter.openFile() ng-disabled=!myWriter.HasFileSys><i class="glyphicon glyphicon-folder-open"></i></a><div class="btn-group btn-group-sm pull-right"><a href="" ng-disabled=!myWriter.FileLocation class="btn btn-default dropdown-toggle" data-toggle=dropdown><i class="glyphicon glyphicon-save"></i> <span class=caret></span></a><ul class=dropdown-menu role=menu><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileContents}"><a href="" ng-click=myWriter.saveFileAs()><i class="glyphicon glyphicon-floppy-disk"></i> Save file as...</a></li><li ng-class="{\'disabled\': !myWriter.HasFileSys || !myWriter.FileLocation}"><a href="" ng-click=myWriter.openFileLocation() ng-disabled="!myWriter.HasFileSys || !myWriter.FileLocation"><i class="glyphicon glyphicon-save"></i>Open file...</a></li></ul></div><a href="" class="btn btn-default pull-right" ng-click=myWriter.saveFile() ng-disabled="!(myWriter.HasFileSys && myWriter.HasChanges)"><i class="glyphicon glyphicon-floppy-disk"></i></a><div class="input-group input-group-sm"><label for=txtFileName class=input-group-addon>File:</label><input id=txtFileName class="cmd-input form-control" tabindex=1 value={{myWriter.FileLocation}} placeholder="{{ myWriter.FileLocation || \'Create new or open existing...\' }}" ng-readonly="true"></div></div><textarea id=FileContents class=text-area ng-disabled="myWriter.FileContents == null" ng-model=myWriter.FileContents></textarea><input style=display:none id=fileDialog type=file accept=".txt,.json"> <input style=display:none id=saveDialog type=file accept=.txt nwsaveas></div>');
+  $templateCache.put('modules/explore/views/addressbar.tpl.html',
+    '<div class="view-toolbar btn-group btn-group-sm"><style>#addressbar {\n' +
+    '            background: none;\n' +
+    '            padding: 0;\n' +
+    '            margin: 0;\n' +
+    '        }\n' +
+    '\n' +
+    '            #addressbar li {\n' +
+    '                padding: 0;\n' +
+    '                margin: 0;\n' +
+    '            }</style><a href="" class="btn btn-default pull-right" ng-click=addrBar.openFolder(dir_path) ng-disabled=!dir_parts><i class="glyphicon glyphicon-folder-open"></i></a> <a href="" ng-click=addrBar.back() class="btn btn-default pull-right" ng-disabled=!addrBar.hasHistory()><i class="glyphicon glyphicon-chevron-left"></i></a><div class="input-group input-group-sm"><label class=input-group-addon>Path:</label><div class="form-control nav-address-bar"><ul id=addressbar class=breadcrumb ng-show=dir_parts><li ng-repeat="itm in dir_parts.sequence" data-path={{itm.path}}><a href="" ng-click=addrBar.navigate(itm.path)>{{itm.name}}</a></li></ul><div class=text-error style="padding-left: 8px" ng-show=!dir_parts><i class="glyphicon glyphicon-bullhorn"></i> No access to local file system.</div></div></div></div>');
+  $templateCache.put('modules/explore/views/browser.tpl.html',
+    '<div style="width: 100%" ng:cloak><style>.ui-view-main {\n' +
+    '            margin: 0 !important;\n' +
+    '            padding: 0 !important;\n' +
+    '        }\n' +
+    '\n' +
+    '        .ui-view-left {\n' +
+    '            margin-right: 0 !important;\n' +
+    '        }\n' +
+    '\n' +
+    '        .view-selector {\n' +
+    '            padding: 3px;\n' +
+    '            margin-right: 8px;\n' +
+    '        }\n' +
+    '\n' +
+    '            .view-selector a {\n' +
+    '                color: #808080;\n' +
+    '                text-decoration: none;\n' +
+    '            }</style><div proto:address-bar style="position: relative"></div><div style="padding: 8px 16px"><div id=fileExplorer ng-class=viewMode.view><div class=loader ng-show=isBusy><br><em style="padding: 24px">Loading...</em></div><div ng-show="!isBusy && appNode.active"><div class=folder-contents ng-if="!folders.length && !files.length"><em>No files or folders were found...</em></div><div class=folder-contents><div class="view-selector pull-right" ng-init="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }"><div class="input-group pull-left"><a href="" class=dropdown-toggle data-toggle=dropdown aria-expanded=false><i ng-class=viewMode.css></i> {{ viewMode.desc || \'Default View\' }} <span class=caret></span></a><ul class="pull-right dropdown-menu" role=menu><li><a href="" ng-click="viewMode = { desc:\'Large Icons\', css:\'fa fa-th-large\', view: \'view-large\' }"><i class="fa fa-th-large"></i> Large Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Medium Icons\', css:\'fa fa-th\', view: \'view-med\' }"><i class="fa fa-th"></i> Medium Icons</a></li><li><a href="" ng-click="viewMode = { desc:\'Details View\', css:\'fa fa-list\', view: \'view-details\' }"><i class="fa fa-list"></i> Details View</a></li><li class=divider></li><li><a href="" ng-click="viewMode = { desc:\'Default View\', css:\'fa fa-th\', view: \'view-med\' }">Use Default</a></li></ul></div></div><h5 ng-if=folders.length>File Folders</h5><div id=files class=files ng-if=folders.length><a href="" class="file centered" ng-click=ctrlExplorer.navigate(itm.path) ng-repeat="itm in folders"><div class=icon><i class="glyphicon glyphicon-folder-open" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div><br style="clear:both"><br style="clear:both"><h5 ng-if=files.length>Application Files</h5><div id=files class=files ng-if=files.length><a href="" class="file centered" ng-repeat="itm in files" ng-class="{ \'focus\' : (selected == itm.path)}" ng-click=ctrlExplorer.select(itm.path) ng-dblclick=ctrlExplorer.open(itm.path)><div class=icon ng-switch=itm.type><i ng-switch-default class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=blank class="fa fa-file-o" style="font-size: 32px"></i> <i ng-switch-when=text class="fa fa-file-text-o" style="font-size: 32px"></i> <i ng-switch-when=image class="fa fa-file-image-o" style="font-size: 32px"></i> <i ng-switch-when=pdf class="fa fa-file-pdf-o" style="font-size: 32px"></i> <i ng-switch-when=css class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=html class="fa fa-file-code-o" style="font-size: 32px"></i> <i ng-switch-when=word class="fa fa-file-word-o" style="font-size: 32px"></i> <i ng-switch-when=powerpoint class="fa fa-file-powerpoint-o" style="font-size: 32px"></i> <i ng-switch-when=movie class="fa fa-file-movie-o" style="font-size: 32px"></i> <i ng-switch-when=excel class="fa fa-file-excel-o" style="font-size: 32px"></i> <i ng-switch-when=compressed class="fa fa-file-archive-o" style="font-size: 32px"></i></div><div class="name ellipsis">{{ itm.name }}</div></a></div></div></div><div ng-show="!isBusy && !appNode.active" class=ng-cloak><br><h5><i class="glyphicon glyphicon-warning-sign"></i> Warning <small>All features not available</small></h5><div class="alert alert-warning"><p><b>Please Note:</b> You are running this from a browser window.</p><p>For security reasons, web browsers do not have permission to use the local file system, or other advanced operating system features.</p><p>To use this application with full functionality, you need an elevated runtime (<a href=/about/info>see this how to</a>).</p></div></div></div></div></div>');
+  $templateCache.put('modules/explore/views/externals.tpl.html',
+    '<div class=external-links style="width: 100%"><style>.ui-view-main {\n' +
+    '            margin: 0 !important;\n' +
+    '            padding: 0 !important;\n' +
+    '            position: relative;\n' +
+    '        }\n' +
+    '\n' +
+    '        .ui-view-left {\n' +
+    '            margin-right: 0 !important;\n' +
+    '        }\n' +
+    '\n' +
+    '        .external-links {\n' +
+    '            margin:0;\n' +
+    '            left:0;\n' +
+    '            right:0;\n' +
+    '            bottom:0;\n' +
+    '            top:0;\n' +
+    '            display:flex;\n' +
+    '            position: absolute;\n' +
+    '            flex-direction:column;\n' +
+    '        }\n' +
+    '        .external-iframe {\n' +
+    '            margin:0;\n' +
+    '            width: 100%; \n' +
+    '            flex-grow: 1;\n' +
+    '            flex-shrink: 0;\n' +
+    '        }</style><div class="btn-group btn-group-sm dock-tight"><div class="input-group input-group-sm"><label for=txtFileName class=input-group-addon><i class="fa fa-globe"></i></label><input id=txtExternalUrl class="cmd-input form-control" tabindex=1 value="{{ linksCtrl.selected.data }}" placeholder="Location not set..." ng-readonly="true || !linksCtrl.selected.data" ng-changed="alert(this)"> <a href="" class="btn btn-default input-group-addon" ng-click=linksCtrl.refreshExternal() ng-disabled=!linksCtrl.selected><i class="fa fa-refresh"></i></a> <a href="" class="btn btn-default input-group-addon" ng-click=linksCtrl.openExternal() ng-disabled=!linksCtrl.selected><i class="fa fa-external-link"></i></a></div></div><iframe id=ExternalExplorerPanel frameborder=0 class=external-iframe ng-if=linksCtrl.selected onerror=console.error(event) ng-src="{{ linksCtrl.selected.data | trustedUrl }}">IFrame not available</iframe></div>');
+  $templateCache.put('modules/explore/views/left.tpl.html',
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-arrow-circle-left"></i>&nbsp; Site Map Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.explore\'"><abn:tree tree-data=navigation.siteExplorer.children icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.externalLinks><a ui:sref=proto.links><i class="fa fa-globe"></i>&nbsp; External Links</a></li><li class=list-group-item style="padding: 6px 0; overflow-x:hidden" ng-if="navigation.externalLinks && state.current.name == \'proto.links\'"><abn:tree tree-data=navigation.externalLinks.children icon-leaf="fa fa-globe" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.fileSystem><a ui:sref=proto.browser><i class="fa fa-hdd-o"></i>&nbsp; File System Browser</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.fileSystem && state.current.name == \'proto.browser\'"><style resx:import=assets/css/images.min.css></style><div class=info-overview ng-if=!appNode.active><div class=panel-icon-lg><div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px"></div></div></div><div ng-if="appNode.active && navigation.fileSystem"><abn:tree tree-data=navigation.fileSystem.children icon-leaf="fa fa-folder" icon-expand="fa fa-folder" icon-collapse="fa fa-folder-open" expand-level=2></abn:tree></div></li><li class=list-group-item ui:sref-active=active ng-if=navigation.clientStates><a ui:sref=proto.routing><i class="fa fa-tasks"></i>&nbsp; UI State &amp; Routing</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.clientStates && state.current.name == \'proto.routing\'"><abn:tree tree-data=navigation.clientStates icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
+  $templateCache.put('modules/explore/views/main.tpl.html',
+    '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail ng-if=exploreCtrl.selected><br><br><div class=row><div class=col-md-9><form class=form-horizontal><div class=form-group><label for=inputState class="col-sm-2 control-label">State</label><div class=col-sm-10><input class=form-control id=inputState placeholder=empty ng-model=exploreCtrl.selected.name readonly></div></div><div class=form-group><label for=inputPath class="col-sm-2 control-label">Path</label><div class=col-sm-10><input class=form-control id=inputPath placeholder="not set" ng-model=exploreCtrl.selected.url readonly></div></div><div class=form-group><div class="col-sm-offset-2 col-sm-10"><div class=checkbox><label><input type=checkbox ng-model=exploreCtrl.selected.abstract> Abstract</label></div></div></div><div class=form-group ng-if=exploreCtrl.selected.name><div class="col-sm-offset-2 col-sm-10"><a class="btn btn-default" ng-class="{ \'btn-primary\': !exploreCtrl.selected.abstract }" ui-sref="{{ exploreCtrl.selected.name }}" ng-disabled=exploreCtrl.selected.abstract>Got to page</a></div></div></form></div><div class=col-md-3>{{ exploreCtrl.selection.views }}</div></div></div></div>');
   $templateCache.put('views/common/components/contents.tpl.html',
     '<div id=contents class=contents><div id=left class="ui-view-left ng-cloak" ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div><div id=main class=ui-view-main ui:view=main><em class=inactive-fill-text ng:if=false><i class="fa fa-spinner fa-spin"></i> Loading...</em> <b class="inactive-fill-text ng-cloak" ng:if="!(state.current.views[\'main\'] || state.current.views[\'main@\'])"><i class="fa fa-exclamation-triangle faa-flash glow-orange"></i> Page not found</b></div></div>');
   $templateCache.put('views/common/components/footer.tpl.html',

@@ -2,7 +2,7 @@
 
 module proto.ng.modules.explorer {
 
-    export class BrowserViewController {
+    export class FileBrowserViewController {
 
         constructor(private $rootScope: any, private $scope: any, private $q: any, public navigation: proto.ng.modules.common.services.NavigationService) {
             var dir = './';
