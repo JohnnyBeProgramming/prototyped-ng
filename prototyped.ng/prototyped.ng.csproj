@@ -63,6 +63,7 @@
     <Content Include="builder\Gruntfile.js" />
     <Content Include="builder\tasks\app-run.js" />
     <Content Include="index.html" />
+    <TypeScriptCompile Include="modules\about\controllers\AboutConnectionController.ts" />
     <TypeScriptCompile Include="modules\about\controllers\AboutInfoController.ts" />
     <TypeScriptCompile Include="modules\common\AppInfo.ts" />
     <TypeScriptCompile Include="modules\common\AppNode.ts" />

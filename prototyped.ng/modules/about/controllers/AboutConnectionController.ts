@@ -1,4 +1,85 @@
-﻿module proto.ng.modules.about.controllers {
+﻿/// <reference path="../../common/services/NavigationService.ts" />
+
+module proto.ng.modules.about.controllers {
+
+    export class ConnectedNode extends proto.ng.modules.common.services.SiteNode {
+        public status: string;
+
+        public static UpdateUI: (action: () => void) => void = () => { };
+
+        constructor(name: string, public url: string) {
+            super(name, url);
+            this.classes = ['tree-item'];
+        }
+
+        public detect() {
+            try {
+                this.status = 'Checking';
+                this.classes = ['tree-item', 'loading'];
+                $.ajax({
+                    url: this.url,
+                    type: 'HEAD',
+                    timeout: 1000,
+                    statusCode: {
+                        200: (response) => {
+                            ConnectedNode.UpdateUI(() => {
+                                this.status = 'Online';
+                                this.classes = ['tree-item', 'online'];
+                            });
+                        },
+                        400: (response) => {
+                            ConnectedNode.UpdateUI(() => {
+                                this.status = 'Offline';
+                                this.classes = ['tree-item', 'offline'];
+                            });
+                        },
+                        404: (response) => {
+                            ConnectedNode.UpdateUI(() => {
+                                this.status = 'Not Found';
+                                this.classes = ['tree-item', 'offline'];
+                            });
+                        },
+                        0: (response) => {
+                            ConnectedNode.UpdateUI(() => {
+                                this.classes = ['tree-item', 'warning'];
+                                this.status = 'Unknown';
+                            });
+                        }
+                    }
+                });
+            } catch (ex) {
+                ConnectedNode.UpdateUI(() => {
+                    this.status = 'Failed';
+                    this.classes = ['tree-item', 'offline'];
+                });
+            }
+        }
+    }
+
+    export class ScriptNode extends ConnectedNode {
+
+        constructor(name: string, public url: string) {
+            super(name, url);
+        }
+
+    }
+
+    export class DomainNode extends ConnectedNode {
+        public scripts: ScriptNode[] = [];
+
+        constructor(domain: string) {
+            super(domain, domain);
+        }
+
+        public refresh() {
+            if (this.children) {
+                this.children.forEach((child: ConnectedNode) => {
+                    child.detect();
+                });
+            }
+            this.detect();
+        }
+    }
 
     export class AboutConnectionController {
 
@@ -11,12 +92,20 @@
             protocol: undefined,
             requireHttps: false,
         }
+        public domains: DomainNode[] = [];
+        public localhost: DomainNode;
+        public selected: proto.ng.modules.common.services.SiteNode;
+        private links: any = {};
 
-        constructor(private $scope, private $location, private appState: proto.ng.modules.common.AppState, public appInfo: proto.ng.modules.common.AppInfo) {
+        constructor(private $scope, private $location, private appState: proto.ng.modules.common.AppState, public appInfo: proto.ng.modules.common.AppInfo, public navigation: proto.ng.modules.common.services.NavigationService) {
             this.init();
         }
 
         private init() {
+            ConnectedNode.UpdateUI = (action) => {
+                this.appState.updateUI(action);
+            };
+
             this.$scope.info = this.appInfo;
 
             this.result = null;
@@ -28,7 +117,15 @@
                 requireHttps: (this.$location.$$protocol == 'https'),
             };
 
+            this.localhost = this.links['localhost'] = this.createNode('localhost');
+            this.localhost.label = 'Local Web Resources';
+
+            this.getScripts();
             this.detect();
+
+            this.domains.forEach((node: DomainNode) => {
+                node.refresh();
+            });
         }
 
         public detect() {
@@ -39,6 +136,8 @@
             this.status = { code: 0, desc: '', style: 'label-default' };
             $.ajax({
                 url: target,
+                type: 'HEAD',
+                timeout: 10000,
                 crossDomain: true,
                 /*
                 username: 'user',
@@ -83,7 +182,6 @@
                     });
                 },
                 complete: (xhr, textStatus) => {
-                    console.debug(' - Status Code: ' + xhr.status);
                     this.appState.updateUI(() => {
                         this.status.code = xhr.status;
                         this.status.desc = textStatus;
@@ -104,6 +202,66 @@
             } else {
                 this.detect();
             }
+        }
+
+        public createNode(domain: string): DomainNode {
+            var node = new DomainNode(domain);
+            node.onSelect = (itm) => { this.nodeSelect(itm); };
+            this.domains.push(node);
+            return node;
+        }
+
+        public nodeSelect(item: proto.ng.modules.common.services.SiteNode) {
+            if (this.selected == item) {
+                item.expanded = !item.expanded;
+                return;
+            }
+            if (this.selected) {
+                this.selected.selected = false;
+            }
+            item.selected = true;
+            this.selected = item;
+
+            if (item.data) {
+                var url = item.data;
+                if (!/https?\:\/\//i.test(url)) {
+                    url = 'http://' + url;
+                }
+                this.state.location = url;
+                this.detect();
+            }
+        }
+
+        public addLink(source, path, type) {
+            var linkElem = (<any>$('<a href="' + path + '"></a>')[0]);
+            var hostname: string = linkElem.hostname;
+            var pathDesc: string = linkElem.pathname;
+            var hostNode: DomainNode = (hostname in this.links) ? this.links[hostname] : null;
+            if (!hostNode) {
+                hostNode = this.createNode(hostname);
+                this.links[hostname] = hostNode;
+            }
+            var scriptNode = new ScriptNode(pathDesc, linkElem.href);
+            scriptNode.onSelect = (itm) => { this.nodeSelect(itm); };
+            hostNode.children.push(scriptNode);
+        }
+
+        public getScripts() {
+            // Get header scripts
+            $(document.head).find('script[src]').each((i, elem) => {
+                this.addLink('head', $(elem).attr('src'), $(elem).attr('type') || 'text/javascript');
+            });
+            $(document.head).find('link[href]').each((i, elem) => {
+                this.addLink('head', $(elem).attr('href'), $(elem).attr('type') || 'css/stylesheet');
+            });
+
+            // Get body scripts
+            $(document.body).find('script[src]').each((i, elem) => {
+                this.addLink('body', $(elem).attr('src'), $(elem).attr('type') || 'text/javascript');
+            });
+            $(document.head).find('link[href]').each((i, elem) => {
+                this.addLink('body', $(elem).attr('href'), $(elem).attr('type') || 'css/stylesheet');
+            });
         }
 
         public getLatencyInfo(): any {

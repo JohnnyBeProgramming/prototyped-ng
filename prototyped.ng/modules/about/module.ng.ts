@@ -70,4 +70,4 @@ angular.module('prototyped.about', [
     }])
     
     .controller('AboutInfoController', ['$scope', 'appInfo', proto.ng.modules.about.controllers.AboutInfoController])
-    .controller('AboutConnectionController', ['$scope', '$location', 'appState', 'appInfo', proto.ng.modules.about.controllers.AboutConnectionController])
+    .controller('AboutConnectionController', ['$scope', '$location', 'appState', 'appInfo', 'navigationService', proto.ng.modules.about.controllers.AboutConnectionController])

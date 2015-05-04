@@ -1,24 +1,516 @@
-﻿var proto;
+﻿var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (services) {
+                    var NavigationService = (function () {
+                        function NavigationService($state, appState) {
+                            this.$state = $state;
+                            this.appState = appState;
+                            this._treeData = [];
+                            this._treeMap = {};
+                            this.init();
+                        }
+                        NavigationService.prototype.init = function () {
+                            this.siteExplorer = new SiteExplorerRoot('Site Explorer', this.appState);
+                            this.register(this.siteExplorer);
+
+                            this.externalLinks = new ExternalLinksRoot('External Links', this.appState);
+                            this.register(this.externalLinks);
+
+                            if (this.appState.node.active) {
+                                this.fileSystem = new FileBrowserRoot('File Browser');
+                                this.register(this.fileSystem);
+                            }
+
+                            if (this.appState.debug) {
+                                this.clientStates = new SiteNavigationRoot('Client States', this.$state.get());
+                                this.register(this.clientStates);
+                            }
+                        };
+
+                        NavigationService.prototype.register = function (node) {
+                            var ident = node.label;
+                            if (ident in this._treeMap)
+                                return this;
+                            this._treeMap[ident] = node;
+                            this._treeData.push(node);
+                            return this;
+                        };
+
+                        NavigationService.prototype.findByLabel = function (ident) {
+                            var node;
+                            this._treeData.forEach(function (itm) {
+                                if (itm.label == ident)
+                                    node = itm;
+                            });
+                            return node;
+                        };
+
+                        NavigationService.prototype.getTreeData = function (ident) {
+                            var ret = [];
+                            if (!ident && this._treeData) {
+                                return this._treeData;
+                            } else if (this._treeData.length) {
+                                this._treeData.forEach(function (itm, i) {
+                                    if (itm.label == ident) {
+                                        ret.push(itm);
+                                    }
+                                });
+                            }
+                            return ret;
+                        };
+                        return NavigationService;
+                    })();
+                    services.NavigationService = NavigationService;
+
+                    var TreeNode = (function () {
+                        function TreeNode(nodeName) {
+                            this.children = [];
+                            this.classes = [];
+                            this.label = nodeName;
+                        }
+                        return TreeNode;
+                    })();
+                    services.TreeNode = TreeNode;
+
+                    var SiteNode = (function (_super) {
+                        __extends(SiteNode, _super);
+                        function SiteNode(nodeName, state) {
+                            _super.call(this, nodeName);
+                            this.state = state;
+                            this.data = state;
+                        }
+                        SiteNode.prototype.onSelect = function (node) {
+                            //this.$rootScope.$broadcast('nodeSelect', this);
+                        };
+                        return SiteNode;
+                    })(TreeNode);
+                    services.SiteNode = SiteNode;
+
+                    var SiteExplorerRoot = (function (_super) {
+                        __extends(SiteExplorerRoot, _super);
+                        function SiteExplorerRoot(nodeName, appState) {
+                            _super.call(this, nodeName, null);
+                            this.appState = appState;
+                            this.init();
+                        }
+                        SiteExplorerRoot.prototype.init = function () {
+                            var _this = this;
+                            this.children = [];
+                            this.appState.routers.forEach(function (route, i) {
+                                if (route.menuitem) {
+                                    var node = new SiteNode(route.menuitem.label, route);
+                                    if (node) {
+                                        node.onSelect = function (item) {
+                                            _this.appState.navigate(item.data);
+                                        };
+                                    }
+                                    _this.children.push(node);
+                                }
+                            });
+                        };
+                        return SiteExplorerRoot;
+                    })(SiteNode);
+                    services.SiteExplorerRoot = SiteExplorerRoot;
+
+                    var FileBrowserRoot = (function (_super) {
+                        __extends(FileBrowserRoot, _super);
+                        function FileBrowserRoot(nodeName) {
+                            _super.call(this, nodeName, './');
+                            this.init();
+                        }
+                        FileBrowserRoot.prototype.init = function () {
+                            var _this = this;
+                            this.children = [];
+                            try  {
+                                if (typeof require === 'undefined')
+                                    return;
+
+                                // Resolve the full path
+                                var path = require('path');
+                                var target = path.resolve(this.data);
+                                var pattern = /[^\\]+\\?$/i;
+                                if (!pattern.test(target) || target == '' || target.indexOf('\\') < 0) {
+                                    this.label = target || 'Drive Root';
+                                    this.populateItem(this, target);
+                                } else {
+                                    var links = [];
+                                    var cwd = target;
+                                    while (pattern.test(cwd) && cwd != '') {
+                                        var label = pattern.exec(cwd)[0];
+                                        var folder = cwd.replace(pattern, '');
+                                        if (label) {
+                                            if (label.lastIndexOf('\\') == label.length - 1)
+                                                label = label.substring(0, label.length - 1);
+                                            var linked = new SiteNode(label, cwd);
+                                            linked.onSelect = function (itm) {
+                                                _this.selectItem(itm);
+                                            };
+                                            links.push(linked);
+                                        }
+                                        cwd = folder;
+                                    }
+                                    var last = this;
+                                    while (links.length) {
+                                        var node = links.pop();
+                                        last.children.push(node);
+                                        last = node;
+                                        last.expanded = true;
+                                        this.populateItem(node, node.data);
+                                    }
+                                }
+                            } catch (ex) {
+                                throw ex;
+                            }
+                        };
+
+                        FileBrowserRoot.prototype.populateItem = function (parentNode, target) {
+                            var _this = this;
+                            if (!target)
+                                return;
+                            try  {
+                                // Read the folder contents
+                                var fs = require('fs');
+                                var path = require('path');
+                                fs.readdir(target, function (error, files) {
+                                    if (error) {
+                                        console.warn('Could not read from filesystem: ', error);
+                                        return;
+                                    }
+
+                                    for (var i = 0; i < files.sort().length; ++i) {
+                                        try  {
+                                            var targ = path.join(target, files[i]);
+                                            if (!parentNode.children.some(function (val) {
+                                                return val.label == files[i];
+                                            })) {
+                                                var stat = fs.statSync(targ);
+                                                if (stat.isDirectory()) {
+                                                    // Folder item
+                                                    var name = path.basename(targ);
+                                                    var linked = new SiteNode(name, targ);
+                                                    linked.onSelect = function (itm) {
+                                                        _this.selectItem(itm);
+                                                    };
+                                                    parentNode.children.push(linked);
+                                                } else {
+                                                    // File item
+                                                }
+                                            }
+                                        } catch (ex) {
+                                        }
+                                    }
+
+                                    parentNode.children.sort(function (a, b) {
+                                        return a.label == b.label ? 0 : (a.label > b.label ? 1 : -1);
+                                    });
+                                    parentNode.data.cached = true;
+
+                                    if (_this.UpdateUI) {
+                                        _this.UpdateUI();
+                                    }
+                                });
+                            } catch (ex) {
+                                console.warn(ex.message);
+                            }
+                        };
+
+                        FileBrowserRoot.prototype.selectItem = function (node) {
+                            if (!node.data.cached) {
+                                this.populateItem(node, node.data);
+                            }
+                            if (this.OnSelect) {
+                                this.OnSelect(node);
+                            }
+                        };
+                        return FileBrowserRoot;
+                    })(SiteNode);
+                    services.FileBrowserRoot = FileBrowserRoot;
+
+                    var SiteNavigationRoot = (function (_super) {
+                        __extends(SiteNavigationRoot, _super);
+                        function SiteNavigationRoot(nodeName, states) {
+                            _super.call(this, nodeName, null);
+                            this.states = states;
+                            this.stateCache = {};
+                            this.init();
+                        }
+                        SiteNavigationRoot.prototype.init = function () {
+                            var _this = this;
+                            this.children = [];
+                            this.states.forEach(function (state, i) {
+                                if (state.url == '^' || state.name == '') {
+                                    _this.data = state; // Root node
+                                } else if (state.name.indexOf('.') < 0) {
+                                    _this.addItem(_this, [state.name], state);
+                                } else {
+                                    var parts = state.name.split('.');
+                                    _this.addItem(_this, parts, state);
+                                }
+                            });
+                        };
+
+                        SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
+                            if (paths && paths.length) {
+                                var ident = paths[0];
+                                var parts = paths.splice(1);
+                                var node = this.stateCache[ident];
+                                if (!node) {
+                                    node = new SiteNode(ident, null);
+                                    this.stateCache[ident] = node;
+                                    parentNode.children.push(node);
+                                }
+                                if (!parts.length) {
+                                    node.data = state;
+                                } else {
+                                    this.addItem(node, parts, state);
+                                }
+                            }
+                        };
+                        return SiteNavigationRoot;
+                    })(SiteNode);
+                    services.SiteNavigationRoot = SiteNavigationRoot;
+
+                    var ExternalLinksRoot = (function (_super) {
+                        __extends(ExternalLinksRoot, _super);
+                        function ExternalLinksRoot(nodeName, appState) {
+                            _super.call(this, nodeName, '[externals]');
+                            this.appState = appState;
+                            this.init();
+                        }
+                        ExternalLinksRoot.prototype.init = function () {
+                            this.children = [];
+
+                            /*
+                            this.addGroup(this, 'Local Resources', [
+                            window.location.protocol + '//' + window.location.host + '/',
+                            window.location.protocol + '//' + window.location.host + '?/#/!test!/',
+                            window.location.protocol + '//' + window.location.host + '?/#/!debug!/',
+                            ]).expanded = false;
+                            */
+                            this.addGroup(this, 'Online Resources', [
+                                {
+                                    name: 'Wikipedia', url: 'https://www.wikipedia.org'
+                                },
+                                {
+                                    name: 'Wolfram Alpha', url: 'http://www.wolframalpha.com/'
+                                },
+                                {
+                                    name: 'Global Wind Maps', url: 'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286'
+                                },
+                                {
+                                    name: 'Disaster Info Map', url: 'http://hisz.rsoe.hu/alertmap/index2.php'
+                                }
+                            ]);
+                            this.addGroup(this, 'Development Resources', [
+                                {
+                                    name: 'Javascript Fiddler', url: 'https://jsfiddle.net/'
+                                },
+                                {
+                                    name: 'Microsoft.net Fiddler', url: 'https://dotnetfiddle.net/'
+                                },
+                                {
+                                    name: 'Font Awesome', url: 'http://fontawesome.io/icons/'
+                                },
+                                {
+                                    name: 'CSS3 Generator', url: 'http://css3generator.com/'
+                                },
+                                {
+                                    name: 'Regular Expressions', url: 'https://regex101.com/'
+                                }
+                            ]).expanded = false;
+                            /*
+                            this.addGroup(this, 'Additional Resources', [
+                            'http://www.databaseanswers.org/data_models/',
+                            'http://brunoimbrizi.com/experiments/#/07',
+                            'http://brunoimbrizi.com/experiments/#/03',
+                            ]).expanded = false;
+                            this.addGroup(this, 'Popular Websites', [
+                            'https://www.google.com',
+                            'https://www.facebook.com',
+                            'https://www.twitter.com',
+                            'https://www.reddit.com',
+                            ]).expanded = false;
+                            */
+                        };
+
+                        ExternalLinksRoot.prototype.addGroup = function (parent, name, urls) {
+                            var _this = this;
+                            var node = new SiteNode(name, urls);
+                            if (urls) {
+                                urls.forEach(function (info) {
+                                    if (typeof info == 'string') {
+                                        node.children.push(_this.createLink(info));
+                                    } else {
+                                        node.children.push(_this.createLink(info.url, info.name));
+                                    }
+                                });
+                            }
+                            if (parent) {
+                                parent.children.push(node);
+                            }
+                            return node;
+                        };
+
+                        ExternalLinksRoot.prototype.createLink = function (url, label) {
+                            var _this = this;
+                            var node = new SiteNode(label || url, url);
+                            if (node) {
+                                node.onSelect = function (item) {
+                                    if (_this.OnSelect) {
+                                        _this.OnSelect(item);
+                                    }
+                                };
+
+                                if (!label) {
+                                    var hostname = $('<a href="' + node.data + '"></a>')[0].hostname;
+                                    node.label = 'Loading: ' + hostname.replace('www.', '');
+                                    $.getJSON('http://whateverorigin.org/get?url=' + encodeURIComponent(node.data) + '&callback=?', function (data) {
+                                        var match = /\<title\>(.+)\<\/title\>/i.exec(data.contents);
+                                        if (match && match.length > 1) {
+                                            node.label = match[1];
+                                        }
+                                        if (_this.UpdateUI)
+                                            _this.UpdateUI();
+                                    });
+                                }
+                            }
+                            return node;
+                        };
+                        return ExternalLinksRoot;
+                    })(SiteNode);
+                    services.ExternalLinksRoot = ExternalLinksRoot;
+                })(common.services || (common.services = {}));
+                var services = common.services;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="../../common/services/NavigationService.ts" />
+var proto;
 (function (proto) {
     (function (ng) {
         (function (modules) {
             (function (about) {
                 (function (controllers) {
+                    var ConnectedNode = (function (_super) {
+                        __extends(ConnectedNode, _super);
+                        function ConnectedNode(name, url) {
+                            _super.call(this, name, url);
+                            this.url = url;
+                            this.classes = ['tree-item'];
+                        }
+                        ConnectedNode.prototype.detect = function () {
+                            var _this = this;
+                            try  {
+                                this.status = 'Checking';
+                                this.classes = ['tree-item', 'loading'];
+                                $.ajax({
+                                    url: this.url,
+                                    type: 'HEAD',
+                                    timeout: 1000,
+                                    statusCode: {
+                                        200: function (response) {
+                                            ConnectedNode.UpdateUI(function () {
+                                                _this.status = 'Online';
+                                                _this.classes = ['tree-item', 'online'];
+                                            });
+                                        },
+                                        400: function (response) {
+                                            ConnectedNode.UpdateUI(function () {
+                                                _this.status = 'Offline';
+                                                _this.classes = ['tree-item', 'offline'];
+                                            });
+                                        },
+                                        404: function (response) {
+                                            ConnectedNode.UpdateUI(function () {
+                                                _this.status = 'Not Found';
+                                                _this.classes = ['tree-item', 'offline'];
+                                            });
+                                        },
+                                        0: function (response) {
+                                            ConnectedNode.UpdateUI(function () {
+                                                _this.classes = ['tree-item', 'warning'];
+                                                _this.status = 'Unknown';
+                                            });
+                                        }
+                                    }
+                                });
+                            } catch (ex) {
+                                ConnectedNode.UpdateUI(function () {
+                                    _this.status = 'Failed';
+                                    _this.classes = ['tree-item', 'offline'];
+                                });
+                            }
+                        };
+                        ConnectedNode.UpdateUI = function () {
+                        };
+                        return ConnectedNode;
+                    })(proto.ng.modules.common.services.SiteNode);
+                    controllers.ConnectedNode = ConnectedNode;
+
+                    var ScriptNode = (function (_super) {
+                        __extends(ScriptNode, _super);
+                        function ScriptNode(name, url) {
+                            _super.call(this, name, url);
+                            this.url = url;
+                        }
+                        return ScriptNode;
+                    })(ConnectedNode);
+                    controllers.ScriptNode = ScriptNode;
+
+                    var DomainNode = (function (_super) {
+                        __extends(DomainNode, _super);
+                        function DomainNode(domain) {
+                            _super.call(this, domain, domain);
+                            this.scripts = [];
+                        }
+                        DomainNode.prototype.refresh = function () {
+                            if (this.children) {
+                                this.children.forEach(function (child) {
+                                    child.detect();
+                                });
+                            }
+                            this.detect();
+                        };
+                        return DomainNode;
+                    })(ConnectedNode);
+                    controllers.DomainNode = DomainNode;
+
                     var AboutConnectionController = (function () {
-                        function AboutConnectionController($scope, $location, appState, appInfo) {
+                        function AboutConnectionController($scope, $location, appState, appInfo, navigation) {
                             this.$scope = $scope;
                             this.$location = $location;
                             this.appState = appState;
                             this.appInfo = appInfo;
+                            this.navigation = navigation;
                             this.state = {
                                 editMode: false,
                                 location: undefined,
                                 protocol: undefined,
                                 requireHttps: false
                             };
+                            this.domains = [];
+                            this.links = {};
                             this.init();
                         }
                         AboutConnectionController.prototype.init = function () {
+                            var _this = this;
+                            ConnectedNode.UpdateUI = function (action) {
+                                _this.appState.updateUI(action);
+                            };
+
                             this.$scope.info = this.appInfo;
 
                             this.result = null;
@@ -30,7 +522,15 @@
                                 requireHttps: (this.$location.$$protocol == 'https')
                             };
 
+                            this.localhost = this.links['localhost'] = this.createNode('localhost');
+                            this.localhost.label = 'Local Web Resources';
+
+                            this.getScripts();
                             this.detect();
+
+                            this.domains.forEach(function (node) {
+                                node.refresh();
+                            });
                         };
 
                         AboutConnectionController.prototype.detect = function () {
@@ -42,6 +542,8 @@
                             this.status = { code: 0, desc: '', style: 'label-default' };
                             $.ajax({
                                 url: target,
+                                type: 'HEAD',
+                                timeout: 10000,
                                 crossDomain: true,
                                 /*
                                 username: 'user',
@@ -86,7 +588,6 @@
                                     });
                                 },
                                 complete: function (xhr, textStatus) {
-                                    console.debug(' - Status Code: ' + xhr.status);
                                     _this.appState.updateUI(function () {
                                         _this.status.code = xhr.status;
                                         _this.status.desc = textStatus;
@@ -106,6 +607,73 @@
                             } else {
                                 this.detect();
                             }
+                        };
+
+                        AboutConnectionController.prototype.createNode = function (domain) {
+                            var _this = this;
+                            var node = new DomainNode(domain);
+                            node.onSelect = function (itm) {
+                                _this.nodeSelect(itm);
+                            };
+                            this.domains.push(node);
+                            return node;
+                        };
+
+                        AboutConnectionController.prototype.nodeSelect = function (item) {
+                            if (this.selected == item) {
+                                item.expanded = !item.expanded;
+                                return;
+                            }
+                            if (this.selected) {
+                                this.selected.selected = false;
+                            }
+                            item.selected = true;
+                            this.selected = item;
+
+                            if (item.data) {
+                                var url = item.data;
+                                if (!/https?\:\/\//i.test(url)) {
+                                    url = 'http://' + url;
+                                }
+                                this.state.location = url;
+                                this.detect();
+                            }
+                        };
+
+                        AboutConnectionController.prototype.addLink = function (source, path, type) {
+                            var _this = this;
+                            var linkElem = $('<a href="' + path + '"></a>')[0];
+                            var hostname = linkElem.hostname;
+                            var pathDesc = linkElem.pathname;
+                            var hostNode = (hostname in this.links) ? this.links[hostname] : null;
+                            if (!hostNode) {
+                                hostNode = this.createNode(hostname);
+                                this.links[hostname] = hostNode;
+                            }
+                            var scriptNode = new ScriptNode(pathDesc, linkElem.href);
+                            scriptNode.onSelect = function (itm) {
+                                _this.nodeSelect(itm);
+                            };
+                            hostNode.children.push(scriptNode);
+                        };
+
+                        AboutConnectionController.prototype.getScripts = function () {
+                            var _this = this;
+                            // Get header scripts
+                            $(document.head).find('script[src]').each(function (i, elem) {
+                                _this.addLink('head', $(elem).attr('src'), $(elem).attr('type') || 'text/javascript');
+                            });
+                            $(document.head).find('link[href]').each(function (i, elem) {
+                                _this.addLink('head', $(elem).attr('href'), $(elem).attr('type') || 'css/stylesheet');
+                            });
+
+                            // Get body scripts
+                            $(document.body).find('script[src]').each(function (i, elem) {
+                                _this.addLink('body', $(elem).attr('src'), $(elem).attr('type') || 'text/javascript');
+                            });
+                            $(document.head).find('link[href]').each(function (i, elem) {
+                                _this.addLink('body', $(elem).attr('href'), $(elem).attr('type') || 'css/stylesheet');
+                            });
                         };
 
                         AboutConnectionController.prototype.getLatencyInfo = function () {
@@ -593,7 +1161,7 @@ angular.module('prototyped.about', [
                 }
             }
         });
-    }]).controller('AboutInfoController', ['$scope', 'appInfo', proto.ng.modules.about.controllers.AboutInfoController]).controller('AboutConnectionController', ['$scope', '$location', 'appState', 'appInfo', proto.ng.modules.about.controllers.AboutConnectionController]);
+    }]).controller('AboutInfoController', ['$scope', 'appInfo', proto.ng.modules.about.controllers.AboutInfoController]).controller('AboutConnectionController', ['$scope', '$location', 'appState', 'appInfo', 'navigationService', proto.ng.modules.about.controllers.AboutConnectionController]);
 var proto;
 (function (proto) {
     (function (ng) {
@@ -2481,405 +3049,6 @@ var proto;
                     providers.AppStateProvider = AppStateProvider;
                 })(common.providers || (common.providers = {}));
                 var providers = common.providers;
-            })(modules.common || (modules.common = {}));
-            var common = modules.common;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (common) {
-                (function (services) {
-                    var NavigationService = (function () {
-                        function NavigationService($state, appState) {
-                            this.$state = $state;
-                            this.appState = appState;
-                            this._treeData = [];
-                            this._treeMap = {};
-                            this.init();
-                        }
-                        NavigationService.prototype.init = function () {
-                            this.siteExplorer = new SiteExplorerRoot('Site Explorer', this.appState);
-                            this.register(this.siteExplorer);
-
-                            this.externalLinks = new ExternalLinksRoot('External Links', this.appState);
-                            this.register(this.externalLinks);
-
-                            if (this.appState.node.active) {
-                                this.fileSystem = new FileBrowserRoot('File Browser');
-                                this.register(this.fileSystem);
-                            }
-
-                            if (this.appState.debug) {
-                                this.clientStates = new SiteNavigationRoot('Client States', this.$state.get());
-                                this.register(this.clientStates);
-                            }
-                        };
-
-                        NavigationService.prototype.register = function (node) {
-                            var ident = node.label;
-                            if (ident in this._treeMap)
-                                return this;
-                            this._treeMap[ident] = node;
-                            this._treeData.push(node);
-                            return this;
-                        };
-
-                        NavigationService.prototype.findByLabel = function (ident) {
-                            var node;
-                            this._treeData.forEach(function (itm) {
-                                if (itm.label == ident)
-                                    node = itm;
-                            });
-                            return node;
-                        };
-
-                        NavigationService.prototype.getTreeData = function (ident) {
-                            var ret = [];
-                            if (!ident && this._treeData) {
-                                return this._treeData;
-                            } else if (this._treeData.length) {
-                                this._treeData.forEach(function (itm, i) {
-                                    if (itm.label == ident) {
-                                        ret.push(itm);
-                                    }
-                                });
-                            }
-                            return ret;
-                        };
-                        return NavigationService;
-                    })();
-                    services.NavigationService = NavigationService;
-
-                    var TreeNode = (function () {
-                        function TreeNode(nodeName) {
-                            this.children = [];
-                            this.classes = [];
-                            this.label = nodeName;
-                        }
-                        return TreeNode;
-                    })();
-                    services.TreeNode = TreeNode;
-
-                    var SiteNode = (function (_super) {
-                        __extends(SiteNode, _super);
-                        function SiteNode(nodeName, state) {
-                            _super.call(this, nodeName);
-                            this.state = state;
-                            this.data = state;
-                        }
-                        SiteNode.prototype.onSelect = function (node) {
-                            //this.$rootScope.$broadcast('nodeSelect', this);
-                        };
-                        return SiteNode;
-                    })(TreeNode);
-                    services.SiteNode = SiteNode;
-
-                    var SiteExplorerRoot = (function (_super) {
-                        __extends(SiteExplorerRoot, _super);
-                        function SiteExplorerRoot(nodeName, appState) {
-                            _super.call(this, nodeName, null);
-                            this.appState = appState;
-                            this.init();
-                        }
-                        SiteExplorerRoot.prototype.init = function () {
-                            var _this = this;
-                            this.children = [];
-                            this.appState.routers.forEach(function (route, i) {
-                                if (route.menuitem) {
-                                    var node = new SiteNode(route.menuitem.label, route);
-                                    if (node) {
-                                        node.onSelect = function (item) {
-                                            _this.appState.navigate(item.data);
-                                        };
-                                    }
-                                    _this.children.push(node);
-                                }
-                            });
-                        };
-                        return SiteExplorerRoot;
-                    })(SiteNode);
-                    services.SiteExplorerRoot = SiteExplorerRoot;
-
-                    var FileBrowserRoot = (function (_super) {
-                        __extends(FileBrowserRoot, _super);
-                        function FileBrowserRoot(nodeName) {
-                            _super.call(this, nodeName, './');
-                            this.init();
-                        }
-                        FileBrowserRoot.prototype.init = function () {
-                            var _this = this;
-                            this.children = [];
-                            try  {
-                                if (typeof require === 'undefined')
-                                    return;
-
-                                // Resolve the full path
-                                var path = require('path');
-                                var target = path.resolve(this.data);
-                                var pattern = /[^\\]+\\?$/i;
-                                if (!pattern.test(target) || target == '' || target.indexOf('\\') < 0) {
-                                    this.label = target || 'Drive Root';
-                                    this.populateItem(this, target);
-                                } else {
-                                    var links = [];
-                                    var cwd = target;
-                                    while (pattern.test(cwd) && cwd != '') {
-                                        var label = pattern.exec(cwd)[0];
-                                        var folder = cwd.replace(pattern, '');
-                                        if (label) {
-                                            if (label.lastIndexOf('\\') == label.length - 1)
-                                                label = label.substring(0, label.length - 1);
-                                            var linked = new SiteNode(label, cwd);
-                                            linked.onSelect = function (itm) {
-                                                _this.selectItem(itm);
-                                            };
-                                            links.push(linked);
-                                        }
-                                        cwd = folder;
-                                    }
-                                    var last = this;
-                                    while (links.length) {
-                                        var node = links.pop();
-                                        last.children.push(node);
-                                        last = node;
-                                        last.expanded = true;
-                                        this.populateItem(node, node.data);
-                                    }
-                                }
-                            } catch (ex) {
-                                throw ex;
-                            }
-                        };
-
-                        FileBrowserRoot.prototype.populateItem = function (parentNode, target) {
-                            var _this = this;
-                            if (!target)
-                                return;
-                            try  {
-                                // Read the folder contents
-                                var fs = require('fs');
-                                var path = require('path');
-                                fs.readdir(target, function (error, files) {
-                                    if (error) {
-                                        console.warn('Could not read from filesystem: ', error);
-                                        return;
-                                    }
-
-                                    for (var i = 0; i < files.sort().length; ++i) {
-                                        try  {
-                                            var targ = path.join(target, files[i]);
-                                            if (!parentNode.children.some(function (val) {
-                                                return val.label == files[i];
-                                            })) {
-                                                var stat = fs.statSync(targ);
-                                                if (stat.isDirectory()) {
-                                                    // Folder item
-                                                    var name = path.basename(targ);
-                                                    var linked = new SiteNode(name, targ);
-                                                    linked.onSelect = function (itm) {
-                                                        _this.selectItem(itm);
-                                                    };
-                                                    parentNode.children.push(linked);
-                                                } else {
-                                                    // File item
-                                                }
-                                            }
-                                        } catch (ex) {
-                                        }
-                                    }
-
-                                    parentNode.children.sort(function (a, b) {
-                                        return a.label == b.label ? 0 : (a.label > b.label ? 1 : -1);
-                                    });
-                                    parentNode.data.cached = true;
-
-                                    if (_this.UpdateUI) {
-                                        _this.UpdateUI();
-                                    }
-                                });
-                            } catch (ex) {
-                                console.warn(ex.message);
-                            }
-                        };
-
-                        FileBrowserRoot.prototype.selectItem = function (node) {
-                            if (!node.data.cached) {
-                                this.populateItem(node, node.data);
-                            }
-                            if (this.OnSelect) {
-                                this.OnSelect(node);
-                            }
-                        };
-                        return FileBrowserRoot;
-                    })(SiteNode);
-                    services.FileBrowserRoot = FileBrowserRoot;
-
-                    var SiteNavigationRoot = (function (_super) {
-                        __extends(SiteNavigationRoot, _super);
-                        function SiteNavigationRoot(nodeName, states) {
-                            _super.call(this, nodeName, null);
-                            this.states = states;
-                            this.stateCache = {};
-                            this.init();
-                        }
-                        SiteNavigationRoot.prototype.init = function () {
-                            var _this = this;
-                            this.children = [];
-                            this.states.forEach(function (state, i) {
-                                if (state.url == '^' || state.name == '') {
-                                    _this.data = state; // Root node
-                                } else if (state.name.indexOf('.') < 0) {
-                                    _this.addItem(_this, [state.name], state);
-                                } else {
-                                    var parts = state.name.split('.');
-                                    _this.addItem(_this, parts, state);
-                                }
-                            });
-                        };
-
-                        SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
-                            if (paths && paths.length) {
-                                var ident = paths[0];
-                                var parts = paths.splice(1);
-                                var node = this.stateCache[ident];
-                                if (!node) {
-                                    node = new SiteNode(ident, null);
-                                    this.stateCache[ident] = node;
-                                    parentNode.children.push(node);
-                                }
-                                if (!parts.length) {
-                                    node.data = state;
-                                } else {
-                                    this.addItem(node, parts, state);
-                                }
-                            }
-                        };
-                        return SiteNavigationRoot;
-                    })(SiteNode);
-                    services.SiteNavigationRoot = SiteNavigationRoot;
-
-                    var ExternalLinksRoot = (function (_super) {
-                        __extends(ExternalLinksRoot, _super);
-                        function ExternalLinksRoot(nodeName, appState) {
-                            _super.call(this, nodeName, '[externals]');
-                            this.appState = appState;
-                            this.init();
-                        }
-                        ExternalLinksRoot.prototype.init = function () {
-                            this.children = [];
-
-                            /*
-                            this.addGroup(this, 'Local Resources', [
-                            window.location.protocol + '//' + window.location.host + '/',
-                            window.location.protocol + '//' + window.location.host + '?/#/!test!/',
-                            window.location.protocol + '//' + window.location.host + '?/#/!debug!/',
-                            ]).expanded = false;
-                            */
-                            this.addGroup(this, 'Online Resources', [
-                                {
-                                    name: 'Wikipedia', url: 'https://www.wikipedia.org'
-                                },
-                                {
-                                    name: 'Wolfram Alpha', url: 'http://www.wolframalpha.com/'
-                                },
-                                {
-                                    name: 'Global Wind Maps', url: 'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286'
-                                },
-                                {
-                                    name: 'Disaster Info Map', url: 'http://hisz.rsoe.hu/alertmap/index2.php'
-                                }
-                            ]);
-                            this.addGroup(this, 'Development Resources', [
-                                {
-                                    name: 'Javascript Fiddler', url: 'https://jsfiddle.net/'
-                                },
-                                {
-                                    name: 'Microsoft.net Fiddler', url: 'https://dotnetfiddle.net/'
-                                },
-                                {
-                                    name: 'Font Awesome', url: 'http://fontawesome.io/icons/'
-                                },
-                                {
-                                    name: 'CSS3 Generator', url: 'http://css3generator.com/'
-                                },
-                                {
-                                    name: 'Regular Expressions', url: 'https://regex101.com/'
-                                }
-                            ]).expanded = false;
-                            /*
-                            this.addGroup(this, 'Additional Resources', [
-                            'http://www.databaseanswers.org/data_models/',
-                            'http://brunoimbrizi.com/experiments/#/07',
-                            'http://brunoimbrizi.com/experiments/#/03',
-                            ]).expanded = false;
-                            this.addGroup(this, 'Popular Websites', [
-                            'https://www.google.com',
-                            'https://www.facebook.com',
-                            'https://www.twitter.com',
-                            'https://www.reddit.com',
-                            ]).expanded = false;
-                            */
-                        };
-
-                        ExternalLinksRoot.prototype.addGroup = function (parent, name, urls) {
-                            var _this = this;
-                            var node = new SiteNode(name, urls);
-                            if (urls) {
-                                urls.forEach(function (info) {
-                                    if (typeof info == 'string') {
-                                        node.children.push(_this.createLink(info));
-                                    } else {
-                                        node.children.push(_this.createLink(info.url, info.name));
-                                    }
-                                });
-                            }
-                            if (parent) {
-                                parent.children.push(node);
-                            }
-                            return node;
-                        };
-
-                        ExternalLinksRoot.prototype.createLink = function (url, label) {
-                            var _this = this;
-                            var node = new SiteNode(label || url, url);
-                            if (node) {
-                                node.onSelect = function (item) {
-                                    if (_this.OnSelect) {
-                                        _this.OnSelect(item);
-                                    }
-                                };
-
-                                if (!label) {
-                                    var hostname = $('<a href="' + node.data + '"></a>')[0].hostname;
-                                    node.label = 'Loading: ' + hostname.replace('www.', '');
-                                    $.getJSON('http://whateverorigin.org/get?url=' + encodeURIComponent(node.data) + '&callback=?', function (data) {
-                                        var match = /\<title\>(.+)\<\/title\>/i.exec(data.contents);
-                                        if (match && match.length > 1) {
-                                            node.label = match[1];
-                                        }
-                                        if (_this.UpdateUI)
-                                            _this.UpdateUI();
-                                    });
-                                }
-                            }
-                            return node;
-                        };
-                        return ExternalLinksRoot;
-                    })(SiteNode);
-                    services.ExternalLinksRoot = ExternalLinksRoot;
-                })(common.services || (common.services = {}));
-                var services = common.services;
             })(modules.common || (modules.common = {}));
             var common = modules.common;
         })(ng.modules || (ng.modules = {}));

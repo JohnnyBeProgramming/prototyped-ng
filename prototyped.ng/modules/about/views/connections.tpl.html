@@ -96,6 +96,30 @@
                 margin: 0;
                 padding: 0;
             }
+
+        .tree-item a {
+            color: #4a4a4a !important;
+        }
+
+        .tree-item.online a .fa {
+            color: #00b500 !important;
+            text-shadow: 0 0 2px #00b500;
+        }
+
+        .tree-item.offline a .fa {
+            color: #D00 !important;
+            text-shadow: 0 0 2px #D00;
+        }
+
+        .tree-item.warning a .fa {
+            color: #ff8d00 !important;
+            text-shadow: 0 0 2px #ff8d00;
+        }
+
+        .nav-pills > li.active > a, .nav-pills > li.active > a:focus, .nav-pills > li.active > a:hover {
+            background-color: #d8e1e8!important;
+            border-color: #337ab7!important;
+        }
     </style>
     <div class="info-overview results">
         <div class="row" style="width: 100%;">
@@ -167,15 +191,11 @@
                         </div>
                     </div>
                 </p>
-                <div class="icon">
-                    <i class="glyphicon glyphicon-globe"></i>
-                    <i class="sub-icon glyphicon" ng-class="connCtrl.getStatusColor()"></i>
-                </div>
             </div>
             <div class="col-md-8" ng-init="tabOverviewMain = 0" ng-switch="tabOverviewMain">
                 <h5>
                     <i class="fa fa-globe"></i>
-                    <span>{{ connCtrl.state.location }}</span>
+                    <span>Connection Details</span>
                     <small class="pull-right">
                         <a class="ctrl-sm" ng-click="connCtrl.state.editMode = true" href=""><i class="glyphicon glyphicon-pencil"></i></a>
                     </small>
@@ -197,6 +217,31 @@
                 <div>
                     <div ng-if="!connCtrl.state.editMode">
                         <div ng-if="connCtrl.state.location">
+                            <p class="info-row">
+                                <div class="info-col-primary pull-left">
+                                    Location: <a>{{ connCtrl.state.location }}</a>
+                                    <br class="clearfix" />
+                                </div>
+                                <div class="info-col-secondary pull-right">
+
+                                </div>
+                                <br class="clearfix" />
+                            </p>
+                            <p class="info-row">
+                                <div class="info-col-primary pull-left" ng-if="connCtrl.result">
+                                    <div class="info-col-ellipse">
+                                        Latency: {{ connCtrl.result.received - connCtrl.result.sent }}ms
+                                        <span ng-if="connCtrl.latency.desc" ng-class="connCtrl.latency.style">
+                                            (<em>{{ connCtrl.latency.desc }}</em>)
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="info-col-primary pull-left" ng-if="!connCtrl.result"><em>Checking...</em></div>
+                                <div class="info-col-secondary pull-right">
+                                    <span ng-if="connCtrl.status.code >= 0" class="pull-right label" ng-class="connCtrl.status.style" title="Status: {{ connCtrl.status.desc }}, Code: {{ connCtrl.status.code }}">{{ connCtrl.status.desc }}: {{ connCtrl.status.code }}</span>
+                                </div>
+                                <br class="clearfix" />
+                            </p>
                             <p class="info-row">
                                 <div class="info-col-primary pull-left">
                                     Protocol: <span class="btn-group btn-group-xs" role="group" aria-label="...">
@@ -229,23 +274,8 @@
                                 </div>
                                 <br class="clearfix" />
                             </p>
-                            <p class="info-row">
-                                <div class="info-col-primary pull-left" ng-if="connCtrl.result">
-                                    <div class="info-col-ellipse">
-                                        Latency: {{ connCtrl.result.received - connCtrl.result.sent }}ms
-                                        <span ng-if="connCtrl.latency.desc" ng-class="connCtrl.latency.style">
-                                            (<em>{{ connCtrl.latency.desc }}</em>)
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="info-col-primary pull-left" ng-if="!connCtrl.result"><em>Checking...</em></div>
-                                <div class="info-col-secondary pull-right">
-                                    <span ng-if="connCtrl.status.code >= 0" class="pull-right label" ng-class="connCtrl.status.style" title="Status: {{ connCtrl.status.desc }}, Code: {{ connCtrl.status.code }}">{{ connCtrl.status.desc }}: {{ connCtrl.status.code }}</span>
-                                </div>
-                                <br class="clearfix" />
-                            </p>
                         </div>
-                        
+                        <br />
                     </div>
                     <form class="" ng-if="connCtrl.state.editMode">
                         <div class="form-group">
@@ -272,21 +302,46 @@
                         <button type="submit" class="btn btn-primary" ng-click="connCtrl.submitForm()">Update</button>
                     </form>
                 </div>
-                <div ng-if="!connCtrl.state.activeTab && connCtrl.result != null">
-                    <p>
-                        <div class="alert alert-warning" ng-if="connCtrl.result.valid && connCtrl.state.protocol == 'http'">
-                            <i class="glyphicon glyphicon-eye-open"></i> <b>Warning:</b> The web connection <b class="text-danger">is not secure</b>, use <a href="" ng-click="connCtrl.setProtocol('https')">HTTPS</a>.
-                        </div>
-                        <div class="alert alert-success" ng-if="connCtrl.result.valid && connCtrl.state.protocol == 'https'">
-                            <i class="glyphicon glyphicon-ok"></i> <b>Validated:</b> The web connection looks secure.
-                        </div>
-                        <div class="alert alert-danger" ng-if="!connCtrl.result.valid && connCtrl.result.error && connCtrl.result.error != 'error'">
-                            <i class="glyphicon glyphicon-exclamation-sign"></i> <b>Failed:</b> {{ connCtrl.result.error }}
-                        </div>
-                        <div class="alert alert-danger" ng-if="!connCtrl.result.valid && !(connCtrl.result.error && connCtrl.result.error != 'error')">
-                            <i class="glyphicon glyphicon-exclamation-sign"></i> <b>Offline:</b> Connection could not be established.
-                        </div>
-                    </p>
+                <div ng-if="!connCtrl.state.activeTab">
+                    <table class="table" width="100%">
+                        <thead>
+                        <th style="width: auto; overflow-x: hidden;">
+                            Description
+                        </th>
+                        <th style="width: 64px; text-align: right;">
+                            Actions
+                        </th>
+                        <th style="width: 80px; text-align: center;">
+                            Status
+                        </th>
+                        </thead>
+                        <tbody>
+                            <tr ng-if="!connCtrl.domains">
+                                <td colspan="4"><em>Nothing to show yet. Fetch some data first...</em></td>
+                            </tr>
+                            <tr ng-repeat="domain in connCtrl.domains">
+                                <td class="ellipsis">
+                                    <abn:tree tree-data="[domain]"
+                                              icon-leaf="fa fa-dot-circle-o"
+                                              icon-expand="fa fa-globe"
+                                              icon-collapse="fa fa-globe"
+                                              expand-level="0">
+                                    </abn:tree>
+                                </td>
+                                <td style="text-align: right;">
+                                    <a href="" ng-click="domain.refresh()">
+                                        <i class="fa fa-refresh inactive-gray"></i>
+                                    </a>
+                                </td>
+                                <td style="width: 80px; text-align: center;">
+                                    <div class="label label-default"
+                                         ng-class="{ 'label-success':domain.status=='Online', 'label-danger':domain.status=='Offline', 'label-danger':domain.status=='Not Found' }">
+                                        {{ domain.status || 'Not Set' }}
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
                 <div ng-if="connCtrl.state.activeTab == 'preview'" class="panel panel-default">
                     <div class="panel-heading">
@@ -321,9 +376,8 @@
                         </tab>
                     </tabset>
                 </div>
-
             </div>
-            <div class="col-md-2">                
+            <div class="col-md-2">
                 <h5>
                     <i class="fa fa-gear"></i>
                     Web Server <small>
@@ -348,6 +402,20 @@
                     </a>
                     <div ng:if="info.about.sql" class="panel-icon-lg img-sqldb"></div>
                 </div>
+                <p>
+                    <div class="alert alert-warning" ng-if="connCtrl.result.valid && connCtrl.state.protocol == 'http'">
+                        <i class="glyphicon glyphicon-eye-open"></i> <b>Warning:</b> <br />The web connection <b class="text-danger">is not secure</b>, use <a href="" ng-click="connCtrl.setProtocol('https')">HTTPS</a>.
+                    </div>
+                    <div class="alert alert-success" ng-if="connCtrl.result.valid && connCtrl.state.protocol == 'https'">
+                        <i class="glyphicon glyphicon-ok"></i> <b>Validated:</b> <br />The web connection looks secure.
+                    </div>
+                    <div class="alert alert-danger" ng-if="!connCtrl.result.valid && connCtrl.result.error && connCtrl.result.error != 'error'">
+                        <i class="glyphicon glyphicon-exclamation-sign"></i> <b>Failed:</b> <br />{{ connCtrl.result.error }}
+                    </div>
+                    <div class="alert alert-danger" ng-if="!connCtrl.result.valid && !(connCtrl.result.error && connCtrl.result.error != 'error')">
+                        <i class="glyphicon glyphicon-exclamation-sign"></i> <b>Offline:</b> <br />Connection could not be established.
+                    </div>
+                </p>
             </div>
         </div>
     </div>

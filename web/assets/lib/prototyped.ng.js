@@ -1,3 +1,797 @@
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (services) {
+                    var NavigationService = (function () {
+                        function NavigationService($state, appState) {
+                            this.$state = $state;
+                            this.appState = appState;
+                            this._treeData = [];
+                            this._treeMap = {};
+                            this.init();
+                        }
+                        NavigationService.prototype.init = function () {
+                            this.siteExplorer = new SiteExplorerRoot('Site Explorer', this.appState);
+                            this.register(this.siteExplorer);
+
+                            this.externalLinks = new ExternalLinksRoot('External Links', this.appState);
+                            this.register(this.externalLinks);
+
+                            if (this.appState.node.active) {
+                                this.fileSystem = new FileBrowserRoot('File Browser');
+                                this.register(this.fileSystem);
+                            }
+
+                            if (this.appState.debug) {
+                                this.clientStates = new SiteNavigationRoot('Client States', this.$state.get());
+                                this.register(this.clientStates);
+                            }
+                        };
+
+                        NavigationService.prototype.register = function (node) {
+                            var ident = node.label;
+                            if (ident in this._treeMap)
+                                return this;
+                            this._treeMap[ident] = node;
+                            this._treeData.push(node);
+                            return this;
+                        };
+
+                        NavigationService.prototype.findByLabel = function (ident) {
+                            var node;
+                            this._treeData.forEach(function (itm) {
+                                if (itm.label == ident)
+                                    node = itm;
+                            });
+                            return node;
+                        };
+
+                        NavigationService.prototype.getTreeData = function (ident) {
+                            var ret = [];
+                            if (!ident && this._treeData) {
+                                return this._treeData;
+                            } else if (this._treeData.length) {
+                                this._treeData.forEach(function (itm, i) {
+                                    if (itm.label == ident) {
+                                        ret.push(itm);
+                                    }
+                                });
+                            }
+                            return ret;
+                        };
+                        return NavigationService;
+                    })();
+                    services.NavigationService = NavigationService;
+
+                    var TreeNode = (function () {
+                        function TreeNode(nodeName) {
+                            this.children = [];
+                            this.classes = [];
+                            this.label = nodeName;
+                        }
+                        return TreeNode;
+                    })();
+                    services.TreeNode = TreeNode;
+
+                    var SiteNode = (function (_super) {
+                        __extends(SiteNode, _super);
+                        function SiteNode(nodeName, state) {
+                            _super.call(this, nodeName);
+                            this.state = state;
+                            this.data = state;
+                        }
+                        SiteNode.prototype.onSelect = function (node) {
+                            //this.$rootScope.$broadcast('nodeSelect', this);
+                        };
+                        return SiteNode;
+                    })(TreeNode);
+                    services.SiteNode = SiteNode;
+
+                    var SiteExplorerRoot = (function (_super) {
+                        __extends(SiteExplorerRoot, _super);
+                        function SiteExplorerRoot(nodeName, appState) {
+                            _super.call(this, nodeName, null);
+                            this.appState = appState;
+                            this.init();
+                        }
+                        SiteExplorerRoot.prototype.init = function () {
+                            var _this = this;
+                            this.children = [];
+                            this.appState.routers.forEach(function (route, i) {
+                                if (route.menuitem) {
+                                    var node = new SiteNode(route.menuitem.label, route);
+                                    if (node) {
+                                        node.onSelect = function (item) {
+                                            _this.appState.navigate(item.data);
+                                        };
+                                    }
+                                    _this.children.push(node);
+                                }
+                            });
+                        };
+                        return SiteExplorerRoot;
+                    })(SiteNode);
+                    services.SiteExplorerRoot = SiteExplorerRoot;
+
+                    var FileBrowserRoot = (function (_super) {
+                        __extends(FileBrowserRoot, _super);
+                        function FileBrowserRoot(nodeName) {
+                            _super.call(this, nodeName, './');
+                            this.init();
+                        }
+                        FileBrowserRoot.prototype.init = function () {
+                            var _this = this;
+                            this.children = [];
+                            try  {
+                                if (typeof require === 'undefined')
+                                    return;
+
+                                // Resolve the full path
+                                var path = require('path');
+                                var target = path.resolve(this.data);
+                                var pattern = /[^\\]+\\?$/i;
+                                if (!pattern.test(target) || target == '' || target.indexOf('\\') < 0) {
+                                    this.label = target || 'Drive Root';
+                                    this.populateItem(this, target);
+                                } else {
+                                    var links = [];
+                                    var cwd = target;
+                                    while (pattern.test(cwd) && cwd != '') {
+                                        var label = pattern.exec(cwd)[0];
+                                        var folder = cwd.replace(pattern, '');
+                                        if (label) {
+                                            if (label.lastIndexOf('\\') == label.length - 1)
+                                                label = label.substring(0, label.length - 1);
+                                            var linked = new SiteNode(label, cwd);
+                                            linked.onSelect = function (itm) {
+                                                _this.selectItem(itm);
+                                            };
+                                            links.push(linked);
+                                        }
+                                        cwd = folder;
+                                    }
+                                    var last = this;
+                                    while (links.length) {
+                                        var node = links.pop();
+                                        last.children.push(node);
+                                        last = node;
+                                        last.expanded = true;
+                                        this.populateItem(node, node.data);
+                                    }
+                                }
+                            } catch (ex) {
+                                throw ex;
+                            }
+                        };
+
+                        FileBrowserRoot.prototype.populateItem = function (parentNode, target) {
+                            var _this = this;
+                            if (!target)
+                                return;
+                            try  {
+                                // Read the folder contents
+                                var fs = require('fs');
+                                var path = require('path');
+                                fs.readdir(target, function (error, files) {
+                                    if (error) {
+                                        console.warn('Could not read from filesystem: ', error);
+                                        return;
+                                    }
+
+                                    for (var i = 0; i < files.sort().length; ++i) {
+                                        try  {
+                                            var targ = path.join(target, files[i]);
+                                            if (!parentNode.children.some(function (val) {
+                                                return val.label == files[i];
+                                            })) {
+                                                var stat = fs.statSync(targ);
+                                                if (stat.isDirectory()) {
+                                                    // Folder item
+                                                    var name = path.basename(targ);
+                                                    var linked = new SiteNode(name, targ);
+                                                    linked.onSelect = function (itm) {
+                                                        _this.selectItem(itm);
+                                                    };
+                                                    parentNode.children.push(linked);
+                                                } else {
+                                                    // File item
+                                                }
+                                            }
+                                        } catch (ex) {
+                                        }
+                                    }
+
+                                    parentNode.children.sort(function (a, b) {
+                                        return a.label == b.label ? 0 : (a.label > b.label ? 1 : -1);
+                                    });
+                                    parentNode.data.cached = true;
+
+                                    if (_this.UpdateUI) {
+                                        _this.UpdateUI();
+                                    }
+                                });
+                            } catch (ex) {
+                                console.warn(ex.message);
+                            }
+                        };
+
+                        FileBrowserRoot.prototype.selectItem = function (node) {
+                            if (!node.data.cached) {
+                                this.populateItem(node, node.data);
+                            }
+                            if (this.OnSelect) {
+                                this.OnSelect(node);
+                            }
+                        };
+                        return FileBrowserRoot;
+                    })(SiteNode);
+                    services.FileBrowserRoot = FileBrowserRoot;
+
+                    var SiteNavigationRoot = (function (_super) {
+                        __extends(SiteNavigationRoot, _super);
+                        function SiteNavigationRoot(nodeName, states) {
+                            _super.call(this, nodeName, null);
+                            this.states = states;
+                            this.stateCache = {};
+                            this.init();
+                        }
+                        SiteNavigationRoot.prototype.init = function () {
+                            var _this = this;
+                            this.children = [];
+                            this.states.forEach(function (state, i) {
+                                if (state.url == '^' || state.name == '') {
+                                    _this.data = state; // Root node
+                                } else if (state.name.indexOf('.') < 0) {
+                                    _this.addItem(_this, [state.name], state);
+                                } else {
+                                    var parts = state.name.split('.');
+                                    _this.addItem(_this, parts, state);
+                                }
+                            });
+                        };
+
+                        SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
+                            if (paths && paths.length) {
+                                var ident = paths[0];
+                                var parts = paths.splice(1);
+                                var node = this.stateCache[ident];
+                                if (!node) {
+                                    node = new SiteNode(ident, null);
+                                    this.stateCache[ident] = node;
+                                    parentNode.children.push(node);
+                                }
+                                if (!parts.length) {
+                                    node.data = state;
+                                } else {
+                                    this.addItem(node, parts, state);
+                                }
+                            }
+                        };
+                        return SiteNavigationRoot;
+                    })(SiteNode);
+                    services.SiteNavigationRoot = SiteNavigationRoot;
+
+                    var ExternalLinksRoot = (function (_super) {
+                        __extends(ExternalLinksRoot, _super);
+                        function ExternalLinksRoot(nodeName, appState) {
+                            _super.call(this, nodeName, '[externals]');
+                            this.appState = appState;
+                            this.init();
+                        }
+                        ExternalLinksRoot.prototype.init = function () {
+                            this.children = [];
+
+                            /*
+                            this.addGroup(this, 'Local Resources', [
+                            window.location.protocol + '//' + window.location.host + '/',
+                            window.location.protocol + '//' + window.location.host + '?/#/!test!/',
+                            window.location.protocol + '//' + window.location.host + '?/#/!debug!/',
+                            ]).expanded = false;
+                            */
+                            this.addGroup(this, 'Online Resources', [
+                                {
+                                    name: 'Wikipedia', url: 'https://www.wikipedia.org'
+                                },
+                                {
+                                    name: 'Wolfram Alpha', url: 'http://www.wolframalpha.com/'
+                                },
+                                {
+                                    name: 'Global Wind Maps', url: 'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286'
+                                },
+                                {
+                                    name: 'Disaster Info Map', url: 'http://hisz.rsoe.hu/alertmap/index2.php'
+                                }
+                            ]);
+                            this.addGroup(this, 'Development Resources', [
+                                {
+                                    name: 'Javascript Fiddler', url: 'https://jsfiddle.net/'
+                                },
+                                {
+                                    name: 'Microsoft.net Fiddler', url: 'https://dotnetfiddle.net/'
+                                },
+                                {
+                                    name: 'Font Awesome', url: 'http://fontawesome.io/icons/'
+                                },
+                                {
+                                    name: 'CSS3 Generator', url: 'http://css3generator.com/'
+                                },
+                                {
+                                    name: 'Regular Expressions', url: 'https://regex101.com/'
+                                }
+                            ]).expanded = false;
+                            /*
+                            this.addGroup(this, 'Additional Resources', [
+                            'http://www.databaseanswers.org/data_models/',
+                            'http://brunoimbrizi.com/experiments/#/07',
+                            'http://brunoimbrizi.com/experiments/#/03',
+                            ]).expanded = false;
+                            this.addGroup(this, 'Popular Websites', [
+                            'https://www.google.com',
+                            'https://www.facebook.com',
+                            'https://www.twitter.com',
+                            'https://www.reddit.com',
+                            ]).expanded = false;
+                            */
+                        };
+
+                        ExternalLinksRoot.prototype.addGroup = function (parent, name, urls) {
+                            var _this = this;
+                            var node = new SiteNode(name, urls);
+                            if (urls) {
+                                urls.forEach(function (info) {
+                                    if (typeof info == 'string') {
+                                        node.children.push(_this.createLink(info));
+                                    } else {
+                                        node.children.push(_this.createLink(info.url, info.name));
+                                    }
+                                });
+                            }
+                            if (parent) {
+                                parent.children.push(node);
+                            }
+                            return node;
+                        };
+
+                        ExternalLinksRoot.prototype.createLink = function (url, label) {
+                            var _this = this;
+                            var node = new SiteNode(label || url, url);
+                            if (node) {
+                                node.onSelect = function (item) {
+                                    if (_this.OnSelect) {
+                                        _this.OnSelect(item);
+                                    }
+                                };
+
+                                if (!label) {
+                                    var hostname = $('<a href="' + node.data + '"></a>')[0].hostname;
+                                    node.label = 'Loading: ' + hostname.replace('www.', '');
+                                    $.getJSON('http://whateverorigin.org/get?url=' + encodeURIComponent(node.data) + '&callback=?', function (data) {
+                                        var match = /\<title\>(.+)\<\/title\>/i.exec(data.contents);
+                                        if (match && match.length > 1) {
+                                            node.label = match[1];
+                                        }
+                                        if (_this.UpdateUI)
+                                            _this.UpdateUI();
+                                    });
+                                }
+                            }
+                            return node;
+                        };
+                        return ExternalLinksRoot;
+                    })(SiteNode);
+                    services.ExternalLinksRoot = ExternalLinksRoot;
+                })(common.services || (common.services = {}));
+                var services = common.services;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="../../common/services/NavigationService.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (about) {
+                (function (controllers) {
+                    var ConnectedNode = (function (_super) {
+                        __extends(ConnectedNode, _super);
+                        function ConnectedNode(name, url) {
+                            _super.call(this, name, url);
+                            this.url = url;
+                            this.classes = ['tree-item'];
+                        }
+                        ConnectedNode.prototype.detect = function () {
+                            var _this = this;
+                            try  {
+                                this.status = 'Checking';
+                                this.classes = ['tree-item', 'loading'];
+                                $.ajax({
+                                    url: this.url,
+                                    type: 'HEAD',
+                                    timeout: 1000,
+                                    statusCode: {
+                                        200: function (response) {
+                                            ConnectedNode.UpdateUI(function () {
+                                                _this.status = 'Online';
+                                                _this.classes = ['tree-item', 'online'];
+                                            });
+                                        },
+                                        400: function (response) {
+                                            ConnectedNode.UpdateUI(function () {
+                                                _this.status = 'Offline';
+                                                _this.classes = ['tree-item', 'offline'];
+                                            });
+                                        },
+                                        404: function (response) {
+                                            ConnectedNode.UpdateUI(function () {
+                                                _this.status = 'Not Found';
+                                                _this.classes = ['tree-item', 'offline'];
+                                            });
+                                        },
+                                        0: function (response) {
+                                            ConnectedNode.UpdateUI(function () {
+                                                _this.classes = ['tree-item', 'warning'];
+                                                _this.status = 'Unknown';
+                                            });
+                                        }
+                                    }
+                                });
+                            } catch (ex) {
+                                ConnectedNode.UpdateUI(function () {
+                                    _this.status = 'Failed';
+                                    _this.classes = ['tree-item', 'offline'];
+                                });
+                            }
+                        };
+                        ConnectedNode.UpdateUI = function () {
+                        };
+                        return ConnectedNode;
+                    })(proto.ng.modules.common.services.SiteNode);
+                    controllers.ConnectedNode = ConnectedNode;
+
+                    var ScriptNode = (function (_super) {
+                        __extends(ScriptNode, _super);
+                        function ScriptNode(name, url) {
+                            _super.call(this, name, url);
+                            this.url = url;
+                        }
+                        return ScriptNode;
+                    })(ConnectedNode);
+                    controllers.ScriptNode = ScriptNode;
+
+                    var DomainNode = (function (_super) {
+                        __extends(DomainNode, _super);
+                        function DomainNode(domain) {
+                            _super.call(this, domain, domain);
+                            this.scripts = [];
+                        }
+                        DomainNode.prototype.refresh = function () {
+                            if (this.children) {
+                                this.children.forEach(function (child) {
+                                    child.detect();
+                                });
+                            }
+                            this.detect();
+                        };
+                        return DomainNode;
+                    })(ConnectedNode);
+                    controllers.DomainNode = DomainNode;
+
+                    var AboutConnectionController = (function () {
+                        function AboutConnectionController($scope, $location, appState, appInfo, navigation) {
+                            this.$scope = $scope;
+                            this.$location = $location;
+                            this.appState = appState;
+                            this.appInfo = appInfo;
+                            this.navigation = navigation;
+                            this.state = {
+                                editMode: false,
+                                location: undefined,
+                                protocol: undefined,
+                                requireHttps: false
+                            };
+                            this.domains = [];
+                            this.links = {};
+                            this.init();
+                        }
+                        AboutConnectionController.prototype.init = function () {
+                            var _this = this;
+                            ConnectedNode.UpdateUI = function (action) {
+                                _this.appState.updateUI(action);
+                            };
+
+                            this.$scope.info = this.appInfo;
+
+                            this.result = null;
+                            this.status = null;
+                            this.state = {
+                                editMode: false,
+                                location: this.$location.$$absUrl,
+                                protocol: this.$location.$$protocol,
+                                requireHttps: (this.$location.$$protocol == 'https')
+                            };
+
+                            this.localhost = this.links['localhost'] = this.createNode('localhost');
+                            this.localhost.label = 'Local Web Resources';
+
+                            this.getScripts();
+                            this.detect();
+
+                            this.domains.forEach(function (node) {
+                                node.refresh();
+                            });
+                        };
+
+                        AboutConnectionController.prototype.detect = function () {
+                            var _this = this;
+                            var target = this.state.location;
+                            var started = Date.now();
+                            this.result = null;
+                            this.latency = null;
+                            this.status = { code: 0, desc: '', style: 'label-default' };
+                            $.ajax({
+                                url: target,
+                                type: 'HEAD',
+                                timeout: 10000,
+                                crossDomain: true,
+                                /*
+                                username: 'user',
+                                password: 'pass',
+                                xhrFields: {
+                                withCredentials: true
+                                }
+                                */
+                                beforeSend: function (xhr) {
+                                    _this.appState.updateUI(function () {
+                                        //this.status.code = xhr.status;
+                                        _this.status.desc = 'sending';
+                                        _this.status.style = 'label-info';
+                                    });
+                                },
+                                success: function (data, textStatus, xhr) {
+                                    _this.appState.updateUI(function () {
+                                        _this.status.code = xhr.status;
+                                        _this.status.desc = textStatus;
+                                        _this.status.style = 'label-success';
+                                        _this.result = {
+                                            valid: true,
+                                            info: data,
+                                            sent: started,
+                                            received: Date.now()
+                                        };
+                                    });
+                                },
+                                error: function (xhr, textStatus, error) {
+                                    xhr.ex = error;
+                                    _this.appState.updateUI(function () {
+                                        _this.status.code = xhr.status;
+                                        _this.status.desc = textStatus;
+                                        _this.status.style = 'label-danger';
+                                        _this.result = {
+                                            valid: false,
+                                            info: xhr,
+                                            sent: started,
+                                            error: xhr.statusText,
+                                            received: Date.now()
+                                        };
+                                    });
+                                },
+                                complete: function (xhr, textStatus) {
+                                    _this.appState.updateUI(function () {
+                                        _this.status.code = xhr.status;
+                                        _this.status.desc = textStatus;
+                                    });
+                                }
+                            }).always(function (xhr) {
+                                _this.appState.updateUI(function () {
+                                    _this.latency = _this.getLatencyInfo();
+                                });
+                            });
+                        };
+
+                        AboutConnectionController.prototype.submitForm = function () {
+                            this.state.editMode = false;
+                            if (this.state.requireHttps) {
+                                this.setProtocol('https');
+                            } else {
+                                this.detect();
+                            }
+                        };
+
+                        AboutConnectionController.prototype.createNode = function (domain) {
+                            var _this = this;
+                            var node = new DomainNode(domain);
+                            node.onSelect = function (itm) {
+                                _this.nodeSelect(itm);
+                            };
+                            this.domains.push(node);
+                            return node;
+                        };
+
+                        AboutConnectionController.prototype.nodeSelect = function (item) {
+                            if (this.selected == item) {
+                                item.expanded = !item.expanded;
+                                return;
+                            }
+                            if (this.selected) {
+                                this.selected.selected = false;
+                            }
+                            item.selected = true;
+                            this.selected = item;
+
+                            if (item.data) {
+                                var url = item.data;
+                                if (!/https?\:\/\//i.test(url)) {
+                                    url = 'http://' + url;
+                                }
+                                this.state.location = url;
+                                this.detect();
+                            }
+                        };
+
+                        AboutConnectionController.prototype.addLink = function (source, path, type) {
+                            var _this = this;
+                            var linkElem = $('<a href="' + path + '"></a>')[0];
+                            var hostname = linkElem.hostname;
+                            var pathDesc = linkElem.pathname;
+                            var hostNode = (hostname in this.links) ? this.links[hostname] : null;
+                            if (!hostNode) {
+                                hostNode = this.createNode(hostname);
+                                this.links[hostname] = hostNode;
+                            }
+                            var scriptNode = new ScriptNode(pathDesc, linkElem.href);
+                            scriptNode.onSelect = function (itm) {
+                                _this.nodeSelect(itm);
+                            };
+                            hostNode.children.push(scriptNode);
+                        };
+
+                        AboutConnectionController.prototype.getScripts = function () {
+                            var _this = this;
+                            // Get header scripts
+                            $(document.head).find('script[src]').each(function (i, elem) {
+                                _this.addLink('head', $(elem).attr('src'), $(elem).attr('type') || 'text/javascript');
+                            });
+                            $(document.head).find('link[href]').each(function (i, elem) {
+                                _this.addLink('head', $(elem).attr('href'), $(elem).attr('type') || 'css/stylesheet');
+                            });
+
+                            // Get body scripts
+                            $(document.body).find('script[src]').each(function (i, elem) {
+                                _this.addLink('body', $(elem).attr('src'), $(elem).attr('type') || 'text/javascript');
+                            });
+                            $(document.head).find('link[href]').each(function (i, elem) {
+                                _this.addLink('body', $(elem).attr('href'), $(elem).attr('type') || 'css/stylesheet');
+                            });
+                        };
+
+                        AboutConnectionController.prototype.getLatencyInfo = function () {
+                            var cssNone = 'text-muted';
+                            var cssHigh = 'text-success';
+                            var cssMedium = 'text-warning';
+                            var cssLow = 'text-danger';
+                            var info = {
+                                desc: '',
+                                style: cssNone
+                            };
+
+                            if (!this.result) {
+                                return info;
+                            }
+
+                            if (!this.result.valid) {
+                                info.style = 'text-muted';
+                                info.desc = 'Connection Failed';
+                                return info;
+                            }
+
+                            var totalMs = this.result.received - this.result.sent;
+                            if (totalMs > 2 * 60 * 1000) {
+                                info.style = cssNone;
+                                info.desc = 'Timed out';
+                            } else if (totalMs > 1 * 60 * 1000) {
+                                info.style = cssLow;
+                                info.desc = 'Impossibly slow';
+                            } else if (totalMs > 30 * 1000) {
+                                info.style = cssLow;
+                                info.desc = 'Very slow';
+                            } else if (totalMs > 1 * 1000) {
+                                info.style = cssMedium;
+                                info.desc = 'Relatively slow';
+                            } else if (totalMs > 500) {
+                                info.style = cssMedium;
+                                info.desc = 'Moderately slow';
+                            } else if (totalMs > 250) {
+                                info.style = cssMedium;
+                                info.desc = 'Barely Responsive';
+                            } else if (totalMs > 150) {
+                                info.style = cssHigh;
+                                info.desc = 'Average Response Time';
+                            } else if (totalMs > 50) {
+                                info.style = cssHigh;
+                                info.desc = 'Responsive Enough';
+                            } else if (totalMs > 15) {
+                                info.style = cssHigh;
+                                info.desc = 'Very Responsive';
+                            } else {
+                                info.style = cssHigh;
+                                info.desc = 'Optimal';
+                            }
+                            return info;
+                        };
+
+                        AboutConnectionController.prototype.getStatusColor = function () {
+                            var cssRes = this.getStatusIcon() + ' ';
+                            if (!this.result) {
+                                cssRes += 'busy';
+                            } else if (this.result.valid) {
+                                cssRes += 'success';
+                            } else {
+                                cssRes += 'error';
+                            }
+                            return cssRes;
+                        };
+
+                        AboutConnectionController.prototype.getStatusIcon = function (activeStyle) {
+                            var cssRes = '';
+                            if (!this.result) {
+                                cssRes += 'glyphicon-refresh';
+                            } else if (activeStyle && this.result.valid) {
+                                cssRes += activeStyle;
+                            } else {
+                                cssRes += this.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
+                            }
+                            return cssRes;
+                        };
+
+                        AboutConnectionController.prototype.getProtocolStyle = function (protocol, activeStyle) {
+                            var cssRes = '';
+                            var isValid = this.state.location.indexOf(protocol + '://') == 0;
+                            if (isValid) {
+                                if (!this.result) {
+                                    cssRes += 'btn-primary';
+                                } else if (this.result.valid && activeStyle) {
+                                    cssRes += activeStyle;
+                                } else if (this.result) {
+                                    cssRes += this.result.valid ? 'btn-success' : 'btn-danger';
+                                }
+                            }
+                            return cssRes;
+                        };
+
+                        AboutConnectionController.prototype.setProtocol = function (protocol) {
+                            var val = this.state.location;
+                            var pos = val.indexOf('://');
+                            if (pos > 0) {
+                                val = protocol + val.substring(pos);
+                            }
+                            this.state.protocol = protocol;
+                            this.state.location = val;
+                            this.detect();
+                        };
+                        return AboutConnectionController;
+                    })();
+                    controllers.AboutConnectionController = AboutConnectionController;
+                })(about.controllers || (about.controllers = {}));
+                var controllers = about.controllers;
+            })(modules.about || (modules.about = {}));
+            var about = modules.about;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 var proto;
 (function (proto) {
     (function (ng) {
@@ -5,24 +799,55 @@ var proto;
             (function (about) {
                 (function (controllers) {
                     var AboutInfoController = (function () {
-                        function AboutInfoController($rootScope, $scope, $location, info) {
-                            this.$rootScope = $rootScope;
+                        function AboutInfoController($scope, appInfo) {
                             this.$scope = $scope;
-                            this.$location = $location;
-                            this.info = info;
-                            //this.info = new proto.ng.modules.common.AppInfo(navigator.appCodeName, navigator.userAgent);
-                            console.debug(' - Info: ', info);
+                            this.appInfo = appInfo;
                             this.init();
                         }
                         AboutInfoController.prototype.init = function () {
+                            this.$scope.info = this.appInfo;
+                        };
+                        return AboutInfoController;
+                    })();
+                    controllers.AboutInfoController = AboutInfoController;
+                })(about.controllers || (about.controllers = {}));
+                var controllers = about.controllers;
+            })(modules.about || (modules.about = {}));
+            var about = modules.about;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (providers) {
+                    var AppInfoProvider = (function () {
+                        function AppInfoProvider(appStateProvider) {
+                            this.appStateProvider = appStateProvider;
+                            this.appState = appStateProvider.appState;
+                            this.appInfo = new proto.ng.modules.common.AppInfo(navigator.appCodeName, navigator.userAgent);
+                            this.init();
+                        }
+                        AppInfoProvider.prototype.init = function () {
                             // Define the state
-                            this.$scope.detectBrowserInfo = this.detectBrowserInfo;
-                            this.$scope.info = this.detectBrowserInfo();
+                            this.detectBrowserInfo();
                         };
 
-                        AboutInfoController.prototype.detectBrowserInfo = function () {
+                        AppInfoProvider.prototype.$get = function () {
+                            return this.appInfo;
+                        };
+
+                        AppInfoProvider.prototype.refreshUI = function (action) {
+                            this.appState.updateUI(action);
+                        };
+
+                        AppInfoProvider.prototype.detectBrowserInfo = function () {
                             var _this = this;
-                            var info = this.info;
+                            var info = this.appInfo;
                             try  {
                                 // Get IE version (if defined)
                                 if (!!window['ActiveXObject']) {
@@ -45,9 +870,9 @@ var proto;
 
                                 // Update location settings
                                 angular.extend(info.about, {
-                                    protocol: this.$location.$$protocol,
+                                    protocol: window.location.protocol,
                                     server: {
-                                        url: this.$location.$$absUrl
+                                        url: window.location.href
                                     }
                                 });
 
@@ -90,7 +915,7 @@ var proto;
 
                                 // Send a loaded package to a server to detect more features
                                 $.getScript(detectUrl).done(function (script, textStatus) {
-                                    _this.$rootScope.$applyAsync(function () {
+                                    _this.refreshUI(function () {
                                         // Browser info and details loaded
                                         var browserInfo = new window.WhichBrowser();
                                         angular.extend(info.about, browserInfo);
@@ -115,7 +940,7 @@ var proto;
                             return info;
                         };
 
-                        AboutInfoController.prototype.detectOSName = function () {
+                        AppInfoProvider.prototype.detectOSName = function () {
                             var osName = 'Unknown OS';
                             var appVer = navigator.appVersion;
                             if (appVer) {
@@ -132,7 +957,7 @@ var proto;
                             return osName;
                         };
 
-                        AboutInfoController.prototype.getWebDBInfo = function () {
+                        AppInfoProvider.prototype.getWebDBInfo = function () {
                             var _this = this;
                             var webDB = {
                                 db: null,
@@ -159,14 +984,14 @@ var proto;
                                             console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
                                         }
                                     }
-                                    _this.$rootScope.$applyAsync(function () {
+                                    _this.refreshUI(function () {
                                         webDB.active = true;
                                         webDB.used = JSON.stringify(webDB.db).length;
                                     });
                                 },
                                 onError: function (tx, e) {
                                     console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
-                                    _this.$rootScope.$applyAsync(function () {
+                                    _this.refreshUI(function () {
                                         webDB.active = false;
                                     });
                                 }
@@ -174,13 +999,13 @@ var proto;
                             return webDB;
                         };
 
-                        AboutInfoController.prototype.checkScriptLoaded = function (sources, filter) {
+                        AppInfoProvider.prototype.checkScriptLoaded = function (sources, filter) {
                             sources.forEach(function (src) {
                                 filter(src);
                             });
                         };
 
-                        AboutInfoController.prototype.getDetectUrl = function () {
+                        AppInfoProvider.prototype.getDetectUrl = function () {
                             return (function () {
                                 var p = [], w = window, d = document, e = 0, f = 0;
                                 p.push('ua=' + encodeURIComponent(navigator.userAgent));
@@ -207,7 +1032,7 @@ var proto;
                             })();
                         };
 
-                        AboutInfoController.prototype.resolveUserAgent = function (info) {
+                        AppInfoProvider.prototype.resolveUserAgent = function (info) {
                             var cn = info.codeName;
                             var ua = info.userAgent;
                             if (ua) {
@@ -240,7 +1065,7 @@ var proto;
                             }
                         };
 
-                        AboutInfoController.prototype.getVersionInfo = function (ident) {
+                        AppInfoProvider.prototype.getVersionInfo = function (ident) {
                             try  {
                                 if (typeof process !== 'undefined' && process.versions) {
                                     return process.versions[ident];
@@ -250,13 +1075,13 @@ var proto;
                             return null;
                         };
 
-                        AboutInfoController.prototype.selectorExists = function (selector) {
+                        AppInfoProvider.prototype.selectorExists = function (selector) {
                             return false;
                             //var ret = css($(selector));
                             //return ret;
                         };
 
-                        AboutInfoController.prototype.css = function (a) {
+                        AppInfoProvider.prototype.css = function (a) {
                             var sheets = document.styleSheets, o = [];
                             for (var i in sheets) {
                                 var rules = sheets[i].rules || sheets[i].cssRules;
@@ -268,13 +1093,13 @@ var proto;
                             }
                             return o;
                         };
-                        return AboutInfoController;
+                        return AppInfoProvider;
                     })();
-                    controllers.AboutInfoController = AboutInfoController;
-                })(about.controllers || (about.controllers = {}));
-                var controllers = about.controllers;
-            })(modules.about || (modules.about = {}));
-            var about = modules.about;
+                    providers.AppInfoProvider = AppInfoProvider;
+                })(common.providers || (common.providers = {}));
+                var providers = common.providers;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
         })(ng.modules || (ng.modules = {}));
         var modules = ng.modules;
     })(proto.ng || (proto.ng = {}));
@@ -331,199 +1156,12 @@ angular.module('prototyped.about', [
                 'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
                 'main@': {
                     templateUrl: 'modules/about/views/connections.tpl.html',
-                    controller: 'AboutConnectionController'
+                    controller: 'AboutConnectionController',
+                    controllerAs: 'connCtrl'
                 }
             }
         });
-    }]).provider('appInfoProvider', ['appStateProvider', proto.ng.modules.common.providers.AppInfoProvider]).run([
-    '$rootScope', 'appState', function ($rootScope, appState) {
-        console.debug(' - appState.setUpdateAction: ', appState.setUpdateAction);
-        appState.setUpdateAction(function (action) {
-            $rootScope.$applyAsync(action);
-        });
-    }]).controller('AboutInfoController', ['$rootScope', '$scope', '$location', 'appInfo', proto.ng.modules.about.controllers.AboutInfoController]).controller('AboutConnectionController', [
-    '$scope', '$location', '$timeout', function ($scope, $location, $timeout) {
-        $scope.result = null;
-        $scope.status = null;
-        $scope.state = {
-            editMode: false,
-            location: $location.$$absUrl,
-            protocol: $location.$$protocol,
-            requireHttps: ($location.$$protocol == 'https')
-        };
-        $scope.detect = function () {
-            var target = $scope.state.location;
-            var started = Date.now();
-            $scope.result = null;
-            $scope.latency = null;
-            $scope.status = { code: 0, desc: '', style: 'label-default' };
-            $.ajax({
-                url: target,
-                crossDomain: true,
-                /*
-                username: 'user',
-                password: 'pass',
-                xhrFields: {
-                withCredentials: true
-                }
-                */
-                beforeSend: function (xhr) {
-                    $timeout(function () {
-                        //$scope.status.code = xhr.status;
-                        $scope.status.desc = 'sending';
-                        $scope.status.style = 'label-info';
-                    });
-                },
-                success: function (data, textStatus, xhr) {
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-success';
-                        $scope.result = {
-                            valid: true,
-                            info: data,
-                            sent: started,
-                            received: Date.now()
-                        };
-                    });
-                },
-                error: function (xhr, textStatus, error) {
-                    xhr.ex = error;
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                        $scope.status.style = 'label-danger';
-                        $scope.result = {
-                            valid: false,
-                            info: xhr,
-                            sent: started,
-                            error: xhr.statusText,
-                            received: Date.now()
-                        };
-                    });
-                },
-                complete: function (xhr, textStatus) {
-                    console.debug(' - Status Code: ' + xhr.status);
-                    $timeout(function () {
-                        $scope.status.code = xhr.status;
-                        $scope.status.desc = textStatus;
-                    });
-                }
-            }).always(function (xhr) {
-                $timeout(function () {
-                    $scope.latency = $scope.getLatencyInfo();
-                });
-            });
-        };
-        $scope.setProtocol = function (protocol) {
-            var val = $scope.state.location;
-            var pos = val.indexOf('://');
-            if (pos > 0) {
-                val = protocol + val.substring(pos);
-            }
-            $scope.state.protocol = protocol;
-            $scope.state.location = val;
-            $scope.detect();
-        };
-        $scope.getProtocolStyle = function (protocol, activeStyle) {
-            var cssRes = '';
-            var isValid = $scope.state.location.indexOf(protocol + '://') == 0;
-            if (isValid) {
-                if (!$scope.result) {
-                    cssRes += 'btn-primary';
-                } else if ($scope.result.valid && activeStyle) {
-                    cssRes += activeStyle;
-                } else if ($scope.result) {
-                    cssRes += $scope.result.valid ? 'btn-success' : 'btn-danger';
-                }
-            }
-            return cssRes;
-        };
-        $scope.getStatusIcon = function (activeStyle) {
-            var cssRes = '';
-            if (!$scope.result) {
-                cssRes += 'glyphicon-refresh';
-            } else if (activeStyle && $scope.result.valid) {
-                cssRes += activeStyle;
-            } else {
-                cssRes += $scope.result.valid ? 'glyphicon-ok' : 'glyphicon-remove';
-            }
-            return cssRes;
-        };
-        $scope.submitForm = function () {
-            $scope.state.editMode = false;
-            if ($scope.state.requireHttps) {
-                $scope.setProtocol('https');
-            } else {
-                $scope.detect();
-            }
-        };
-        $scope.getStatusColor = function () {
-            var cssRes = $scope.getStatusIcon() + ' ';
-            if (!$scope.result) {
-                cssRes += 'busy';
-            } else if ($scope.result.valid) {
-                cssRes += 'success';
-            } else {
-                cssRes += 'error';
-            }
-            return cssRes;
-        };
-        $scope.getLatencyInfo = function () {
-            var cssNone = 'text-muted';
-            var cssHigh = 'text-success';
-            var cssMedium = 'text-warning';
-            var cssLow = 'text-danger';
-            var info = {
-                desc: '',
-                style: cssNone
-            };
-
-            if (!$scope.result) {
-                return info;
-            }
-
-            if (!$scope.result.valid) {
-                info.style = 'text-muted';
-                info.desc = 'Connection Failed';
-                return info;
-            }
-
-            var totalMs = $scope.result.received - $scope.result.sent;
-            if (totalMs > 2 * 60 * 1000) {
-                info.style = cssNone;
-                info.desc = 'Timed out';
-            } else if (totalMs > 1 * 60 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Impossibly slow';
-            } else if (totalMs > 30 * 1000) {
-                info.style = cssLow;
-                info.desc = 'Very slow';
-            } else if (totalMs > 1 * 1000) {
-                info.style = cssMedium;
-                info.desc = 'Relatively slow';
-            } else if (totalMs > 500) {
-                info.style = cssMedium;
-                info.desc = 'Moderately slow';
-            } else if (totalMs > 250) {
-                info.style = cssMedium;
-                info.desc = 'Barely Responsive';
-            } else if (totalMs > 150) {
-                info.style = cssHigh;
-                info.desc = 'Average Response Time';
-            } else if (totalMs > 50) {
-                info.style = cssHigh;
-                info.desc = 'Responsive Enough';
-            } else if (totalMs > 15) {
-                info.style = cssHigh;
-                info.desc = 'Very Responsive';
-            } else {
-                info.style = cssHigh;
-                info.desc = 'Optimal';
-            }
-            return info;
-        };
-    }]);
+    }]).controller('AboutInfoController', ['$scope', 'appInfo', proto.ng.modules.about.controllers.AboutInfoController]).controller('AboutConnectionController', ['$scope', '$location', 'appState', 'appInfo', 'navigationService', proto.ng.modules.about.controllers.AboutConnectionController]);
 var proto;
 (function (proto) {
     (function (ng) {
@@ -2277,292 +2915,6 @@ var proto;
         (function (modules) {
             (function (common) {
                 (function (providers) {
-                    var AppInfoProvider = (function () {
-                        function AppInfoProvider(appStateProvider) {
-                            this.appStateProvider = appStateProvider;
-                            this.appState = appStateProvider.appState;
-                            this.appInfo = new proto.ng.modules.common.AppInfo(navigator.appCodeName, navigator.userAgent);
-                            this.init();
-                        }
-                        AppInfoProvider.prototype.init = function () {
-                            // Define the state
-                            this.detectBrowserInfo();
-                        };
-
-                        AppInfoProvider.prototype.$get = function () {
-                            return this.appInfo;
-                        };
-
-                        AppInfoProvider.prototype.refreshUI = function (action) {
-                            this.appState.updateUI(action);
-                        };
-
-                        AppInfoProvider.prototype.detectBrowserInfo = function () {
-                            var _this = this;
-                            var info = this.appInfo;
-                            try  {
-                                // Get IE version (if defined)
-                                if (!!window['ActiveXObject']) {
-                                    info.versions.ie = 10;
-                                }
-
-                                // Sanitize codeName and userAgent
-                                this.resolveUserAgent(info);
-                                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
-                                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
-                                info.versions.nw = this.getVersionInfo('node-webkit');
-                                info.versions.njs = this.getVersionInfo('node');
-                                info.versions.v8 = this.getVersionInfo('v8');
-                                info.versions.openssl = this.getVersionInfo('openssl');
-                                info.versions.chromium = this.getVersionInfo('chromium');
-
-                                // Check for CSS extensions
-                                info.css.boostrap2 = this.selectorExists('hero-unit');
-                                info.css.boostrap3 = this.selectorExists('jumbotron');
-
-                                // Update location settings
-                                angular.extend(info.about, {
-                                    protocol: window.location.protocol,
-                                    server: {
-                                        url: window.location.href
-                                    }
-                                });
-
-                                // Detect the operating system name
-                                info.about.os.name = this.detectOSName();
-
-                                // Check for jQuery
-                                info.detects.jqry = typeof jQuery !== 'undefined';
-
-                                // Check for general header and body scripts
-                                var sources = [];
-                                $("script").each(function (i, elem) {
-                                    var src = $(elem).attr("src");
-                                    if (src)
-                                        sources.push(src);
-                                });
-
-                                // Fast check on known script names
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
-                                });
-
-                                // Get the client browser details (build a url string)
-                                var detectUrl = this.getDetectUrl();
-
-                                // Send a loaded package to a server to detect more features
-                                $.getScript(detectUrl).done(function (script, textStatus) {
-                                    _this.refreshUI(function () {
-                                        // Browser info and details loaded
-                                        var browserInfo = new window.WhichBrowser();
-                                        angular.extend(info.about, browserInfo);
-                                    });
-                                }).fail(function (jqxhr, settings, exception) {
-                                    console.error(exception);
-                                });
-
-                                // Set browser name to IE (if defined)
-                                if (navigator.appName == 'Microsoft Internet Explorer') {
-                                    info.about.browser.name = 'Internet Explorer';
-                                }
-
-                                // Check if the browser supports web db's
-                                var webDB = info.about.webdb = this.getWebDBInfo();
-                                info.about.webdb.test();
-                            } catch (ex) {
-                                console.error(ex);
-                            }
-
-                            // Return the preliminary info
-                            return info;
-                        };
-
-                        AppInfoProvider.prototype.detectOSName = function () {
-                            var osName = 'Unknown OS';
-                            var appVer = navigator.appVersion;
-                            if (appVer) {
-                                if (appVer.indexOf("Win") != -1)
-                                    osName = 'Windows';
-                                if (appVer.indexOf("Mac") != -1)
-                                    osName = 'MacOS';
-                                if (appVer.indexOf("X11") != -1)
-                                    osName = 'UNIX';
-                                if (appVer.indexOf("Linux") != -1)
-                                    osName = 'Linux';
-                                //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
-                            }
-                            return osName;
-                        };
-
-                        AppInfoProvider.prototype.getWebDBInfo = function () {
-                            var _this = this;
-                            var webDB = {
-                                db: null,
-                                version: '1',
-                                active: null,
-                                used: undefined,
-                                size: 5 * 1024 * 1024,
-                                test: function (name, desc, dbVer, dbSize) {
-                                    try  {
-                                        // Try and open a web db
-                                        webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
-                                        webDB.onSuccess(null, null);
-                                    } catch (ex) {
-                                        // Nope, something went wrong
-                                        webDB.onError(null, null);
-                                    }
-                                },
-                                onSuccess: function (tx, r) {
-                                    if (tx) {
-                                        if (r) {
-                                            console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
-                                        }
-                                        if (tx) {
-                                            console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
-                                        }
-                                    }
-                                    _this.refreshUI(function () {
-                                        webDB.active = true;
-                                        webDB.used = JSON.stringify(webDB.db).length;
-                                    });
-                                },
-                                onError: function (tx, e) {
-                                    console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
-                                    _this.refreshUI(function () {
-                                        webDB.active = false;
-                                    });
-                                }
-                            };
-                            return webDB;
-                        };
-
-                        AppInfoProvider.prototype.checkScriptLoaded = function (sources, filter) {
-                            sources.forEach(function (src) {
-                                filter(src);
-                            });
-                        };
-
-                        AppInfoProvider.prototype.getDetectUrl = function () {
-                            return (function () {
-                                var p = [], w = window, d = document, e = 0, f = 0;
-                                p.push('ua=' + encodeURIComponent(navigator.userAgent));
-                                e |= w.ActiveXObject ? 1 : 0;
-                                e |= w.opera ? 2 : 0;
-                                e |= w.chrome ? 4 : 0;
-                                e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
-                                e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
-                                e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
-                                p.push('e=' + e);
-                                f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
-                                f |= 'WebSocket' in w ? 2 : 0;
-                                f |= w.Worker ? 4 : 0;
-                                f |= w.applicationCache ? 8 : 0;
-                                f |= w.history && history.pushState ? 16 : 0;
-                                f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
-                                f |= 'FileReader' in w ? 64 : 0;
-                                p.push('f=' + f);
-                                p.push('r=' + Math.random().toString(36).substring(7));
-                                p.push('w=' + screen.width);
-                                p.push('h=' + screen.height);
-                                var s = d.createElement('script');
-                                return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
-                            })();
-                        };
-
-                        AppInfoProvider.prototype.resolveUserAgent = function (info) {
-                            var cn = info.codeName;
-                            var ua = info.userAgent;
-                            if (ua) {
-                                // Remove start of string in UAgent upto CName or end of string if not found.
-                                ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
-
-                                // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
-                                ua = ua.substring(cn.length);
-
-                                while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
-                                    ua = ua.substring(1);
-                                }
-
-                                // Remove the end of the string from first characrer that is not a number or point etc.
-                                var pointer = 0;
-                                while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
-                                    pointer = pointer + 1;
-                                }
-                                ua = ua.substring(0, pointer);
-
-                                if (!window.isNaN(ua)) {
-                                    if (parseInt(ua) > 0) {
-                                        info.versions.html = ua;
-                                    }
-                                    if (parseFloat(ua) >= 5) {
-                                        info.versions.css = '3.x';
-                                        info.versions.js = '5.x';
-                                    }
-                                }
-                            }
-                        };
-
-                        AppInfoProvider.prototype.getVersionInfo = function (ident) {
-                            try  {
-                                if (typeof process !== 'undefined' && process.versions) {
-                                    return process.versions[ident];
-                                }
-                            } catch (ex) {
-                            }
-                            return null;
-                        };
-
-                        AppInfoProvider.prototype.selectorExists = function (selector) {
-                            return false;
-                            //var ret = css($(selector));
-                            //return ret;
-                        };
-
-                        AppInfoProvider.prototype.css = function (a) {
-                            var sheets = document.styleSheets, o = [];
-                            for (var i in sheets) {
-                                var rules = sheets[i].rules || sheets[i].cssRules;
-                                for (var r in rules) {
-                                    if (a.is(rules[r].selectorText)) {
-                                        o.push(rules[r].selectorText);
-                                    }
-                                }
-                            }
-                            return o;
-                        };
-                        return AppInfoProvider;
-                    })();
-                    providers.AppInfoProvider = AppInfoProvider;
-                })(common.providers || (common.providers = {}));
-                var providers = common.providers;
-            })(modules.common || (modules.common = {}));
-            var common = modules.common;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (common) {
-                (function (providers) {
                     var AppStateProvider = (function () {
                         function AppStateProvider($stateProvider, $locationProvider, $urlRouterProvider, appConfigProvider, appNodeProvider) {
                             this.$stateProvider = $stateProvider;
@@ -2697,405 +3049,6 @@ var proto;
                     providers.AppStateProvider = AppStateProvider;
                 })(common.providers || (common.providers = {}));
                 var providers = common.providers;
-            })(modules.common || (modules.common = {}));
-            var common = modules.common;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (common) {
-                (function (services) {
-                    var NavigationService = (function () {
-                        function NavigationService($state, appState) {
-                            this.$state = $state;
-                            this.appState = appState;
-                            this._treeData = [];
-                            this._treeMap = {};
-                            this.init();
-                        }
-                        NavigationService.prototype.init = function () {
-                            this.siteExplorer = new SiteExplorerRoot('Site Explorer', this.appState);
-                            this.register(this.siteExplorer);
-
-                            this.externalLinks = new ExternalLinksRoot('External Links', this.appState);
-                            this.register(this.externalLinks);
-
-                            if (this.appState.node.active) {
-                                this.fileSystem = new FileBrowserRoot('File Browser');
-                                this.register(this.fileSystem);
-                            }
-
-                            if (this.appState.debug) {
-                                this.clientStates = new SiteNavigationRoot('Client States', this.$state.get());
-                                this.register(this.clientStates);
-                            }
-                        };
-
-                        NavigationService.prototype.register = function (node) {
-                            var ident = node.label;
-                            if (ident in this._treeMap)
-                                return this;
-                            this._treeMap[ident] = node;
-                            this._treeData.push(node);
-                            return this;
-                        };
-
-                        NavigationService.prototype.findByLabel = function (ident) {
-                            var node;
-                            this._treeData.forEach(function (itm) {
-                                if (itm.label == ident)
-                                    node = itm;
-                            });
-                            return node;
-                        };
-
-                        NavigationService.prototype.getTreeData = function (ident) {
-                            var ret = [];
-                            if (!ident && this._treeData) {
-                                return this._treeData;
-                            } else if (this._treeData.length) {
-                                this._treeData.forEach(function (itm, i) {
-                                    if (itm.label == ident) {
-                                        ret.push(itm);
-                                    }
-                                });
-                            }
-                            return ret;
-                        };
-                        return NavigationService;
-                    })();
-                    services.NavigationService = NavigationService;
-
-                    var TreeNode = (function () {
-                        function TreeNode(nodeName) {
-                            this.children = [];
-                            this.classes = [];
-                            this.label = nodeName;
-                        }
-                        return TreeNode;
-                    })();
-                    services.TreeNode = TreeNode;
-
-                    var SiteNode = (function (_super) {
-                        __extends(SiteNode, _super);
-                        function SiteNode(nodeName, state) {
-                            _super.call(this, nodeName);
-                            this.state = state;
-                            this.data = state;
-                        }
-                        SiteNode.prototype.onSelect = function (node) {
-                            //this.$rootScope.$broadcast('nodeSelect', this);
-                        };
-                        return SiteNode;
-                    })(TreeNode);
-                    services.SiteNode = SiteNode;
-
-                    var SiteExplorerRoot = (function (_super) {
-                        __extends(SiteExplorerRoot, _super);
-                        function SiteExplorerRoot(nodeName, appState) {
-                            _super.call(this, nodeName, null);
-                            this.appState = appState;
-                            this.init();
-                        }
-                        SiteExplorerRoot.prototype.init = function () {
-                            var _this = this;
-                            this.children = [];
-                            this.appState.routers.forEach(function (route, i) {
-                                if (route.menuitem) {
-                                    var node = new SiteNode(route.menuitem.label, route);
-                                    if (node) {
-                                        node.onSelect = function (item) {
-                                            _this.appState.navigate(item.data);
-                                        };
-                                    }
-                                    _this.children.push(node);
-                                }
-                            });
-                        };
-                        return SiteExplorerRoot;
-                    })(SiteNode);
-                    services.SiteExplorerRoot = SiteExplorerRoot;
-
-                    var FileBrowserRoot = (function (_super) {
-                        __extends(FileBrowserRoot, _super);
-                        function FileBrowserRoot(nodeName) {
-                            _super.call(this, nodeName, './');
-                            this.init();
-                        }
-                        FileBrowserRoot.prototype.init = function () {
-                            var _this = this;
-                            this.children = [];
-                            try  {
-                                if (typeof require === 'undefined')
-                                    return;
-
-                                // Resolve the full path
-                                var path = require('path');
-                                var target = path.resolve(this.data);
-                                var pattern = /[^\\]+\\?$/i;
-                                if (!pattern.test(target) || target == '' || target.indexOf('\\') < 0) {
-                                    this.label = target || 'Drive Root';
-                                    this.populateItem(this, target);
-                                } else {
-                                    var links = [];
-                                    var cwd = target;
-                                    while (pattern.test(cwd) && cwd != '') {
-                                        var label = pattern.exec(cwd)[0];
-                                        var folder = cwd.replace(pattern, '');
-                                        if (label) {
-                                            if (label.lastIndexOf('\\') == label.length - 1)
-                                                label = label.substring(0, label.length - 1);
-                                            var linked = new SiteNode(label, cwd);
-                                            linked.onSelect = function (itm) {
-                                                _this.selectItem(itm);
-                                            };
-                                            links.push(linked);
-                                        }
-                                        cwd = folder;
-                                    }
-                                    var last = this;
-                                    while (links.length) {
-                                        var node = links.pop();
-                                        last.children.push(node);
-                                        last = node;
-                                        last.expanded = true;
-                                        this.populateItem(node, node.data);
-                                    }
-                                }
-                            } catch (ex) {
-                                throw ex;
-                            }
-                        };
-
-                        FileBrowserRoot.prototype.populateItem = function (parentNode, target) {
-                            var _this = this;
-                            if (!target)
-                                return;
-                            try  {
-                                // Read the folder contents
-                                var fs = require('fs');
-                                var path = require('path');
-                                fs.readdir(target, function (error, files) {
-                                    if (error) {
-                                        console.warn('Could not read from filesystem: ', error);
-                                        return;
-                                    }
-
-                                    for (var i = 0; i < files.sort().length; ++i) {
-                                        try  {
-                                            var targ = path.join(target, files[i]);
-                                            if (!parentNode.children.some(function (val) {
-                                                return val.label == files[i];
-                                            })) {
-                                                var stat = fs.statSync(targ);
-                                                if (stat.isDirectory()) {
-                                                    // Folder item
-                                                    var name = path.basename(targ);
-                                                    var linked = new SiteNode(name, targ);
-                                                    linked.onSelect = function (itm) {
-                                                        _this.selectItem(itm);
-                                                    };
-                                                    parentNode.children.push(linked);
-                                                } else {
-                                                    // File item
-                                                }
-                                            }
-                                        } catch (ex) {
-                                        }
-                                    }
-
-                                    parentNode.children.sort(function (a, b) {
-                                        return a.label == b.label ? 0 : (a.label > b.label ? 1 : -1);
-                                    });
-                                    parentNode.data.cached = true;
-
-                                    if (_this.UpdateUI) {
-                                        _this.UpdateUI();
-                                    }
-                                });
-                            } catch (ex) {
-                                console.warn(ex.message);
-                            }
-                        };
-
-                        FileBrowserRoot.prototype.selectItem = function (node) {
-                            if (!node.data.cached) {
-                                this.populateItem(node, node.data);
-                            }
-                            if (this.OnSelect) {
-                                this.OnSelect(node);
-                            }
-                        };
-                        return FileBrowserRoot;
-                    })(SiteNode);
-                    services.FileBrowserRoot = FileBrowserRoot;
-
-                    var SiteNavigationRoot = (function (_super) {
-                        __extends(SiteNavigationRoot, _super);
-                        function SiteNavigationRoot(nodeName, states) {
-                            _super.call(this, nodeName, null);
-                            this.states = states;
-                            this.stateCache = {};
-                            this.init();
-                        }
-                        SiteNavigationRoot.prototype.init = function () {
-                            var _this = this;
-                            this.children = [];
-                            this.states.forEach(function (state, i) {
-                                if (state.url == '^' || state.name == '') {
-                                    _this.data = state; // Root node
-                                } else if (state.name.indexOf('.') < 0) {
-                                    _this.addItem(_this, [state.name], state);
-                                } else {
-                                    var parts = state.name.split('.');
-                                    _this.addItem(_this, parts, state);
-                                }
-                            });
-                        };
-
-                        SiteNavigationRoot.prototype.addItem = function (parentNode, paths, state) {
-                            if (paths && paths.length) {
-                                var ident = paths[0];
-                                var parts = paths.splice(1);
-                                var node = this.stateCache[ident];
-                                if (!node) {
-                                    node = new SiteNode(ident, null);
-                                    this.stateCache[ident] = node;
-                                    parentNode.children.push(node);
-                                }
-                                if (!parts.length) {
-                                    node.data = state;
-                                } else {
-                                    this.addItem(node, parts, state);
-                                }
-                            }
-                        };
-                        return SiteNavigationRoot;
-                    })(SiteNode);
-                    services.SiteNavigationRoot = SiteNavigationRoot;
-
-                    var ExternalLinksRoot = (function (_super) {
-                        __extends(ExternalLinksRoot, _super);
-                        function ExternalLinksRoot(nodeName, appState) {
-                            _super.call(this, nodeName, '[externals]');
-                            this.appState = appState;
-                            this.init();
-                        }
-                        ExternalLinksRoot.prototype.init = function () {
-                            this.children = [];
-
-                            /*
-                            this.addGroup(this, 'Local Resources', [
-                            window.location.protocol + '//' + window.location.host + '/',
-                            window.location.protocol + '//' + window.location.host + '?/#/!test!/',
-                            window.location.protocol + '//' + window.location.host + '?/#/!debug!/',
-                            ]).expanded = false;
-                            */
-                            this.addGroup(this, 'Online Resources', [
-                                {
-                                    name: 'Wikipedia', url: 'https://www.wikipedia.org'
-                                },
-                                {
-                                    name: 'Wolfram Alpha', url: 'http://www.wolframalpha.com/'
-                                },
-                                {
-                                    name: 'Global Wind Maps', url: 'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286'
-                                },
-                                {
-                                    name: 'Disaster Info Map', url: 'http://hisz.rsoe.hu/alertmap/index2.php'
-                                }
-                            ]);
-                            this.addGroup(this, 'Development Resources', [
-                                {
-                                    name: 'Javascript Fiddler', url: 'https://jsfiddle.net/'
-                                },
-                                {
-                                    name: 'Microsoft.net Fiddler', url: 'https://dotnetfiddle.net/'
-                                },
-                                {
-                                    name: 'Font Awesome', url: 'http://fontawesome.io/icons/'
-                                },
-                                {
-                                    name: 'CSS3 Generator', url: 'http://css3generator.com/'
-                                },
-                                {
-                                    name: 'Regular Expressions', url: 'https://regex101.com/'
-                                }
-                            ]).expanded = false;
-                            /*
-                            this.addGroup(this, 'Additional Resources', [
-                            'http://www.databaseanswers.org/data_models/',
-                            'http://brunoimbrizi.com/experiments/#/07',
-                            'http://brunoimbrizi.com/experiments/#/03',
-                            ]).expanded = false;
-                            this.addGroup(this, 'Popular Websites', [
-                            'https://www.google.com',
-                            'https://www.facebook.com',
-                            'https://www.twitter.com',
-                            'https://www.reddit.com',
-                            ]).expanded = false;
-                            */
-                        };
-
-                        ExternalLinksRoot.prototype.addGroup = function (parent, name, urls) {
-                            var _this = this;
-                            var node = new SiteNode(name, urls);
-                            if (urls) {
-                                urls.forEach(function (info) {
-                                    if (typeof info == 'string') {
-                                        node.children.push(_this.createLink(info));
-                                    } else {
-                                        node.children.push(_this.createLink(info.url, info.name));
-                                    }
-                                });
-                            }
-                            if (parent) {
-                                parent.children.push(node);
-                            }
-                            return node;
-                        };
-
-                        ExternalLinksRoot.prototype.createLink = function (url, label) {
-                            var _this = this;
-                            var node = new SiteNode(label || url, url);
-                            if (node) {
-                                node.onSelect = function (item) {
-                                    if (_this.OnSelect) {
-                                        _this.OnSelect(item);
-                                    }
-                                };
-
-                                if (!label) {
-                                    var hostname = $('<a href="' + node.data + '"></a>')[0].hostname;
-                                    node.label = 'Loading: ' + hostname.replace('www.', '');
-                                    $.getJSON('http://whateverorigin.org/get?url=' + encodeURIComponent(node.data) + '&callback=?', function (data) {
-                                        var match = /\<title\>(.+)\<\/title\>/i.exec(data.contents);
-                                        if (match && match.length > 1) {
-                                            node.label = match[1];
-                                        }
-                                        if (_this.UpdateUI)
-                                            _this.UpdateUI();
-                                    });
-                                }
-                            }
-                            return node;
-                        };
-                        return ExternalLinksRoot;
-                    })(SiteNode);
-                    services.ExternalLinksRoot = ExternalLinksRoot;
-                })(common.services || (common.services = {}));
-                var services = common.services;
             })(modules.common || (modules.common = {}));
             var common = modules.common;
         })(ng.modules || (ng.modules = {}));
@@ -4257,116 +4210,139 @@ angular.module('prototyped.ng.runtime', [
     'appConfigProvider',
     'appNodeProvider',
     proto.ng.modules.common.providers.AppStateProvider
-]);
+]).provider('appInfo', [
+    'appStateProvider',
+    proto.ng.modules.common.providers.AppInfoProvider
+]).run([
+    '$rootScope', 'appState', function ($rootScope, appState) {
+        appState.setUpdateAction(function (action) {
+            $rootScope.$applyAsync(action);
+        });
+    }]);
 ;angular.module('prototyped.ng.views', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('modules/about/views/connections.tpl.html',
-    '<div ng:cloak style="width: 100%"><div ng-if=!state.showRaw class=results ng-init=detect()><div class="icon pull-left left"><i class="glyphicon glyphicon-globe"></i> <i class="sub-icon glyphicon" ng-class=getStatusColor()></i></div><div class="info pull-left"><div><div class=pull-right><a class=ctrl-sm ng-click="state.editMode = true" href=""><i class="glyphicon glyphicon-pencil"></i></a></div><h4 ng-if=!state.editMode><a href="{{ state.location }}">{{ state.location }}</a></h4></div><div ng-if=!state.editMode><div ng-if=state.location><p class=info-row><div class="info-col-primary pull-left">Protocol: <span class="btn-group btn-group-xs" role=group aria-label=...><button type=button ng-disabled=state.requireHttps class="btn btn-default" ng-click="setProtocol(\'http\')" ng-class="state.requireHttps ? \'disabled\' : getProtocolStyle(\'http\', \'btn-warning\')"><i class=glyphicon ng-class="getStatusIcon(\'glyphicon-eye-open\')" ng-if="state.location.indexOf(\'http://\') == 0"></i> HTTP</button> <button type=button class="btn btn-default" ng-click="setProtocol(\'https\')" ng-class="getProtocolStyle(\'https\')"><i class=glyphicon ng-class="getStatusIcon(\'glyphicon-eye-close\')" ng-if="state.location.indexOf(\'https://\') == 0"></i> HTTPS</button></span></div><div class="info-col-secondary pull-right"><span class="btn-group btn-group-xs" role=group><a ng-if=result.info class="btn btn-default" href="" ng-click="state.activeTab = (state.activeTab == \'result\') ? null : \'result\'" ng-class="{\'btn-info\':(state.activeTab == \'result\'), \'btn-default\':(state.activeTab != \'result\')}"><i class="glyphicon glyphicon-file"></i> View Result</a> <a ng-if=state.location class=btn href="" ng-click="state.activeTab = (state.activeTab == \'preview\') ? null : \'preview\'" ng-class="{\'btn-info\':(state.activeTab == \'preview\'), \'btn-default\':(state.activeTab != \'preview\')}"><i class=glyphicon ng-class="{\'glyphicon-eye-close\':state.showPreview, \'glyphicon-eye-open\':!state.showPreview}"></i> {{ state.showPreview ? \'Hide\' : \'Show\' }} Preview</a></span></div><br class="clearfix"></p><p class=info-row><div class="info-col-primary pull-left" ng-if=result><div class=info-col-ellipse>Latency: {{ result.received - result.sent }}ms <span ng-if=latency.desc ng-class=latency.style>(<em>{{ latency.desc }}</em>)</span></div></div><div class="info-col-primary pull-left" ng-if=!result><em>Checking...</em></div><div class="info-col-secondary pull-right"><span ng-if="status.code >= 0" class="pull-right label" ng-class=status.style title="Status: {{ status.desc }}, Code: {{ status.code }}">{{ status.desc }}: {{ status.code }}</span></div><br class="clearfix"></p></div><div ng-if="result != null"><p><div class="alert alert-warning" ng-if="result.valid && state.protocol == \'http\'"><i class="glyphicon glyphicon-eye-open"></i> <b>Warning:</b> The web connection <b class=text-danger>is not secure</b>, use <a href="" ng-click="setProtocol(\'https\')">HTTPS</a>.</div><div class="alert alert-success" ng-if="result.valid && state.protocol == \'https\'"><i class="glyphicon glyphicon-ok"></i> <b>Validated:</b> The web connection looks secure.</div><div class="alert alert-danger" ng-if="!result.valid && result.error && result.error != \'error\'"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Failed:</b> {{ result.error }}</div><div class="alert alert-danger" ng-if="!result.valid && !(result.error && result.error != \'error\')"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Offline:</b> Connection could not be established.</div></p></div></div><form ng-if=state.editMode><div class=form-group><h4 class=control-label for=txtTarget>Enter the website URL to connect to:</h4><input class=form-control id=txtTarget ng-model=state.location></div><div class=form-group><div class=checkbox><label><input type=checkbox ng-model=state.requireHttps> Require secure connection</label></div><div class=checkbox ng-class="\'disabled text-muted\'" ng-if=state.requireHttps><label><input type=checkbox ng-model=state.requireCert ng-disabled=true> Requires Client Certificate</label></div></div><div class=form-group ng-show=state.requireCert><label for=exampleInputFile>Select Client Certificate:</label><input type=file id=exampleInputFile><p class=help-block>This must be a valid client certificate.</p></div><button type=submit class="btn btn-primary" ng-click=submitForm()>Update</button></form></div></div><div ng-if="state.activeTab == \'preview\'" class="panel panel-default"><div class=panel-heading><b class=panel-title><i class="glyphicon glyphicon-globe"></i> <a target=_blank href="{{ state.location }}">{{ state.location }}</a></b></div><div class="panel-body info-row iframe-body" style="min-height: 480px"><iframe class=info-col-primary ng-src="{{ state.location }}" frameborder=0>IFrame not available</iframe></div></div><div ng-if="state.activeTab == \'result\'" class=source><span class=pull-right><a class="btn btn-sm btn-primary" ng-click="state.activeTab = null">Close</a></span> <samp><pre>{{ result.info }}</pre></samp></div></div><style>.results {\n' +
-    '        min-width: 480px;\n' +
-    '        display: flex;\n' +
-    '    }\n' +
-    '\n' +
-    '        .results .icon {\n' +
-    '            margin: 0 8px;\n' +
-    '            font-size: 128px;\n' +
-    '            width: 128px !important;\n' +
-    '            height: 128px !important;\n' +
-    '            position: relative;\n' +
-    '            flex-grow: 0;\n' +
-    '            flex-shrink: 0;\n' +
+    '<div ng:cloak style="width: 100%"><style resx:import=assets/css/images.min.css></style><style>.results {\n' +
+    '            display: block;\n' +
+    '            width: 100%;\n' +
     '        }\n' +
     '\n' +
-    '            .results .icon .sub-icon {\n' +
-    '                font-size: 64px !important;\n' +
-    '                width: 64px !important;\n' +
-    '                height: 64px !important;\n' +
-    '                position: absolute;\n' +
-    '                right: 0;\n' +
-    '                top: 0;\n' +
-    '                margin-top: 100px;\n' +
+    '            .results .icon {\n' +
+    '                margin: 0 8px;\n' +
+    '                font-size: 128px;\n' +
+    '                width: 128px !important;\n' +
+    '                height: 128px !important;\n' +
+    '                position: relative;\n' +
+    '                flex-grow: 0;\n' +
+    '                flex-shrink: 0;\n' +
     '            }\n' +
     '\n' +
-    '                .results .icon .sub-icon.success {\n' +
-    '                    color: #080;\n' +
+    '                .results .icon .sub-icon {\n' +
+    '                    font-size: 64px !important;\n' +
+    '                    width: 64px !important;\n' +
+    '                    height: 64px !important;\n' +
+    '                    position: absolute;\n' +
+    '                    right: 0;\n' +
+    '                    top: 0;\n' +
+    '                    margin-top: 100px;\n' +
     '                }\n' +
     '\n' +
-    '                .results .icon .sub-icon.error {\n' +
-    '                    color: #D00;\n' +
-    '                }\n' +
+    '                    .results .icon .sub-icon.success {\n' +
+    '                        color: #080;\n' +
+    '                    }\n' +
     '\n' +
-    '                .results .icon .sub-icon.warning {\n' +
-    '                    color: #0094ff;\n' +
-    '                }\n' +
+    '                    .results .icon .sub-icon.error {\n' +
+    '                        color: #D00;\n' +
+    '                    }\n' +
     '\n' +
-    '                .results .icon .sub-icon.busy {\n' +
-    '                    color: #0094ff;\n' +
-    '                }\n' +
+    '                    .results .icon .sub-icon.warning {\n' +
+    '                        color: #0094ff;\n' +
+    '                    }\n' +
     '\n' +
-    '        .results .info {\n' +
-    '            margin: 0 16px;\n' +
-    '            min-height: 128px;\n' +
-    '            min-width: 300px;\n' +
-    '            display: inline-block;\n' +
-    '            flex-grow: 1;\n' +
-    '            flex-shrink: 1;\n' +
-    '        }\n' +
+    '                    .results .icon .sub-icon.busy {\n' +
+    '                        color: #0094ff;\n' +
+    '                    }\n' +
     '\n' +
-    '            .results .info h4 {\n' +
+    '            .results h4 {\n' +
     '                text-wrap: avoid;\n' +
     '                overflow: hidden;\n' +
     '                white-space: nowrap;\n' +
     '                text-overflow: ellipsis;\n' +
     '            }\n' +
     '\n' +
-    '                .results .info h4 a {\n' +
+    '                .results h4 a {\n' +
     '                    color: black;\n' +
     '                }\n' +
     '\n' +
-    '            .results .info .ctrl-sm {\n' +
+    '            .results .ctrl-sm {\n' +
     '                font-size: larger;\n' +
     '                margin-left: 8px;\n' +
     '                color: black;\n' +
     '            }\n' +
     '\n' +
-    '    .info-row {\n' +
-    '        display: flex;\n' +
-    '    }\n' +
-    '\n' +
-    '    .info-row-links {\n' +
-    '        color: silver;\n' +
-    '    }\n' +
-    '\n' +
-    '        .info-row-links a {\n' +
-    '            color: #4a4a4a;\n' +
-    '            margin-left: 8px;\n' +
+    '        .info-row {\n' +
+    '            display: flex;\n' +
     '        }\n' +
     '\n' +
-    '            .info-row-links a:hover {\n' +
-    '                color: #000000;\n' +
+    '        .info-row-links {\n' +
+    '            color: silver;\n' +
+    '        }\n' +
+    '\n' +
+    '            .info-row-links a {\n' +
+    '                color: #4a4a4a;\n' +
+    '                margin-left: 8px;\n' +
     '            }\n' +
     '\n' +
-    '    .info-col-primary {\n' +
-    '        flex-grow: 1;\n' +
-    '        flex-shrink: 1;\n' +
-    '    }\n' +
+    '                .info-row-links a:hover {\n' +
+    '                    color: #000000;\n' +
+    '                }\n' +
     '\n' +
-    '    .info-col-secondary {\n' +
-    '        flex-grow: 0;\n' +
-    '        flex-shrink: 0;\n' +
-    '    }\n' +
+    '        .info-col-primary {\n' +
+    '            flex-grow: 1;\n' +
+    '            flex-shrink: 1;\n' +
+    '        }\n' +
     '\n' +
-    '    .iframe-body {\n' +
-    '        margin: 0;\n' +
-    '        padding: 0;\n' +
-    '    }\n' +
+    '        .info-col-secondary {\n' +
+    '            flex-grow: 0;\n' +
+    '            flex-shrink: 0;\n' +
+    '        }\n' +
     '\n' +
-    '        .iframe-body iframe {\n' +
+    '        .iframe-body {\n' +
     '            margin: 0;\n' +
     '            padding: 0;\n' +
-    '        }</style>');
+    '        }\n' +
+    '\n' +
+    '            .iframe-body iframe {\n' +
+    '                margin: 0;\n' +
+    '                padding: 0;\n' +
+    '            }\n' +
+    '\n' +
+    '        .tree-item a {\n' +
+    '            color: #4a4a4a !important;\n' +
+    '        }\n' +
+    '\n' +
+    '        .tree-item.online a .fa {\n' +
+    '            color: #00b500 !important;\n' +
+    '            text-shadow: 0 0 2px #00b500;\n' +
+    '        }\n' +
+    '\n' +
+    '        .tree-item.offline a .fa {\n' +
+    '            color: #D00 !important;\n' +
+    '            text-shadow: 0 0 2px #D00;\n' +
+    '        }\n' +
+    '\n' +
+    '        .tree-item.warning a .fa {\n' +
+    '            color: #ff8d00 !important;\n' +
+    '            text-shadow: 0 0 2px #ff8d00;\n' +
+    '        }\n' +
+    '\n' +
+    '        .nav-pills > li.active > a, .nav-pills > li.active > a:focus, .nav-pills > li.active > a:hover {\n' +
+    '            background-color: #d8e1e8!important;\n' +
+    '            border-color: #337ab7!important;\n' +
+    '        }</style><div class="info-overview results"><div class=row style="width: 100%"><div class=col-md-2><h5><i class="fa fa-gear"></i> My Client <small><span ng-if=true class=ng-cloak><b app:version ng-class="{ \'text-success glow-green\': appInfo.version }">loading...</b></span> <span ng-if=false><b class="text-danger glow-red"><i class="glyphicon glyphicon-remove"></i> Offline</b></span></small></h5><div ng:if=true><a class="panel-icon-lg img-terminal"><div ng:if="info.about.browser.name == \'Chrome\'" class="panel-icon-inner img-chrome"></div><div ng:if="info.about.browser.name == \'Chromium\'" class="panel-icon-inner img-chromium"></div><div ng:if="info.about.browser.name == \'Firefox\'" class="panel-icon-inner img-firefox"></div><div ng:if="info.about.browser.name == \'Internet Explorer\'" class="panel-icon-inner img-iexplore"></div><div ng:if="info.about.browser.name == \'Opera\'" class="panel-icon-inner img-opera"></div><div ng:if="info.about.browser.name == \'Safari\'" class="panel-icon-inner img-safari"></div><div ng:if="info.about.browser.name == \'SeaMonkey\'" class="panel-icon-inner img-seamonkey"></div><div ng:if="info.about.browser.name == \'Spartan\'" class="panel-icon-inner img-spartan"></div><div ng:if="info.about.os.name == \'Windows\'" class="panel-icon-overlay img-windows"></div><div ng:if="info.about.os.name == \'MacOS\'" class="panel-icon-overlay img-mac-os"></div><div ng:if="info.about.os.name == \'Apple\'" class="panel-icon-overlay img-apple"></div><div ng:if="info.about.os.name == \'UNIX\'" class="panel-icon-overlay img-unix"></div><div ng:if="info.about.os.name == \'Linux\'" class="panel-icon-overlay img-linux"></div><div ng:if="info.about.os.name == \'Ubuntu\'" class="panel-icon-overlay img-ubuntu"></div></a><p class=panel-label title="{{ info.about.os.name }} @ {{ info.about.os.version.alias }}">Host System: <b ng:if=info.about.os.name>{{ info.about.os.name }}</b> <em ng:if=!info.about.os.name>checking...</em> <span ng:if=info.about.os.version.alias>@ {{ info.about.os.version.alias }}</span></p><p class=panel-label title="{{ info.about.browser.name }} @ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? \'.\' + info.about.browser.version.build : \'\' }}">User Agent: <b ng:if=info.about.browser.name>{{ info.about.browser.name }}</b> <em ng:if=!info.about.browser.name>detecting...</em> <span ng:if=info.about.browser.version>@ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? \'.\' + info.about.browser.version.build : \'\' }}</span></p></div><div ng-switch=info.about.hdd.type class=panel-icon-lg><a ng-switch-default class="panel-icon-lg inactive-gray img-drive"></a> <a ng-switch-when=true class="panel-icon-lg img-drive-default"></a> <a ng-switch-when=onl class="panel-icon-lg img-drive-onl"></a> <a ng-switch-when=usb class="panel-icon-lg img-drive-usb"></a> <a ng-switch-when=ssd class="panel-icon-lg img-drive-ssd"></a> <a ng-switch-when=web class="panel-icon-lg img-drive-web"></a> <a ng-switch-when=mac class="panel-icon-lg img-drive-mac"></a> <a ng-switch-when=warn class="panel-icon-lg img-drive-warn"></a> <a ng-switch-when=hist class="panel-icon-lg img-drive-hist"></a> <a ng-switch-when=wifi class="panel-icon-lg img-drive-wifi"></a><div ng:if=info.about.webdb.active class="panel-icon-inset-bl img-webdb"></div></div><p ng:if=info.about.webdb.active class="panel-label ellipsis">Local databsse is <b class=glow-green>Online</b></p><p ng:if=!info.about.webdb.active class="panel-label text-muted ellipsis"><em>No local storage found</em></p><p ng:if=!info.about.webdb.active class="panel-label text-muted"><div class=progress ng-style="{ height: \'10px\' }" title="{{(100 * progA) + \'%\'}} ( {{info.about.webdb.used}} / {{info.about.webdb.size}} )"><div ng:init="progA = (info.about.webdb.size > 0) ? (info.about.webdb.used||0)/info.about.webdb.size : 0" class=progress-bar ng-class="\'progress-bar-info\'" role=progressbar aria-valuenow="{{ progA }}" aria-valuemin=0 aria-valuemax=100 ng-style="{width: (100 * progA) + \'%\'}" aria-valuetext="{{ (100.0 * progA) + \' %\' }}%"></div></div></p></div><div class=col-md-8 ng-init="tabOverviewMain = 0" ng-switch=tabOverviewMain><h5><i class="fa fa-globe"></i> <span>Connection Details</span> <small class=pull-right><a class=ctrl-sm ng-click="connCtrl.state.editMode = true" href=""><i class="glyphicon glyphicon-pencil"></i></a></small> <small><span ng-if=!info.about.server><em class=text-muted>checking...</em></span> <span ng-if="info.about.server.active === false"><b class="text-danger glow-red">Offline</b>, faulty or disconnected.</span> <span ng-if="info.about.server.active && appState.node.active">Connected via <b class="text-warning glow-orange">web client</b>.</span> <span ng-if="info.about.server.active && !appState.node.active"><b class="text-success glow-green">Online</b> and fully operational.</span></small></h5><div><div ng-if=!connCtrl.state.editMode><div ng-if=connCtrl.state.location><p class=info-row><div class="info-col-primary pull-left">Location: <a>{{ connCtrl.state.location }}</a><br class="clearfix"></div><div class="info-col-secondary pull-right"></div><br class="clearfix"></p><p class=info-row><div class="info-col-primary pull-left" ng-if=connCtrl.result><div class=info-col-ellipse>Latency: {{ connCtrl.result.received - connCtrl.result.sent }}ms <span ng-if=connCtrl.latency.desc ng-class=connCtrl.latency.style>(<em>{{ connCtrl.latency.desc }}</em>)</span></div></div><div class="info-col-primary pull-left" ng-if=!connCtrl.result><em>Checking...</em></div><div class="info-col-secondary pull-right"><span ng-if="connCtrl.status.code >= 0" class="pull-right label" ng-class=connCtrl.status.style title="Status: {{ connCtrl.status.desc }}, Code: {{ connCtrl.status.code }}">{{ connCtrl.status.desc }}: {{ connCtrl.status.code }}</span></div><br class="clearfix"></p><p class=info-row><div class="info-col-primary pull-left">Protocol: <span class="btn-group btn-group-xs" role=group aria-label=...><button type=button ng-disabled=connCtrl.state.requireHttps class="btn btn-default" ng-click="connCtrl.setProtocol(\'http\')" ng-class="connCtrl.state.requireHttps ? \'disabled\' : connCtrl.getProtocolStyle(\'http\', \'btn-warning\')"><i class=glyphicon ng-class="connCtrl.getStatusIcon(\'glyphicon-eye-open\')" ng-if="connCtrl.state.location.indexOf(\'http://\') == 0"></i> HTTP</button> <button type=button class="btn btn-default" ng-click="connCtrl.setProtocol(\'https\')" ng-class="connCtrl.getProtocolStyle(\'https\')"><i class=glyphicon ng-class="connCtrl.getStatusIcon(\'glyphicon-eye-close\')" ng-if="connCtrl.state.location.indexOf(\'https://\') == 0"></i> HTTPS</button></span></div><div class="info-col-secondary pull-right"><span class="btn-group btn-group-xs" role=group><a ng-if=connCtrl.result.info class="btn btn-default" href="" ng-click="connCtrl.state.activeTab = (connCtrl.state.activeTab == \'result\') ? null : \'result\'" ng-class="{\'btn-info\':(connCtrl.state.activeTab == \'result\'), \'btn-default\':(connCtrl.state.activeTab != \'result\')}"><i class="glyphicon glyphicon-file"></i> View Result</a> <a ng-if=connCtrl.state.location class=btn href="" ng-click="connCtrl.state.activeTab = (connCtrl.state.activeTab == \'preview\') ? null : \'preview\'" ng-class="{\'btn-info\':(connCtrl.state.activeTab == \'preview\'), \'btn-default\':(connCtrl.state.activeTab != \'preview\')}"><i class=glyphicon ng-class="{\'glyphicon-eye-close\':connCtrl.state.showPreview, \'glyphicon-eye-open\':!connCtrl.state.showPreview}"></i> {{ connCtrl.state.showPreview ? \'Hide\' : \'Show\' }} Preview</a></span></div><br class="clearfix"></p></div><br></div><form ng-if=connCtrl.state.editMode><div class=form-group><h4 class=control-label for=txtTarget>Enter the website URL to connect to:</h4><input class=form-control id=txtTarget ng-model=connCtrl.state.location></div><div class=form-group><div class=checkbox><label><input type=checkbox ng-model=connCtrl.state.requireHttps> Require secure connection</label></div><div class=checkbox ng-class="\'disabled text-muted\'" ng-if=connCtrl.state.requireHttps><label><input type=checkbox ng-model=connCtrl.state.requireCert ng-disabled=true> Requires Client Certificate</label></div></div><div class=form-group ng-show=connCtrl.state.requireCert><label for=exampleInputFile>Select Client Certificate:</label><input type=file id=exampleInputFile><p class=help-block>This must be a valid client certificate.</p></div><button type=submit class="btn btn-primary" ng-click=connCtrl.submitForm()>Update</button></form></div><div ng-if=!connCtrl.state.activeTab><table class=table width=100%><thead><th style="width: auto; overflow-x: hidden">Description</th><th style="width: 64px; text-align: right">Actions</th><th style="width: 80px; text-align: center">Status</th></thead><tbody><tr ng-if=!connCtrl.domains><td colspan=4><em>Nothing to show yet. Fetch some data first...</em></td></tr><tr ng-repeat="domain in connCtrl.domains"><td class=ellipsis><abn:tree tree-data=[domain] icon-leaf="fa fa-dot-circle-o" icon-expand="fa fa-globe" icon-collapse="fa fa-globe" expand-level=0></abn:tree></td><td style="text-align: right"><a href="" ng-click=domain.refresh()><i class="fa fa-refresh inactive-gray"></i></a></td><td style="width: 80px; text-align: center"><div class="label label-default" ng-class="{ \'label-success\':domain.status==\'Online\', \'label-danger\':domain.status==\'Offline\', \'label-danger\':domain.status==\'Not Found\' }">{{ domain.status || \'Not Set\' }}</div></td></tr></tbody></table></div><div ng-if="connCtrl.state.activeTab == \'preview\'" class="panel panel-default"><div class=panel-heading><b class=panel-title><i class="glyphicon glyphicon-globe"></i> <a target=_blank href="{{ connCtrl.state.location }}">{{ connCtrl.state.location }}</a></b></div><div class="panel-body info-row iframe-body" style="min-height: 480px"><iframe class=info-col-primary ng-src="{{ connCtrl.state.location }}" frameborder=0>IFrame not available</iframe></div></div><div ng-if="connCtrl.state.activeTab == \'result\'" class=source><tabset><tab heading="Last Result" disabled><pre>{{ connCtrl.result.info }}</pre></tab><tab heading=Browser disabled><pre>{{ info.about.browser }}</pre></tab><tab heading=Server disabled><pre>{{ info.about.server }}</pre></tab><tab heading=WebDB disabled><pre>{{ info.about.webdb }}</pre></tab><tab heading=OS disabled><pre>{{ info.about.os }}</pre></tab><tab heading=Storage disabled><pre>{{ info.about.hdd }}</pre></tab></tabset></div></div><div class=col-md-2><h5><i class="fa fa-gear"></i> Web Server <small><span class=ng-cloak><b ng-class="{ \'text-success glow-green\': info.about.server.active, \'text-danger glow-red\': info.about.server.active == false }" app:version=server default-text="{{ info.about.server.active ? (info.about.server.active ? \'Online\' : \'Offline\') : \'n.a.\' }}">requesting...</b></span></small></h5><div ng:if=info.about.server.local><a class="panel-icon-lg img-server-local"></a></div><div ng:if=!info.about.server.local ng-class="{ \'inactive-gray\': true || info.versions.jqry }"><a class="panel-icon-lg img-server"><div ng:if="info.about.server.type == \'iis\'" class="panel-icon-inset img-iis"></div><div ng:if="info.about.server.type == \'node\'" class="panel-icon-inset img-node"></div><div ng:if="info.about.server.type == \'apache\'" class="panel-icon-inset img-apache"></div><div ng:if="info.about.server.name == \'Windows\'" class="panel-icon-overlay img-windows"></div><div ng:if="info.about.server.name == \'MacOS\'" class="panel-icon-overlay img-mac-os"></div><div ng:if="info.about.server.name == \'Apple\'" class="panel-icon-overlay img-apple"></div><div ng:if="info.about.server.name == \'UNIX\'" class="panel-icon-overlay img-unix"></div><div ng:if="info.about.server.name == \'Linux\'" class="panel-icon-overlay img-linux"></div></a><div ng:if=info.about.sql class="panel-icon-lg img-sqldb"></div></div><p><div class="alert alert-warning" ng-if="connCtrl.result.valid && connCtrl.state.protocol == \'http\'"><i class="glyphicon glyphicon-eye-open"></i> <b>Warning:</b><br>The web connection <b class=text-danger>is not secure</b>, use <a href="" ng-click="connCtrl.setProtocol(\'https\')">HTTPS</a>.</div><div class="alert alert-success" ng-if="connCtrl.result.valid && connCtrl.state.protocol == \'https\'"><i class="glyphicon glyphicon-ok"></i> <b>Validated:</b><br>The web connection looks secure.</div><div class="alert alert-danger" ng-if="!connCtrl.result.valid && connCtrl.result.error && connCtrl.result.error != \'error\'"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Failed:</b><br>{{ connCtrl.result.error }}</div><div class="alert alert-danger" ng-if="!connCtrl.result.valid && !(connCtrl.result.error && connCtrl.result.error != \'error\')"><i class="glyphicon glyphicon-exclamation-sign"></i> <b>Offline:</b><br>Connection could not be established.</div></p></div></div></div></div>');
   $templateCache.put('modules/about/views/contact.tpl.html',
     '<div style="width: 100%"><h4>About <small>Contact Us Online</small></h4><hr><div><i class="fa fa-home"></i> Visit our home page - <a href=http://www.prototyped.info>www.prototyped.info</a></div><hr></div>');
   $templateCache.put('modules/about/views/info.tpl.html',
-    '<div id=about-info class=container style="width: 100%"><style resx:import=assets/css/images.min.css></style><div class=row><div class="col-lg-8 col-md-12 info-overview"><h4>About <small>your current status and application architecture</small></h4><hr><div class=row><div class="col-md-3 panel-left"><h5><i class="fa fa-gear"></i> My Client <small><span ng-if=true class=ng-cloak><b app:version ng-class="{ \'text-success glow-green\': appInfo.version }">loading...</b></span> <span ng-if=false><b class="text-danger glow-red"><i class="glyphicon glyphicon-remove"></i> Offline</b></span></small></h5><div ng:if=true><a class="panel-icon-lg img-terminal"><div ng:if="info.about.browser.name == \'Chrome\'" class="panel-icon-inner img-chrome"></div><div ng:if="info.about.browser.name == \'Chromium\'" class="panel-icon-inner img-chromium"></div><div ng:if="info.about.browser.name == \'Firefox\'" class="panel-icon-inner img-firefox"></div><div ng:if="info.about.browser.name == \'Internet Explorer\'" class="panel-icon-inner img-iexplore"></div><div ng:if="info.about.browser.name == \'Opera\'" class="panel-icon-inner img-opera"></div><div ng:if="info.about.browser.name == \'Safari\'" class="panel-icon-inner img-safari"></div><div ng:if="info.about.browser.name == \'SeaMonkey\'" class="panel-icon-inner img-seamonkey"></div><div ng:if="info.about.browser.name == \'Spartan\'" class="panel-icon-inner img-spartan"></div><div ng:if="info.about.os.name == \'Windows\'" class="panel-icon-overlay img-windows"></div><div ng:if="info.about.os.name == \'MacOS\'" class="panel-icon-overlay img-mac-os"></div><div ng:if="info.about.os.name == \'Apple\'" class="panel-icon-overlay img-apple"></div><div ng:if="info.about.os.name == \'UNIX\'" class="panel-icon-overlay img-unix"></div><div ng:if="info.about.os.name == \'Linux\'" class="panel-icon-overlay img-linux"></div><div ng:if="info.about.os.name == \'Ubuntu\'" class="panel-icon-overlay img-ubuntu"></div></a><p class=panel-label title="{{ info.about.os.name }} @ {{ info.about.os.version.alias }}">Host System: <b ng:if=info.about.os.name>{{ info.about.os.name }}</b> <em ng:if=!info.about.os.name>checking...</em> <span ng:if=info.about.os.version.alias>@ {{ info.about.os.version.alias }}</span></p><p class=panel-label title="{{ info.about.browser.name }} @ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? \'.\' + info.about.browser.version.build : \'\' }}">User Agent: <b ng:if=info.about.browser.name>{{ info.about.browser.name }}</b> <em ng:if=!info.about.browser.name>detecting...</em> <span ng:if=info.about.browser.version>@ {{ info.about.browser.version.major }}.{{ info.about.browser.version.minor }}{{ info.about.browser.version.build ? \'.\' + info.about.browser.version.build : \'\' }}</span></p></div><div ng-switch=info.about.hdd.type class=panel-icon-lg><a ng-switch-default class="panel-icon-lg inactive-gray img-drive"></a> <a ng-switch-when=true class="panel-icon-lg img-drive-default"></a> <a ng-switch-when=onl class="panel-icon-lg img-drive-onl"></a> <a ng-switch-when=usb class="panel-icon-lg img-drive-usb"></a> <a ng-switch-when=ssd class="panel-icon-lg img-drive-ssd"></a> <a ng-switch-when=web class="panel-icon-lg img-drive-web"></a> <a ng-switch-when=mac class="panel-icon-lg img-drive-mac"></a> <a ng-switch-when=warn class="panel-icon-lg img-drive-warn"></a> <a ng-switch-when=hist class="panel-icon-lg img-drive-hist"></a> <a ng-switch-when=wifi class="panel-icon-lg img-drive-wifi"></a><div ng:if=info.about.webdb.active class="panel-icon-inset-bl img-webdb"></div></div><p ng:if=info.about.webdb.active class="panel-label ellipsis">Local databsse is <b class=glow-green>Online</b></p><p ng:if=!info.about.webdb.active class="panel-label text-muted ellipsis"><em>No local storage found</em></p><p ng:if=!info.about.webdb.active class="panel-label text-muted"><div class=progress ng-style="{ height: \'10px\' }" title="{{(100 * progA) + \'%\'}} ( {{info.about.webdb.used}} / {{info.about.webdb.size}} )"><div ng:init="progA = (info.about.webdb.size > 0) ? (info.about.webdb.used||0)/info.about.webdb.size : 0" class=progress-bar ng-class="\'progress-bar-info\'" role=progressbar aria-valuenow="{{ progA }}" aria-valuemin=0 aria-valuemax=100 ng-style="{width: (100 * progA) + \'%\'}" aria-valuetext="{{ (100.0 * progA) + \' %\' }}%"></div></div></p></div><div ng-init="tabOverviewMain = 0" ng-switch=tabOverviewMain class="col-md-6 panel-mid"><h5><span ng-if="info.about.server.active == undefined">Checking...</span> <span ng-if="info.about.server.active != undefined">Current Status</span> <small><span ng-if=!info.about.server><em class=text-muted>checking...</em></span> <span ng-if="info.about.server.active === false"><b class="text-danger glow-red">Offline</b>, faulty or disconnected.</span> <span ng-if="info.about.server.active && appState.node.active">Connected via <b class="text-warning glow-orange">web client</b>.</span> <span ng-if="info.about.server.active && !appState.node.active"><b class="text-success glow-green">Online</b> and fully operational.</span></small></h5><p class=ellipsis ng:if=info.about.server.url>Server Url: <a target=_blank ng-class="{ \'glow-green\':appState.node.active || info.about.protocol == \'https\', \'glow-blue\':!appState.node.active && info.about.protocol == \'http\', \'glow-red\':info.about.protocol == \'file\' }" ng-href="{{ info.about.server.url }}">{{ info.about.server.url }}</a></p><p><a href="" ng-click="tabOverviewMain = 0">Summary</a> | <a href="" ng-click="tabOverviewMain = 1">Details</a></p><div><div ng-switch-default><em>Loading...</em></div><div ng-switch-when=0><p>...</p></div><div ng-switch-when=1><pre>OS: {{ info.about.os }}</pre><pre>Browser: {{ info.about.browser }}</pre><pre>Server: {{ info.about.server }}</pre><pre>WebDB: {{ info.about.webdb }}</pre><pre>HDD: {{ info.about.hdd }}</pre></div></div></div><div class="col-md-3 panel-right"><h5><i class="fa fa-gear"></i> Web Server <small><span class=ng-cloak><b ng-class="{ \'text-success glow-green\': info.about.server.active, \'text-danger glow-red\': info.about.server.active == false }" app:version=server default-text="{{ info.about.server.active ? (info.about.server.active ? \'Online\' : \'Offline\') : \'n.a.\' }}">requesting...</b></span></small></h5><div ng:if=info.about.server.local><a class="panel-icon-lg img-server-local"></a></div><div ng:if=!info.about.server.local ng-class="{ \'inactive-gray\': true || info.versions.jqry }"><a class="panel-icon-lg img-server"><div ng:if="info.about.server.type == \'iis\'" class="panel-icon-inset img-iis"></div><div ng:if="info.about.server.type == \'node\'" class="panel-icon-inset img-node"></div><div ng:if="info.about.server.type == \'apache\'" class="panel-icon-inset img-apache"></div><div ng:if="info.about.server.name == \'Windows\'" class="panel-icon-overlay img-windows"></div><div ng:if="info.about.server.name == \'MacOS\'" class="panel-icon-overlay img-mac-os"></div><div ng:if="info.about.server.name == \'Apple\'" class="panel-icon-overlay img-apple"></div><div ng:if="info.about.server.name == \'UNIX\'" class="panel-icon-overlay img-unix"></div><div ng:if="info.about.server.name == \'Linux\'" class="panel-icon-overlay img-linux"></div></a><div ng:if=info.about.sql class="panel-icon-lg img-sqldb"></div></div></div></div><hr></div><div class="col-lg-4 hidden-md" ng:init="info.showUnavailable = false"><h4>Inspirations <small>come from great ideas</small></h4><hr><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.ng }" ng:hide="!info.showUnavailable && !info.versions.ng"><a class=app-info-icon target=_blank href="https://angularjs.org/"><div ng:if=true class="img-clipper img-angular"></div></a><div class=app-info-info><h5>Angular JS <small><span ng:if=info.versions.ng>@ v{{info.versions.ng}}</span> <span ng:if=!info.versions.ng><em>not found</em></span></small></h5><p ng:if=!info.versions.ng class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href="https://angularjs.org//">angularjs.org</a> for more info.</p><p ng:if=info.detects.ngUiUtils class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Utils found.</p><p ng:if=info.detects.ngUiRouter class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Router found.</p><p ng:if=info.detects.ngUiBootstrap class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Bootrap found.</p><p ng:if=info.detects.ngAnimate class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular Animations active.</p></div></div><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.nw }" ng:hide="!info.showUnavailable && !info.versions.nw"><a class=app-info-icon target=_blank href="http://nwjs.io/"><div ng:if=true class="img-clipper img-nodewebkit"></div></a><div class=app-info-info><h5>Node Webkit <small><span ng:if=info.versions.nw>@ v{{info.versions.nw}}</span> <span ng:if=!info.versions.nw><em>not available</em></span></small></h5><p ng:if=!info.versions.nw class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href="http://nwjs.io/">nwjs.io</a> for more info.</p><p ng:if=info.versions.nw class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are connected to node webkit.</p><p ng:if=info.versions.chromium class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running Chromium @ {{ info.versions.chromium }}.</p></div></div><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.njs }" ng:hide="!info.showUnavailable && !info.versions.njs"><a class=app-info-icon target=_blank href=http://www.nodejs.org><div ng:if=true class="img-clipper img-nodejs"></div></a><div class=app-info-info><h5>Node JS <small><span ng:if=info.versions.njs>@ v{{info.versions.njs}}</span> <span ng:if=!info.versions.njs><em>not available</em></span></small></h5><p ng:if=!info.versions.njs class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href=http://www.nodejs.org>NodeJS.org</a> for more info.</p><p ng:if=info.versions.njs class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are inside a node js runtime.</p><p ng:if=info.versions.v8 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running V8 @ {{ info.versions.v8 }}.</p><p ng:if=info.versions.openssl class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running OpenSSL @ {{ info.versions.openssl }}.</p></div></div><div class="app-aside-collapser centered" ng-if=!appState.node.active><a href="" ng:show=!info.showUnavailable ng-click="info.showUnavailable = !info.showUnavailable">Show More</a> <a href="" ng:show=info.showUnavailable ng-click="info.showUnavailable = !info.showUnavailable">Hide Inactive</a></div><hr><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.html }"><div class=app-info-icon><div ng:if="info.about.browser.name != \'Internet Explorer\'" class="img-clipper img-html5"></div><div ng:if="info.about.browser.name == \'Internet Explorer\'" class="img-clipper img-html5-ie"></div></div><div class=app-info-info><h5>HTML Rendering Mode <small><span ng-if=info.versions.html>@ v{{ info.versions.html }}</span> <span ng-if=!info.versions.html><em>unknown</em></span></small></h5><p ng:if="info.versions.html >= \'5.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running a modern browser.</p><p ng:if="info.versions.html < \'5.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> Your browser is out of date. Try upgrading.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.js }"><div class=app-info-icon><div ng:if=!info.versions.v8 class="img-clipper img-js-default"></div><div ng:if=info.versions.v8 class="img-clipper img-js-v8"></div></div><div class=app-info-info><h5>Javascript Engine<small><span ng:if=info.versions.js>@ v{{ info.versions.js }}</span> <span ng:if=!info.versions.js><em>not found</em></span></small></h5><p ng:if="info.versions.js >= \'5.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You have a modern javascript engine.</p><p ng:if="info.versions.js < \'5.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> Javascript is out of date or unavailable.</p><p ng:if=info.versions.v8 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Javascript V8 engine, build v{{info.versions.v8}}.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.css }"><div class=app-info-icon><div ng:if=true class="img-clipper img-css3"></div></div><div class=app-info-info><h5>Cascading Styles <small><span ng:if=info.versions.css>@ v{{ info.versions.css }}</span> <span ng:if=!info.versions.css><em class=text-muted>not found</em></span></small></h5><p ng:if="info.versions.css >= \'3.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>You have an up-to-date style engine.</span></p><p ng:if="info.versions.css < \'3.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <span>CSS out of date. Styling might be broken.</span></p><p ng:if=info.css.boostrap2 class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <span>Bootstrap 2 is depricated. Upgrade to 3.x.</span></p><p ng:if=info.css.boostrap3 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>Bootstrap and/or UI componets found.</span></p><p ng:if=info.detects.less class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>Support for LESS has been detected.</span></p><p ng:if=info.detects.bootstrap class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Bootstrap and/or UI Componets found.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.jqry }"><div class=app-info-icon><div ng:if=true class="img-clipper img-jquery"></div></div><div class=app-info-info><h5>jQuery <small><span ng:if=info.versions.jqry>@ v{{ info.versions.jqry }}</span> <span ng:if=!info.versions.jqry><em>not found</em></span></small></h5><p ng:if=info.versions.jqry class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> jQuery or jqLite is loaded.</p><p ng:if="info.versions.jqry < \'1.10\'" class=text-danger><i class="glyphicon glyphicon-warning-sign glow-orange"></i> jQuery is out of date!</p></div></div><hr></div></div></div>');
+    '<div id=about-info class=container style="width: 100%"><style resx:import=assets/css/images.min.css></style><div class=row><div class="col-lg-8 col-md-12 info-overview"><h4>About this application</h4><hr>...<hr></div><div class="col-lg-4 hidden-md" ng:init="info.showUnavailable = false"><h4>Inspirations <small>come from great ideas</small></h4><hr><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.ng }" ng:hide="!info.showUnavailable && !info.versions.ng"><a class=app-info-icon target=_blank href="https://angularjs.org/"><div ng:if=true class="img-clipper img-angular"></div></a><div class=app-info-info><h5>Angular JS <small><span ng:if=info.versions.ng>@ v{{info.versions.ng}}</span> <span ng:if=!info.versions.ng><em>not found</em></span></small></h5><p ng:if=!info.versions.ng class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href="https://angularjs.org//">angularjs.org</a> for more info.</p><p ng:if=info.detects.ngUiUtils class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Utils found.</p><p ng:if=info.detects.ngUiRouter class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Router found.</p><p ng:if=info.detects.ngUiBootstrap class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular UI Bootrap found.</p><p ng:if=info.detects.ngAnimate class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Angular Animations active.</p></div></div><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.nw }" ng:hide="!info.showUnavailable && !info.versions.nw"><a class=app-info-icon target=_blank href="http://nwjs.io/"><div ng:if=true class="img-clipper img-nodewebkit"></div></a><div class=app-info-info><h5>Node Webkit <small><span ng:if=info.versions.nw>@ v{{info.versions.nw}}</span> <span ng:if=!info.versions.nw><em>not available</em></span></small></h5><p ng:if=!info.versions.nw class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href="http://nwjs.io/">nwjs.io</a> for more info.</p><p ng:if=info.versions.nw class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are connected to node webkit.</p><p ng:if=info.versions.chromium class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running Chromium @ {{ info.versions.chromium }}.</p></div></div><div class="app-info-aside animate-show" ng:class="{ \'info-disabled\': !info.versions.njs }" ng:hide="!info.showUnavailable && !info.versions.njs"><a class=app-info-icon target=_blank href=http://www.nodejs.org><div ng:if=true class="img-clipper img-nodejs"></div></a><div class=app-info-info><h5>Node JS <small><span ng:if=info.versions.njs>@ v{{info.versions.njs}}</span> <span ng:if=!info.versions.njs><em>not available</em></span></small></h5><p ng:if=!info.versions.njs class=text-muted><i class="glyphicon glyphicon-info-sign glow-blue"></i> Check out <a target=_blank href=http://www.nodejs.org>NodeJS.org</a> for more info.</p><p ng:if=info.versions.njs class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are inside a node js runtime.</p><p ng:if=info.versions.v8 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running V8 @ {{ info.versions.v8 }}.</p><p ng:if=info.versions.openssl class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running OpenSSL @ {{ info.versions.openssl }}.</p></div></div><div class="app-aside-collapser centered" ng-if=!appState.node.active><a href="" ng:show=!info.showUnavailable ng-click="info.showUnavailable = !info.showUnavailable">Show More</a> <a href="" ng:show=info.showUnavailable ng-click="info.showUnavailable = !info.showUnavailable">Hide Inactive</a></div><hr><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.html }"><div class=app-info-icon><div ng:if="info.about.browser.name != \'Internet Explorer\'" class="img-clipper img-html5"></div><div ng:if="info.about.browser.name == \'Internet Explorer\'" class="img-clipper img-html5-ie"></div></div><div class=app-info-info><h5>HTML Rendering Mode <small><span ng-if=info.versions.html>@ v{{ info.versions.html }}</span> <span ng-if=!info.versions.html><em>unknown</em></span></small></h5><p ng:if="info.versions.html >= \'5.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You are running a modern browser.</p><p ng:if="info.versions.html < \'5.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> Your browser is out of date. Try upgrading.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.js }"><div class=app-info-icon><div ng:if=!info.versions.v8 class="img-clipper img-js-default"></div><div ng:if=info.versions.v8 class="img-clipper img-js-v8"></div></div><div class=app-info-info><h5>Javascript Engine<small><span ng:if=info.versions.js>@ v{{ info.versions.js }}</span> <span ng:if=!info.versions.js><em>not found</em></span></small></h5><p ng:if="info.versions.js >= \'5.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> You have a modern javascript engine.</p><p ng:if="info.versions.js < \'5.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> Javascript is out of date or unavailable.</p><p ng:if=info.versions.v8 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Javascript V8 engine, build v{{info.versions.v8}}.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.css }"><div class=app-info-icon><div ng:if=true class="img-clipper img-css3"></div></div><div class=app-info-info><h5>Cascading Styles <small><span ng:if=info.versions.css>@ v{{ info.versions.css }}</span> <span ng:if=!info.versions.css><em class=text-muted>not found</em></span></small></h5><p ng:if="info.versions.css >= \'3.0\'" class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>You have an up-to-date style engine.</span></p><p ng:if="info.versions.css < \'3.0\'" class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <span>CSS out of date. Styling might be broken.</span></p><p ng:if=info.css.boostrap2 class=text-warning><i class="glyphicon glyphicon-warning-sign glow-orange"></i> <span>Bootstrap 2 is depricated. Upgrade to 3.x.</span></p><p ng:if=info.css.boostrap3 class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>Bootstrap and/or UI componets found.</span></p><p ng:if=info.detects.less class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> <span>Support for LESS has been detected.</span></p><p ng:if=info.detects.bootstrap class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> Bootstrap and/or UI Componets found.</p></div></div><div class=app-info-aside ng-class="{ \'info-disabled\': !info.versions.jqry }"><div class=app-info-icon><div ng:if=true class="img-clipper img-jquery"></div></div><div class=app-info-info><h5>jQuery <small><span ng:if=info.versions.jqry>@ v{{ info.versions.jqry }}</span> <span ng:if=!info.versions.jqry><em>not found</em></span></small></h5><p ng:if=info.versions.jqry class=text-success><i class="glyphicon glyphicon-ok glow-green"></i> jQuery or jqLite is loaded.</p><p ng:if="info.versions.jqry < \'1.10\'" class=text-danger><i class="glyphicon glyphicon-warning-sign glow-orange"></i> jQuery is out of date!</p></div></div><hr></div></div></div>');
   $templateCache.put('modules/about/views/left.tpl.html',
     '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.info><i class="fa fa-info-circle"></i>&nbsp; About this app</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.conection><i class="fa fa-plug"></i>&nbsp; Check Connectivity</a></li><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=about.online><i class="fa fa-globe"></i>&nbsp; Visit us online</a></li></ul>');
   $templateCache.put('modules/console/views/logs.tpl.html',
@@ -4450,7 +4426,7 @@ angular.module('prototyped.ng.runtime', [
     '            flex-shrink: 0;\n' +
     '        }</style><div class="btn-group btn-group-sm dock-tight"><div class="input-group input-group-sm"><label for=txtFileName class=input-group-addon><i class="fa fa-globe"></i></label><input id=txtExternalUrl class="cmd-input form-control" tabindex=1 value="{{ linksCtrl.selected.data }}" placeholder="Location not set..." ng-readonly="true || !linksCtrl.selected.data" ng-changed="alert(this)"> <a href="" class="btn btn-default input-group-addon" ng-click=linksCtrl.refreshExternal() ng-disabled=!linksCtrl.selected><i class="fa fa-refresh"></i></a> <a href="" class="btn btn-default input-group-addon" ng-click=linksCtrl.openExternal() ng-disabled=!linksCtrl.selected><i class="fa fa-external-link"></i></a></div></div><iframe id=ExternalExplorerPanel frameborder=0 class=external-iframe ng-if=linksCtrl.selected onerror=console.error(event) ng-src="{{ linksCtrl.selected.data | trustedUrl }}">IFrame not available</iframe></div>');
   $templateCache.put('modules/explore/views/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-arrow-circle-left"></i>&nbsp; Site Map Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.explore\'"><abn:tree tree-data=navigation.siteExplorer.children icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.externalLinks><a ui:sref=proto.links><i class="fa fa-globe"></i>&nbsp; External Links</a></li><li class=list-group-item style="padding: 6px 0; overflow-x:hidden" ng-if="navigation.externalLinks && state.current.name == \'proto.links\'"><abn:tree tree-data=navigation.externalLinks.children icon-leaf="fa fa-globe" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.fileSystem><a ui:sref=proto.browser><i class="fa fa-hdd-o"></i>&nbsp; File System Browser</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.fileSystem && state.current.name == \'proto.browser\'"><style resx:import=assets/css/images.min.css></style><div class=info-overview ng-if=!appNode.active><div class=panel-icon-lg><div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px"></div></div></div><div ng-if="appNode.active && navigation.fileSystem"><abn:tree tree-data=navigation.fileSystem.children icon-leaf="fa fa-folder" icon-expand="fa fa-folder" icon-collapse="fa fa-folder-open" expand-level=2></abn:tree></div></li><li class=list-group-item ui:sref-active=active ng-if=navigation.clientStates><a ui:sref=proto.routing><i class="fa fa-tasks"></i>&nbsp; UI State &amp; Routing</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.clientStates && state.current.name == \'proto.routing\'"><abn:tree tree-data=navigation.clientStates icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-arrow-circle-left"></i>&nbsp; Site Map Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.explore\'"><abn:tree tree-data=navigation.siteExplorer.children icon-leaf="fa fa-file-o" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.externalLinks><a ui:sref=proto.links><i class="fa fa-globe"></i>&nbsp; External Links</a></li><li class=list-group-item style="padding: 6px 0; overflow-x:hidden" ng-if="navigation.externalLinks && state.current.name == \'proto.links\'"><abn:tree tree-data=navigation.externalLinks.children icon-leaf="fa fa-globe" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.fileSystem><a ui:sref=proto.browser><i class="fa fa-hdd-o"></i>&nbsp; File System Browser</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.fileSystem && state.current.name == \'proto.browser\'"><style resx:import=assets/css/images.min.css></style><div class=info-overview ng-if=!appNode.active><div class=panel-icon-lg><div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px"></div></div></div><div ng-if="appNode.active && navigation.fileSystem"><abn:tree tree-data=navigation.fileSystem.children icon-leaf="fa fa-folder" icon-expand="fa fa-folder" icon-collapse="fa fa-folder-open" expand-level=2></abn:tree></div></li><li class=list-group-item ui:sref-active=active ng-if=navigation.clientStates><a ui:sref=proto.routing><i class="fa fa-tasks"></i>&nbsp; UI State &amp; Routing</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.clientStates && state.current.name == \'proto.routing\'"><abn:tree tree-data=navigation.clientStates icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
   $templateCache.put('modules/explore/views/main.tpl.html',
     '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail ng-if=exploreCtrl.selected><br><br><div class=row><div class=col-md-9><form class=form-horizontal><div class=form-group><label for=inputState class="col-sm-2 control-label">State</label><div class=col-sm-10><input class=form-control id=inputState placeholder=empty ng-model=exploreCtrl.selected.name readonly></div></div><div class=form-group><label for=inputPath class="col-sm-2 control-label">Path</label><div class=col-sm-10><input class=form-control id=inputPath placeholder="not set" ng-model=exploreCtrl.selected.url readonly></div></div><div class=form-group><div class="col-sm-offset-2 col-sm-10"><div class=checkbox><label><input type=checkbox ng-model=exploreCtrl.selected.abstract> Abstract</label></div></div></div><div class=form-group ng-if=exploreCtrl.selected.name><div class="col-sm-offset-2 col-sm-10"><a class="btn btn-default" ng-class="{ \'btn-primary\': !exploreCtrl.selected.abstract }" ui-sref="{{ exploreCtrl.selected.name }}" ng-disabled=exploreCtrl.selected.abstract>Got to page</a></div></div></form></div><div class=col-md-3>{{ exploreCtrl.selection.views }}</div></div></div></div>');
   $templateCache.put('views/common/components/contents.tpl.html',
@@ -4489,7 +4465,7 @@ angular.module('prototyped.ng.runtime', [
 
 
   $templateCache.put('assets/css/prototyped.min.css',
-    "body .glow-green{color:#00b500!important;text-shadow:0 0 2px #00b500}body .glow-red{color:#D00!important;text-shadow:0 0 2px #D00}body .glow-orange{color:#ff8d00!important;text-shadow:0 0 2px #ff8d00}body .glow-blue{color:#0094ff!important;text-shadow:0 0 2px #0094ff}body .input-group-xs>.form-control,body .input-group-xs>.input-group-addon,body .input-group-xs>.input-group-btn>.btn{height:22px;padding:1px 5px;font-size:12px;line-height:1.5}body .docked{flex-grow:1;flex-shrink:1;display:flex;overflow:auto}body .dock-tight{flex-grow:0;flex-shrink:0}body .dock-fill{flex-grow:1;flex-shrink:1}body .ellipsis{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .dragable{-webkit-app-region:drag;-webkit-user-select:none}body .non-dragable{-webkit-app-region:no-drag;-webkit-user-select:auto}body .inactive-gray{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .inactive-gray:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-25{opacity:.25;filter:alpha(opacity=25);filter:grayscale(100%) opacity(0.25);-webkit-filter:grayscale(100%) opacity(0.25);-moz-filter:alpha(opacity=25);-o-filter:alpha(opacity=25)}body .inactive-gray-25:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-10{opacity:.1;filter:alpha(opacity=10);filter:grayscale(100%) opacity(0.1);-webkit-filter:grayscale(100%) opacity(0.1);-moz-filter:alpha(opacity=10);-o-filter:alpha(opacity=10)}body .inactive-gray-10:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-ctrl{opacity:.65;filter:alpha(opacity=65);filter:grayscale(100%) opacity(0.65);-webkit-filter:grayscale(100%) opacity(0.65);-moz-filter:alpha(opacity=65);-o-filter:alpha(opacity=65)}body .inactive-fill-text{width:100%;height:100%;display:block;padding:64px 0;font-size:14px;text-align:center;color:rgba(128,128,128,.75)}body [draggable=true]{cursor:move}body .top-hint{text-align:center}body .top-hint .tab{top:0;width:320px;height:24px;padding:2px 6px;margin-left:-160px;z-index:4000;text-wrap:avoid;border-top:none;position:absolute;border-radius:0 0 10px 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .top-hint a{color:#000}body .results{min-width:480px;display:flex}body .results .icon{margin:0 8px;font-size:128px;width:128px!important;height:128px!important;position:relative;flex-grow:0;flex-shrink:0}body .results .icon .sub-icon{font-size:64px!important;width:64px!important;height:64px!important;position:absolute;right:0;top:0;margin-top:100px}body .results .info{margin:0 16px;min-height:128px;min-width:300px;display:inline-block;flex-grow:1;flex-shrink:1}body .results .info h4{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .results .info h4 a{color:#000}body .info-row{display:flex}body .info-row-links{color:silver}body .info-row-links a{color:#4a4a4a;margin-left:8px}body .info-row-links a:hover{color:#000}body .info-col-primary{flex-grow:1;flex-shrink:1}body .info-col-secondary{flex-grow:0;flex-shrink:0}body .info-overview{vertical-align:top}body .info-overview .panel-icon-lg{width:128px;height:128px;padding:0;margin:0 auto 10px;display:block;position:relative;background-repeat:no-repeat;background-size:auto 128px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inner{width:92px;height:92px;margin:6px auto;background-repeat:no-repeat;background-size:auto 86px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-overlay{right:0;bottom:0;width:48px;height:48px;position:absolute;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inset{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-inset-bl{margin:0;position:absolute;background-repeat:no-repeat;background-position:center center;width:64px;height:64px;left:10px;bottom:10px;background-size:auto 64px}body .info-overview .panel-label{margin:6px auto;text-align:center;text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .info-overview .panel-mid{text-align:center}body .info-tabs .trim-top{padding:10px;border-top:none;min-height:380px;border-top-left-radius:0;border-top-right-radius:0}body .img-clipper{width:48px;height:48px;padding:0;margin:3px auto;text-align:center;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .app-info-aside{display:flex;margin-bottom:12px}body .app-info-aside .app-info-icon{flex-grow:0;flex-shrink:0;flex-basis:64px;vertical-align:top}body .app-info-aside .app-info-info{flex-grow:1;flex-shrink:1;text-align:left;vertical-align:top}body .app-info-aside .app-info-info p{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .app-info-aside.info-disabled .app-info-icon{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .app-info-aside.info-disabled .app-info-icon:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .app-aside-collapser a{margin:0;padding:0;display:block;color:silver;text-decoration:none}body .app-aside-collapser a:hover{color:gray}body .iframe-body,body .iframe-body iframe{margin:0;padding:0}body .alertify-hidden{display:none}body .console .cmd-output{padding:3px;font-family:Courier New,Courier,monospace;color:gray}body .console .cmd-line{padding:0;margin:0}body .console .cmd-time{color:silver}body .console .cmd-text{white-space:pre}@media screen and (max-width:640px) and (max-height:480px){body .console .cmd-output{padding:4px;font-size:10.4px}}body .card-view{margin:0 auto;padding:0;color:#333;height:100%;overflow:auto}body .card-view.float-left .card{float:left}body .card-view .multi-column{columns:300px 3;-webkit-columns:300px 3}body .card-view a{color:#4c4c4c;text-decoration:none}body .card-view .boxed{margin:0 auto 36px;max-width:1056px;display:inline-block}body .card-view .card{width:320px;height:200px;padding:0;margin:15px 15px 0;overflow:hidden;background:#fff;background:#ededed;background:-moz-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#ededed),color-stop(45%,#f6f6f6),color-stop(61%,#fff),color-stop(61%,#fff));background:-webkit-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-o-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-ms-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:linear-gradient(to bottom,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#ffffff', GradientType=0);border:1px solid #AAA;border-bottom:3px solid #BBB}body .card-view .card:hover{-webkit-box-shadow:0 0 10px 1px rgba(128,128,128,.75);-moz-box-shadow:0 0 10px 1px rgba(128,128,128,.75);box-shadow:0 0 10px 1px rgba(128,128,128,.75)}body .card-view .card p{background:#fff;margin:0;padding:10px}body .card-view .card-image{width:100%;height:140px;padding:0;margin:0;position:relative;overflow:hidden;background-position:center;background-repeat:no-repeat}body .card-view .card-image .banner{height:50px;width:50px;top:0;right:0;background-position:top right;background-repeat:no-repeat;position:absolute}body .card-view .card-image h1,body .card-view .card-image h2,body .card-view .card-image h3,body .card-view .card-image h4,body .card-view .card-image h5,body .card-view .card-image h6{position:absolute;bottom:0;left:0;width:100%;color:#fff;background:rgba(0,0,0,.65);margin:0;padding:6px 12px!important;border:none}body .card-view .small-only{display:none!important}body .card-view .leftColumn,body .card-view .rightColumn{display:inline-block;width:49%;vertical-align:top}body .card-view .column{display:inline-block;vertical-align:top}body .card-view .arrow{top:50%;width:50px;bottom:0;margin:auto 0;outline:medium none;position:absolute;font-size:40px;cursor:pointer;z-index:5}body .card-view .arrow i{top:-25px}body .card-view .arrow.prev{left:0;opacity:.2}body .card-view .arrow.prev:hover{opacity:1}body .card-view .arrow.next{right:0;opacity:.2;text-align:right}body .card-view .arrow.next:hover{opacity:1}body .card-view .img-default{background:#b3bead;background:-moz-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fcfff4),color-stop(40%,#dfe5d7),color-stop(100%,#b3bead));background:-webkit-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-o-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-ms-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:linear-gradient(to bottom,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fcfff4', endColorstr='#b3bead', GradientType=0)}body .card-view .img-explore{background-position:top left;background-image:url(https://farm6.staticflickr.com/5250/5279251697_3ab802e3ef.jpg)}body .card-view .img-editor{background-image:url(http://f.fastcompany.net/multisite_files/fastcompany/inline/2013/10/3020994-inline-d3-data-viz001.jpg);background-size:320px auto}body .card-view .img-console{background-image:url(http://shumakovich.com/uploads/useruploads/images/programming_256x256.png);background-size:auto auto;background-position:top}body .card-view .img-about{background-image:url(https://farm9.staticflickr.com/8282/7807659570_f5ba8dfc63.jpg);background-size:420px auto;background-position:center}body .card-view .img-sandbox{background-image:url(http://8020.photos.jpgmag.com/1727832_147374_5c80086d33_p.jpg);background-size:360px auto;background-position:top center}body .card-view .slider-nav{bottom:0;display:block;height:48px;left:0;margin:0 auto;padding:1em 0 .8em;position:absolute;right:0;text-align:center;width:100%;z-index:5}body .card-view .slider-nav li{margin:3px;padding:1px 3px;cursor:pointer;position:relative;display:inline-block;border:1px dotted #E0E0E0;background-color:rgba(255,255,255,.25)}body .card-view .slider-nav li a{color:rgba(128,128,128,.75)}body .card-view .slider-nav li.active{border:solid 1px #BBB;background-color:rgba(128,128,128,.25)}body .card-view .slider-nav li.active a{color:#000}body .card-view .slider{-webkit-perspective:1000px;-moz-perspective:1000px;-ms-perspective:1000px;-o-perspective:1000px;perspective:1000px;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d;-ms-transform-style:preserve-3d;-o-transform-style:preserve-3d;transform-style:preserve-3d}body .card-view .slide{-webkit-transition:1s linear all;-moz-transition:1s linear all;-o-transition:1s linear all;transition:1s linear all;opacity:1}body .card-view .slide.ng-hide-add{opacity:1}body .card-view .slide.ng-hide-add.ng-hide-add-active,body .card-view .slide.ng-hide-remove{opacity:0}body .card-view .slide.ng-hide-remove.ng-hide-remove-active{opacity:1}body .footer .log-group{padding:1px 6px}@media screen and (min-width:741px) and (max-width:1024px){#cardViewer .boxed{max-width:740px!important}}@media screen and (max-width:740px){#cardViewer .boxed{max-width:350px!important}#cardViewer .small-only{display:block!important}#cardViewer .card-view{height:100%;overflow:auto}#cardViewer .card-view .card{display:none}#cardViewer .card-view .card.active{display:block}}#fileExplorer{-webkit-user-select:none}#fileExplorer .folder-contents{padding:16px 8px;clear:both}#fileExplorer .file{color:#000;text-decoration:none}#fileExplorer .name{margin-top:6px;font-size:11px}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .file .icon img{width:48px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-large{display:block}#fileExplorer .view-large .files{padding:0;margin:0}#fileExplorer .view-large .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-large .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-large .file .name{width:100px;word-wrap:break-word}#fileExplorer .view-large .file.focus .name{color:#fff}#fileExplorer .view-large .file .icon{margin:0 auto;width:60px}#fileExplorer .view-large .file .icon img{width:60px;height:auto}#fileExplorer .view-large .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-med .files{padding:0;margin:0}#fileExplorer .view-med .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-med .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-med .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .view-med .file.focus .name{color:#fff}#fileExplorer .view-med .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .view-med .file .icon img{width:48px;height:auto}#fileExplorer .view-med .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-details{display:block}#fileExplorer .view-details .files{padding:0;margin:0}#fileExplorer .view-details .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .view-details .file.focus{-webkit-border-radius:0}#fileExplorer .view-details .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .view-details .file .icon{margin:0;width:24px;display:inline}#fileExplorer .view-details .file .icon img{width:24px;height:auto}@media screen and (max-width:640px) and (max-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .file.focus{-webkit-border-radius:0}#fileExplorer .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .file .icon{margin:0;width:24px;display:inline}#fileExplorer .file .icon img{width:24px;height:auto}#fileExplorer .name{padding:3px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}}@media screen and (min-width:1024px) and (min-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:100px;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;width:60px}#fileExplorer .file .icon img{width:60px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}}.abn-tree-animate-enter,li.abn-tree-row.ng-enter{transition:200ms linear all;position:relative;display:block;opacity:0;max-height:0}.abn-tree-animate-enter.abn-tree-animate-enter-active,li.abn-tree-row.ng-enter-active{opacity:1;max-height:30px}.abn-tree-animate-leave,li.abn-tree-row.ng-leave{transition:200ms linear all;position:relative;display:block;height:30px;max-height:30px;opacity:1}.abn-tree-animate-leave.abn-tree-animate-leave-active,li.abn-tree-row.ng-leave-active{height:0;max-height:0;opacity:0}ul.abn-tree li.abn-tree-row{padding:0;margin:0}ul.abn-tree li.abn-tree-row a{padding:3px 10px}ul.abn-tree i.indented{padding:2px 6px}.abn-tree{cursor:pointer}ul.nav.abn-tree .level-1 .indented{position:relative;left:0}ul.nav.abn-tree .level-2 .indented{position:relative;left:16px}ul.nav.abn-tree .level-3 .indented{position:relative;left:40px}ul.nav.abn-tree .level-4 .indented{position:relative;left:60px}ul.nav.abn-tree .level-5 .indented{position:relative;left:80px}ul.nav.abn-tree .level-6 .indented{position:relative;left:100px}ul.nav.nav-list.abn-tree .level-7 .indented{position:relative;left:120px}ul.nav.nav-list.abn-tree .level-8 .indented{position:relative;left:140px}ul.nav.nav-list.abn-tree .level-9 .indented{position:relative;left:160px}"
+    "body .glow-green{color:#00b500!important;text-shadow:0 0 2px #00b500}body .glow-red{color:#D00!important;text-shadow:0 0 2px #D00}body .glow-orange{color:#ff8d00!important;text-shadow:0 0 2px #ff8d00}body .glow-blue{color:#0094ff!important;text-shadow:0 0 2px #0094ff}body .input-group-xs>.form-control,body .input-group-xs>.input-group-addon,body .input-group-xs>.input-group-btn>.btn{height:22px;padding:1px 5px;font-size:12px;line-height:1.5}body .docked{flex-grow:1;flex-shrink:1;display:flex;overflow:auto}body .dock-tight{flex-grow:0;flex-shrink:0}body .dock-fill{flex-grow:1;flex-shrink:1}body .ellipsis{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .dragable{-webkit-app-region:drag;-webkit-user-select:none}body .non-dragable{-webkit-app-region:no-drag;-webkit-user-select:auto}body .inactive-gray{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .inactive-gray:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-25{opacity:.25;filter:alpha(opacity=25);filter:grayscale(100%) opacity(0.25);-webkit-filter:grayscale(100%) opacity(0.25);-moz-filter:alpha(opacity=25);-o-filter:alpha(opacity=25)}body .inactive-gray-25:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-gray-10{opacity:.1;filter:alpha(opacity=10);filter:grayscale(100%) opacity(0.1);-webkit-filter:grayscale(100%) opacity(0.1);-moz-filter:alpha(opacity=10);-o-filter:alpha(opacity=10)}body .inactive-gray-10:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .inactive-ctrl{opacity:.65;filter:alpha(opacity=65);filter:grayscale(100%) opacity(0.65);-webkit-filter:grayscale(100%) opacity(0.65);-moz-filter:alpha(opacity=65);-o-filter:alpha(opacity=65)}body .inactive-fill-text{width:100%;height:100%;display:block;padding:64px 0;font-size:14px;text-align:center;color:rgba(128,128,128,.75)}body [draggable=true]{cursor:move}body .top-hint{text-align:center}body .top-hint .tab{top:0;width:320px;height:24px;padding:2px 6px;margin-left:-160px;z-index:4000;text-wrap:avoid;border-top:none;position:absolute;border-radius:0 0 10px 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .top-hint a{color:#000}body .results{min-width:480px;display:flex}body .results .icon{margin:0 8px;font-size:128px;width:128px!important;height:128px!important;position:relative;flex-grow:0;flex-shrink:0}body .results .icon .sub-icon{font-size:64px!important;width:64px!important;height:64px!important;position:absolute;right:0;top:0;margin-top:100px}body .results .info{margin:0 16px;min-height:128px;min-width:300px;display:inline-block;flex-grow:1;flex-shrink:1}body .results .info h4{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .results .info h4 a{color:#000}body .info-row{display:flex}body .info-row-links{color:silver}body .info-row-links a{color:#4a4a4a;margin-left:8px}body .info-row-links a:hover{color:#000}body .info-col-primary{flex-grow:1;flex-shrink:1}body .info-col-secondary{flex-grow:0;flex-shrink:0}body .info-overview{vertical-align:top}body .info-overview .panel-icon-lg{width:128px;height:128px;padding:0;margin:0 auto 10px;display:block;position:relative;background-repeat:no-repeat;background-size:auto 128px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inner{width:92px;height:92px;margin:6px auto;background-repeat:no-repeat;background-size:auto 86px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-overlay{right:0;bottom:0;width:48px;height:48px;position:absolute;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .info-overview .panel-icon-lg .panel-icon-inset{width:40px;height:40px;margin:0;left:24px;bottom:0;position:absolute;background-repeat:no-repeat;background-size:auto 40px;background-position:center center}body .info-overview .panel-icon-lg .panel-icon-inset-bl{margin:0;position:absolute;background-repeat:no-repeat;background-position:center center;width:64px;height:64px;left:10px;bottom:10px;background-size:auto 64px}body .info-overview .panel-label{margin:6px auto;text-align:center;text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .info-tabs .trim-top{padding:10px;border-top:none;min-height:380px;border-top-left-radius:0;border-top-right-radius:0}body .img-clipper{width:48px;height:48px;padding:0;margin:3px auto;text-align:center;background-repeat:no-repeat;background-size:auto 48px;background-position:top center}body .app-info-aside{display:flex;margin-bottom:12px}body .app-info-aside .app-info-icon{flex-grow:0;flex-shrink:0;flex-basis:64px;vertical-align:top}body .app-info-aside .app-info-info{flex-grow:1;flex-shrink:1;text-align:left;vertical-align:top}body .app-info-aside .app-info-info p{text-wrap:avoid;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}body .app-info-aside.info-disabled .app-info-icon{opacity:.5;filter:alpha(opacity=50);filter:grayscale(100%) opacity(0.5);-webkit-filter:grayscale(100%) opacity(0.5);-moz-filter:alpha(opacity=50);-o-filter:alpha(opacity=50)}body .app-info-aside.info-disabled .app-info-icon:hover{opacity:.75!important;filter:alpha(opacity=75)!important;filter:grayscale(100%) opacity(0.75)!important;-webkit-filter:grayscale(100%) opacity(0.75);-moz-filter:alpha(opacity=75)!important;-o-filter:alpha(opacity=75)!important}body .app-aside-collapser a{margin:0;padding:0;display:block;color:silver;text-decoration:none}body .app-aside-collapser a:hover{color:gray}body .iframe-body,body .iframe-body iframe{margin:0;padding:0}body .alertify-hidden{display:none}body .console .cmd-output{padding:3px;font-family:Courier New,Courier,monospace;color:gray}body .console .cmd-line{padding:0;margin:0}body .console .cmd-time{color:silver}body .console .cmd-text{white-space:pre}@media screen and (max-width:640px) and (max-height:480px){body .console .cmd-output{padding:4px;font-size:10.4px}}body .card-view{margin:0 auto;padding:0;color:#333;height:100%;overflow:auto}body .card-view.float-left .card{float:left}body .card-view .multi-column{columns:300px 3;-webkit-columns:300px 3}body .card-view a{color:#4c4c4c;text-decoration:none}body .card-view .boxed{margin:0 auto 36px;max-width:1056px;display:inline-block}body .card-view .card{width:320px;height:200px;padding:0;margin:15px 15px 0;overflow:hidden;background:#fff;background:#ededed;background:-moz-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#ededed),color-stop(45%,#f6f6f6),color-stop(61%,#fff),color-stop(61%,#fff));background:-webkit-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-o-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:-ms-linear-gradient(top,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);background:linear-gradient(to bottom,#ededed 0,#f6f6f6 45%,#fff 61%,#fff 61%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#ffffff', GradientType=0);border:1px solid #AAA;border-bottom:3px solid #BBB}body .card-view .card:hover{-webkit-box-shadow:0 0 10px 1px rgba(128,128,128,.75);-moz-box-shadow:0 0 10px 1px rgba(128,128,128,.75);box-shadow:0 0 10px 1px rgba(128,128,128,.75)}body .card-view .card p{background:#fff;margin:0;padding:10px}body .card-view .card-image{width:100%;height:140px;padding:0;margin:0;position:relative;overflow:hidden;background-position:center;background-repeat:no-repeat}body .card-view .card-image .banner{height:50px;width:50px;top:0;right:0;background-position:top right;background-repeat:no-repeat;position:absolute}body .card-view .card-image h1,body .card-view .card-image h2,body .card-view .card-image h3,body .card-view .card-image h4,body .card-view .card-image h5,body .card-view .card-image h6{position:absolute;bottom:0;left:0;width:100%;color:#fff;background:rgba(0,0,0,.65);margin:0;padding:6px 12px!important;border:none}body .card-view .small-only{display:none!important}body .card-view .leftColumn,body .card-view .rightColumn{display:inline-block;width:49%;vertical-align:top}body .card-view .column{display:inline-block;vertical-align:top}body .card-view .arrow{top:50%;width:50px;bottom:0;margin:auto 0;outline:medium none;position:absolute;font-size:40px;cursor:pointer;z-index:5}body .card-view .arrow i{top:-25px}body .card-view .arrow.prev{left:0;opacity:.2}body .card-view .arrow.prev:hover{opacity:1}body .card-view .arrow.next{right:0;opacity:.2;text-align:right}body .card-view .arrow.next:hover{opacity:1}body .card-view .img-default{background:#b3bead;background:-moz-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fcfff4),color-stop(40%,#dfe5d7),color-stop(100%,#b3bead));background:-webkit-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-o-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:-ms-linear-gradient(top,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);background:linear-gradient(to bottom,#fcfff4 0,#dfe5d7 40%,#b3bead 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fcfff4', endColorstr='#b3bead', GradientType=0)}body .card-view .img-explore{background-position:top left;background-image:url(https://farm6.staticflickr.com/5250/5279251697_3ab802e3ef.jpg)}body .card-view .img-editor{background-image:url(http://f.fastcompany.net/multisite_files/fastcompany/inline/2013/10/3020994-inline-d3-data-viz001.jpg);background-size:320px auto}body .card-view .img-console{background-image:url(http://shumakovich.com/uploads/useruploads/images/programming_256x256.png);background-size:auto auto;background-position:top}body .card-view .img-about{background-image:url(https://farm9.staticflickr.com/8282/7807659570_f5ba8dfc63.jpg);background-size:420px auto;background-position:center}body .card-view .img-sandbox{background-image:url(http://8020.photos.jpgmag.com/1727832_147374_5c80086d33_p.jpg);background-size:360px auto;background-position:top center}body .card-view .slider-nav{bottom:0;display:block;height:48px;left:0;margin:0 auto;padding:1em 0 .8em;position:absolute;right:0;text-align:center;width:100%;z-index:5}body .card-view .slider-nav li{margin:3px;padding:1px 3px;cursor:pointer;position:relative;display:inline-block;border:1px dotted #E0E0E0;background-color:rgba(255,255,255,.25)}body .card-view .slider-nav li a{color:rgba(128,128,128,.75)}body .card-view .slider-nav li.active{border:solid 1px #BBB;background-color:rgba(128,128,128,.25)}body .card-view .slider-nav li.active a{color:#000}body .card-view .slider{-webkit-perspective:1000px;-moz-perspective:1000px;-ms-perspective:1000px;-o-perspective:1000px;perspective:1000px;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d;-ms-transform-style:preserve-3d;-o-transform-style:preserve-3d;transform-style:preserve-3d}body .card-view .slide{-webkit-transition:1s linear all;-moz-transition:1s linear all;-o-transition:1s linear all;transition:1s linear all;opacity:1}body .card-view .slide.ng-hide-add{opacity:1}body .card-view .slide.ng-hide-add.ng-hide-add-active,body .card-view .slide.ng-hide-remove{opacity:0}body .card-view .slide.ng-hide-remove.ng-hide-remove-active{opacity:1}body .footer .log-group{padding:1px 6px}@media screen and (min-width:741px) and (max-width:1024px){#cardViewer .boxed{max-width:740px!important}}@media screen and (max-width:740px){#cardViewer .boxed{max-width:350px!important}#cardViewer .small-only{display:block!important}#cardViewer .card-view{height:100%;overflow:auto}#cardViewer .card-view .card{display:none}#cardViewer .card-view .card.active{display:block}}#fileExplorer{-webkit-user-select:none}#fileExplorer .folder-contents{padding:16px 8px;clear:both}#fileExplorer .file{color:#000;text-decoration:none}#fileExplorer .name{margin-top:6px;font-size:11px}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .file .icon img{width:48px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-large{display:block}#fileExplorer .view-large .files{padding:0;margin:0}#fileExplorer .view-large .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-large .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-large .file .name{width:100px;word-wrap:break-word}#fileExplorer .view-large .file.focus .name{color:#fff}#fileExplorer .view-large .file .icon{margin:0 auto;width:60px}#fileExplorer .view-large .file .icon img{width:60px;height:auto}#fileExplorer .view-large .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-med .files{padding:0;margin:0}#fileExplorer .view-med .file{float:left;padding:2px;margin:2px;width:64px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .view-med .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .view-med .file .name{width:64px;padding:3px;display:inline-block;word-wrap:break-word}#fileExplorer .view-med .file.focus .name{color:#fff}#fileExplorer .view-med .file .icon{margin:0 auto;padding:6px 0;width:48px}#fileExplorer .view-med .file .icon img{width:48px;height:auto}#fileExplorer .view-med .file.focus .icon{-webkit-filter:invert(20%)}#fileExplorer .view-details{display:block}#fileExplorer .view-details .files{padding:0;margin:0}#fileExplorer .view-details .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .view-details .file.focus{-webkit-border-radius:0}#fileExplorer .view-details .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .view-details .file .icon{margin:0;width:24px;display:inline}#fileExplorer .view-details .file .icon img{width:24px;height:auto}@media screen and (max-width:640px) and (max-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{padding:0;margin:2px;float:none;display:block;width:100%;text-align:left}#fileExplorer .file.focus{-webkit-border-radius:0}#fileExplorer .file .name{padding:3px;display:inline;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}#fileExplorer .file .icon{margin:0;width:24px;display:inline}#fileExplorer .file .icon img{width:24px;height:auto}#fileExplorer .name{padding:3px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}}@media screen and (min-width:1024px) and (min-height:480px){#fileExplorer{display:block}#fileExplorer .files{padding:0;margin:0}#fileExplorer .file{float:left;padding:0;margin:2px;width:100px;display:inline-block;text-align:center;vertical-align:top}#fileExplorer .file.focus{background-color:#08C;-webkit-border-radius:4px}#fileExplorer .file .name{width:100px;word-wrap:break-word}#fileExplorer .file.focus .name{color:#fff}#fileExplorer .file .icon{margin:0 auto;width:60px}#fileExplorer .file .icon img{width:60px;height:auto}#fileExplorer .file.focus .icon{-webkit-filter:invert(20%)}}.abn-tree-animate-enter,li.abn-tree-row.ng-enter{transition:200ms linear all;position:relative;display:block;opacity:0;max-height:0}.abn-tree-animate-enter.abn-tree-animate-enter-active,li.abn-tree-row.ng-enter-active{opacity:1;max-height:30px}.abn-tree-animate-leave,li.abn-tree-row.ng-leave{transition:200ms linear all;position:relative;display:block;height:30px;max-height:30px;opacity:1}.abn-tree-animate-leave.abn-tree-animate-leave-active,li.abn-tree-row.ng-leave-active{height:0;max-height:0;opacity:0}ul.abn-tree li.abn-tree-row{padding:0;margin:0}ul.abn-tree li.abn-tree-row a{padding:3px 10px}ul.abn-tree i.indented{padding:2px 6px}.abn-tree{cursor:pointer}ul.nav.abn-tree .level-1 .indented{position:relative;left:0}ul.nav.abn-tree .level-2 .indented{position:relative;left:16px}ul.nav.abn-tree .level-3 .indented{position:relative;left:40px}ul.nav.abn-tree .level-4 .indented{position:relative;left:60px}ul.nav.abn-tree .level-5 .indented{position:relative;left:80px}ul.nav.abn-tree .level-6 .indented{position:relative;left:100px}ul.nav.nav-list.abn-tree .level-7 .indented{position:relative;left:120px}ul.nav.nav-list.abn-tree .level-8 .indented{position:relative;left:140px}ul.nav.nav-list.abn-tree .level-9 .indented{position:relative;left:160px}"
   );
 
 
