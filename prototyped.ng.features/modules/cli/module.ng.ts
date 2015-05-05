@@ -14,11 +14,11 @@ angular.module('prototyped.cli', [
     'prototyped.certs',
 ])
 
-    .config(['$stateProvider', ($stateProvider) => {
+    .config(['appStateProvider', (appStateProvider) => {
 
-        $stateProvider
-            .state('proto.cmd', {
-                url: '/explore',
+        appStateProvider
+            .state('features.cmd', {
+                url: '/cmd',
                 views: {
                     'left@': { templateUrl: 'views/left.tpl.html' },
                     'main@': {
@@ -27,16 +27,7 @@ angular.module('prototyped.cli', [
                     },
                 }
             })
-            .state('proto.clear', {
-                url: '/clear',
-                views: {
-                    'left@': { templateUrl: 'views/left.tpl.html' },
-                    'main@': {
-                        templateUrl: 'views/index.tpl.html',
-                        controller: 'systemCmdViewController'
-                    },
-                }
-            })
+
 
     }])
 

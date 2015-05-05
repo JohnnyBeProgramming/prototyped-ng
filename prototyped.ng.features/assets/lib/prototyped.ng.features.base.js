@@ -2,9 +2,9 @@
 angular.module('prototyped.certs', [
     'ui.router'
 ]).config([
-    '$stateProvider', function ($stateProvider) {
+    'appStateProvider', function (appStateProvider) {
         // Now set up the states
-        $stateProvider.state('certs', {
+        appStateProvider.state('certs', {
             url: '/certs',
             abstract: true
         }).state('certs.info', {
@@ -228,12 +228,11 @@ angular.module('prototyped.certs', [
     }]);
 /// <reference path="../../../../imports.d.ts" />
 angular.module('prototyped.sqlcmd', [
-    'prototyped.ng.features.scripts',
-    'ui.router'
+    'prototyped.ng.features.scripts'
 ]).config([
-    '$stateProvider', function ($stateProvider) {
+    'appStateProvider', function (appStateProvider) {
         // Now set up the states
-        $stateProvider.state('sqlcmd', {
+        appStateProvider.state('sqlcmd', {
             url: '/sqlcmd',
             abstract: true
         }).state('sqlcmd.connect', {
@@ -892,18 +891,9 @@ angular.module('prototyped.cli', [
     'prototyped.sqlcmd',
     'prototyped.certs'
 ]).config([
-    '$stateProvider', function ($stateProvider) {
-        $stateProvider.state('proto.cmd', {
-            url: '/explore',
-            views: {
-                'left@': { templateUrl: 'views/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/index.tpl.html',
-                    controller: 'systemCmdViewController'
-                }
-            }
-        }).state('proto.clear', {
-            url: '/clear',
+    'appStateProvider', function (appStateProvider) {
+        appStateProvider.state('features.cmd', {
+            url: '/cmd',
             views: {
                 'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
@@ -1180,9 +1170,8 @@ angular.module('prototyped.ng.features', [
         // Define module routes
         appStateProvider.config('prototyped.ng.features', {
             active: true,
-            hideInBrowserMode: true
+            hideInBrowserMode: false
         }).define('features', {
-            url: '/proto/explore',
             priority: 100,
             state: {
                 url: '/features',
@@ -1191,7 +1180,7 @@ angular.module('prototyped.ng.features', [
             menuitem: {
                 label: 'Features',
                 icon: 'fa fa-flask',
-                state: 'proto.cmd'
+                state: 'features.info'
             },
             cardview: {
                 style: typeof require !== 'undefined' ? 'img-advanced' : 'img-advanced-restricted',
@@ -1199,17 +1188,26 @@ angular.module('prototyped.ng.features', [
                 desc: 'Samples based on feature detection. Some may not be available for your browser or operating system.'
             },
             visible: function () {
+                return true;
                 var opts = appConfigProvider.current.modules['prototyped.ng.features'];
                 return opts && opts.hideInBrowserMode ? typeof require !== 'undefined' : appConfigProvider.current.options.showDefaultItems || !opts.hideInBrowserMode;
             }
-        }).define('proto.imports', {
-            url: '/imports',
+        }).state('features.info', {
+            url: '',
+            views: {
+                'left@': { templateUrl: 'views/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/index.tpl.html',
+                    controller: 'systemCmdViewController'
+                }
+            }
+        }).define('features.imports', {
             abstract: true,
             priority: 100,
             menuitem: {
                 label: 'Imports',
                 icon: 'fa fa-cloud-download',
-                state: 'proto.edge'
+                state: 'features.info'
             },
             cardview: {
                 style: 'img-editor',
@@ -1219,15 +1217,6 @@ angular.module('prototyped.ng.features', [
             visible: function () {
                 var opts = appConfigProvider.current.modules['prototyped.ng.features'];
                 return opts && opts.hideInBrowserMode;
-            }
-        }).state('features.info', {
-            url: '',
-            views: {
-                'left@': { templateUrl: 'views/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/index.tpl.html',
-                    controller: 'featuresViewController'
-                }
             }
         });
     }]).controller('featuresViewController', [

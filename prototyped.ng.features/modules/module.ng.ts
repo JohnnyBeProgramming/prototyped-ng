@@ -20,10 +20,9 @@ angular.module('prototyped.ng.features', [
         appStateProvider
             .config('prototyped.ng.features', {
                 active: true,
-                hideInBrowserMode: true,
+                hideInBrowserMode: false,
             })
             .define('features', {
-                url: '/proto/explore',
                 priority: 100,
                 state: {
                     url: '/features',
@@ -32,7 +31,7 @@ angular.module('prototyped.ng.features', [
                 menuitem: {
                     label: 'Features',
                     icon: 'fa fa-flask',
-                    state: 'proto.cmd',
+                    state: 'features.info',
                 },
                 cardview: {
                     style: typeof require !== 'undefined' ? 'img-advanced' : 'img-advanced-restricted',
@@ -40,20 +39,30 @@ angular.module('prototyped.ng.features', [
                     desc: 'Samples based on feature detection. Some may not be available for your browser or operating system.'
                 },
                 visible: function () {
+                    return true;
                     var opts = appConfigProvider.current.modules['prototyped.ng.features'];
                     return opts && opts.hideInBrowserMode
                         ? typeof require !== 'undefined'
                         : appConfigProvider.current.options.showDefaultItems || !opts.hideInBrowserMode;
                 },
             })
-            .define('proto.imports', {
-                url: '/imports',
+            .state('features.info', {
+                url: '',
+                views: {
+                    'left@': { templateUrl: 'views/left.tpl.html' },
+                    'main@': {
+                        templateUrl: 'views/index.tpl.html',
+                        controller: 'systemCmdViewController'
+                    },
+                }
+            })
+            .define('features.imports', {
                 abstract: true,
                 priority: 100,
                 menuitem: {
                     label: 'Imports',
                     icon: 'fa fa-cloud-download',
-                    state: 'proto.edge',
+                    state: 'features.info',
                 },
                 cardview: {
                     style: 'img-editor',
@@ -64,16 +73,6 @@ angular.module('prototyped.ng.features', [
                     var opts = appConfigProvider.current.modules['prototyped.ng.features'];
                     return opts && opts.hideInBrowserMode;
                 },
-            })
-            .state('features.info', {
-                url: '',
-                views: {
-                    'left@': { templateUrl: 'views/left.tpl.html' },
-                    'main@': {
-                        templateUrl: 'views/index.tpl.html',
-                        controller: 'featuresViewController'
-                    },
-                }
             })
 
     }])
@@ -121,4 +120,3 @@ angular.module('prototyped.ng.features', [
         }
     }])
 
-;

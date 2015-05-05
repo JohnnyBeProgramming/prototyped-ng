@@ -2,9 +2,9 @@
 angular.module('prototyped.certs', [
     'ui.router'
 ]).config([
-    '$stateProvider', function ($stateProvider) {
+    'appStateProvider', function (appStateProvider) {
         // Now set up the states
-        $stateProvider.state('certs', {
+        appStateProvider.state('certs', {
             url: '/certs',
             abstract: true
         }).state('certs.info', {
@@ -228,12 +228,11 @@ angular.module('prototyped.certs', [
     }]);
 /// <reference path="../../../../imports.d.ts" />
 angular.module('prototyped.sqlcmd', [
-    'prototyped.ng.features.scripts',
-    'ui.router'
+    'prototyped.ng.features.scripts'
 ]).config([
-    '$stateProvider', function ($stateProvider) {
+    'appStateProvider', function (appStateProvider) {
         // Now set up the states
-        $stateProvider.state('sqlcmd', {
+        appStateProvider.state('sqlcmd', {
             url: '/sqlcmd',
             abstract: true
         }).state('sqlcmd.connect', {
@@ -892,18 +891,9 @@ angular.module('prototyped.cli', [
     'prototyped.sqlcmd',
     'prototyped.certs'
 ]).config([
-    '$stateProvider', function ($stateProvider) {
-        $stateProvider.state('proto.cmd', {
-            url: '/explore',
-            views: {
-                'left@': { templateUrl: 'views/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/index.tpl.html',
-                    controller: 'systemCmdViewController'
-                }
-            }
-        }).state('proto.clear', {
-            url: '/clear',
+    'appStateProvider', function (appStateProvider) {
+        appStateProvider.state('features.cmd', {
+            url: '/cmd',
             views: {
                 'left@': { templateUrl: 'views/left.tpl.html' },
                 'main@': {
@@ -1180,9 +1170,8 @@ angular.module('prototyped.ng.features', [
         // Define module routes
         appStateProvider.config('prototyped.ng.features', {
             active: true,
-            hideInBrowserMode: true
+            hideInBrowserMode: false
         }).define('features', {
-            url: '/proto/explore',
             priority: 100,
             state: {
                 url: '/features',
@@ -1191,7 +1180,7 @@ angular.module('prototyped.ng.features', [
             menuitem: {
                 label: 'Features',
                 icon: 'fa fa-flask',
-                state: 'proto.cmd'
+                state: 'features.info'
             },
             cardview: {
                 style: typeof require !== 'undefined' ? 'img-advanced' : 'img-advanced-restricted',
@@ -1199,17 +1188,26 @@ angular.module('prototyped.ng.features', [
                 desc: 'Samples based on feature detection. Some may not be available for your browser or operating system.'
             },
             visible: function () {
+                return true;
                 var opts = appConfigProvider.current.modules['prototyped.ng.features'];
                 return opts && opts.hideInBrowserMode ? typeof require !== 'undefined' : appConfigProvider.current.options.showDefaultItems || !opts.hideInBrowserMode;
             }
-        }).define('proto.imports', {
-            url: '/imports',
+        }).state('features.info', {
+            url: '',
+            views: {
+                'left@': { templateUrl: 'views/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'views/index.tpl.html',
+                    controller: 'systemCmdViewController'
+                }
+            }
+        }).define('features.imports', {
             abstract: true,
             priority: 100,
             menuitem: {
                 label: 'Imports',
                 icon: 'fa fa-cloud-download',
-                state: 'proto.edge'
+                state: 'features.info'
             },
             cardview: {
                 style: 'img-editor',
@@ -1219,15 +1217,6 @@ angular.module('prototyped.ng.features', [
             visible: function () {
                 var opts = appConfigProvider.current.modules['prototyped.ng.features'];
                 return opts && opts.hideInBrowserMode;
-            }
-        }).state('features.info', {
-            url: '',
-            views: {
-                'left@': { templateUrl: 'views/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'views/index.tpl.html',
-                    controller: 'featuresViewController'
-                }
             }
         });
     }]).controller('featuresViewController', [
@@ -1373,7 +1362,7 @@ angular.module('prototyped.ng.features', [
   $templateCache.put('views/index.tpl.html',
     '<div class=container><h4>Prototyping Local Resources <small>Discover features and command line utilities</small></h4><div ng:cloak><div ng:if=cmd.busy><div class=app-loading><div class=loadtext><label id=preLoaderText>Loading, please wait...</label><div class=spinner><div class=rect1></div><div class=rect2></div><div class=rect3></div><div class=rect4></div><div class=rect5></div><div class=rect7></div><div class=rect7></div><div class=rect8></div><div class=rect9></div><div class=rect10></div><div class=rect11></div><div class=rect12></div></div></div></div></div><div ng:if=!cmd.busy><div ng:if=!appState.node.active class="alert alert-warning"><i class="fa fa-warning"></i> <b>Not Available:</b> Application requires a NodeJS (or CommonJS) runtime. Web browsers do not have access to these advanced features...</div><div ng:if="cmd.active && !cmd.result.stderr" class="alert alert-success"><i class="fa fa-share-square"></i> <b>Success!</b> You are now conncted to the local host machine...</div><div ng:if=cmd.result.stderr class="alert alert-danger"><i class="fa fa-share-square"></i> <b>Error:</b> {{ cmd.result.stderr }}</div><div ng:if=false class="alert alert-info"><i class="fa fa-share-square"></i> <b>Info:</b></div></div><div ng:if=!appState.node.active><h5>How to run this application</h5><ul style="padding-left: 20px"><li>This software requires access to the <a target=_blank href="https://nodejs.org/">NodeJS</a> framework for some advanced features.</li><li>Nodewebkit is a modified chromium build that adds NodeJS to the DOM script engine (V8).</li><li>See the node-webkit GitHub page for more info: <a target=_blank href="https://github.com/nwjs/nw.js/">https://github.com/nwjs/nw.js</a></li></ul></div><div ng:if=cmd.cwd><h5>Current Working Directory <small>{{ cmd.cwd.path }}</small></h5><ul ng:if=cmd.cwd.list style="padding: 12px; margin: 0"><li ng-repeat="path in cmd.cwd.list" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="cmd.utils.icon(cmd.cwd.path, path)"></i>&nbsp; <a href="" ng-click=cmd.utils.list(cmd.cwd.path) ng-class="{ \'glow-blue\': path == cmd.target.path }">{{ path }}</a><ul ng:if="false && cmd.cwd.path == cmd.target.path" style="padding: 0 0 0 8px; margin: 8px"><li ng:if="cmd.cwd.list.length == 0" style="list-style: none; padding: 0; margin: 0"><em>Nothing to display...</em></li><li ng-repeat="item in cmd.cwd.list" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="cmd.utils.icon(path, item)"></i> <a href="">{{item}}</a></li></ul></li></ul></div><div ng:if=cmd.result><h5>Additional System Paths</h5><ul ng:if=cmd.result.paths style="padding: 12px; margin: 0"><li ng-repeat="path in cmd.utils.getAllPaths()" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="cmd.utils.icon(path, null)"></i>&nbsp; <a href="" ng-click=cmd.utils.list(path) ng-class="{ \'glow-blue\': path == cmd.target.path }">{{ path }}</a><ul ng:if="path == cmd.target.path" style="padding: 0 0 0 8px; margin: 8px"><li ng:if="cmd.target.list.length == 0" style="list-style: none; padding: 0; margin: 0"><em>Nothing to display...</em></li><li ng-repeat="item in cmd.target.list" style="list-style: none; padding: 0; margin: 0"><i class=glyphicon ng-class="cmd.utils.icon(path, item)"></i> <a href="" ng-click="cmd.utils.call(path, item)">{{item}}</a></li></ul></li></ul></div></div></div>');
   $templateCache.put('views/left.tpl.html',
-    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=proto.cmd><i class=fa ng-class="{ \'fa-refresh glow-blue\': cmd.busy, \'fa-desktop glow-green\': !cmd.busy && appState.node.active, \'fa-warning glow-orange\': !cmd.busy && !appState.node.active }"></i>&nbsp; Explore All Features</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appState.node.active }"><a app:nav-link ui:sref=proto.browser data:eat-click-if=!appState.node.active><i class="fa fa-folder"></i> Local Filesystem Viewer</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appState.node.active }"><a app:nav-link ui:sref=sqlcmd.connect data:eat-click-if=!appState.node.active><i class="fa fa-database"></i> Connect to Data Source</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appState.node.active }"><a app:nav-link ui:sref=certs.info data:eat-click-if=!appState.node.active><i class="fa fa-certificate"></i> Check Certificates</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appState.node.active }"><a app:nav-link ui:sref=proto.edge data:eat-click-if=!appState.node.active><i class="fa fa-magic"></i> Interop with C#.net</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appState.node.active }"><a app:nav-link ui:sref=proto.editor><i class="fa fa-edit"></i>&nbsp; File &amp; Text Editor</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appState.node.active }"><a app:nav-link ui:sref=proto.console><i class="fa fa-terminal"></i>&nbsp; Console Application</a></li></ul>');
+    '<ul class=list-group><li class=list-group-item ui:sref-active=active><a app:nav-link ui:sref=features.info><i class=fa ng-class="{ \'fa-refresh glow-blue\': cmd.busy, \'fa-desktop glow-green\': !cmd.busy && appState.node.active, \'fa-warning glow-orange\': !cmd.busy && !appState.node.active }"></i>&nbsp; Explore All Features</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appState.node.active }"><a app:nav-link ui:sref=proto.browser data:eat-click-if=!appState.node.active><i class="fa fa-folder"></i> Local Filesystem Viewer</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appState.node.active }"><a app:nav-link ui:sref=sqlcmd.connect data:eat-click-if=!appState.node.active><i class="fa fa-database"></i> Connect to Data Source</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appState.node.active }"><a app:nav-link ui:sref=certs.info data:eat-click-if=!appState.node.active><i class="fa fa-certificate"></i> Check Certificates</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appState.node.active }"><a app:nav-link ui:sref=proto.edge data:eat-click-if=!appState.node.active><i class="fa fa-magic"></i> Interop with C#.net</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appState.node.active }"><a app:nav-link ui:sref=proto.editor><i class="fa fa-edit"></i>&nbsp; File &amp; Text Editor</a></li><li class=list-group-item ui:sref-active=active ng-class="{ \'disabled\': !appState.node.active }"><a app:nav-link ui:sref=proto.console><i class="fa fa-terminal"></i>&nbsp; Console Application</a></li></ul>');
 }]);
 ;angular.module('prototyped.ng.features.styles', []).run(['$templateCache', function($templateCache) { 
   'use strict';

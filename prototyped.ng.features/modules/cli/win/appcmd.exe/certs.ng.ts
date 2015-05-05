@@ -4,9 +4,9 @@ angular.module('prototyped.certs', [
     'ui.router',
 ])
 
-    .config(['$stateProvider', ($stateProvider) => {
+    .config(['appStateProvider', (appStateProvider) => {
         // Now set up the states
-        $stateProvider
+        appStateProvider
             .state('certs', {
                 url: '/certs',
                 abstract: true,

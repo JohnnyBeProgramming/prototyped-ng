@@ -2,12 +2,11 @@
 
 angular.module('prototyped.sqlcmd', [
     'prototyped.ng.features.scripts',
-    'ui.router',
 ])
 
-    .config(['$stateProvider', function ($stateProvider) {
+    .config(['appStateProvider', function (appStateProvider) {
         // Now set up the states
-        $stateProvider
+        appStateProvider
             .state('sqlcmd', {
                 url: '/sqlcmd',
                 abstract: true,
