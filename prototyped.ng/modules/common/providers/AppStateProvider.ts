@@ -40,6 +40,9 @@
                     this.appState.html5 = !routePrefix;
                     this.appState.debug = /debug/i.test(routePrefix);
 
+                    $(document.body).toggleClass('debug', this.appState.debug);
+                    $(document.body).toggleClass('tests', /test/i.test(routePrefix));
+
                     // Show a hint message to the  user
                     var proxyName = this.appState.proxy;
                     if (proxyName) {
@@ -59,7 +62,7 @@
                             var text = $('<span>Note: Proxy router <b>' + proxyName + '</b> is active.</span>');
                             var icon = $('<i class="' + this.appState.getIcon() + '" style="margin-right:4px;"></i>');
                             var link = $('<a href="" class="pull-right glyphicon glyphicon-remove" style="text-decoration: none; padding: 3px;"></a>');
-                            var span = $('<span class="tab ' + css + '"></span>');
+                            var span = $('<span class="tab non-dragable ' + css + '"></span>');
                             link.click(() => {
                                 this.appState.cancelProxy();
                             });

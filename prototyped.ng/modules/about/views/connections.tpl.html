@@ -215,11 +215,11 @@
                     </small>
                 </h5>
                 <div>
-                    <div ng-if="!connCtrl.state.editMode">
+                    <div ng-show="!connCtrl.state.editMode">
                         <div ng-if="connCtrl.state.location">
                             <p class="info-row">
                                 <div class="info-col-primary pull-left">
-                                    Location: <a>{{ connCtrl.state.location }}</a>
+                                    Location: <a target="_blank" ng-href="{{connCtrl.state.location}}">{{ connCtrl.state.location }}</a>
                                     <br class="clearfix" />
                                 </div>
                                 <div class="info-col-secondary pull-right">
@@ -302,7 +302,7 @@
                         <button type="submit" class="btn btn-primary" ng-click="connCtrl.submitForm()">Update</button>
                     </form>
                 </div>
-                <div ng-if="!connCtrl.state.activeTab">
+                <div ng-show="!connCtrl.state.activeTab">
                     <table class="table" width="100%">
                         <thead>
                         <th style="width: auto; overflow-x: hidden;">
@@ -343,7 +343,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div ng-if="connCtrl.state.activeTab == 'preview'" class="panel panel-default">
+                <div ng-show="connCtrl.state.activeTab == 'preview'" class="panel panel-default">
                     <div class="panel-heading">
                         <b class="panel-title">
                             <i class="glyphicon glyphicon-globe"></i>
@@ -354,7 +354,7 @@
                         <iframe class="info-col-primary" ng-src="{{ connCtrl.state.location }}" frameborder="0">IFrame not available</iframe>
                     </div>
                 </div>
-                <div ng-if="connCtrl.state.activeTab == 'result'" class="source">
+                <div ng-show="connCtrl.state.activeTab == 'result'" class="source">
                     <tabset>
                         <tab heading="Last Result" disabled="!connCtrl.result">
                             <pre>{{ connCtrl.result.info }}</pre>
