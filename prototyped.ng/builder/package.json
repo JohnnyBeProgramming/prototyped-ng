@@ -6,6 +6,7 @@
   "description": "Prototyped software for responsive web-based solutions.",
   "homepage": "http://www.prototyped.info",
   "scripts": {
+    "test":"karma start tests/karma.conf.js",
     "start": "grunt"
   },
   "globals": {
@@ -27,9 +28,16 @@
     "grunt-html2js": "^0.3.0",
     "grunt-notify": "^0.4.1",
     "grunt-usemin": "^3.0.0",
+    "jasmine-core": "^2.3.0",
+    "karma": "^0.12.31",
+    "karma-chrome-launcher": "^0.1.8",
+    "karma-jasmine": "^0.3.5",
+    "karma-phantomjs-launcher": "^0.1.4",
+    "karma-requirejs": "^0.2.2",
     "load-grunt-configs": "^0.4.2",
     "load-grunt-tasks": "3.1.0",
     "minimatch": "0.3",
+    "requirejs": "^2.1.17",
     "time-grunt": "^1.1.0"
   }
 }
