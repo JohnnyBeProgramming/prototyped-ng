@@ -13,3 +13,4 @@ node_modules/
 /prototyped.node/.ntvs_analysis.dat
 /prototyped.ng.features/assets/css
 /prototyped.ng.features/assets/lib/prototyped.ng.js
+/prototyped.ng/builder/coverage

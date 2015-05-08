@@ -61,8 +61,12 @@
     <Content Include="builder\config\uglify.js" />
     <Content Include="builder\config\watch.js" />
     <Content Include="builder\Gruntfile.js" />
+    <Content Include="builder\Start.js" />
     <Content Include="builder\tasks\app-run.js" />
+    <Content Include="builder\Test.js" />
+    <Content Include="builder\tests\karma.conf.js" />
     <Content Include="index.html" />
+    <Content Include="builder\tests\unit\sample.spec.js" />
     <TypeScriptCompile Include="modules\about\controllers\AboutConnectionController.ts" />
     <TypeScriptCompile Include="modules\about\controllers\AboutInfoController.ts" />
     <TypeScriptCompile Include="modules\common\AppInfo.ts" />
@@ -169,7 +173,9 @@
       <DependentUpon>sandbox.css</DependentUpon>
     </Content>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="builder\tests\e2e\" />
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>
