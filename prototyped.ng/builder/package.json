@@ -6,8 +6,10 @@
   "description": "Prototyped software for responsive web-based solutions.",
   "homepage": "http://www.prototyped.info",
   "scripts": {
-    "test": "karma start tests/karma.conf.js",
-    "start": "grunt"
+    "start": "grunt",
+    "pretest": "karma start tests/karma.conf.js",
+    "xxx": "node Test.e2e.js",
+    "test": "jasmine-node tests/e2e/sample.e2e.spec.js"
   },
   "globals": {
     "grunt-init": "0.3.2",
@@ -29,6 +31,7 @@
     "grunt-notify": "^0.4.1",
     "grunt-usemin": "^3.0.0",
     "jasmine-core": "^2.3.0",
+    "jasmine-given": "^2.6.3",
     "karma": "^0.12.31",
     "karma-chrome-launcher": "^0.1.8",
     "karma-coverage": "^0.3.1",
@@ -38,6 +41,7 @@
     "load-grunt-configs": "^0.4.2",
     "load-grunt-tasks": "3.1.0",
     "minimatch": "0.3",
+    "protractor": "^2.0.0",
     "requirejs": "^2.1.17",
     "selenium-webdriver": "^2.45.1",
     "time-grunt": "^1.1.0"

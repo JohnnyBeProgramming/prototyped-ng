@@ -1,8 +1,3 @@
-var webdriver = require('selenium-webdriver');
-var driver = new webdriver.Builder().
-    withCapabilities(webdriver.Capabilities.chrome()).
-    build();
-
 
 // Start the web server prior to opening the window
 var httpHost = require('../../prototyped.node/modules/Server.js');
@@ -13,6 +8,17 @@ if (httpHost) {
 
     // Try and start the dev server
     if (httpHost.start()) {
+        // -----------------------------------------------------------------------
+        // Start the web driver plugins
+        // -----------------------------------------------------------------------
+
+        var webdriver = require('selenium-webdriver');
+        var driver = new webdriver.Builder().
+            withCapabilities(webdriver.Capabilities.chrome()).
+            build();
+
         driver.get('http://localhost:' + httpHost.port + '/');
+
+        // -----------------------------------------------------------------------
     }
 }

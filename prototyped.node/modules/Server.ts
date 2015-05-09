@@ -9,7 +9,7 @@ var http = require("http"),
     path = require("path"),
     fs = require("fs");
 
-var httpServer = {
+var httpServer: any = {
     host: 'localhost',
     port: process.argv[2] || 8008,
     path: './',
@@ -18,6 +18,7 @@ var httpServer = {
         '.css': "text/css",
         '.js': "text/javascript"
     },
+    server: null,
     start: () => {
         try {
             console.log('-------------------------------------------------------------------------------');
@@ -28,7 +29,8 @@ var httpServer = {
             httpServer.baseUrl = "http://" + httpServer.host + ":" + httpServer.port + '/';
 
             // Start the http server on the specified port
-            http.createServer(httpServer.request).listen(parseInt(httpServer.port, 10));
+            httpServer.server = http.createServer(httpServer.request)
+            httpServer.server.listen(parseInt(httpServer.port, 10));
             console.log(' - Static HTTP server running.');
 
             if (httpServer.pfxPath) {
@@ -48,6 +50,12 @@ var httpServer = {
             return false;
         }
         return true;
+    },
+    stop: () => {
+        console.log(' - Stopping HTTP server...');
+        httpServer.server.stop(() => {
+            console.log(' - Server Stopped.');
+        });
     },
     request: (request, response) => {
         var uri = url.parse(request.url).pathname;

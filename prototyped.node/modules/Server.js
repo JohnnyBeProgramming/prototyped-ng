@@ -1,4 +1,4 @@
-/// <reference path="../imports.d.ts" />
+﻿/// <reference path="../imports.d.ts" />
 /* -------------------------------------------------------------------------------
 Example of a custom HTTP Server
 ------------------------------------------------------------------------------- */
@@ -13,6 +13,7 @@ var httpServer = {
         '.css': "text/css",
         '.js': "text/javascript"
     },
+    server: null,
     start: function () {
         try  {
             console.log('-------------------------------------------------------------------------------');
@@ -23,7 +24,8 @@ var httpServer = {
             httpServer.baseUrl = "http://" + httpServer.host + ":" + httpServer.port + '/';
 
             // Start the http server on the specified port
-            http.createServer(httpServer.request).listen(parseInt(httpServer.port, 10));
+            httpServer.server = http.createServer(httpServer.request);
+            httpServer.server.listen(parseInt(httpServer.port, 10));
             console.log(' - Static HTTP server running.');
 
             if (httpServer.pfxPath) {
@@ -43,6 +45,12 @@ var httpServer = {
             return false;
         }
         return true;
+    },
+    stop: function () {
+        console.log(' - Stopping HTTP server...');
+        httpServer.server.stop(function () {
+            console.log(' - Server Stopped.');
+        });
     },
     request: function (request, response) {
         var uri = url.parse(request.url).pathname;
