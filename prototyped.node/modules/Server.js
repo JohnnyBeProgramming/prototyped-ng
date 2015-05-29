@@ -1,4 +1,4 @@
-﻿/// <reference path="../imports.d.ts" />
+/// <reference path="../imports.d.ts" />
 /* -------------------------------------------------------------------------------
 Example of a custom HTTP Server
 ------------------------------------------------------------------------------- */
@@ -13,6 +13,7 @@ var httpServer = {
         '.css': "text/css",
         '.js': "text/javascript"
     },
+    verbose: true,
     server: null,
     start: function () {
         try  {
@@ -56,7 +57,8 @@ var httpServer = {
         var uri = url.parse(request.url).pathname;
         var filename = path.join(httpServer.path, uri);
 
-        console.log(' > ' + path.relative('\\', uri));
+        if (httpServer.verbose)
+            console.log(' > ' + path.relative('\\', uri));
 
         // Redirect to proxy routers (if needed)
         if (/(.*)(debug!)/i.exec(request.url)) {
@@ -92,7 +94,8 @@ var httpServer = {
             return;
         }
 
-        console.log(' < ' + path.relative(httpServer.path, filename));
+        if (httpServer.verbose)
+            console.log(' < ' + path.relative(httpServer.path, filename));
 
         var headers = {};
         var ext = path.extname(filename);

@@ -63,10 +63,16 @@
     <Content Include="builder\Gruntfile.js" />
     <Content Include="builder\Start.js" />
     <Content Include="builder\tasks\app-run.js" />
-    <Content Include="builder\Test.js" />
+    <Content Include="builder\tests\e2e\about.e2e.spec.js" />
+    <Content Include="builder\tests\e2e\explore.e2e.spec.js" />
+    <Content Include="builder\tests\e2e\sample.e2e.spec.js" />
+    <Content Include="builder\tests\e2e\login.e2e.spec.js" />
     <Content Include="builder\tests\karma.conf.js" />
+    <Content Include="builder\tests\pages\LoginPage.js" />
+    <Content Include="builder\tests\protractor.conf.js" />
+    <Content Include="builder\tests\unit\config.unit.spec.js" />
     <Content Include="index.html" />
-    <Content Include="builder\tests\unit\sample.spec.js" />
+    <Content Include="builder\tests\unit\sample.unit.spec.js" />
     <TypeScriptCompile Include="modules\about\controllers\AboutConnectionController.ts" />
     <TypeScriptCompile Include="modules\about\controllers\AboutInfoController.ts" />
     <TypeScriptCompile Include="modules\common\AppInfo.ts" />
@@ -173,9 +179,7 @@
       <DependentUpon>sandbox.css</DependentUpon>
     </Content>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="builder\tests\e2e\" />
-  </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>
@@ -200,6 +204,7 @@
           <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
         </WebProjectProperties>
       </FlavorProperties>
+      <UserProperties builder_2package_1json__JSONSchema="http://json.schemastore.org/project" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

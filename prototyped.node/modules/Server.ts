@@ -18,6 +18,7 @@ var httpServer: any = {
         '.css': "text/css",
         '.js': "text/javascript"
     },
+    verbose: true,
     server: null,
     start: () => {
         try {
@@ -61,7 +62,7 @@ var httpServer: any = {
         var uri = url.parse(request.url).pathname;
         var filename = path.join(httpServer.path, uri);
 
-        console.log(' > ' + path.relative('\\', uri));
+        if (httpServer.verbose) console.log(' > ' + path.relative('\\', uri));
 
         // Redirect to proxy routers (if needed)
         if (/(.*)(debug!)/i.exec(request.url)) {
@@ -97,7 +98,7 @@ var httpServer: any = {
             return;
         }
 
-        console.log(' < ' + path.relative(httpServer.path, filename));
+        if (httpServer.verbose) console.log(' < ' + path.relative(httpServer.path, filename));
 
         var headers = {};
         var ext = path.extname(filename);
