@@ -2976,8 +2976,231 @@ angular.module('prototyped.ng.samples.notifications', []).config([
             notify: notifyService
         });
     }]);
+///<reference path="../../../imports.d.ts"/>
+/// <reference path="../../../../typings/firebase/firebase.d.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (_data) {
+                var SampleDataController = (function () {
+                    function SampleDataController($rootScope, $scope, $state, $stateParams, $q, $firebaseAuth, $firebaseObject, $firebaseArray, appConfig) {
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.$state = $state;
+                        this.$stateParams = $stateParams;
+                        this.$q = $q;
+                        this.$firebaseAuth = $firebaseAuth;
+                        this.$firebaseObject = $firebaseObject;
+                        this.$firebaseArray = $firebaseArray;
+                        this.appConfig = appConfig;
+                        this.init();
+                    }
+                    SampleDataController.prototype.init = function () {
+                        var _this = this;
+                        var baseUrl = this.appConfig['sampleData'].dataUrl;
+                        if (baseUrl) {
+                            this.busy = true;
+                            this.OnlineConn = new Firebase(baseUrl + '/OnlineSamples');
+                            this.OnlineData = this.$firebaseArray(this.OnlineConn);
+                            this.OnlineData.$loaded().then(function () {
+                                console.log(' - Online Data Loaded: ', _this.OnlineData);
+                            }).catch(function (err) {
+                                _this.error = err;
+                            }).finally(function () {
+                                _this.$rootScope.$applyAsync(function () {
+                                    _this.busy = false;
+                                });
+                            });
+                        } else {
+                            this.error = new Error('Config setting "sampleData.dataUrl" is undefined.');
+                        }
+                    };
+
+                    SampleDataController.prototype.authenticate = function (type) {
+                        var _this = this;
+                        if (typeof type === "undefined") { type = null; }
+                        this.$firebaseAuth(this.OnlineConn).$authWithOAuthPopup(type).then(function (authData) {
+                            console.log("Logged in as:" + authData.uid, authData);
+                            if (!_this.OnlineData.length) {
+                                _this.createSamples();
+                            }
+                        }).catch(function (error) {
+                            _this.error = error;
+                            console.warn("Authentication failed:", error);
+                        });
+                    };
+
+                    SampleDataController.prototype.createSamples = function () {
+                        var _this = this;
+                        // Define default profiles
+                        if (this.appConfig['sampleData'].defaults) {
+                            this.appConfig['sampleData'].defaults.forEach(function (itm) {
+                                _this.addProfile(itm);
+                            });
+                        }
+                    };
+
+                    SampleDataController.prototype.getArgs = function () {
+                        var data = {
+                            rows: this.context.rows
+                        };
+                        this.context.args.forEach(function (obj) {
+                            if (obj.id)
+                                data[obj.id] = obj.val;
+                        });
+                        return data;
+                    };
+
+                    SampleDataController.prototype.test = function () {
+                        var _this = this;
+                        try  {
+                            // Set busy flag
+                            this.busy = true;
+
+                            // Create and send the request
+                            var req = this.getArgs();
+                            this.fetch(req).then(function (data) {
+                                _this.context.resp = data;
+                                _this.OnlineData.$save(_this.context);
+                            }).catch(function (error) {
+                                _this.error = error;
+                            }).finally(function () {
+                                _this.$rootScope.$applyAsync(function () {
+                                    _this.busy = false;
+                                });
+                            });
+
+                            // Define the request and response handlers
+                            console.debug(' - Requesting...');
+                        } catch (ex) {
+                            this.error = ex;
+                        }
+                    };
+
+                    SampleDataController.prototype.fetch = function (data) {
+                        var deferred = this.$q.defer();
+
+                        var url = this.appConfig['sampleData'].fillText;
+                        if (url) {
+                            $.getJSON(url, data).done(function (data) {
+                                deferred.resolve(data);
+                            }).fail(function (xhr, desc, err) {
+                                var error = new Error('Error [' + xhr.status + ']: ' + xhr.statusText + ' - ' + err);
+                                deferred.reject(error);
+                            });
+                        } else {
+                            this.error = new Error('Config setting "sampleData.fillText" is undefined.');
+                            deferred.reject(this.error);
+                        }
+
+                        return deferred.promise;
+                    };
+
+                    SampleDataController.prototype.addNew = function (item) {
+                        var _this = this;
+                        if (!item || !item.name)
+                            return;
+                        return this.addProfile(item).then(function () {
+                            _this._new = null;
+                        });
+                    };
+
+                    SampleDataController.prototype.addProfile = function (profile) {
+                        return this.OnlineData.$add(profile);
+                    };
+
+                    SampleDataController.prototype.updateProfile = function (profile) {
+                        return this.OnlineData.$save(profile);
+                    };
+
+                    SampleDataController.prototype.removeProfile = function (profile) {
+                        return this.OnlineData.$remove(profile);
+                    };
+
+                    SampleDataController.prototype.clearData = function (profile) {
+                        profile.resp = null;
+                        return this.OnlineData.$save(profile);
+                    };
+
+                    SampleDataController.prototype.addColumn = function (profile, item) {
+                        profile.args = profile.args || [];
+                        profile.args.push(item);
+                        return this.OnlineData.$save(profile);
+                    };
+
+                    SampleDataController.prototype.updateColumn = function (profile, item) {
+                        profile.args = profile.args || [];
+                        profile.args.push(item);
+                        return this.OnlineData.$save(profile);
+                    };
+
+                    SampleDataController.prototype.removeColumn = function (profile, item) {
+                        profile.args = profile.args || [];
+                        profile.args.splice(this.context.args.indexOf(item), 1);
+                        return this.OnlineData.$save(profile);
+                    };
+                    return SampleDataController;
+                })();
+                _data.SampleDataController = SampleDataController;
+            })(samples.data || (samples.data = {}));
+            var data = samples.data;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
-angular.module('prototyped.ng.samples.sampleData', []).config([
+/// <reference path="../../../typings/firebase/firebase.d.ts" />
+/// <reference path="controllers/SampleDataController.ts" />
+angular.module('prototyped.ng.samples.sampleData', [
+    'firebase'
+]).config([
+    'appConfigProvider', function (appConfigProvider) {
+        appConfigProvider.config('sampleData', {
+            enabled: appConfigProvider.getPersisted('sampleData.enabled') == '1',
+            dataUrl: 'https://dazzling-heat-2165.firebaseio.com',
+            fillText: 'http://www.filltext.com/?delay=0&callback=?',
+            defaults: [
+                {
+                    name: 'Person Data',
+                    rows: 10,
+                    args: [
+                        { id: 'id', val: '{number}' },
+                        { id: 'username', val: '{username}' },
+                        { id: 'firstname', val: '{firstName}' },
+                        { id: 'lastname', val: '{lastName}' },
+                        { id: 'email', val: '{email}' },
+                        { id: 'mobile', val: '{phone|format}' },
+                        { id: 'active', val: '{bool|n}' }
+                    ]
+                },
+                {
+                    name: 'Company Info',
+                    rows: 10,
+                    args: [
+                        { id: 'business', val: '{business}' },
+                        { id: 'city', val: '{city}' },
+                        { id: 'contact', val: '{firstName}' },
+                        { id: 'tel', val: '{phone|format}' }
+                    ]
+                },
+                {
+                    name: 'Product Info',
+                    rows: 10,
+                    args: [
+                        { id: 'id', val: '{number}' },
+                        { id: 'name', val: '{lorem|2}' },
+                        { id: 'desc', val: '{lorem|20}' },
+                        { id: 'type', val: '{number|10000}' },
+                        { id: 'category', val: '{ccType|abbr}' },
+                        { id: 'created', val: '{date|1-1-1990,1-1-2050}' },
+                        { id: 'active', val: '{bool|n}' }
+                    ]
+                }
+            ]
+        });
+    }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.sampleData', {
@@ -2986,99 +3209,23 @@ angular.module('prototyped.ng.samples.sampleData', []).config([
                 'left@': { templateUrl: 'samples/left.tpl.html' },
                 'main@': {
                     templateUrl: 'samples/sampleData/main.tpl.html',
-                    controller: 'sampleDataController'
+                    controller: 'sampleDataController',
+                    controllerAs: 'sampleData'
                 }
             }
         });
     }]).controller('sampleDataController', [
-    '$rootScope', '$scope', '$state', '$stateParams', '$q', function ($rootScope, $scope, $state, $stateParams, $q) {
-        // Define the model
-        var context = $scope.sampleData = {
-            busy: true,
-            rows: 10,
-            args: [
-                { id: 'business', val: '{business}' },
-                { id: 'firstname', val: '{firstName}' },
-                { id: 'lastname', val: '{lastName}' },
-                { id: 'email', val: '{email}' },
-                { id: 'tel', val: '{phone|format}' },
-                { id: 'city', val: '{city}' },
-                { id: 'active', val: '{bool|n}' }
-            ],
-            test: function () {
-                try  {
-                    // Set busy flag
-                    context.busy = true;
-
-                    // Build requested fields
-                    var data = {};
-                    context.args.forEach(function (obj) {
-                        if (obj.id)
-                            data[obj.id] = obj.val;
-                    });
-
-                    // Define the request
-                    var req = angular.extend(data, {
-                        'rows': context.rows
-                    });
-
-                    // Define the request data
-                    context.fetch(req).then(function (data) {
-                        context.resp = data;
-                    }).catch(function (error) {
-                        context.error = error;
-                    }).finally(function () {
-                        $rootScope.$applyAsync(function () {
-                            context.busy = false;
-                        });
-                    });
-
-                    // Define the request and response handlers
-                    console.debug(' - Requesting...');
-                } catch (ex) {
-                    context.error = ex;
-                }
-            },
-            fetch: function (data) {
-                var url = "http://www.filltext.com/?delay=0&callback=?";
-                var deferred = $q.defer();
-
-                $.getJSON(url, data).done(function (data) {
-                    deferred.resolve(data);
-                }).fail(function (xhr, desc, err) {
-                    var error = new Error('Error [' + xhr.status + ']: ' + xhr.statusText + ' - ' + err);
-                    deferred.reject(error);
-                });
-
-                return deferred.promise;
-            },
-            getArgs: function () {
-            }
-        };
-
-        // Apply updates (including async)
-        var updates = {};
-        try  {
-            // Check for required libraries
-            if (typeof require !== 'undefined') {
-                // We are now in NodeJS!
-                updates = {
-                    busy: false,
-                    hasNode: true
-                };
-            } else {
-                // Not available
-                updates.hasNode = false;
-                updates.busy = false;
-            }
-        } catch (ex) {
-            updates.busy = false;
-            updates.error = ex;
-        } finally {
-            // Extend updates for scope
-            angular.extend(context, updates);
-        }
-    }]);
+    '$rootScope',
+    '$scope',
+    '$state',
+    '$stateParams',
+    '$q',
+    '$firebaseAuth',
+    '$firebaseObject',
+    '$firebaseArray',
+    'appConfig',
+    proto.ng.samples.data.SampleDataController
+]);
 /// <reference path="../../imports.d.ts" />
 
 angular.module('prototyped.ng.samples.styles3d', []).config([

@@ -2976,8 +2976,180 @@ angular.module('prototyped.ng.samples.notifications', []).config([
             notify: notifyService
         });
     }]);
+///<reference path="../../../imports.d.ts"/>
+/// <reference path="../../../../typings/firebase/firebase.d.ts" />
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (samples) {
+            (function (_data) {
+                var SampleDataController = (function () {
+                    function SampleDataController($rootScope, $scope, $state, $stateParams, $q, $firebaseAuth, $firebaseObject, $firebaseArray) {
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.$state = $state;
+                        this.$stateParams = $stateParams;
+                        this.$q = $q;
+                        this.$firebaseAuth = $firebaseAuth;
+                        this.$firebaseObject = $firebaseObject;
+                        this.$firebaseArray = $firebaseArray;
+                        this.profiles = [];
+                        this.init();
+                    }
+                    SampleDataController.prototype.init = function () {
+                        var _this = this;
+                        var baseUrl = 'https://dazzling-heat-2165.firebaseio.com';
+
+                        this.busy = true;
+                        this.OnlineConn = new Firebase(baseUrl + '/OnlineSamples');
+                        this.OnlineData = this.$firebaseArray(this.OnlineConn);
+                        this.OnlineData.$loaded().then(function () {
+                            console.log(' - Online Data Loaded: ', _this.OnlineData);
+                        }).catch(function (err) {
+                            _this.error = err;
+                        }).finally(function () {
+                            _this.$rootScope.$applyAsync(function () {
+                                _this.busy = false;
+                            });
+                        });
+                    };
+
+                    SampleDataController.prototype.authenticate = function (type) {
+                        var _this = this;
+                        if (typeof type === "undefined") { type = null; }
+                        this.$firebaseAuth(this.OnlineConn).$authWithOAuthPopup(type).then(function (authData) {
+                            console.log("Logged in as:" + authData.uid, authData);
+                            if (!_this.OnlineData.length) {
+                                _this.createSamples();
+                            }
+                        }).catch(function (error) {
+                            _this.error = error;
+                            console.warn("Authentication failed:", error);
+                        });
+                    };
+
+                    SampleDataController.prototype.createSamples = function () {
+                        // Define default profiles
+                        this.addProfile({
+                            name: 'Person Data',
+                            rows: 10,
+                            args: [
+                                { id: 'id', val: '{number}' },
+                                { id: 'username', val: '{username}' },
+                                { id: 'firstname', val: '{firstName}' },
+                                { id: 'lastname', val: '{lastName}' },
+                                { id: 'email', val: '{email}' },
+                                { id: 'mobile', val: '{phone|format}' },
+                                { id: 'active', val: '{bool|n}' }
+                            ]
+                        });
+                        this.addProfile({
+                            name: 'Company Info',
+                            rows: 10,
+                            args: [
+                                { id: 'business', val: '{business}' },
+                                { id: 'city', val: '{city}' },
+                                { id: 'contact', val: '{firstName}' },
+                                { id: 'tel', val: '{phone|format}' }
+                            ]
+                        });
+                    };
+
+                    SampleDataController.prototype.getArgs = function () {
+                        var data = {
+                            rows: this.context.rows
+                        };
+                        this.context.args.forEach(function (obj) {
+                            if (obj.id)
+                                data[obj.id] = obj.val;
+                        });
+                        return data;
+                    };
+
+                    SampleDataController.prototype.test = function () {
+                        var _this = this;
+                        try  {
+                            // Set busy flag
+                            this.busy = true;
+
+                            // Create and send the request
+                            var req = this.getArgs();
+                            this.fetch(req).then(function (data) {
+                                _this.context.resp = data;
+                                _this.OnlineData.$save(_this.context);
+                            }).catch(function (error) {
+                                _this.error = error;
+                            }).finally(function () {
+                                _this.$rootScope.$applyAsync(function () {
+                                    _this.busy = false;
+                                });
+                            });
+
+                            // Define the request and response handlers
+                            console.debug(' - Requesting...');
+                        } catch (ex) {
+                            this.error = ex;
+                        }
+                    };
+
+                    SampleDataController.prototype.fetch = function (data) {
+                        var url = "http://www.filltext.com/?delay=0&callback=?";
+                        var deferred = this.$q.defer();
+
+                        $.getJSON(url, data).done(function (data) {
+                            deferred.resolve(data);
+                        }).fail(function (xhr, desc, err) {
+                            var error = new Error('Error [' + xhr.status + ']: ' + xhr.statusText + ' - ' + err);
+                            deferred.reject(error);
+                        });
+
+                        return deferred.promise;
+                    };
+
+                    SampleDataController.prototype.addProfile = function (profile) {
+                        this.profiles.push(profile);
+                        this.OnlineData.$add(profile);
+                    };
+
+                    SampleDataController.prototype.updateProfile = function (profile) {
+                        this.OnlineData.$save(profile);
+                    };
+
+                    SampleDataController.prototype.removeProfile = function (profile) {
+                        this.OnlineData.$remove(profile);
+                        this.profiles.splice(this.profiles.indexOf(profile), 1);
+                    };
+
+                    SampleDataController.prototype.addColumn = function (profile, item) {
+                        profile.args.push(item);
+                        this.OnlineData.$save(profile);
+                    };
+
+                    SampleDataController.prototype.updateColumn = function (profile, item) {
+                        profile.args.push(item);
+                        this.OnlineData.$save(profile);
+                    };
+
+                    SampleDataController.prototype.removeColumn = function (profile, item) {
+                        profile.args.splice(this.context.args.indexOf(item), 1);
+                        this.OnlineData.$save(profile);
+                    };
+                    return SampleDataController;
+                })();
+                _data.SampleDataController = SampleDataController;
+            })(samples.data || (samples.data = {}));
+            var data = samples.data;
+        })(ng.samples || (ng.samples = {}));
+        var samples = ng.samples;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
-angular.module('prototyped.ng.samples.sampleData', []).config([
+/// <reference path="../../../typings/firebase/firebase.d.ts" />
+/// <reference path="controllers/SampleDataController.ts" />
+angular.module('prototyped.ng.samples.sampleData', [
+    'firebase'
+]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.sampleData', {
@@ -2986,99 +3158,22 @@ angular.module('prototyped.ng.samples.sampleData', []).config([
                 'left@': { templateUrl: 'samples/left.tpl.html' },
                 'main@': {
                     templateUrl: 'samples/sampleData/main.tpl.html',
-                    controller: 'sampleDataController'
+                    controller: 'sampleDataController',
+                    controllerAs: 'sampleData'
                 }
             }
         });
     }]).controller('sampleDataController', [
-    '$rootScope', '$scope', '$state', '$stateParams', '$q', function ($rootScope, $scope, $state, $stateParams, $q) {
-        // Define the model
-        var context = $scope.sampleData = {
-            busy: true,
-            rows: 10,
-            args: [
-                { id: 'business', val: '{business}' },
-                { id: 'firstname', val: '{firstName}' },
-                { id: 'lastname', val: '{lastName}' },
-                { id: 'email', val: '{email}' },
-                { id: 'tel', val: '{phone|format}' },
-                { id: 'city', val: '{city}' },
-                { id: 'active', val: '{bool|n}' }
-            ],
-            test: function () {
-                try  {
-                    // Set busy flag
-                    context.busy = true;
-
-                    // Build requested fields
-                    var data = {};
-                    context.args.forEach(function (obj) {
-                        if (obj.id)
-                            data[obj.id] = obj.val;
-                    });
-
-                    // Define the request
-                    var req = angular.extend(data, {
-                        'rows': context.rows
-                    });
-
-                    // Define the request data
-                    context.fetch(req).then(function (data) {
-                        context.resp = data;
-                    }).catch(function (error) {
-                        context.error = error;
-                    }).finally(function () {
-                        $rootScope.$applyAsync(function () {
-                            context.busy = false;
-                        });
-                    });
-
-                    // Define the request and response handlers
-                    console.debug(' - Requesting...');
-                } catch (ex) {
-                    context.error = ex;
-                }
-            },
-            fetch: function (data) {
-                var url = "http://www.filltext.com/?delay=0&callback=?";
-                var deferred = $q.defer();
-
-                $.getJSON(url, data).done(function (data) {
-                    deferred.resolve(data);
-                }).fail(function (xhr, desc, err) {
-                    var error = new Error('Error [' + xhr.status + ']: ' + xhr.statusText + ' - ' + err);
-                    deferred.reject(error);
-                });
-
-                return deferred.promise;
-            },
-            getArgs: function () {
-            }
-        };
-
-        // Apply updates (including async)
-        var updates = {};
-        try  {
-            // Check for required libraries
-            if (typeof require !== 'undefined') {
-                // We are now in NodeJS!
-                updates = {
-                    busy: false,
-                    hasNode: true
-                };
-            } else {
-                // Not available
-                updates.hasNode = false;
-                updates.busy = false;
-            }
-        } catch (ex) {
-            updates.busy = false;
-            updates.error = ex;
-        } finally {
-            // Extend updates for scope
-            angular.extend(context, updates);
-        }
-    }]);
+    '$rootScope',
+    '$scope',
+    '$state',
+    '$stateParams',
+    '$q',
+    '$firebaseAuth',
+    '$firebaseObject',
+    '$firebaseArray',
+    proto.ng.samples.data.SampleDataController
+]);
 /// <reference path="../../imports.d.ts" />
 
 angular.module('prototyped.ng.samples.styles3d', []).config([
@@ -3563,7 +3658,7 @@ angular.module('prototyped.ng.samples', [
   $templateCache.put('samples/decorators/dialogs/interceptor.tpl.html',
     '<div class=modal-body style="min-height: 180px; padding: 6px"><ul class="nav nav-tabs"><li role=presentation ng-class="{ \'active\' : (modalAction == \'req\') }"><a href="" ng-click="modalAction = \'req\'">Request Details</a></li><li role=presentation ng-class="{ \'active\' : (modalAction == \'resp\') }"><a href="" ng-click="modalAction = \'resp\'">Return Result</a></li></ul><div class=thumbnail style="border-top: none; margin-bottom: 0; border-top-left-radius: 0; border-top-right-radius: 0"><form ng-switch=modalAction style="margin-top: 6px"><div ng-if=statusMsg class="alert alert-warning" style="padding: 8px; margin: 0">{{ statusMsg }}</div><div ng-switch-default class=docked><em class=text-muted style="padding: 6px; margin: 50px auto">Select an action to start with...</em></div><div ng-switch-when=req><h5>Request Details <small>More about the source</small></h5><p>...</p></div><div ng-switch-when=resp><h5>Result Returned <small ng-if=!status class="text-danger pull-right"><i class="fa fa-close"></i> Rejected</small> <small ng-if=status class="text-success pull-right"><i class="fa fa-check"></i> Responded</small></h5><div class="input-group input-group-sm"><span class=input-group-addon id=sizing-addon3>Type</span> <input class=form-control ng-value=getType() ng-readonly=true placeholder=undefined aria-describedby=sizing-addon3> <span class=input-group-btn><button type=button ng-disabled=true class="btn btn-default dropdown-toggle" data-toggle=dropdown aria-expanded=false>Edit <span class=caret></span></button><ul class="dropdown-menu dropdown-menu-right" role=menu><li><a href=#>Accepted Reply</a></li><li><a href=#>Rejection Reason</a></li><li class=divider></li><li><a href=#>Reset to Defaults</a></li></ul></span></div><textarea ng-class="{ \'alert alert-danger\':!getStatus(), \'alert alert-success\':getStatus() }" ng-readonly=true ng-bind=getBody() style="width: 100%; min-height: 160px; margin:0"></textarea><div class=input-group><div ng-click=setToggle(!allowEmpty) style="padding-left: 8px"><i class=fa ng-class="{ \'fa-check\':allowEmpty, \'fa-close\':!allowEmpty }"></i> <span>Allow empty value as return value</span></div></div></div></form></div></div><div class=modal-footer><button id=btnCancel ng-disabled="!allowEmpty && !rejectValue" class="btn btn-danger pull-left" ng-click=cancel()>Reject Action</button> <button id=btnUpdate ng-disabled="!allowEmpty && !promisedValue" class="btn btn-success pull-right" ng-click=ok()>Complete Action</button></div>');
   $templateCache.put('samples/decorators/main.tpl.html',
-    '<div id=DecoratorView class=container style="width: 100%"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css rel="stylesheet"><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input bs:switch type=checkbox ng:model=appConfig.decorators.enabled switch:size=mini switch:label="Patch Promises" switch:inverse="false"> <input bs:switch type=checkbox ng:model=appConfig.decorators.xhttp switch:size=mini switch:label="Intercep HTTP" switch:inverse="false"> <input bs:switch type=checkbox ng:model=appConfig.decorators.debug switch:size=mini switch:label=Debug switch:inverse="false"></span><h4>Service Decorators <small>Monkey patching the normal behaviour of your application.</small></h4><hr><div class=row><div class=col-md-6><p><a href="" class="btn btn-default" ng-class="{ \'btn-success\': (decorators.confirmStatus === true), \'btn-danger\': (decorators.confirmStatus === false), \'btn-primary\': appConfig.decorators.enabled }" ng-click=decorators.runPromiseAction()>Run Promised Action</a> <a class="btn btn-default" ng-click=decorators.fcall() xxx-ng-disabled=!appConfig.decorators.enabled ng-class="{ \'btn-success\': decorators.fcallState == \'Resolved\', \'btn-danger\': decorators.fcallState == \'Rejected\', \'btn-primary\':appConfig.decorators.enabled }" href="">Invoke Timeout</a> <a class="btn btn-default" href="" ng-click=decorators.triggerAjaxRequest() xxx-ng-disabled=!appConfig.decorators.enabled ng-class="{ \'btn-success\': decorators.ajaxStatus === true, \'btn-danger\': decorators.ajaxStatus === false, \'btn-primary\': appConfig.decorators.xhttp }">HTML Ajax Request</a></p><p>By making use of angular\'s <a href=https://docs.angularjs.org/api/auto/service/$provide>$provide decorators</a>, we patch the <a href=https://docs.angularjs.org/api/ng/service/$q>$q service</a> to intercept any promised actions and take over the reply mechanism.</p><p>After the initial investigation, it quickly became clear there are just way too many promises to intercept and keep track of, many of them in the angular framework itself. A mechanism was required to identify (and filter out) the promises we were looking for.</p><p>With no <em>real</em> unique identifiers to work with, stack traces are used for tracking identity. In javascript, stack traces are ugly, and not always helpful, but with a little bit of regular expressions, enough sensible info can be extracted to get a picture of <em>where</em> the actions originate from. And this opens up a whole new world of oppertunities...</p><div ng-if="decorators.lastStatus === undefined || decorators.lastStatus === null"><h5>Inspired by these blogs:</h5><ul class="alert alert-info" style="list-style: none"><li><a target=_blank href=http://www.bennadel.com/blog/2775-monkey-patching-the-q-service-using-provide-decorator-in-angularjs.htm><i class="fa fa-external-link-square"></i> This experiment was inspired by this blog</a></li><li><a target=_blank href=http://www.codeovertones.com/2011/08/how-to-print-stack-trace-anywhere-in.html><i class="fa fa-external-link-square"></i> The idea to use stack traces was inspired from here</a></li></ul></div><div ng-if="decorators.lastStatus === true || decorators.lastStatus === false"><h5>Last event status and result:</h5><div ng:if=decorators.error class="alert alert-danger"><b>Error:</b> {{ decorators.error.message || \'Something went wrong.\' }}</div><div ng:if=!decorators.error><div class="alert alert-success" ng-if="decorators.lastStatus === true"><b>Accepted:</b> {{ decorators.lastResult || \'No additional information specified.\' }}</div><div class="alert alert-danger" ng-if="decorators.lastStatus === false"><b>Rejected:</b> {{ (decorators.lastResult.message || decorators.lastResult) || \'No additional information specified.\' }}</div></div></div></div><div class=col-md-6><pre ng:if=decorators.ajaxResult>{{ decorators.ajaxResult }}</pre><div ng:if=!decorators.ajaxResult class=inactive-fill-text style="border: dotted 1px silver; padding: 100px 0"><div ng-if="decorators.lastStatus === undefined || decorators.lastStatus === null"><em>No result yet</em></div><div class=glow-green ng-if="decorators.lastStatus === true"><i class="fa fa-check"></i> <b>Accepted</b></div><div class=glow-red ng-if="decorators.lastStatus === false"><i class="fa fa-close"></i> <b>Rejected</b></div></div></div></div></div></div></div>');
+    '<div id=DecoratorView class=container style="width: 100%"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css rel="stylesheet"><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input bs:switch type=checkbox ng:model=appConfig.decorators.enabled switch:size=mini switch:label="Patch Promises" switch:inverse="false"> <input bs:switch type=checkbox ng:model=appConfig.decorators.xhttp switch:size=mini switch:label="Intercep HTTP" switch:inverse="false"> <input bs:switch type=checkbox ng:model=appConfig.decorators.debug switch:size=mini switch:label=Debug switch:inverse="false"></span><h4>Service Decorators <small>Monkey patching the normal behaviour of your application.</small></h4><hr><div class=row><div class=col-md-6><p><a href="" class="btn btn-default" ng-class="{ \'btn-success\': (decorators.confirmStatus === true), \'btn-danger\': (decorators.confirmStatus === false), \'btn-primary\': appConfig.decorators.enabled }" ng-click=decorators.runPromiseAction()>Run Promised Action</a> <a class="btn btn-default" ng-click=decorators.fcall() xxx-ng-disabled=!appConfig.decorators.enabled ng-class="{ \'btn-success\': decorators.fcallState == \'Resolved\', \'btn-danger\': decorators.fcallState == \'Rejected\', \'btn-primary\':appConfig.decorators.enabled }" href="">Invoke Timeout</a> <a class="btn btn-default" href="" ng-click=decorators.triggerAjaxRequest() xxx-ng-disabled=!appConfig.decorators.enabled ng-class="{ \'btn-success\': decorators.ajaxStatus === true, \'btn-danger\': decorators.ajaxStatus === false, \'btn-primary\': appConfig.decorators.xhttp }">HTML Ajax Request</a></p><p>By making use of angular\'s <a href=https://docs.angularjs.org/api/auto/service/$provide>$provide decorators</a>, we patch the <a href=https://docs.angularjs.org/api/ng/service/$q>$q service</a> to intercept any promised actions and take over the reply mechanism.</p><p>After the initial investigation, it quickly became clear there are just way too many promises to intercept and keep track of, many of them in the angular framework itself. A mechanism was required to identify (and filter out) the promises we were looking for.</p><p>With no <em>real</em> unique identifiers to work with, stack traces are used for tracking identity. In javascript, stack traces are ugly, and not always helpful, but with a little bit of regular expressions, enough sensible info can be extracted to get a picture of <em>where</em> the actions originate from. And this opens up a whole new world of oppertunities...</p><div ng-if="decorators.lastStatus === undefined || decorators.lastStatus === null"><h5>Inspired by these blogs:</h5><ul class="alert alert-info" style="list-style: none"><li><a target=_blank href=http://www.bennadel.com/blog/2775-monkey-patching-the-q-service-using-provide-decorator-in-angularjs.htm><i class="fa fa-external-link-square"></i> This experiment was inspired by this blog</a></li><li><a target=_blank href=http://www.codeovertones.com/2011/08/how-to-print-stack-trace-anywhere-in.html><i class="fa fa-external-link-square"></i> The idea to use stack traces was inspired from here</a></li></ul></div><div ng-if="decorators.lastStatus === true || decorators.lastStatus === false"><h5>Last event status and result:</h5><div ng:if=decorators.error class="alert alert-danger"><b>Error:</b> {{ decorators.error.message || \'Something went wrong.\' }}</div><div ng:if=!decorators.error><div class="alert alert-success" ng-if="decorators.lastStatus === true"><b>Accepted:</b> {{ decorators.lastResult || \'No additional information specified.\' }}</div><div class="alert alert-danger" ng-if="decorators.lastStatus === false"><b>Rejected:</b> {{ (decorators.lastResult.message || decorators.lastResult) || \'No additional information specified.\' }}</div></div></div></div><div class=col-md-6><pre ng:if=decorators.ajaxResult>{{ decorators.ajaxResult }}</pre><div ng:if=!decorators.ajaxResult class=inactive-fill-text style="border: dotted 1px silver; padding: 100px 0"><div ng-if="decorators.lastStatus === undefined || decorators.lastStatus === null"><em>No result yet</em></div><div class="glow-green text-hudge" ng-if="decorators.lastStatus === true"><i class="fa fa-check"></i> <b>Accepted</b></div><div class="glow-red text-hudge" ng-if="decorators.lastStatus === false"><i class="fa fa-close"></i> <b>Rejected</b></div></div></div></div></div></div></div>');
   $templateCache.put('samples/errorHandlers/main.tpl.html',
     '<div ng:cloak class=container style="width: 100%"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link rel=stylesheet resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.core.css"><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.default.min.css"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.min.js></script><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input type=checkbox ng:show="sampleErrors.result !== null" ng:model=appConfig.errorHandlers.enabled bs:switch switch:size=mini switch:inverse=true></span><h4>Exception Handling <small>Error reporting and client-side exception handling</small></h4><hr><div class=row><div class=col-md-3><div><h5>Throw Exceptions</h5><ul class=list-group><li class=list-group-item><a href="" ng-click=sampleErrors.throwManagedException()><span class="badge pull-right" ng-if="appConfig.errorHandlers.counts[\'Managed Sample\']">{{ appConfig.errorHandlers.counts[\'Managed Sample\'] }}</span> <i class="fa fa-exclamation glow-red"></i>&nbsp; Catch Managed Error</a></li><li class=list-group-item><a href="" ng-click=sampleErrors.throwAjaxException()><span class="badge pull-right" ng-if="appConfig.errorHandlers.counts[\'Ajax Error\']">{{ appConfig.errorHandlers.counts[\'Ajax Error\'] }}</span> <i class="fa fa-exclamation glow-red"></i>&nbsp; Create Ajax Error</a></li><li class=list-group-item><a href="" ng-click=sampleErrors.throwAngularException()><span class="badge pull-right" ng-if="appConfig.errorHandlers.counts[\'Angular\']">{{ appConfig.errorHandlers.counts[\'Angular\'] }}</span> <i class="fa fa-exclamation glow-red"></i>&nbsp; AngularJS Error</a></li><li class=list-group-item><a href="" ng-click=sampleErrors.throwTimeoutException()><i class="fa fa-exclamation glow-red"></i>&nbsp; Timeout Error</a></li><li class=list-group-item><a href="" onclick=sampleError.dontExist++><span class="badge pull-right" ng-if="appConfig.errorHandlers.counts[\'Javascript Error\']">{{ appConfig.errorHandlers.counts[\'Javascript Error\'] }}</span> <i class="fa fa-exclamation glow-red"></i>&nbsp; Unhandled Exception</a></li></ul></div></div><div class=ellipsis style="overflow: hidden" ng-class="{ \'col-md-6\':appConfig.errorHandlers.enabled, \'col-md-9\': !appConfig.errorHandlers.enabled }"><div><span class=pull-right style="padding: 3px"><a href="" ng-click="">Refresh</a> | <a href="" ng-click=sampleErrors.clear()>Clear</a></span><h5>Event Logs</h5><table class="table table-hover table-condensed"><thead><tr><th style="width: 80px">Time</th><th style="width: 64px">Type</th><th>Description</th></tr></thead><tbody><tr ng-if=!appState.logs.length><td colspan=3><em>No events have been logged...</em></td></tr><tr ng-repeat="row in appState.logs" ng-class="{ \'text-info inactive-gray\':row.type==\'debug\', \'text-info\':row.type==\'info\', \'text-warning glow-orange\':row.type==\'warn\', \'text-danger glow-red\':row.type==\'error\' }"><td>{{ row.time | date:\'hh:mm:ss\' }}</td><td>{{ row.type }}</td><td class=ellipsis style="width: auto; overflow: hidden">{{ row.desc }}</td></tr></tbody></table></div><div ng-if=!appState.logs.length><h5>Inspired by these blogs:</h5><ul class="alert alert-info" style="list-style: none"><li><a target=_blank href=http://www.davecap.com/post/46522098029/using-sentry-raven-js-with-angularjs-to-catch><i class="fa fa-external-link-square"></i> http://www.davecap.com</a></li><li><a target=_blank href=http://bahmutov.calepin.co/catch-all-errors-in-angular-app.html><i class="fa fa-external-link-square"></i> http://bahmutov.calepin.co</a></li><li><a target=_blank href=http://davidwalsh.name/track-errors-google-analytics><i class="fa fa-external-link-square"></i> http://davidwalsh.name</a></li></ul></div></div><div ng-class="{ \'col-md-3\':appConfig.errorHandlers.enabled, \'hide\': !appConfig.errorHandlers.enabled }"><div><h5>Exception Handlers</h5><form class=thumbnail><div style="padding: 0 8px"><div class=checkbox ng:class="{ \'inactive-gray\': !handler.enabled && handler.locked }" ng:repeat="handler in sampleErrors.errorHandlers"><label><input type=checkbox ng-disabled=handler.locked ng-checked=handler.enabled ng-click=sampleErrors.checkChanged(handler)> <span ng-if=!handler.busy><strong ng:if=handler.enabled>{{ handler.label }}</strong> <span ng:if=!handler.enabled>{{ handler.label }}</span></span> <span ng-if=handler.busy><i class="fa fa-spinner fa-spin"></i> <em>Loading third-party scripts...</em></span></label></div></div></form></div><div ng:if="sampleErrors.google.isEnabled && !sampleErrors.google.handler.busy"><span class=pull-right style="padding: 3px"><b ng:if=sampleErrors.google.isOnline class=glow-green>Online</b> <b ng:if=!sampleErrors.google.isOnline class=glow-red>Offline</b></span><h5>Google Analytics</h5><div style="padding: 0 8px"><div ng-show=sampleErrors.google.isOnline><a href="" class=pull-right ng:click="sampleErrors.google.isOnline = false;"><i class="glyphicon glyphicon-remove"></i></a><div class=ellipsis><b>Public Key:</b> <a class=inactive-text>{{ sampleErrors.google.config.publicKey }}</a></div></div><form class=form-inline role=form ng-show=!sampleErrors.google.isOnline><div class=form-group><label for=sentryKey>Google API key (required)</label><div class=input-group><input class="form-control input-sm" id=googleKey ng:model=sampleErrors.google.config.publicKey placeholder=UA-XXXX-Y><div class=input-group-btn><a class="btn btn-sm btn-default" ng-class="{ \'btn-danger\': sampleErrors.google.lastError, \'btn-primary\': sampleErrors.google.config.publicKey, \'btn-default\': !sampleErrors.google.config.publicKey }" ng-disabled=!sampleErrors.google.config.publicKey ng-click=sampleErrors.google.connect(sampleErrors.google.config.publicKey)>Set</a></div></div></div></form><br><div class="alert alert-danger" ng-if="!sampleErrors.google.isOnline && sampleErrors.google.lastError">{{ sampleErrors.google.lastError.message }}</div></div></div><div ng:if="sampleErrors.raven.isEnabled && !sampleErrors.raven.handler.busy"><span class=pull-right style="padding: 3px"><b ng:if=sampleErrors.raven.isOnline class=glow-green>Online</b> <b ng:if=!sampleErrors.raven.isOnline class=glow-red>Offline</b></span><h5>Sentry and RavenJS</h5><div style="padding: 0 8px"><div ng-show=sampleErrors.raven.isOnline><a href="" class=pull-right ng:click="sampleErrors.raven.isOnline = false;"><i class="glyphicon glyphicon-remove"></i></a><div class=ellipsis><b>Public Key:</b> <a ng-href="{{ sampleErrors.raven.config.publicKey }}" target=_blank class=inactive-text>{{ sampleErrors.raven.config.publicKey }}</a></div></div><form class=form-inline role=form ng-show=!sampleErrors.raven.isOnline><div class=form-group><label for=sentryKey>Sentry public key (required)</label><div class=input-group><input class="form-control input-sm" id=sentryKey ng:model=sampleErrors.raven.config.publicKey placeholder="https://<-key->@app.getsentry.com/12345"><div class=input-group-btn><a class="btn btn-sm btn-default" ng-class="{ \'btn-danger\': sampleErrors.raven.lastError, \'btn-primary\': sampleErrors.raven.config.publicKey, \'btn-default\': !sampleErrors.raven.config.publicKey }" ng-disabled=!sampleErrors.raven.config.publicKey ng-click=sampleErrors.raven.connect(sampleErrors.raven.config.publicKey)>Set</a></div></div></div></form><br><div class="alert alert-danger" ng-if="!sampleErrors.raven.isOnline && sampleErrors.raven.lastError">{{ sampleErrors.raven.lastError.message }}</div><div class="alert alert-info" ng-if="!sampleErrors.raven.isOnline && !sampleErrors.raven.lastError"><a target=_blank href="https://www.getsentry.com/welcome/">Sentry</a> is a third party online service used to track errors. <a target=_blank href="http://raven-js.readthedocs.org/en/latest/">RavenJS</a> is used on the client-side to catch and send events on to Sentry.</div></div></div></div></div></div></div></div>');
   $templateCache.put('samples/left.tpl.html',
@@ -3579,7 +3674,7 @@ angular.module('prototyped.ng.samples', [
   $templateCache.put('samples/notifications/main.tpl.html',
     '<div id=NotificationView class=container style="width: 100%"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link rel=stylesheet resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.core.css"><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.default.min.css"><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input type=checkbox ng:show="notify.ready !== null" ng:model=notify.enabled bs:switch switch:size=mini switch:inverse=true></span><h4>{{ notify.isPatched() ? \'Desktop\' : \'Browser\' }} Notifications <small>Various mechanisms of user notification in HTML5.</small></h4><hr><p ng-show="notify.ready === null"><em><i class="fa fa-spinner fa-spin"></i> <b>Requesting Access:</b> Desktop notifications...</em> <span><a href="" ng-click="notify.ready = false">cancel</a></span></p><div ng-show="notify.ready !== null" class=row><div class=col-md-3><div><h5>Notification Types</h5><div class=thumbnail><div style="padding: 0 8px"><div class=radio ng-class="{ \'inactive-gray\': !method.enabled() }" ng-repeat="method in methods"><label><input type=radio name=optionsMethods id=option_method_{{method.name}} value="{{ method.name }}" ng-disabled=!method.enabled() ng-click="notify.current = method" ng-checked="notify.current.name == method.name"> <span ng-if="(notify.current.name != method.name)">{{ method.label }}</span> <strong ng-if="(notify.current.name == method.name)">{{ method.label }}</strong></label></div></div></div></div><div ng-show="notify.current.name == \'notify\'"><h5>Message Styling</h5><form class=thumbnail><div class=form-group><label for=exampleIcon>Icon File</label><input type=file id=exampleIcon><p class=help-block>Image to display with message.</p></div></form></div></div><div ng-class="{ \'col-md-6\':notify.enabled, \'col-md-9\': !notify.enabled }"><h5>Create a new message</h5><form class=thumbnail ng-disabled=notify.ready ng-init="msgOpts = { title: \'Web Notification\', body: \'This is a test message.\'}"><div style="padding: 8px"><div class=form-group><label for=exampleTitle>Message Title</label><input class=form-control id=exampleTitle placeholder="Enter title" ng-model=msgOpts.title></div><div class=form-group><label for=exampleMessage>Message Body Text</label><textarea class=form-control rows=5 class=form-control id=exampleMessage ng-model=msgOpts.body placeholder="Enter body text"></textarea></div><span class=pull-right ng-show="notify.current.name != \'alert\'" style="margin: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.showResult }"><label><input type=checkbox ng-model=notify.showResult> Show Result</label></div></span> <span class=pull-right ng-show="notify.current.name != \'alert\'" style="margin: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.sameDialog }"><label><input type=checkbox ng-model=notify.sameDialog> Recycle Dialog</label></div></span> <button type=submit class="btn btn-default" ng-class="{ \'btn-success\': notify.isPatched(), \'btn-primary\': notify.ready !== null && !notify.isPatched() }" ng-click="notify.current.action(msgOpts.title, msgOpts.body, msgOpts)">Create Message</button></div></form></div><div ng-class="{ \'col-md-3\':notify.enabled, \'hide\': !notify.enabled }"><div><h5>Notification Extenders</h5><form class=thumbnail><div style="padding: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.enabled }"><label><input type=checkbox ng-model=notify.enabled> Desktop Notifications</label></div><div class=checkbox ng-class="{ \'inactive-gray\': !notify.options.alertify.enabled }"><label><input type=checkbox ng-checked=notify.options.alertify.enabled ng-click=notify.hookAlertify()> <span ng-if=!notify.options.alertify.busy>Extend with <a target=_blank href="http://fabien-d.github.io/alertify.js/">AlertifyJS</a></span> <span ng-if=notify.options.alertify.busy><i class="fa fa-spinner fa-spin"></i> <em>Loading third-party scripts...</em></span></label></div></div></form></div><div ng-show=notify.enabled><h5>System Notifications Active</h5><div class="alert alert-success"><b>Note:</b> All notifications get redirected to your OS notification system.</div></div></div></div><div ng:if=notify.error class="alert alert-danger"><b>Error:</b> {{ notify.error.message || \'Something went wrong.\' }}</div></div></div></div>');
   $templateCache.put('samples/sampleData/main.tpl.html',
-    '<div id=SampleDataView class=container style="width: 100%"><div class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=sampleData.busy ng-click=sampleData.test() class="btn btn-primary">Fetch Sample Data</a></span><h4>Online Sample Data <small>Directly from the cloud! Supplied by this awesome API: <a href="http://www.filltext.com/" target=_blank>http://www.filltext.com/</a></small></h4><hr><div ng:if=sampleData.error class="alert alert-danger"><b>Error:</b> {{ sampleData.error.message || \'Something went wrong. :(\' }}</div><div class=row><div class=col-md-3><h5>Define Fields <small>( {{ sampleData.args.length }} defined )</small> <small class=pull-right><a href="" ng-click="sampleData.args.push({ id: \'myField\', val: \'\'})"><i class="fa fa-plus"></i></a></small></h5><div class=thumbnail><div style="display: flex; width: auto; padding: 3px" ng-repeat="arg in sampleData.args"><span style="flex-basis: 20px; flex-grow:0; flex-shrink:0"><input checked type=checkbox ng-click="sampleData.args.splice(sampleData.args.indexOf(arg), 1)" aria-label=...></span><div style="flex-basis: 64px; flex-grow:0; flex-shrink:0"><input style="width: 100%" aria-label=... ng-model=arg.id></div><div style="flex-grow:1; flex-shrink:1"><input style="width: 100%" aria-label=... ng-model=arg.val></div></div></div></div><div class=col-md-9><h5>Results View <small ng:if=sampleData.resp.length>( {{ sampleData.resp.length }} total )</small></h5><table class=table><thead><tr><th ng-repeat="arg in sampleData.args">{{ arg.id }}</th></tr></thead><tbody><tr ng-if=!sampleData.resp><td colspan="{{ sampleData.args.length }}"><em>Nothing to show yet. Fetch some data first...</em></td></tr><tr ng-repeat="row in sampleData.resp"><td ng-repeat="arg in sampleData.args">{{ row[arg.id] }}</td></tr></tbody></table></div></div></div></div></div>');
+    '<div id=SampleDataView class=container style="width: 100%"><div ng:if=sampleData.error class="alert alert-danger"><a class=pull-right href="" ng-click="sampleData.error = null"><i class="fa fa-remove"></i></a> <b>Error:</b> {{ sampleData.error.message || \'Something went wrong. :(\' }}</div><div ng-if=!sampleData.context class=row><div class=col-md-12><h4>Data Profiles <small>Create and model your data objects.</small></h4><hr><div ng-if=sampleData._new>{{ sampleData._new }}</div><ul ng-if=!sampleData._new class=list-group><li class=list-group-item ng-if="!sampleData.OnlineData.length && sampleData.busy"><em><i class="fa fa-spinner fa-spin"></i> Loading...</em></li><li class=list-group-item ng-if="!sampleData.OnlineData.length && !sampleData.busy"><p><b><i class="fa fa-info-circle"></i> Warning:</b> <em>No Profiles available...</em></p><p>Identify Yourself: <a href="" ng-click="sampleData.authenticate(\'google\')">Google</a> | <a href="" ng-click="sampleData.authenticate(\'facebook\')">Facebook</a> | <a href="" ng-click="sampleData.authenticate(\'github\')">GitHub</a> | <a href="" ng-click="sampleData.authenticate(\'twitter\')">Twitter</a> | <a href="" ng-click="sampleData.authenticate(\'password\')">Email</a> | <a href="" ng-click=sampleData.createSamples()>Load Samples</a></p></li><li class=list-group-item xxx-ng-if=!sampleData.busy><a href="" class=inactive-gray-75 ng-click="sampleData._new = { name: \'My Data Object\', rows: 10 }"><i class="fa fa-plus-circle"></i> Create new profile</a></li><li class=list-group-item ng-repeat="profile in sampleData.OnlineData"><a href="" ng-click="sampleData.context = profile"><i class="fa fa-globe"></i> {{ profile.name }}</a></li></ul></div></div><div ng-if=sampleData.context class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=sampleData.busy ng-click=sampleData.test() class="btn btn-primary">Fetch Sample Data</a> <a href="" ng-click="sampleData.context = null" class="btn btn-default">Close</a></span><h4>Online Sample Data <small>Directly from the cloud! Supplied by this awesome API: <a href="http://www.filltext.com/" target=_blank>http://www.filltext.com/</a></small></h4><hr><div class=row><div class=col-md-3><h5>Define Fields <small>( {{ sampleData.context.args.length }} defined )</small> <small class=pull-right><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: \'myField\', val: \'{email}\'})"><i class="fa fa-plus"></i></a></small></h5><div class=thumbnail><div style="display: flex; width: auto; padding: 3px" ng-repeat="arg in sampleData.context.args"><span style="flex-basis: 20px; flex-grow:0; flex-shrink:0"><input checked type=checkbox ng-click="sampleData.removeColumn(sampleData.context, arg)"></span><div style="flex-basis: 64px; flex-grow:0; flex-shrink:0"><input style="width: 100%" ng-model=arg.id ng-blur="sampleData.updateColumn(sampleData.context, arg)"></div><div style="flex-grow:1; flex-shrink:1"><input style="width: 100%" ng-model=arg.val ng-blur="sampleData.updateColumn(sampleData.context, arg)"></div></div></div></div><div class=col-md-9><h5>Results View <small ng:if=sampleData.context.resp.length>( {{ sampleData.context.resp.length }} total )</small></h5><table class=table><thead><tr><th ng-repeat="arg in sampleData.context.args">{{ arg.id }}</th></tr></thead><tbody><tr ng-if=!sampleData.context.resp><td colspan="{{ sampleData.context.args.length }}"><em>Nothing to show yet. Fetch some data first...</em></td></tr><tr ng-repeat="row in sampleData.context.resp"><td ng-repeat="arg in sampleData.context.args">{{ row[arg.id] }}</td></tr></tbody></table></div></div></div></div></div>');
   $templateCache.put('samples/styles3d/main.tpl.html',
     '<div id=mainview style="width: 100%"><div>Inspired by this post: <a href=http://www.dhteumeuleu.com/apparently-transparent/source>http://www.dhteumeuleu.com/apparently-transparent/source</a></div><div id=screen><div id=scene><div class="f sky" data-transform="rotateX(-90deg) translateZ(-300px)"></div><div class=wall data-transform=translateZ(-500px)></div><div class=wall data-transform="rotateY(-90deg) translateZ(-500px)"></div><div class=wall data-transform="rotateY(90deg) translateZ(-500px)"></div><div class=wall data-transform="rotateY(180deg) translateZ(-500px)"></div><iframe class="f bottom" data-transform="rotateX(90deg) translateZ(-300px)" src=//www.prototyped.info style="background-image: none"></iframe></div></div></div><style>html {\n' +
     '        -ms-touch-action: none;\n' +

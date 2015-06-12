@@ -1,9 +1,81 @@
 ﻿<div id="SampleDataView" class="container" style="width: 100%;">
-    <div class="row">
+    <div ng:if="sampleData.error" class="alert alert-danger">
+        <a class="pull-right" href="" ng-click="sampleData.error = null"><i class="fa fa-remove"></i></a>
+        <b>Error: </b>
+        {{ sampleData.error.message || 'Something went wrong. :(' }}
+    </div>
+    <div ng-if="!sampleData.context" class="row">
+        <div class="col-md-12">
+            <h4>Data Profiles <small>Create and model your data objects.</small></h4>
+            <hr />
+            <form ng-if="sampleData._new">
+                <div class="form-group">
+                    <label for="inputName">Profile Name</label>
+                    <input class="form-control"
+                           id="inputName"
+                           type="text"
+                           tabindex="1"
+                           ng-required
+                           placeholder="Your Profile Name"
+                           ng-model="sampleData._new.name">
+                </div>
+                <div class="form-group">
+                    <label for="inputRows">Sample Data Size</label>
+                    <input class="form-control"
+                           id="inputRows"
+                           type="number"
+                           tabindex="2"
+                           ng-required
+                           placeholder="Enter number of rows"
+                           ng-model="sampleData._new.rows">
+                </div>
+                <hr />
+                <a href="" class="btn btn-primary" ng-click="sampleData.addNew(sampleData._new)">Create</a>
+                <a href="" class="btn btn-default" ng-click="sampleData._new = null">Cancel</a>
+            </form>
+            <ul ng-if="!sampleData._new" class="list-group">
+                <li class="list-group-item">
+                    <a href="" class="inactive-gray" ng-click="sampleData._new = { name: 'My Data Object', rows: 10, args: [] }">
+                        <i class="fa fa-plus-circle"></i> Create new profile
+                    </a>
+                </li>
+                <li class="list-group-item" ng-if="!sampleData.OnlineData.length && sampleData.busy">
+                    <em><i class="fa fa-spinner fa-spin"></i> Loading...</em>
+                </li>
+                <li class="list-group-item" ng-if="!sampleData.OnlineData.length && !sampleData.busy">
+                    <p>
+                        <b><i class="fa fa-info-circle"></i> Warning: </b>
+                        <em>No Profiles available...</em>
+                    </p>
+                    <p>
+                        &raquo; Identify Yourself:
+                        <a href="" ng-click="sampleData.authenticate('google')">Google</a> |
+                        <a href="" ng-click="sampleData.authenticate('facebook')">Facebook</a> |
+                        <a href="" ng-click="sampleData.authenticate('github')">GitHub</a> |
+                        <a href="" ng-click="sampleData.authenticate('twitter')">Twitter</a> |
+                        <a href="" ng-click="sampleData.authenticate('password')">Email</a> |
+                        <a href="" ng-click="sampleData.createSamples()">Load Samples</a>
+                    </p>
+                </li>
+                <li class="list-group-item" ng-repeat="profile in sampleData.OnlineData">
+                    <a href="" class="pull-right" ng-click="sampleData.removeProfile(profile)">
+                        <i class="fa fa-trash"></i>
+                    </a>
+                    <a href="" ng-click="sampleData.context = profile">
+                        <i class="fa fa-globe"></i> {{ profile.name }}
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div ng-if="sampleData.context" class="row">
         <div class="col-md-12">
             <span class="pull-right">
                 <a href="" ng-disabled="sampleData.busy" ng-click="sampleData.test()" class="btn btn-primary">
                     Fetch Sample Data
+                </a>
+                <a href="" ng-click="sampleData.context = null" class="btn btn-default">
+                    Close
                 </a>
             </span>
             <h4>
@@ -11,49 +83,62 @@
                 <small>Directly from the cloud! Supplied by this awesome API: <a href="http://www.filltext.com/" target="_blank">http://www.filltext.com/</a></small>
             </h4>
             <hr />
-            <div ng:if="sampleData.error" class="alert alert-danger">
-                <b>Error: </b>
-                {{ sampleData.error.message || 'Something went wrong. :(' }}
-            </div>
             <div class="row">
                 <div class="col-md-3">
                     <h5>
                         Define Fields
-                        <small>( {{ sampleData.args.length }} defined )</small>
+                        <small ng-if="sampleData.context.args.length">( {{ sampleData.context.args.length }} defined )</small>
                         <small class="pull-right">
-                            <a href="" ng-click="sampleData.args.push({ id: 'myField', val: ''})"><i class="fa fa-plus"></i></a>
+                            <a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'myField', val: '{email}'})"><i class="fa fa-plus"></i></a>
                         </small>
                     </h5>
                     <div class="thumbnail">
-                        <div style="display: flex; width: auto; padding: 3px;" ng-repeat="arg in sampleData.args">
+                        <div style="display: flex; width: auto; padding: 3px;" ng-if="!sampleData.context.args.length">
+                            <em>List Empty</em>
+                        </div>
+                        <div style="display: flex; width: auto; padding: 3px;" ng-repeat="arg in sampleData.context.args">
                             <span style="flex-basis: 20px; flex-grow:0; flex-shrink:0;">
-                                <input checked="checked" type="checkbox" ng-click="sampleData.args.splice(sampleData.args.indexOf(arg), 1)" aria-label="...">
+                                <input checked="checked" type="checkbox" ng-click="sampleData.removeColumn(sampleData.context, arg)">
                             </span>
                             <div style="flex-basis: 64px; flex-grow:0; flex-shrink:0;">
-                                <input type="text" style="width: 100%;" aria-label="..." ng-model="arg.id">
+                                <input type="text" style="width: 100%;" ng-model="arg.id" ng-blur="sampleData.updateColumn(sampleData.context, arg)">
                             </div>
                             <div style="flex-grow:1; flex-shrink:1;">
-                                <input type="text" style="width: 100%" aria-label="..." ng-model="arg.val">
+                                <input type="text" style="width: 100%" ng-model="arg.val" ng-blur="sampleData.updateColumn(sampleData.context, arg)">
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-9">
-                    <h5>Results View <small ng:if="sampleData.resp.length">( {{ sampleData.resp.length }} total )</small></h5>
+                    <div class="pull-right" style="width: 200px;">
+                        <input id="ex1" type="range" min="0" max="100" ng-model="sampleData.context.rows" />
+                    </div>
+                    <div class="pull-right" style="width: 64px;">
+                        Rows: <b>{{ sampleData.context.rows }}</b>
+                    </div>
+                    <h5>
+                        Results View
+                        <small ng:if="sampleData.context.resp.length">
+                            ( {{ sampleData.context.resp.length }} total ) |
+                            <a href="" ng-click="sampleData.clearData(sampleData.context)">
+                                <i class="fa fa-trash"></i> Clear
+                            </a>
+                        </small>
+                    </h5>
                     <table class="table">
                         <thead>
                             <tr>
-                                <th ng-repeat="arg in sampleData.args">{{ arg.id }}</th>
+                                <th ng-repeat="arg in sampleData.context.args">{{ arg.id }}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr ng-if="!sampleData.resp">
-                                <td colspan="{{ sampleData.args.length }}">
+                            <tr ng-if="!sampleData.context.resp">
+                                <td colspan="{{ sampleData.context.args.length }}">
                                     <em>Nothing to show yet. Fetch some data first...</em>
                                 </td>
                             </tr>
-                            <tr ng-repeat="row in sampleData.resp">
-                                <td ng-repeat="arg in sampleData.args">{{ row[arg.id] }}</td>
+                            <tr ng-repeat="row in sampleData.context.resp">
+                                <td ng-repeat="arg in sampleData.context.args">{{ row[arg.id] }}</td>
                             </tr>
                         </tbody>
                     </table>

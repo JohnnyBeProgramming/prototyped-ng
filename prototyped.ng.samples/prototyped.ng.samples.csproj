@@ -76,6 +76,7 @@
     <Content Include="samples\notifications\main.tpl.html" />
     <TypeScriptCompile Include="samples\notifications\module.ng.ts" />
     <Content Include="samples\sampleData\main.tpl.html" />
+    <TypeScriptCompile Include="samples\sampleData\controllers\SampleDataController.ts" />
     <TypeScriptCompile Include="samples\sampleData\module.ng.ts" />
     <Content Include="samples\styles3d\main.tpl.html" />
     <TypeScriptCompile Include="samples\styles3d\module.ng.ts" />
