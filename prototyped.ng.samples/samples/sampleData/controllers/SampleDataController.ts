@@ -53,7 +53,7 @@ module proto.ng.samples.data {
                     console.log("Logged in as:" + authData.uid, authData);
                     if (!this.OnlineData.length) {
                         this.createSamples();
-                    }                    
+                    }
                     this._new = {
                         name: authData.uid,
                         args: [],
@@ -68,12 +68,11 @@ module proto.ng.samples.data {
 
         public createSamples() {
             // Define default profiles
-            if (this.appConfig['sampleData'].defaults)
-            {
+            if (this.appConfig['sampleData'].defaults) {
                 this.appConfig['sampleData'].defaults.forEach((itm) => {
                     this.addProfile(itm);
                 });
-            }             
+            }
         }
 
         private getArgs(): any {
@@ -87,13 +86,14 @@ module proto.ng.samples.data {
         }
 
         public test() {
+            console.debug(' - Requesting... ', req);
             try {
                 // Set busy flag
                 this.busy = true;
 
                 // Create and send the request
                 var req = this.getArgs();
-                this.fetch(req)
+                return this.fetch(req)
                     .then((data) => {
                         this.context.resp = data;
                         this.OnlineData.$save(this.context);
@@ -107,8 +107,6 @@ module proto.ng.samples.data {
                         });
                     });
 
-                // Define the request and response handlers
-                console.debug(' - Requesting...');
             } catch (ex) {
                 this.error = ex;
             }
@@ -146,8 +144,13 @@ module proto.ng.samples.data {
             return this.OnlineData.$add(profile);
         }
 
-        public updateProfile(profile: ISampleDataContext) {
-            return this.OnlineData.$save(profile);
+        public updateProfile(profile: ISampleDataContext, autoUpdate: boolean = false) {
+            return this.OnlineData.$save(profile).then(() => {
+                if (autoUpdate) {
+                    this.$rootScope.$applyAsync(() => { });
+                    return this.test();
+                }
+            });
         }
 
         public removeProfile(profile: ISampleDataContext) {

@@ -3059,13 +3059,14 @@ var proto;
 
                     SampleDataController.prototype.test = function () {
                         var _this = this;
+                        console.debug(' - Requesting... ', req);
                         try  {
                             // Set busy flag
                             this.busy = true;
 
                             // Create and send the request
                             var req = this.getArgs();
-                            this.fetch(req).then(function (data) {
+                            return this.fetch(req).then(function (data) {
                                 _this.context.resp = data;
                                 _this.OnlineData.$save(_this.context);
                             }).catch(function (error) {
@@ -3075,9 +3076,6 @@ var proto;
                                     _this.busy = false;
                                 });
                             });
-
-                            // Define the request and response handlers
-                            console.debug(' - Requesting...');
                         } catch (ex) {
                             this.error = ex;
                         }
@@ -3115,8 +3113,16 @@ var proto;
                         return this.OnlineData.$add(profile);
                     };
 
-                    SampleDataController.prototype.updateProfile = function (profile) {
-                        return this.OnlineData.$save(profile);
+                    SampleDataController.prototype.updateProfile = function (profile, autoUpdate) {
+                        var _this = this;
+                        if (typeof autoUpdate === "undefined") { autoUpdate = false; }
+                        return this.OnlineData.$save(profile).then(function () {
+                            if (autoUpdate) {
+                                _this.$rootScope.$applyAsync(function () {
+                                });
+                                return _this.test();
+                            }
+                        });
                     };
 
                     SampleDataController.prototype.removeProfile = function (profile) {

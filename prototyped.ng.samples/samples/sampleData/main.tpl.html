@@ -104,14 +104,19 @@
                                 <input type="text" style="width: 100%;" ng-model="arg.id" ng-blur="sampleData.updateColumn(sampleData.context, arg)">
                             </div>
                             <div style="flex-grow:1; flex-shrink:1;">
-                                <input type="text" style="width: 100%" ng-model="arg.val" ng-blur="sampleData.updateColumn(sampleData.context, arg)">
+                                <input type="text" style="width: 100%"
+                                       ng-model="arg.val"
+                                       ng-blur="sampleData.updateColumn(sampleData.context, arg)"
+                                       ng-change="sampleData.updateColumn(sampleData.context, arg)">
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-9">
                     <div class="pull-right" style="width: 200px;">
-                        <input id="ex1" type="range" min="0" max="100" ng-model="sampleData.context.rows" />
+                        <input id="ex1" type="range" min="0" max="100"
+                               ng-model="sampleData.context.rows"
+                               ng-blur="sampleData.updateProfile(sampleData.context, true)" />
                     </div>
                     <div class="pull-right" style="width: 64px;">
                         Rows: <b>{{ sampleData.context.rows }}</b>

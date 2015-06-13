@@ -2984,7 +2984,7 @@ var proto;
         (function (samples) {
             (function (_data) {
                 var SampleDataController = (function () {
-                    function SampleDataController($rootScope, $scope, $state, $stateParams, $q, $firebaseAuth, $firebaseObject, $firebaseArray) {
+                    function SampleDataController($rootScope, $scope, $state, $stateParams, $q, $firebaseAuth, $firebaseObject, $firebaseArray, appConfig) {
                         this.$rootScope = $rootScope;
                         this.$scope = $scope;
                         this.$state = $state;
@@ -2993,25 +2993,28 @@ var proto;
                         this.$firebaseAuth = $firebaseAuth;
                         this.$firebaseObject = $firebaseObject;
                         this.$firebaseArray = $firebaseArray;
-                        this.profiles = [];
+                        this.appConfig = appConfig;
                         this.init();
                     }
                     SampleDataController.prototype.init = function () {
                         var _this = this;
-                        var baseUrl = 'https://dazzling-heat-2165.firebaseio.com';
-
-                        this.busy = true;
-                        this.OnlineConn = new Firebase(baseUrl + '/OnlineSamples');
-                        this.OnlineData = this.$firebaseArray(this.OnlineConn);
-                        this.OnlineData.$loaded().then(function () {
-                            console.log(' - Online Data Loaded: ', _this.OnlineData);
-                        }).catch(function (err) {
-                            _this.error = err;
-                        }).finally(function () {
-                            _this.$rootScope.$applyAsync(function () {
-                                _this.busy = false;
+                        var baseUrl = this.appConfig['sampleData'].dataUrl;
+                        if (baseUrl) {
+                            this.busy = true;
+                            this.OnlineConn = new Firebase(baseUrl + '/OnlineSamples');
+                            this.OnlineData = this.$firebaseArray(this.OnlineConn);
+                            this.OnlineData.$loaded().then(function () {
+                                console.log(' - Online Data Loaded: ', _this.OnlineData);
+                            }).catch(function (err) {
+                                _this.error = err;
+                            }).finally(function () {
+                                _this.$rootScope.$applyAsync(function () {
+                                    _this.busy = false;
+                                });
                             });
-                        });
+                        } else {
+                            this.error = new Error('Config setting "sampleData.dataUrl" is undefined.');
+                        }
                     };
 
                     SampleDataController.prototype.authenticate = function (type) {
@@ -3022,6 +3025,11 @@ var proto;
                             if (!_this.OnlineData.length) {
                                 _this.createSamples();
                             }
+                            _this._new = {
+                                name: authData.uid,
+                                args: [],
+                                rows: 10
+                            };
                         }).catch(function (error) {
                             _this.error = error;
                             console.warn("Authentication failed:", error);
@@ -3029,30 +3037,13 @@ var proto;
                     };
 
                     SampleDataController.prototype.createSamples = function () {
+                        var _this = this;
                         // Define default profiles
-                        this.addProfile({
-                            name: 'Person Data',
-                            rows: 10,
-                            args: [
-                                { id: 'id', val: '{number}' },
-                                { id: 'username', val: '{username}' },
-                                { id: 'firstname', val: '{firstName}' },
-                                { id: 'lastname', val: '{lastName}' },
-                                { id: 'email', val: '{email}' },
-                                { id: 'mobile', val: '{phone|format}' },
-                                { id: 'active', val: '{bool|n}' }
-                            ]
-                        });
-                        this.addProfile({
-                            name: 'Company Info',
-                            rows: 10,
-                            args: [
-                                { id: 'business', val: '{business}' },
-                                { id: 'city', val: '{city}' },
-                                { id: 'contact', val: '{firstName}' },
-                                { id: 'tel', val: '{phone|format}' }
-                            ]
-                        });
+                        if (this.appConfig['sampleData'].defaults) {
+                            this.appConfig['sampleData'].defaults.forEach(function (itm) {
+                                _this.addProfile(itm);
+                            });
+                        }
                     };
 
                     SampleDataController.prototype.getArgs = function () {
@@ -3068,13 +3059,14 @@ var proto;
 
                     SampleDataController.prototype.test = function () {
                         var _this = this;
+                        console.debug(' - Requesting... ', req);
                         try  {
                             // Set busy flag
                             this.busy = true;
 
                             // Create and send the request
                             var req = this.getArgs();
-                            this.fetch(req).then(function (data) {
+                            return this.fetch(req).then(function (data) {
                                 _this.context.resp = data;
                                 _this.OnlineData.$save(_this.context);
                             }).catch(function (error) {
@@ -3084,55 +3076,80 @@ var proto;
                                     _this.busy = false;
                                 });
                             });
-
-                            // Define the request and response handlers
-                            console.debug(' - Requesting...');
                         } catch (ex) {
                             this.error = ex;
                         }
                     };
 
                     SampleDataController.prototype.fetch = function (data) {
-                        var url = "http://www.filltext.com/?delay=0&callback=?";
                         var deferred = this.$q.defer();
 
-                        $.getJSON(url, data).done(function (data) {
-                            deferred.resolve(data);
-                        }).fail(function (xhr, desc, err) {
-                            var error = new Error('Error [' + xhr.status + ']: ' + xhr.statusText + ' - ' + err);
-                            deferred.reject(error);
-                        });
+                        var url = this.appConfig['sampleData'].fillText;
+                        if (url) {
+                            $.getJSON(url, data).done(function (data) {
+                                deferred.resolve(data);
+                            }).fail(function (xhr, desc, err) {
+                                var error = new Error('Error [' + xhr.status + ']: ' + xhr.statusText + ' - ' + err);
+                                deferred.reject(error);
+                            });
+                        } else {
+                            this.error = new Error('Config setting "sampleData.fillText" is undefined.');
+                            deferred.reject(this.error);
+                        }
 
                         return deferred.promise;
                     };
 
-                    SampleDataController.prototype.addProfile = function (profile) {
-                        this.profiles.push(profile);
-                        this.OnlineData.$add(profile);
+                    SampleDataController.prototype.addNew = function (item) {
+                        var _this = this;
+                        if (!item || !item.name)
+                            return;
+                        return this.addProfile(item).then(function () {
+                            _this._new = null;
+                        });
                     };
 
-                    SampleDataController.prototype.updateProfile = function (profile) {
-                        this.OnlineData.$save(profile);
+                    SampleDataController.prototype.addProfile = function (profile) {
+                        return this.OnlineData.$add(profile);
+                    };
+
+                    SampleDataController.prototype.updateProfile = function (profile, autoUpdate) {
+                        var _this = this;
+                        if (typeof autoUpdate === "undefined") { autoUpdate = false; }
+                        return this.OnlineData.$save(profile).then(function () {
+                            if (autoUpdate) {
+                                _this.$rootScope.$applyAsync(function () {
+                                });
+                                return _this.test();
+                            }
+                        });
                     };
 
                     SampleDataController.prototype.removeProfile = function (profile) {
-                        this.OnlineData.$remove(profile);
-                        this.profiles.splice(this.profiles.indexOf(profile), 1);
+                        return this.OnlineData.$remove(profile);
+                    };
+
+                    SampleDataController.prototype.clearData = function (profile) {
+                        profile.resp = null;
+                        return this.OnlineData.$save(profile);
                     };
 
                     SampleDataController.prototype.addColumn = function (profile, item) {
+                        profile.args = profile.args || [];
                         profile.args.push(item);
-                        this.OnlineData.$save(profile);
+                        return this.OnlineData.$save(profile);
                     };
 
                     SampleDataController.prototype.updateColumn = function (profile, item) {
+                        profile.args = profile.args || [];
                         profile.args.push(item);
-                        this.OnlineData.$save(profile);
+                        return this.OnlineData.$save(profile);
                     };
 
                     SampleDataController.prototype.removeColumn = function (profile, item) {
+                        profile.args = profile.args || [];
                         profile.args.splice(this.context.args.indexOf(item), 1);
-                        this.OnlineData.$save(profile);
+                        return this.OnlineData.$save(profile);
                     };
                     return SampleDataController;
                 })();
@@ -3150,6 +3167,51 @@ var proto;
 angular.module('prototyped.ng.samples.sampleData', [
     'firebase'
 ]).config([
+    'appConfigProvider', function (appConfigProvider) {
+        appConfigProvider.config('sampleData', {
+            enabled: appConfigProvider.getPersisted('sampleData.enabled') == '1',
+            dataUrl: 'https://dazzling-heat-2165.firebaseio.com',
+            fillText: 'http://www.filltext.com/?delay=0&callback=?',
+            defaults: [
+                {
+                    name: 'Person Data',
+                    rows: 10,
+                    args: [
+                        { id: 'id', val: '{number}' },
+                        { id: 'username', val: '{username}' },
+                        { id: 'firstname', val: '{firstName}' },
+                        { id: 'lastname', val: '{lastName}' },
+                        { id: 'email', val: '{email}' },
+                        { id: 'mobile', val: '{phone|format}' },
+                        { id: 'active', val: '{bool|n}' }
+                    ]
+                },
+                {
+                    name: 'Company Info',
+                    rows: 10,
+                    args: [
+                        { id: 'business', val: '{business}' },
+                        { id: 'city', val: '{city}' },
+                        { id: 'contact', val: '{firstName}' },
+                        { id: 'tel', val: '{phone|format}' }
+                    ]
+                },
+                {
+                    name: 'Product Info',
+                    rows: 10,
+                    args: [
+                        { id: 'id', val: '{number}' },
+                        { id: 'name', val: '{lorem|2}' },
+                        { id: 'desc', val: '{lorem|20}' },
+                        { id: 'type', val: '{number|10000}' },
+                        { id: 'category', val: '{ccType|abbr}' },
+                        { id: 'created', val: '{date|1-1-1990,1-1-2050}' },
+                        { id: 'active', val: '{bool|n}' }
+                    ]
+                }
+            ]
+        });
+    }]).config([
     '$stateProvider', function ($stateProvider) {
         // Now set up the states
         $stateProvider.state('samples.sampleData', {
@@ -3172,6 +3234,7 @@ angular.module('prototyped.ng.samples.sampleData', [
     '$firebaseAuth',
     '$firebaseObject',
     '$firebaseArray',
+    'appConfig',
     proto.ng.samples.data.SampleDataController
 ]);
 /// <reference path="../../imports.d.ts" />
@@ -3674,7 +3737,7 @@ angular.module('prototyped.ng.samples', [
   $templateCache.put('samples/notifications/main.tpl.html',
     '<div id=NotificationView class=container style="width: 100%"><script resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js></script><link rel=stylesheet resx:import=https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.core.css"><link rel=stylesheet resx:import="https://cdnjs.cloudflare.com/ajax/libs/alertify.js/0.3.11/alertify.default.min.css"><div class=row><div class=col-md-12><span class="pull-right ng-cloak" style="padding: 6px"><input type=checkbox ng:show="notify.ready !== null" ng:model=notify.enabled bs:switch switch:size=mini switch:inverse=true></span><h4>{{ notify.isPatched() ? \'Desktop\' : \'Browser\' }} Notifications <small>Various mechanisms of user notification in HTML5.</small></h4><hr><p ng-show="notify.ready === null"><em><i class="fa fa-spinner fa-spin"></i> <b>Requesting Access:</b> Desktop notifications...</em> <span><a href="" ng-click="notify.ready = false">cancel</a></span></p><div ng-show="notify.ready !== null" class=row><div class=col-md-3><div><h5>Notification Types</h5><div class=thumbnail><div style="padding: 0 8px"><div class=radio ng-class="{ \'inactive-gray\': !method.enabled() }" ng-repeat="method in methods"><label><input type=radio name=optionsMethods id=option_method_{{method.name}} value="{{ method.name }}" ng-disabled=!method.enabled() ng-click="notify.current = method" ng-checked="notify.current.name == method.name"> <span ng-if="(notify.current.name != method.name)">{{ method.label }}</span> <strong ng-if="(notify.current.name == method.name)">{{ method.label }}</strong></label></div></div></div></div><div ng-show="notify.current.name == \'notify\'"><h5>Message Styling</h5><form class=thumbnail><div class=form-group><label for=exampleIcon>Icon File</label><input type=file id=exampleIcon><p class=help-block>Image to display with message.</p></div></form></div></div><div ng-class="{ \'col-md-6\':notify.enabled, \'col-md-9\': !notify.enabled }"><h5>Create a new message</h5><form class=thumbnail ng-disabled=notify.ready ng-init="msgOpts = { title: \'Web Notification\', body: \'This is a test message.\'}"><div style="padding: 8px"><div class=form-group><label for=exampleTitle>Message Title</label><input class=form-control id=exampleTitle placeholder="Enter title" ng-model=msgOpts.title></div><div class=form-group><label for=exampleMessage>Message Body Text</label><textarea class=form-control rows=5 class=form-control id=exampleMessage ng-model=msgOpts.body placeholder="Enter body text"></textarea></div><span class=pull-right ng-show="notify.current.name != \'alert\'" style="margin: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.showResult }"><label><input type=checkbox ng-model=notify.showResult> Show Result</label></div></span> <span class=pull-right ng-show="notify.current.name != \'alert\'" style="margin: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.sameDialog }"><label><input type=checkbox ng-model=notify.sameDialog> Recycle Dialog</label></div></span> <button type=submit class="btn btn-default" ng-class="{ \'btn-success\': notify.isPatched(), \'btn-primary\': notify.ready !== null && !notify.isPatched() }" ng-click="notify.current.action(msgOpts.title, msgOpts.body, msgOpts)">Create Message</button></div></form></div><div ng-class="{ \'col-md-3\':notify.enabled, \'hide\': !notify.enabled }"><div><h5>Notification Extenders</h5><form class=thumbnail><div style="padding: 0 8px"><div class=checkbox ng-class="{ \'inactive-gray\': !notify.enabled }"><label><input type=checkbox ng-model=notify.enabled> Desktop Notifications</label></div><div class=checkbox ng-class="{ \'inactive-gray\': !notify.options.alertify.enabled }"><label><input type=checkbox ng-checked=notify.options.alertify.enabled ng-click=notify.hookAlertify()> <span ng-if=!notify.options.alertify.busy>Extend with <a target=_blank href="http://fabien-d.github.io/alertify.js/">AlertifyJS</a></span> <span ng-if=notify.options.alertify.busy><i class="fa fa-spinner fa-spin"></i> <em>Loading third-party scripts...</em></span></label></div></div></form></div><div ng-show=notify.enabled><h5>System Notifications Active</h5><div class="alert alert-success"><b>Note:</b> All notifications get redirected to your OS notification system.</div></div></div></div><div ng:if=notify.error class="alert alert-danger"><b>Error:</b> {{ notify.error.message || \'Something went wrong.\' }}</div></div></div></div>');
   $templateCache.put('samples/sampleData/main.tpl.html',
-    '<div id=SampleDataView class=container style="width: 100%"><div ng:if=sampleData.error class="alert alert-danger"><a class=pull-right href="" ng-click="sampleData.error = null"><i class="fa fa-remove"></i></a> <b>Error:</b> {{ sampleData.error.message || \'Something went wrong. :(\' }}</div><div ng-if=!sampleData.context class=row><div class=col-md-12><h4>Data Profiles <small>Create and model your data objects.</small></h4><hr><div ng-if=sampleData._new>{{ sampleData._new }}</div><ul ng-if=!sampleData._new class=list-group><li class=list-group-item ng-if="!sampleData.OnlineData.length && sampleData.busy"><em><i class="fa fa-spinner fa-spin"></i> Loading...</em></li><li class=list-group-item ng-if="!sampleData.OnlineData.length && !sampleData.busy"><p><b><i class="fa fa-info-circle"></i> Warning:</b> <em>No Profiles available...</em></p><p>Identify Yourself: <a href="" ng-click="sampleData.authenticate(\'google\')">Google</a> | <a href="" ng-click="sampleData.authenticate(\'facebook\')">Facebook</a> | <a href="" ng-click="sampleData.authenticate(\'github\')">GitHub</a> | <a href="" ng-click="sampleData.authenticate(\'twitter\')">Twitter</a> | <a href="" ng-click="sampleData.authenticate(\'password\')">Email</a> | <a href="" ng-click=sampleData.createSamples()>Load Samples</a></p></li><li class=list-group-item xxx-ng-if=!sampleData.busy><a href="" class=inactive-gray-75 ng-click="sampleData._new = { name: \'My Data Object\', rows: 10 }"><i class="fa fa-plus-circle"></i> Create new profile</a></li><li class=list-group-item ng-repeat="profile in sampleData.OnlineData"><a href="" ng-click="sampleData.context = profile"><i class="fa fa-globe"></i> {{ profile.name }}</a></li></ul></div></div><div ng-if=sampleData.context class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=sampleData.busy ng-click=sampleData.test() class="btn btn-primary">Fetch Sample Data</a> <a href="" ng-click="sampleData.context = null" class="btn btn-default">Close</a></span><h4>Online Sample Data <small>Directly from the cloud! Supplied by this awesome API: <a href="http://www.filltext.com/" target=_blank>http://www.filltext.com/</a></small></h4><hr><div class=row><div class=col-md-3><h5>Define Fields <small>( {{ sampleData.context.args.length }} defined )</small> <small class=pull-right><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: \'myField\', val: \'{email}\'})"><i class="fa fa-plus"></i></a></small></h5><div class=thumbnail><div style="display: flex; width: auto; padding: 3px" ng-repeat="arg in sampleData.context.args"><span style="flex-basis: 20px; flex-grow:0; flex-shrink:0"><input checked type=checkbox ng-click="sampleData.removeColumn(sampleData.context, arg)"></span><div style="flex-basis: 64px; flex-grow:0; flex-shrink:0"><input style="width: 100%" ng-model=arg.id ng-blur="sampleData.updateColumn(sampleData.context, arg)"></div><div style="flex-grow:1; flex-shrink:1"><input style="width: 100%" ng-model=arg.val ng-blur="sampleData.updateColumn(sampleData.context, arg)"></div></div></div></div><div class=col-md-9><h5>Results View <small ng:if=sampleData.context.resp.length>( {{ sampleData.context.resp.length }} total )</small></h5><table class=table><thead><tr><th ng-repeat="arg in sampleData.context.args">{{ arg.id }}</th></tr></thead><tbody><tr ng-if=!sampleData.context.resp><td colspan="{{ sampleData.context.args.length }}"><em>Nothing to show yet. Fetch some data first...</em></td></tr><tr ng-repeat="row in sampleData.context.resp"><td ng-repeat="arg in sampleData.context.args">{{ row[arg.id] }}</td></tr></tbody></table></div></div></div></div></div>');
+    '<div id=SampleDataView class=container style="width: 100%"><div ng:if=sampleData.error class="alert alert-danger"><a class=pull-right href="" ng-click="sampleData.error = null"><i class="fa fa-remove"></i></a> <b>Error:</b> {{ sampleData.error.message || \'Something went wrong. :(\' }}</div><div ng-if=!sampleData.context class=row><div class=col-md-12><h4>Data Profiles <small>Create and model your data objects.</small></h4><hr><form ng-if=sampleData._new><div class=form-group><label for=inputName>Profile Name</label><input class=form-control id=inputName tabindex=1 ng-required placeholder="Your Profile Name" ng-model=sampleData._new.name></div><div class=form-group><label for=inputRows>Sample Data Size</label><input class=form-control id=inputRows type=number tabindex=2 ng-required placeholder="Enter number of rows" ng-model=sampleData._new.rows></div><hr><a href="" class="btn btn-primary" ng-click=sampleData.addNew(sampleData._new)>Create</a> <a href="" class="btn btn-default" ng-click="sampleData._new = null">Cancel</a></form><ul ng-if=!sampleData._new class=list-group><li class=list-group-item><a href="" class=inactive-gray ng-click="sampleData._new = { name: \'My Data Object\', rows: 10, args: [] }"><i class="fa fa-plus-circle"></i> Create new profile</a></li><li class=list-group-item ng-if="!sampleData.OnlineData.length && sampleData.busy"><em><i class="fa fa-spinner fa-spin"></i> Loading...</em></li><li class=list-group-item ng-if="!sampleData.OnlineData.length && !sampleData.busy"><p><b><i class="fa fa-info-circle"></i> Warning:</b> <em>No Profiles available...</em></p><p>&raquo; Identify Yourself: <a href="" ng-click="sampleData.authenticate(\'google\')">Google</a> | <a href="" ng-click="sampleData.authenticate(\'facebook\')">Facebook</a> | <a href="" ng-click="sampleData.authenticate(\'github\')">GitHub</a> | <a href="" ng-click="sampleData.authenticate(\'twitter\')">Twitter</a> | <a href="" ng-click="sampleData.authenticate(\'password\')">Email</a> | <a href="" ng-click=sampleData.createSamples()>Load Samples</a></p></li><li class=list-group-item ng-repeat="profile in sampleData.OnlineData"><a href="" class=pull-right ng-click=sampleData.removeProfile(profile)><i class="fa fa-trash"></i></a> <a href="" ng-click="sampleData.context = profile"><i class="fa fa-globe"></i> {{ profile.name }}</a></li></ul></div></div><div ng-if=sampleData.context class=row><div class=col-md-12><span class=pull-right><a href="" ng-disabled=sampleData.busy ng-click=sampleData.test() class="btn btn-primary">Fetch Sample Data</a> <a href="" ng-click="sampleData.context = null" class="btn btn-default">Close</a></span><h4>Online Sample Data <small>Directly from the cloud! Supplied by this awesome API: <a href="http://www.filltext.com/" target=_blank>http://www.filltext.com/</a></small></h4><hr><div class=row><div class=col-md-3><h5>Define Fields <small ng-if=sampleData.context.args.length>( {{ sampleData.context.args.length }} defined )</small> <small class=pull-right><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: \'myField\', val: \'{email}\'})"><i class="fa fa-plus"></i></a></small></h5><div class=thumbnail><div style="display: flex; width: auto; padding: 3px" ng-if=!sampleData.context.args.length><em>List Empty</em></div><div style="display: flex; width: auto; padding: 3px" ng-repeat="arg in sampleData.context.args"><span style="flex-basis: 20px; flex-grow:0; flex-shrink:0"><input checked type=checkbox ng-click="sampleData.removeColumn(sampleData.context, arg)"></span><div style="flex-basis: 64px; flex-grow:0; flex-shrink:0"><input style="width: 100%" ng-model=arg.id ng-blur="sampleData.updateColumn(sampleData.context, arg)"></div><div style="flex-grow:1; flex-shrink:1"><input style="width: 100%" ng-model=arg.val ng-blur="sampleData.updateColumn(sampleData.context, arg)" ng-change="sampleData.updateColumn(sampleData.context, arg)"></div></div></div></div><div class=col-md-9><div class=pull-right style="width: 200px"><input id=ex1 type=range min=0 max=100 ng-model=sampleData.context.rows ng-blur="sampleData.updateProfile(sampleData.context, true)"></div><div class=pull-right style="width: 64px">Rows: <b>{{ sampleData.context.rows }}</b></div><h5>Results View <small ng:if=sampleData.context.resp.length>( {{ sampleData.context.resp.length }} total ) | <a href="" ng-click=sampleData.clearData(sampleData.context)><i class="fa fa-trash"></i> Clear</a></small></h5><table class=table><thead><tr><th ng-repeat="arg in sampleData.context.args">{{ arg.id }}</th></tr></thead><tbody><tr ng-if=!sampleData.context.resp><td colspan="{{ sampleData.context.args.length }}"><em>Nothing to show yet. Fetch some data first...</em></td></tr><tr ng-repeat="row in sampleData.context.resp"><td ng-repeat="arg in sampleData.context.args">{{ row[arg.id] }}</td></tr></tbody></table></div></div></div></div></div>');
   $templateCache.put('samples/styles3d/main.tpl.html',
     '<div id=mainview style="width: 100%"><div>Inspired by this post: <a href=http://www.dhteumeuleu.com/apparently-transparent/source>http://www.dhteumeuleu.com/apparently-transparent/source</a></div><div id=screen><div id=scene><div class="f sky" data-transform="rotateX(-90deg) translateZ(-300px)"></div><div class=wall data-transform=translateZ(-500px)></div><div class=wall data-transform="rotateY(-90deg) translateZ(-500px)"></div><div class=wall data-transform="rotateY(90deg) translateZ(-500px)"></div><div class=wall data-transform="rotateY(180deg) translateZ(-500px)"></div><iframe class="f bottom" data-transform="rotateX(90deg) translateZ(-300px)" src=//www.prototyped.info style="background-image: none"></iframe></div></div></div><style>html {\n' +
     '        -ms-touch-action: none;\n' +
