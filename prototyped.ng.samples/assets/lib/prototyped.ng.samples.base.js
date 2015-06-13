@@ -3025,6 +3025,11 @@ var proto;
                             if (!_this.OnlineData.length) {
                                 _this.createSamples();
                             }
+                            _this._new = {
+                                name: authData.uid,
+                                args: [],
+                                rows: 10
+                            };
                         }).catch(function (error) {
                             _this.error = error;
                             console.warn("Authentication failed:", error);

@@ -53,7 +53,12 @@ module proto.ng.samples.data {
                     console.log("Logged in as:" + authData.uid, authData);
                     if (!this.OnlineData.length) {
                         this.createSamples();
-                    }
+                    }                    
+                    this._new = {
+                        name: authData.uid,
+                        args: [],
+                        rows: 10,
+                    };
                 })
                 .catch((error) => {
                     this.error = error;
