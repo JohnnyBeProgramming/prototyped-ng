@@ -87,10 +87,13 @@
                 <div class="col-md-3">
                     <h5>
                         Define Fields
-                        <small ng-if="sampleData.context.args.length">( {{ sampleData.context.args.length }} defined )</small>
                         <small class="pull-right">
-                            <a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'myField', val: '{email}'})"><i class="fa fa-plus"></i></a>
+                            <a href=""
+                               ng-click="sampleData.addColumn(sampleData.context, { id: 'myField', val: '{email}'})">
+                                <i class="fa fa-plus"></i>
+                            </a>
                         </small>
+                        <small ng-if="sampleData.context.args.length">( {{ sampleData.context.args.length }} defined )</small>
                     </h5>
                     <div class="thumbnail">
                         <div style="display: flex; width: auto; padding: 3px;" ng-if="!sampleData.context.args.length">

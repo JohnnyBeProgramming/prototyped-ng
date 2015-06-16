@@ -1,0 +1,54 @@
+﻿<div class="anim-fade top-menu dragable">
+    <div class="view-panel" docked:top:left>
+        <div>
+            <div ui:view="menu">
+                <ul class="nav navbar-nav non-dragable pull-right">
+                    <li ui:sref-active="hidden">
+                        <a ui:sref="default"><i class="fa fa-chevron-left"></i></a>
+                    </li>
+                    <li ui:sref-active="open"
+                        ng:repeat="route in appState.routers | orderBy:'(priority || 1)'"
+                        ng:if="route.menuitem && (!route.visible || route.visible())">
+                        <a ng:if="route.menuitem.state" ui:sref="{{ route.menuitem.state }}">
+                            <i ng-if="route.menuitem.icon" class="{{route.menuitem.icon}}"></i> {{ route.menuitem.label }}
+                        </a>
+                        <a ng:if="!route.menuitem.state" ng:href="{{ route.url }}">
+                            <i ng-if="route.menuitem.icon" class="{{route.menuitem.icon}}"></i> {{ route.menuitem.label }}
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="view-panel" docked:top:right>
+        <ul class="nav navbar-nav non-dragable pull-left">
+            <li ui:sref-active="open" class="disabled">
+                <a ui:sref="settings" ng:disabled>
+                    <i class="fa fa-cogs"></i> Settings
+                </a>
+            </li>
+            <li ui:sref-active="open" ng-class="{ 'disabled': !appState.proxyAvailable('test')}">
+                <a href="" ng:click="appState.setProxy('test')"
+                   ng:class="{ 'glow-blue glow-animated':appState.proxyActive('test') }"
+                   ng:disabled="!appState.proxyAvailable('test')">
+                    <i class="fa fa-flask"></i> Testing
+                </a>
+            </li>
+            <li ui:sref-active="open" ng-class="{ 'disabled': !appState.proxyAvailable('debug')}">
+                <a href="" ng:click="appState.setProxy('debug')"
+                   ng:class="{ 'glow-orange glow-animated':appState.proxyActive('debug') }"
+                   ng:disabled="!appState.proxyAvailable('debug')">
+                    <i class="fa fa-bug"></i> Debugger
+                </a>
+            </li>
+        </ul>
+        <ul class="nav navbar-nav non-dragable pull-right toolbar-ctrls hidden-xs">
+            <li class="ng-cloak"><a app:clean href=""><i class="glyphicon glyphicon-refresh"></i></a></li>
+            <li class="ng-cloak"><a app:debug href=""><i class="glyphicon glyphicon-wrench"></i></a></li>
+            <li class="ng-cloak"><a app:kiosk href=""><i class="glyphicon glyphicon-fullscreen"></i></a></li>
+            <li class="ng-cloak" id="btnCloseWindow">
+                <a app:close href=""><i class="glyphicon glyphicon-remove"></i></a>
+            </li>
+        </ul>
+    </div>
+</div>

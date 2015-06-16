@@ -25,6 +25,8 @@
     <EmbeddedResource Include="..\web\assets\lib\prototyped.ng.extended.js">
       <Link>assets\lib\prototyped.ng.extended.js</Link>
     </EmbeddedResource>
+    <Content Include="assets\css\animate.min.css" />
+    <Content Include="assets\css\font-awesome-animation.min.css" />
     <Content Include="assets\lib\prototyped.ng.extended.styles.js" />
     <Content Include="builder\config\banner.js" />
     <Content Include="builder\config\concat.js" />

@@ -5,6 +5,7 @@
     <base href="/">
     <meta charset="utf-8" />
     <title>Module Sandbox</title>
+    <link rel="stylesheet" href="assets/css/app.min.css" />
     <link rel="stylesheet" href="assets/css/sandbox.min.css" />
     <link rel="stylesheet" href="assets/css/prototyped.min.css" />
     <link rel="stylesheet" href="assets/css/samples.min.css" />
@@ -19,6 +20,7 @@
                 'angulartics.google.analytics',
                 'angular-loading-bar',
                 'angularMoment',
+                'prototyped.sandbox',
             ],
             module: {
                 name: 'testApp',
@@ -52,9 +54,24 @@
 <body id="testApp">
 
     <!-- Define the assets and components to be loaded (async) -->
-    <div dom:replace ng:include="'views/common/sandbox/menu.tpl.html'"></div>
-    <div dom:replace ng:include="'views/common/sandbox/contents.tpl.html'"></div>
-    <div dom:replace ng:include="'views/common/sandbox/footer.tpl.html'"></div>
+    <div id="contents" 
+         class="docked-container"
+         ng-init="docker = { enabled: true }"
+         ng-class="{ 'docked-full':docker.enabled === false, 'docked-left':docker.enabled === true }">
+        <!-- directive: docked-top -->
+        <div docked:icon>
+            <div class="top-spacer">
+                <span class="anim-slide">
+                    <a><i class="fa fa-gear faa-spin animated" style="font-size: xx-large;"></i></a>
+                </span>
+            </div>
+        </div>
+        <!-- directive: docked-left-nav -->
+        <!-- directive: docked-main -->
+        <div class="anim-fade" docked:footer>
+            <div dom:replace ng:include="'views/common/components/footer.tpl.html'"></div>
+        </div>
+    </div>
 
     <!-- Load AngularJS and all the required libraries (exclude IE < 10 from the party) -->
     <!--[if gt IE 9]><!-->

@@ -29,6 +29,8 @@
     <EmbeddedResource Include="assets\lib\prototyped.ng.features.scripts.js" />
     <EmbeddedResource Include="assets\lib\prototyped.ng.features.styles.js" />
     <EmbeddedResource Include="assets\lib\prototyped.ng.features.views.js" />
+    <Content Include="assets\css\animate.css" />
+    <Content Include="assets\css\font-awesome-animation.min.css" />
     <Content Include="builder\config\banner.js" />
     <Content Include="builder\config\concat.js" />
     <Content Include="builder\config\copy.js" />

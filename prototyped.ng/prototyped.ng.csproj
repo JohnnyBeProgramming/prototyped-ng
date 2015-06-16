@@ -136,6 +136,14 @@
     <Content Include="views\common\components\footer.tpl.html" />
     <Content Include="views\common\components\left.tpl.html" />
     <Content Include="views\common\components\menu.tpl.html" />
+    <Content Include="views\common\docked\container.tpl.html" />
+    <Content Include="views\common\docked\footer.tpl.html" />
+    <Content Include="views\common\docked\icon.tpl.html" />
+    <Content Include="views\common\docked\left.tpl.html" />
+    <Content Include="views\common\docked\main.tpl.html" />
+    <Content Include="views\common\docked\top.tpl.html" />
+    <Content Include="views\common\docked\topLeft.tpl.html" />
+    <Content Include="views\common\docked\topRight.tpl.html" />
     <Content Include="views\common\sandbox\contents.tpl.html" />
     <Content Include="views\common\sandbox\footer.tpl.html" />
     <Content Include="views\common\sandbox\menu.tpl.html" />
@@ -144,6 +152,7 @@
     <Content Include="modules\explore\views\left.tpl.html" />
     <Content Include="web.config" />
     <TypeScriptCompile Include="modules\runtime.ng.ts" />
+    <TypeScriptCompile Include="modules\sandbox\module.ng.ts" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="imports.d.ts" />
@@ -179,7 +188,9 @@
       <DependentUpon>sandbox.css</DependentUpon>
     </Content>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="package.json" />
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>

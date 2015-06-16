@@ -1,0 +1,11 @@
+﻿<div id="main"
+     ui:view="main"
+     class="anim-fade view-panel main-contents ui-view-main"
+     ng:class="{ 'expanded': !(state.current.views['left'] || state.current.views['left@']) }">
+    <em class="inactive-fill-text" ng:if="false">
+        <i class="fa fa-spinner fa-spin"></i> Loading...
+    </em>
+    <b class="inactive-fill-text ng-cloak" ng:if="!(state.current.views['main'] || state.current.views['main@'])">
+        <i class="fa fa-exclamation-triangle faa-flash glow-orange"></i> Page not found
+    </b>
+</div>
