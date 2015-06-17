@@ -46,9 +46,14 @@
     <EmbeddedResource Include="assets\css\sandbox.min.css">
       <DependentUpon>sandbox.css</DependentUpon>
     </EmbeddedResource>
+    <Content Include="assets\img\Transparent.svg" />
     <Content Include="assets\lib\prototyped.ng.base.js" />
     <Content Include="assets\lib\prototyped.ng.styles.js" />
     <Content Include="assets\lib\prototyped.ng.views.js" />
+    <Content Include="assets\lib\vend\angular\angular-animate.js" />
+    <Content Include="assets\lib\vend\angular\angular.js" />
+    <Content Include="assets\lib\vend\chance\chance.min.js" />
+    <Content Include="assets\lib\vend\jquery\jquery-2.1.3.min.js" />
     <Content Include="builder\config\banner.js" />
     <Content Include="builder\config\concat.js" />
     <Content Include="builder\config\copy.js" />

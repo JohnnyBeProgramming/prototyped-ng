@@ -28,6 +28,10 @@
     <Content Include="assets\css\animate.css" />
     <Content Include="assets\css\font-awesome-animation.min.css" />
     <Content Include="assets\lib\prototyped.ng.samples.styles.js" />
+    <Content Include="assets\lib\vend\angular\angular-animate.js" />
+    <Content Include="assets\lib\vend\angular\angular.js" />
+    <Content Include="assets\lib\vend\chance\chance.min.js" />
+    <Content Include="assets\lib\vend\jquery\jquery-2.1.3.min.js" />
     <Content Include="builder\config\banner.js" />
     <Content Include="builder\config\concat.js" />
     <Content Include="builder\config\copy.js" />

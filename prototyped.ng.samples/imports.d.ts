@@ -11,4 +11,5 @@ declare var moment: any;
 declare var process: any;
 declare var require: (name: string) => any;
 declare var openDatabase: (name: string, version: string, desc: string, size: number) => void;
+declare var Chance: any;
 declare var CodeMirror: any;

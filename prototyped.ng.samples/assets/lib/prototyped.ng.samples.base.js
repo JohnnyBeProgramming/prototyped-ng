@@ -2983,6 +2983,116 @@ var proto;
     (function (ng) {
         (function (samples) {
             (function (_data) {
+                var ChanceDataGenerator = (function () {
+                    function ChanceDataGenerator() {
+                        this.name = 'chance';
+                        this.instance = new Chance();
+                    }
+                    ChanceDataGenerator.prototype.format = function (input) {
+                        return 'Chance';
+                    };
+
+                    ChanceDataGenerator.prototype.populate = function (rows, columns) {
+                        var list = [];
+                        for (var r = 0; r < rows; r++) {
+                            var item = {};
+                            for (var col in columns) {
+                                item[col] = this.format(columns[col]);
+                            }
+                            list.push(item);
+                        }
+                        return list;
+                    };
+                    return ChanceDataGenerator;
+                })();
+                _data.ChanceDataGenerator = ChanceDataGenerator;
+
+                var FillTextGenerator = (function () {
+                    function FillTextGenerator($rootScope, $q) {
+                        this.$rootScope = $rootScope;
+                        this.$q = $q;
+                        this.name = 'fillText';
+                    }
+                    FillTextGenerator.prototype.format = function (input) {
+                        return 'FillText';
+                    };
+
+                    FillTextGenerator.prototype.populate = function (rows, columns) {
+                        var list = [];
+                        for (var r = 0; r < rows; r++) {
+                            var item = {};
+                            for (var col in columns) {
+                                item[col] = this.format(columns[col]);
+                            }
+                            list.push(item);
+                        }
+                        return list;
+                    };
+
+                    FillTextGenerator.prototype.getArgs = function (rows, args) {
+                        var data = {
+                            rows: rows
+                        };
+                        args.forEach(function (obj) {
+                            if (obj.id)
+                                data[obj.id] = obj.val;
+                        });
+                        return data;
+                    };
+
+                    FillTextGenerator.prototype.test = function () {
+                        /*
+                        console.debug(' - Requesting... ', req);
+                        try {
+                        // Set busy flag
+                        this.busy = true;
+                        
+                        // Create and send the request
+                        var req = this.getArgs();
+                        return this.fetch(req)
+                        .then((data) => {
+                        this.context.resp = data;
+                        this.OnlineData.$save(this.context);
+                        })
+                        .catch((error) => {
+                        this.error = error;
+                        })
+                        .finally(() => {
+                        this.$rootScope.$applyAsync(() => {
+                        this.busy = false;
+                        });
+                        });
+                        } catch (ex) {
+                        this.error = ex;
+                        }
+                        */
+                    };
+
+                    FillTextGenerator.prototype.fetch = function (data) {
+                        var deferred = this.$q.defer();
+
+                        /*
+                        var url = this.appConfig['sampleData'].fillText;
+                        if (url) {
+                        $.getJSON(url, data)
+                        .done(function (data) {
+                        deferred.resolve(data);
+                        })
+                        .fail(function (xhr, desc, err) {
+                        var error = new Error('Error [' + xhr.status + ']: ' + xhr.statusText + ' - ' + err);
+                        deferred.reject(error);
+                        });
+                        } else {
+                        this.error = new Error('Config setting "sampleData.fillText" is undefined.');
+                        deferred.reject(this.error);
+                        }
+                        */
+                        return deferred.promise;
+                    };
+                    return FillTextGenerator;
+                })();
+                _data.FillTextGenerator = FillTextGenerator;
+
                 var SampleDataController = (function () {
                     function SampleDataController($rootScope, $scope, $state, $stateParams, $q, $firebaseAuth, $firebaseObject, $firebaseArray, appConfig) {
                         this.$rootScope = $rootScope;
@@ -2998,6 +3108,13 @@ var proto;
                     }
                     SampleDataController.prototype.init = function () {
                         var _this = this;
+                        // Create random data generators
+                        this._generators = [
+                            new ChanceDataGenerator(),
+                            new FillTextGenerator(this.$rootScope, this.$q)
+                        ];
+
+                        // Set up firebase
                         var baseUrl = this.appConfig['sampleData'].dataUrl;
                         if (baseUrl) {
                             this.busy = true;
@@ -3046,58 +3163,63 @@ var proto;
                         }
                     };
 
-                    SampleDataController.prototype.getArgs = function () {
-                        var data = {
-                            rows: this.context.rows
-                        };
-                        this.context.args.forEach(function (obj) {
-                            if (obj.id)
-                                data[obj.id] = obj.val;
-                        });
-                        return data;
-                    };
-
                     SampleDataController.prototype.test = function () {
-                        var _this = this;
-                        console.debug(' - Requesting... ', req);
+                        console.debug(' - Requesting... ');
                         try  {
                             // Set busy flag
                             this.busy = true;
 
-                            // Create and send the request
-                            var req = this.getArgs();
-                            return this.fetch(req).then(function (data) {
-                                _this.context.resp = data;
-                                _this.OnlineData.$save(_this.context);
-                            }).catch(function (error) {
-                                _this.error = error;
-                            }).finally(function () {
-                                _this.$rootScope.$applyAsync(function () {
-                                    _this.busy = false;
-                                });
+                            // Fetch the sample data
+                            var gens = [];
+                            this.context.args.forEach(function (item) {
+                                if (!item.val)
+                                    return;
+                                gens[item.type] = gens[item.type] || {};
+                                gens[item.type][item.id] = item.val;
                             });
+                            console.log(' - Generators: ', gens);
+                            var rows = this.context.rows;
+                            var data = [];
+                            for (var r = 0; r < rows; r++) {
+                                data.push({ $id: r });
+                            }
+                            this._generators.forEach(function (gen) {
+                                // --------------------
+                                if (gen.name in gens) {
+                                    console.log(' - Generating: ' + gen.name);
+                                    var res = gen.populate(rows, gens[gen.name]);
+                                    var i = 0;
+                                    while (i < res.length && i < data.length) {
+                                        angular.extend(data[i], res[i]);
+                                        i++;
+                                    }
+                                    console.log(' - Result: ' + gen.name, res);
+                                }
+                            });
+
+                            this.context.resp = data;
+                            this.OnlineData.$save(this.context);
+                            this.busy = false;
+                            // Create and send the request
+                            /*
+                            var req = this.getArgs(this.context.rows, this.context.args);
+                            return this.fetch(req)
+                            .then((data) => {
+                            this.context.resp = data;
+                            this.OnlineData.$save(this.context);
+                            })
+                            .catch((error) => {
+                            this.error = error;
+                            })
+                            .finally(() => {
+                            this.$rootScope.$applyAsync(() => {
+                            this.busy = false;
+                            });
+                            });
+                            */
                         } catch (ex) {
                             this.error = ex;
                         }
-                    };
-
-                    SampleDataController.prototype.fetch = function (data) {
-                        var deferred = this.$q.defer();
-
-                        var url = this.appConfig['sampleData'].fillText;
-                        if (url) {
-                            $.getJSON(url, data).done(function (data) {
-                                deferred.resolve(data);
-                            }).fail(function (xhr, desc, err) {
-                                var error = new Error('Error [' + xhr.status + ']: ' + xhr.statusText + ' - ' + err);
-                                deferred.reject(error);
-                            });
-                        } else {
-                            this.error = new Error('Config setting "sampleData.fillText" is undefined.');
-                            deferred.reject(this.error);
-                        }
-
-                        return deferred.promise;
                     };
 
                     SampleDataController.prototype.addNew = function (item) {
@@ -3110,7 +3232,11 @@ var proto;
                     };
 
                     SampleDataController.prototype.addProfile = function (profile) {
-                        return this.OnlineData.$add(profile);
+                        var _this = this;
+                        return this.OnlineData.$add(profile).then(function () {
+                            _this.edit = true;
+                            _this.context = profile;
+                        });
                     };
 
                     SampleDataController.prototype.updateProfile = function (profile, autoUpdate) {
@@ -3151,6 +3277,15 @@ var proto;
                         profile.args.splice(this.context.args.indexOf(item), 1);
                         return this.OnlineData.$save(profile);
                     };
+
+                    SampleDataController.prototype.importColumns = function (profile, elems) {
+                        console.info(' - elems: ', elems);
+                        if (elems && elems.length) {
+                            elems.forEach(function (link) {
+                                link.click();
+                            });
+                        }
+                    };
                     return SampleDataController;
                 })();
                 _data.SampleDataController = SampleDataController;
@@ -3177,36 +3312,36 @@ angular.module('prototyped.ng.samples.sampleData', [
                     name: 'Person Data',
                     rows: 10,
                     args: [
-                        { id: 'id', val: '{number}' },
-                        { id: 'username', val: '{username}' },
-                        { id: 'firstname', val: '{firstName}' },
-                        { id: 'lastname', val: '{lastName}' },
-                        { id: 'email', val: '{email}' },
-                        { id: 'mobile', val: '{phone|format}' },
-                        { id: 'active', val: '{bool|n}' }
+                        { id: 'id', val: '{number}', type: 'fillText' },
+                        { id: 'username', val: '{username}', type: 'fillText' },
+                        { id: 'firstname', val: '{firstName}', type: 'fillText' },
+                        { id: 'lastname', val: '{lastName}', type: 'fillText' },
+                        { id: 'email', val: '{email}', type: 'fillText' },
+                        { id: 'mobile', val: '{phone|format}', type: 'fillText' },
+                        { id: 'active', val: '{bool|n}', type: 'fillText' }
                     ]
                 },
                 {
                     name: 'Company Info',
                     rows: 10,
                     args: [
-                        { id: 'business', val: '{business}' },
-                        { id: 'city', val: '{city}' },
-                        { id: 'contact', val: '{firstName}' },
-                        { id: 'tel', val: '{phone|format}' }
+                        { id: 'business', val: '{business}', type: 'fillText' },
+                        { id: 'city', val: '{city}', type: 'fillText' },
+                        { id: 'contact', val: '{firstName}', type: 'fillText' },
+                        { id: 'tel', val: '{phone|format}', type: 'fillText' }
                     ]
                 },
                 {
                     name: 'Product Info',
                     rows: 10,
                     args: [
-                        { id: 'id', val: '{number}' },
-                        { id: 'name', val: '{lorem|2}' },
-                        { id: 'desc', val: '{lorem|20}' },
-                        { id: 'type', val: '{number|10000}' },
-                        { id: 'category', val: '{ccType|abbr}' },
-                        { id: 'created', val: '{date|1-1-1990,1-1-2050}' },
-                        { id: 'active', val: '{bool|n}' }
+                        { id: 'id', val: '{number}', type: 'fillText' },
+                        { id: 'name', val: '{lorem|2}', type: 'fillText' },
+                        { id: 'desc', val: '{lorem|20}', type: 'fillText' },
+                        { id: 'type', val: '{number|10000}', type: 'fillText' },
+                        { id: 'category', val: '{ccType|abbr}', type: 'fillText' },
+                        { id: 'created', val: '{date|1-1-1990,1-1-2050}', type: 'fillText' },
+                        { id: 'active', val: '{bool|n}', type: 'fillText' }
                     ]
                 }
             ]
