@@ -3081,10 +3081,13 @@ var proto;
                         this.$firebaseObject = $firebaseObject;
                         this.$firebaseArray = $firebaseArray;
                         this.appConfig = appConfig;
+                        this._resultMap = {};
                         this.init();
                     }
                     SampleDataController.prototype.init = function () {
                         var _this = this;
+                        this.sync = true;
+
                         // Create random data generators
                         this._generators = [
                             new ChanceDataGenerator(this.$q),
@@ -3098,7 +3101,10 @@ var proto;
                             this.OnlineConn = new Firebase(baseUrl + '/OnlineSamples');
                             this.OnlineData = this.$firebaseArray(this.OnlineConn);
                             this.OnlineData.$loaded().then(function () {
-                                console.log(' - Online Data Loaded: ', _this.OnlineData);
+                                if (_this.OnlineData)
+                                    _this.OnlineData.forEach(function (profile) {
+                                        _this.loadProfile(profile);
+                                    });
                             }).catch(function (err) {
                                 _this.error = err;
                             }).finally(function () {
@@ -3140,7 +3146,7 @@ var proto;
                         }
                     };
 
-                    SampleDataController.prototype.test = function () {
+                    SampleDataController.prototype.fetchData = function () {
                         var _this = this;
                         var deferred = this.$q.defer();
                         try  {
@@ -3187,8 +3193,7 @@ var proto;
                             this.$q.all(promises).finally(function () {
                                 deferred.resolve(data);
                                 _this.$rootScope.$applyAsync(function () {
-                                    _this.context.resp = data;
-                                    _this.OnlineData.$save(_this.context);
+                                    _this.persistResult(_this.context, data);
                                     _this.busy = false;
                                 });
                             });
@@ -3198,6 +3203,57 @@ var proto;
                         }
 
                         return deferred.promise;
+                    };
+
+                    SampleDataController.prototype.loadProfile = function (profile) {
+                        // ToDo: Fetch prev. result sets (async...)
+                        if (profile.resp) {
+                            this._resultMap[profile.name] = profile.resp;
+                        }
+                        /* Fusion table data
+                        var tableId = '17jbXdqXSInoNOOm4ZwMKEII0sT_9ukkqt_zuPwU';
+                        var query = "SELECT 'Country Name', '1960' as 'Population in 1960', '2000' as 'Population in 2000' FROM " + tableId + " ORDER BY 'Country Name' LIMIT 10";
+                        var encodedQuery = encodeURIComponent(query);
+                        
+                        // Construct the URL
+                        var url = ['https://www.googleapis.com/fusiontables/v1/query'];
+                        url.push('?sql=' + encodedQuery);
+                        url.push('&key=AIzaSyCAI2GoGWfLBvgygLKQp5suUk3RCG7r_ME');
+                        url.push('&callback=?');
+                        
+                        // Send the JSONP request using jQuery
+                        $.ajax({
+                        url: url.join(''),
+                        dataType: 'jsonp',
+                        success: function (data) {
+                        var rows = data['rows'];
+                        console.debug(' - Fusion Result: ', data);
+                        }
+                        });
+                        */
+                    };
+
+                    SampleDataController.prototype.persistResult = function (profile, data) {
+                        this._resultMap[profile.name] = data;
+
+                        if (this.sync) {
+                            profile.resp = data;
+                            this.OnlineData.$save(profile);
+                        }
+                    };
+
+                    SampleDataController.prototype.hasResult = function (profile) {
+                        if (profile.name in this._resultMap) {
+                            return this._resultMap[profile.name].length;
+                        }
+                        return false;
+                    };
+
+                    SampleDataController.prototype.getResult = function (profile) {
+                        if (this.hasResult(profile)) {
+                            return this._resultMap[profile.name];
+                        }
+                        return [];
                     };
 
                     SampleDataController.prototype.addNew = function (item) {
@@ -3224,7 +3280,7 @@ var proto;
                             if (autoUpdate) {
                                 _this.$rootScope.$applyAsync(function () {
                                 });
-                                return _this.test();
+                                return _this.fetchData();
                             }
                         });
                     };
@@ -3234,7 +3290,7 @@ var proto;
                     };
 
                     SampleDataController.prototype.clearData = function (profile) {
-                        profile.resp = null;
+                        this.persistResult(profile, []);
                         return this.OnlineData.$save(profile);
                     };
 

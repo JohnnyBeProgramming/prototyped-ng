@@ -7,7 +7,6 @@ module proto.ng.samples.data {
         name: string;
         rows: number;
         args: any[];
-        resp?: any;
     }
 
     export interface IDataGenerator {
@@ -107,6 +106,7 @@ module proto.ng.samples.data {
 
         public busy: boolean;
         public edit: boolean;
+        public sync: boolean;
         public error: Error;
         public context: ISampleDataContext;
         public _new: ISampleDataContext;
@@ -114,12 +114,15 @@ module proto.ng.samples.data {
         public OnlineData: any;
 
         private _generators: IDataGenerator[];
+        private _resultMap: any = {};
 
         constructor(private $rootScope: any, private $scope: any, private $state: any, private $stateParams: any, private $q: any, private $firebaseAuth: any, private $firebaseObject: any, private $firebaseArray: any, private appConfig: any) {
             this.init();
         }
 
         private init() {
+            this.sync = true;
+
             // Create random data generators
             this._generators = [
                 new ChanceDataGenerator(this.$q),
@@ -134,7 +137,9 @@ module proto.ng.samples.data {
                 this.OnlineData = this.$firebaseArray(this.OnlineConn);
                 this.OnlineData.$loaded()
                     .then(() => {
-                        console.log(' - Online Data Loaded: ', this.OnlineData);
+                        if (this.OnlineData) this.OnlineData.forEach((profile: ISampleDataContext) => {
+                            this.loadProfile(profile);
+                        });
                     })
                     .catch((err) => {
                         this.error = err;
@@ -179,7 +184,7 @@ module proto.ng.samples.data {
             }
         }
 
-        public test() {
+        public fetchData() {
             var deferred = this.$q.defer();
             try {
                 // Set busy flag
@@ -226,8 +231,7 @@ module proto.ng.samples.data {
                     .finally(() => {
                         deferred.resolve(data);
                         this.$rootScope.$applyAsync(() => {
-                            this.context.resp = data;
-                            this.OnlineData.$save(this.context);
+                            this.persistResult(this.context, data);
                             this.busy = false;
                         });
                     });
@@ -238,6 +242,59 @@ module proto.ng.samples.data {
             }
 
             return deferred.promise;
+        }
+
+        public loadProfile(profile: ISampleDataContext) {
+            // ToDo: Fetch prev. result sets (async...)
+            if ((<any>profile).resp) {
+                this._resultMap[profile.name] = (<any>profile).resp;
+            }
+
+            /* Fusion table data
+            var tableId = '17jbXdqXSInoNOOm4ZwMKEII0sT_9ukkqt_zuPwU';
+            var query = "SELECT 'Country Name', '1960' as 'Population in 1960', '2000' as 'Population in 2000' FROM " + tableId + " ORDER BY 'Country Name' LIMIT 10";
+            var encodedQuery = encodeURIComponent(query);
+
+            // Construct the URL
+            var url = ['https://www.googleapis.com/fusiontables/v1/query'];
+            url.push('?sql=' + encodedQuery);
+            url.push('&key=AIzaSyCAI2GoGWfLBvgygLKQp5suUk3RCG7r_ME');
+            url.push('&callback=?');
+
+            // Send the JSONP request using jQuery
+            $.ajax({
+                url: url.join(''),
+                dataType: 'jsonp',
+                success: function (data) {
+                    var rows = data['rows'];
+                    console.debug(' - Fusion Result: ', data);                    
+                }
+            });
+            */
+        }
+
+        public persistResult(profile: ISampleDataContext, data: any[]) {
+
+            this._resultMap[profile.name] = data;
+
+            if (this.sync) {
+                (<any>profile).resp = data;
+                this.OnlineData.$save(profile);
+            }
+        }
+
+        public hasResult(profile: ISampleDataContext): boolean {
+            if (profile.name in this._resultMap) {
+                return this._resultMap[profile.name].length;
+            }
+            return false;
+        }
+
+        public getResult(profile: ISampleDataContext): any[] {
+            if (this.hasResult(profile)) {
+                return this._resultMap[profile.name];
+            }
+            return [];
         }
 
         public addNew(item: ISampleDataContext) {
@@ -258,7 +315,7 @@ module proto.ng.samples.data {
             return this.OnlineData.$save(profile).then(() => {
                 if (autoUpdate) {
                     this.$rootScope.$applyAsync(() => { });
-                    return this.test();
+                    return this.fetchData();
                 }
             });
         }
@@ -268,7 +325,7 @@ module proto.ng.samples.data {
         }
 
         public clearData(profile: ISampleDataContext) {
-            profile.resp = null;
+            this.persistResult(profile, []);
             return this.OnlineData.$save(profile);
         }
 

@@ -1,4 +1,9 @@
 ﻿<div id="SampleDataView" class="container" style="width: 100%;">
+
+    <!-- Define required scripts & styling for bootstrap switch -->
+    <script resx:import="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js"></script>
+    <link resx:import="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css" rel="stylesheet" />
+
     <div ng:if="sampleData.error" class="alert alert-danger">
         <a class="pull-right" href="" ng-click="sampleData.error = null"><i class="fa fa-remove"></i></a>
         <b>Error: </b>
@@ -71,7 +76,7 @@
     <div ng-if="sampleData.context" class="row">
         <div class="col-md-12">
             <span class="pull-right">
-                <a href="" ng-disabled="!sampleData.context.args.length || sampleData.busy" ng-click="sampleData.test()" class="btn btn-primary">
+                <a href="" ng-disabled="!sampleData.context.args.length || sampleData.busy" ng-click="sampleData.fetchData()" class="btn btn-primary">
                     Fetch Sample Data
                 </a>
                 <a href="" ng-click="sampleData.context = null" class="btn btn-default">
@@ -129,7 +134,16 @@
                         </div>
                     </div>
                 </div>
-                <div ng-if="sampleData.edit || !sampleData.context.resp" class="col-md-8">
+                <div ng-if="sampleData.edit || !sampleData.hasResult(sampleData.context)" class="col-md-8">
+                    <div class="pull-right ng-cloak" style="padding-left: 10px;">
+                        <input bs:switch type="checkbox"
+                               ng:model="sampleData.sync"
+                               switch:size="mini"
+                               switch:label="Table Data"
+                               switch:inverse="false"
+                               switch:on:text="Sync"
+                               switch:off:text="Offline" />
+                    </div>
                     <h5>
                         Define Data Model
                     </h5>
@@ -288,7 +302,16 @@
                         </div>
                     </div>
                 </div>
-                <div ng-if="!sampleData.edit && sampleData.context.resp" class="col-md-8">
+                <div ng-if="!sampleData.edit && sampleData.hasResult(sampleData.context)" class="col-md-8">
+                    <div class="pull-right ng-cloak" style="padding-left: 10px;">
+                        <input bs:switch type="checkbox"
+                               ng:model="sampleData.sync"
+                               switch:size="mini"
+                               switch:label="Table Data"
+                               switch:inverse="false"
+                               switch:on:text="Sync"
+                               switch:off:text="Offline" />
+                    </div>
                     <div class="pull-right" style="width: 200px;">
                         <input id="ex1" type="range" min="0" max="100"
                                ng-model="sampleData.context.rows"
@@ -299,8 +322,8 @@
                     </div>
                     <h5>
                         Results View
-                        <small ng:if="sampleData.context.resp.length">
-                            ( {{ sampleData.context.resp.length }} total ) |
+                        <small ng:if="sampleData.hasResult(sampleData.context)">
+                            ( {{ sampleData.getResult(sampleData.context).length }} total ) |
                             <a href="" ng-click="sampleData.clearData(sampleData.context)">
                                 <i class="fa fa-trash"></i> Clear
                             </a>
@@ -313,12 +336,12 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr ng-if="!sampleData.context.resp">
+                            <tr ng-if="!sampleData.hasResult(sampleData.context)">
                                 <td colspan="{{ sampleData.context.args.length }}">
                                     <em>Nothing to show yet. Fetch some data first...</em>
                                 </td>
                             </tr>
-                            <tr ng-repeat="row in sampleData.context.resp">
+                            <tr ng-repeat="row in sampleData.getResult(sampleData.context)">
                                 <td ng-repeat="arg in sampleData.context.args">{{ row[arg.id] }}</td>
                             </tr>
                         </tbody>
