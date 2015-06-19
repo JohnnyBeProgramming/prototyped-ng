@@ -103,6 +103,20 @@
                             <span style="flex-basis: 20px; flex-grow:0; flex-shrink:0;">
                                 <input checked="checked" type="checkbox" ng-click="sampleData.removeColumn(sampleData.context, arg)">
                             </span>
+                            <div style="flex-basis: 64px; flex-grow:0; flex-shrink:0;">
+                                <div class="dropdown">
+                                    <button type="button" data-toggle="dropdown"
+                                            class="btn btn-xs btn-default dropdown-toggle"
+                                            ng-class="{ 'btn-primary':arg.type=='chance', 'btn-info':arg.type=='fillText' }">
+                                        {{ arg.type }}
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="" ng-click="arg.type = 'chance'">Chance.js (offline)</a></li>
+                                        <li><a href="" ng-click="arg.type = 'fillText'">Fill Text (online)</a></li>
+                                    </ul>
+                                </div>
+                            </div>
                             <div style="flex-basis: 100px; flex-grow:0; flex-shrink:0;">
                                 <input type="text" style="width: 100%;" ng-model="arg.id" ng-blur="sampleData.updateColumn(sampleData.context, arg)">
                             </div>
@@ -166,8 +180,10 @@
                                 <ul class="toc_section">
                                     <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'CreditCardNo', val: '{cc}', type:'chance'})">cc</a></li>
                                     <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'CreditCardType', val: '{cc_type}', type:'chance'})">cc_type</a></li>
+                                    <!--
                                     <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Currency', val: '{currency}', type:'chance'})">currency</a></li>
                                     <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'CurrencyPair', val: '{currency_pair}', type:'chance'})">currency_pair</a></li>
+                                    -->
                                     <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Dollars', val: '{dollar}', type:'chance'})">dollar</a></li>
                                     <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'ExpiryDate', val: '{exp}', type:'chance'})">exp</a></li>
                                     <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'ExpiryMonth', val: '{exp_month}', type:'chance'})">exp_month</a></li>
@@ -187,24 +203,22 @@
                                     <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Birthday', val: '{birthday}', type:'chance'})">birthday</a></li>
                                     <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Gender', val: '{gender}', type:'chance'})">gender</a></li>
                                     <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Age', val: '{age}', type:'chance'})">age</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'CPF', val: '{cpf}', type:'chance'})">cpf</a></li>
                                     <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'SSN', val: '{ssn}', type:'chance'})">ssn</a></li>
                                 </ul>
                             </div>
                             <div class="thumbnail sample-list">
-                                <h5>Miscellaneous</h5>
+                                <h5>Time</h5>
                                 <ul class="toc_section">
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Dice', val: '{dice}', type:'chance'})">dice</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Guid', val: '{guid}', type:'chance'})">guid</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Hash', val: '{hash}', type:'chance'})">hash</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Hidden', val: '{hidden}', type:'chance'})">hidden</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'N', val: '{n}', type:'chance'})">n</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Normal', val: '{normal}', type:'chance'})">normal</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Radio', val: '{radio}', type:'chance'})">radio</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'RPG', val: '{rpg}', type:'chance'})">rpg</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'TV', val: '{tv}', type:'chance'})">tv</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Unique', val: '{unique}', type:'chance'})">unique</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Weighted', val: '{weighted}', type:'chance'})">weighted</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'AM_PM', val: '{ampm}', type:'chance'})">ampm</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Date', val: '{date}', type:'chance'})">date</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'HammerTime', val: '{hammertime}', type:'chance'})">hammertime</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Hour', val: '{hour}', type:'chance'})">hour</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Millisecond', val: '{millisecond}', type:'chance'})">millisecond</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Minute', val: '{minute}', type:'chance'})">minute</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Month', val: '{month}', type:'chance'})">month</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Second', val: '{second}', type:'chance'})">second</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Timestamp', val: '{timestamp}', type:'chance'})">timestamp</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Year', val: '{year}', type:'chance'})">year</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -227,18 +241,13 @@
                                 </ul>
                             </div>
                             <div class="thumbnail sample-list">
-                                <h5>Time</h5>
+                                <h5>Miscellaneous</h5>
                                 <ul class="toc_section">
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'AM_PM', val: '{ampm}', type:'chance'})">ampm</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Date', val: '{date}', type:'chance'})">date</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'HammerTime', val: '{hammertime}', type:'chance'})">hammertime</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Hour', val: '{hour}', type:'chance'})">hour</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Millisecond', val: '{millisecond}', type:'chance'})">millisecond</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Minute', val: '{minute}', type:'chance'})">minute</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Month', val: '{month}', type:'chance'})">month</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Second', val: '{second}', type:'chance'})">second</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Timestamp', val: '{timestamp}', type:'chance'})">timestamp</a></li>
-                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Year', val: '{year}', type:'chance'})">year</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Guid', val: '{guid}', type:'chance'})">guid</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Hash', val: '{hash}', type:'chance'})">hash</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Normal', val: '{normal}', type:'chance'})">normal</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'Radio', val: '{radio}', type:'chance'})">radio</a></li>
+                                    <li><a href="" ng-click="sampleData.addColumn(sampleData.context, { id: 'TV', val: '{tv}', type:'chance'})">tv</a></li>
                                 </ul>
                             </div>
                         </div>

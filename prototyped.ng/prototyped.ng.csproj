@@ -22,6 +22,7 @@
       <Link>assets\lib\prototyped.ng.js</Link>
     </EmbeddedResource>
     <EmbeddedResource Include="assets\css\app.css" />
+    <EmbeddedResource Include="assets\css\animate.css" />
     <Content Include="assets\css\app.css.map">
       <DependentUpon>app.css</DependentUpon>
     </Content>
@@ -29,6 +30,7 @@
       <DependentUpon>app.css</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="assets\css\images.css" />
+    <EmbeddedResource Include="assets\css\font-awesome-animation.min.css" />
     <Content Include="assets\css\images.css.map">
       <DependentUpon>images.css</DependentUpon>
     </Content>

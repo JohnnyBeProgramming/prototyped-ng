@@ -2984,109 +2984,86 @@ var proto;
         (function (samples) {
             (function (_data) {
                 var ChanceDataGenerator = (function () {
-                    function ChanceDataGenerator() {
+                    function ChanceDataGenerator($q) {
+                        this.$q = $q;
                         this.name = 'chance';
                         this.instance = new Chance();
                     }
-                    ChanceDataGenerator.prototype.format = function (input) {
-                        return 'Chance';
+                    ChanceDataGenerator.prototype.populate = function (rows, columns) {
+                        var deferred = this.$q.defer();
+
+                        if (columns) {
+                            var list = [];
+                            for (var r = 0; r < rows; r++) {
+                                var item = {};
+                                for (var col in columns) {
+                                    item[col] = this.format(columns[col]);
+                                }
+                                list.push(item);
+                            }
+                            deferred.resolve(list);
+                        } else {
+                            var error = new Error('No column definition was found.');
+                            deferred.reject(error);
+                        }
+
+                        return deferred.promise;
                     };
 
-                    ChanceDataGenerator.prototype.populate = function (rows, columns) {
-                        var list = [];
-                        for (var r = 0; r < rows; r++) {
-                            var item = {};
-                            for (var col in columns) {
-                                item[col] = this.format(columns[col]);
+                    ChanceDataGenerator.prototype.format = function (input) {
+                        var result = null;
+                        try  {
+                            var match = /(\{)([^\}]+)(\})/i.exec(input);
+                            if (match.length > 2) {
+                                var name = match[2];
+                                var opts = null;
+                                if (name in this.instance) {
+                                    result = this.instance[name]();
+                                } else {
+                                    console.debug('Not Found: chance.' + name + '()');
+                                }
                             }
-                            list.push(item);
+                        } catch (ex) {
+                            result = null;
                         }
-                        return list;
+                        return result;
                     };
                     return ChanceDataGenerator;
                 })();
                 _data.ChanceDataGenerator = ChanceDataGenerator;
 
                 var FillTextGenerator = (function () {
-                    function FillTextGenerator($rootScope, $q) {
-                        this.$rootScope = $rootScope;
+                    function FillTextGenerator($q, appConfig) {
                         this.$q = $q;
+                        this.appConfig = appConfig;
                         this.name = 'fillText';
                     }
-                    FillTextGenerator.prototype.format = function (input) {
-                        return 'FillText';
-                    };
-
                     FillTextGenerator.prototype.populate = function (rows, columns) {
                         var list = [];
-                        for (var r = 0; r < rows; r++) {
-                            var item = {};
-                            for (var col in columns) {
-                                item[col] = this.format(columns[col]);
-                            }
-                            list.push(item);
-                        }
-                        return list;
-                    };
-
-                    FillTextGenerator.prototype.getArgs = function (rows, args) {
                         var data = {
                             rows: rows
                         };
-                        args.forEach(function (obj) {
-                            if (obj.id)
-                                data[obj.id] = obj.val;
-                        });
-                        return data;
-                    };
 
-                    FillTextGenerator.prototype.test = function () {
-                        /*
-                        console.debug(' - Requesting... ', req);
-                        try {
-                        // Set busy flag
-                        this.busy = true;
-                        
-                        // Create and send the request
-                        var req = this.getArgs();
-                        return this.fetch(req)
-                        .then((data) => {
-                        this.context.resp = data;
-                        this.OnlineData.$save(this.context);
-                        })
-                        .catch((error) => {
-                        this.error = error;
-                        })
-                        .finally(() => {
-                        this.$rootScope.$applyAsync(() => {
-                        this.busy = false;
-                        });
-                        });
-                        } catch (ex) {
-                        this.error = ex;
-                        }
-                        */
+                        angular.extend(data, columns);
+                        return this.fetch(data);
                     };
 
                     FillTextGenerator.prototype.fetch = function (data) {
                         var deferred = this.$q.defer();
 
-                        /*
                         var url = this.appConfig['sampleData'].fillText;
                         if (url) {
-                        $.getJSON(url, data)
-                        .done(function (data) {
-                        deferred.resolve(data);
-                        })
-                        .fail(function (xhr, desc, err) {
-                        var error = new Error('Error [' + xhr.status + ']: ' + xhr.statusText + ' - ' + err);
-                        deferred.reject(error);
-                        });
+                            $.getJSON(url, data).done(function (data) {
+                                deferred.resolve(data);
+                            }).fail(function (xhr, desc, err) {
+                                var error = new Error('Error [' + xhr.status + ']: ' + xhr.statusText + ' - ' + err);
+                                deferred.reject(error);
+                            });
                         } else {
-                        this.error = new Error('Config setting "sampleData.fillText" is undefined.');
-                        deferred.reject(this.error);
+                            var error = new Error('Config setting "sampleData.fillText" is undefined.');
+                            deferred.reject(error);
                         }
-                        */
+
                         return deferred.promise;
                     };
                     return FillTextGenerator;
@@ -3110,8 +3087,8 @@ var proto;
                         var _this = this;
                         // Create random data generators
                         this._generators = [
-                            new ChanceDataGenerator(),
-                            new FillTextGenerator(this.$rootScope, this.$q)
+                            new ChanceDataGenerator(this.$q),
+                            new FillTextGenerator(this.$q, this.appConfig)
                         ];
 
                         // Set up firebase
@@ -3164,12 +3141,20 @@ var proto;
                     };
 
                     SampleDataController.prototype.test = function () {
-                        console.debug(' - Requesting... ');
+                        var _this = this;
+                        var deferred = this.$q.defer();
                         try  {
                             // Set busy flag
                             this.busy = true;
+                            this.edit = false;
 
-                            // Fetch the sample data
+                            var data = [];
+                            var rows = this.context.rows;
+                            for (var r = 0; r < rows; r++) {
+                                data.push({ $id: r });
+                            }
+
+                            // Build a map of generators
                             var gens = [];
                             this.context.args.forEach(function (item) {
                                 if (!item.val)
@@ -3177,49 +3162,42 @@ var proto;
                                 gens[item.type] = gens[item.type] || {};
                                 gens[item.type][item.id] = item.val;
                             });
-                            console.log(' - Generators: ', gens);
-                            var rows = this.context.rows;
-                            var data = [];
-                            for (var r = 0; r < rows; r++) {
-                                data.push({ $id: r });
-                            }
+
+                            // Fetch the sample data
+                            var promises = [];
                             this._generators.forEach(function (gen) {
-                                // --------------------
                                 if (gen.name in gens) {
-                                    console.log(' - Generating: ' + gen.name);
-                                    var res = gen.populate(rows, gens[gen.name]);
-                                    var i = 0;
-                                    while (i < res.length && i < data.length) {
-                                        angular.extend(data[i], res[i]);
-                                        i++;
-                                    }
-                                    console.log(' - Result: ' + gen.name, res);
+                                    var deferred = gen.populate(rows, gens[gen.name]).then(function (res) {
+                                        var i = 0;
+                                        if (!res || !res.length)
+                                            return;
+                                        while (i < res.length && i < data.length) {
+                                            angular.extend(data[i], res[i]);
+                                            i++;
+                                        }
+                                    }).catch(function (error) {
+                                        console.error(' - Error: ' + gen.name, error);
+                                    });
+
+                                    promises.push(deferred);
                                 }
                             });
 
-                            this.context.resp = data;
-                            this.OnlineData.$save(this.context);
-                            this.busy = false;
-                            // Create and send the request
-                            /*
-                            var req = this.getArgs(this.context.rows, this.context.args);
-                            return this.fetch(req)
-                            .then((data) => {
-                            this.context.resp = data;
-                            this.OnlineData.$save(this.context);
-                            })
-                            .catch((error) => {
-                            this.error = error;
-                            })
-                            .finally(() => {
-                            this.$rootScope.$applyAsync(() => {
-                            this.busy = false;
+                            // Wait for results, then stitch them together
+                            this.$q.all(promises).finally(function () {
+                                deferred.resolve(data);
+                                _this.$rootScope.$applyAsync(function () {
+                                    _this.context.resp = data;
+                                    _this.OnlineData.$save(_this.context);
+                                    _this.busy = false;
+                                });
                             });
-                            });
-                            */
                         } catch (ex) {
                             this.error = ex;
+                            deferred.reject(ex);
                         }
+
+                        return deferred.promise;
                     };
 
                     SampleDataController.prototype.addNew = function (item) {
@@ -3275,16 +3253,9 @@ var proto;
                     SampleDataController.prototype.removeColumn = function (profile, item) {
                         profile.args = profile.args || [];
                         profile.args.splice(this.context.args.indexOf(item), 1);
+                        if (profile.args.length == 0)
+                            profile.resp = null;
                         return this.OnlineData.$save(profile);
-                    };
-
-                    SampleDataController.prototype.importColumns = function (profile, elems) {
-                        console.info(' - elems: ', elems);
-                        if (elems && elems.length) {
-                            elems.forEach(function (link) {
-                                link.click();
-                            });
-                        }
                     };
                     return SampleDataController;
                 })();

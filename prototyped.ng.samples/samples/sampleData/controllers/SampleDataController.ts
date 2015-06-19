@@ -12,96 +12,77 @@ module proto.ng.samples.data {
 
     export interface IDataGenerator {
         name: string;
-        populate(rows: number, columns: any): any[];
+        populate(rows: number, columns: any): any;
     }
 
     export class ChanceDataGenerator implements IDataGenerator {
         public name: string = 'chance';
         private instance: any;
 
-        constructor() {
+        constructor(private $q: any) {
             this.instance = new Chance();
         }
 
-        public format(input: string): any {
-            return 'Chance';
+        public populate(rows: number, columns: any): any {
+            var deferred = this.$q.defer();
+
+            if (columns) {
+                var list = [];
+                for (var r = 0; r < rows; r++) {
+                    var item = {};
+                    for (var col in columns) {
+                        item[col] = this.format(columns[col]);
+                    }
+                    list.push(item);
+                }
+                deferred.resolve(list);
+            } else {
+                var error = new Error('No column definition was found.');
+                deferred.reject(error);
+            }
+
+            return deferred.promise;
         }
 
-        public populate(rows: number, columns: any): any[] {
-            var list = [];
-            for (var r = 0; r < rows; r++) {
-                var item = {};
-                for (var col in columns) {
-                    item[col] = this.format(columns[col]);
+        public format(input: string): any {
+            var result = null;
+            try {
+                var match = /(\{)([^\}]+)(\})/i.exec(input);
+                if (match.length > 2) {
+                    var name = match[2];
+                    var opts = null;//match[3];
+                    if (name in this.instance) {
+                        result = this.instance[name]();
+                    } else {
+                        console.debug('Not Found: chance.' + name + '()');
+                    }
                 }
-                list.push(item);
+            } catch (ex) {
+                result = null;
             }
-            return list;
+            return result;
         }
+
     }
 
     export class FillTextGenerator implements IDataGenerator {
         public name: string = 'fillText';
 
-        constructor(private $rootScope: any, private $q: any) { }
+        constructor(private $q: any, private appConfig: any) { }
 
-        public format(input: string): any {
-            return 'FillText';
-        }
-
-        public populate(rows: number, columns: any): any[] {
+        public populate(rows: number, columns: any): any {
             var list = [];
-            for (var r = 0; r < rows; r++) {
-                var item = {};
-                for (var col in columns) {
-                    item[col] = this.format(columns[col]);
-                }
-                list.push(item);
-            }
-            return list;
-        }
-
-        private getArgs(rows: number, args: { id: string; val: string }[]): any {
             var data = {
                 rows: rows,
             };
-            args.forEach(function (obj) {
-                if (obj.id) data[obj.id] = obj.val;
-            });
-            return data;
+
+            angular.extend(data, columns);
+            return this.fetch(data);
         }
 
-        public test() {
-            /*
-            console.debug(' - Requesting... ', req);
-            try {
-                // Set busy flag
-                this.busy = true;
-
-                // Create and send the request
-                var req = this.getArgs();
-                return this.fetch(req)
-                    .then((data) => {
-                        this.context.resp = data;
-                        this.OnlineData.$save(this.context);
-                    })
-                    .catch((error) => {
-                        this.error = error;
-                    })
-                    .finally(() => {
-                        this.$rootScope.$applyAsync(() => {
-                            this.busy = false;
-                        });
-                    });
-            } catch (ex) {
-                this.error = ex;
-            }
-            */
-        }
-
-        public fetch(data) {
+        public fetch(data): any {
             var deferred = this.$q.defer();
-            /*
+
             var url = this.appConfig['sampleData'].fillText;
             if (url) {
                 $.getJSON(url, data)
@@ -113,10 +94,10 @@ module proto.ng.samples.data {
                         deferred.reject(error);
                     });
             } else {
-                this.error = new Error('Config setting "sampleData.fillText" is undefined.');
-                deferred.reject(this.error);
+                var error = new Error('Config setting "sampleData.fillText" is undefined.');
+                deferred.reject(error);
             }
-            */
+
             return deferred.promise;
         }
 
@@ -141,8 +122,8 @@ module proto.ng.samples.data {
         private init() {
             // Create random data generators
             this._generators = [
-                new ChanceDataGenerator(),
-                new FillTextGenerator(this.$rootScope, this.$q),
+                new ChanceDataGenerator(this.$q),
+                new FillTextGenerator(this.$q, this.appConfig),
             ];
 
             // Set up firebase 
@@ -199,62 +180,64 @@ module proto.ng.samples.data {
         }
 
         public test() {
-            console.debug(' - Requesting... ');
+            var deferred = this.$q.defer();
             try {
                 // Set busy flag
                 this.busy = true;
+                this.edit = false;
 
-                // Fetch the sample data
+                var data = [];
+                var rows = this.context.rows;
+                for (var r = 0; r < rows; r++) {
+                    data.push({ $id: r });
+                }
+
+                // Build a map of generators
                 var gens = [];
                 this.context.args.forEach((item) => {
                     if (!item.val) return;
                     gens[item.type] = gens[item.type] || {};
                     gens[item.type][item.id] = item.val;
                 });
-                console.log(' - Generators: ', gens);
-                var rows = this.context.rows;
-                var data = [];
-                for (var r = 0; r < rows; r++) {
-                    data.push({ $id: r });
-                }
+
+                // Fetch the sample data
+                var promises = [];
                 this._generators.forEach((gen) => {
-                    // --------------------
                     if (gen.name in gens) {
-                        console.log(' - Generating: ' + gen.name);
-                        var res = gen.populate(rows, gens[gen.name]);
-                        var i = 0;
-                        while (i < res.length && i < data.length) {
-                            angular.extend(data[i], res[i]);
-                            i++;
-                        }
-                        console.log(' - Result: ' + gen.name, res);
+                        var deferred = gen.populate(rows, gens[gen.name])
+                            .then((res) => {
+                                var i = 0;
+                                if (!res || !res.length) return;
+                                while (i < res.length && i < data.length) {
+                                    angular.extend(data[i], res[i]);
+                                    i++;
+                                }
+                            })
+                            .catch((error) => {
+                                console.error(' - Error: ' + gen.name, error);
+                            });
+
+                        promises.push(deferred);
                     }
                 });
 
-                this.context.resp = data;
-                this.OnlineData.$save(this.context);
-                this.busy = false;
-
-                // Create and send the request
-                /*
-                var req = this.getArgs(this.context.rows, this.context.args);
-                return this.fetch(req)
-                    .then((data) => {
-                        this.context.resp = data;
-                        this.OnlineData.$save(this.context);
-                    })
-                    .catch((error) => {
-                        this.error = error;
-                    })
+                // Wait for results, then stitch them together
+                this.$q.all(promises)
                     .finally(() => {
+                        deferred.resolve(data);
                         this.$rootScope.$applyAsync(() => {
+                            this.context.resp = data;
+                            this.OnlineData.$save(this.context);
                             this.busy = false;
                         });
                     });
-                */
+
             } catch (ex) {
                 this.error = ex;
+                deferred.reject(ex);
             }
+
+            return deferred.promise;
         }
 
         public addNew(item: ISampleDataContext) {
@@ -304,17 +287,10 @@ module proto.ng.samples.data {
         public removeColumn(profile: any, item: { id: string; val?: string }) {
             profile.args = profile.args || [];
             profile.args.splice(this.context.args.indexOf(item), 1);
+            if (profile.args.length == 0) profile.resp = null;
             return this.OnlineData.$save(profile);
         }
 
-        public importColumns(profile: any, elems: any[]) {
-            console.info(' - elems: ', elems);
-            if (elems && elems.length) {
-                elems.forEach((link) => {
-                    link.click();
-                });
-            }
-        }
     }
 
 }  
