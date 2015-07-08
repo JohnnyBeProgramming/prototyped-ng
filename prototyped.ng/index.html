@@ -87,16 +87,16 @@
     <script src="https://cdn.firebase.com/js/client/2.2.4/firebase.js"></script>
     <script src="https://cdn.firebase.com/libs/angularfire/1.1.1/angularfire.min.js"></script>
     <!--<![endif]-->
-
     <!-- Load this module's libraries -->
     <script src="assets/lib/prototyped.ng.base.js"></script>
     <script src="assets/lib/prototyped.ng.views.js"></script>
     <script src="assets/lib/prototyped.ng.styles.js"></script>
-    <script html-compile="none">
+    <script compiler-condition="false">
         // Mock the template caches (clears pre-loaded templates and load rather from source)
         angular.module(appContext.name + '.views', []).run(['$templateCache', function ($templateCache) { }]);
         angular.module(appContext.name + '.styles', []).run(['$templateCache', function ($templateCache) { }]);
     </script>
+
     <script>
         // Load the test app (async), with extended config (if available)
         !(function (document, angular, $, ctx) {
