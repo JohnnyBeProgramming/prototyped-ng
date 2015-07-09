@@ -59,10 +59,28 @@ module.exports = {
         },
         src: [
             '<%= cfg.base %>**/**.min.css',
+            '!<%= cfg.base %>**/**.offline.min.css',
             '!<%= cfg.base %>**/builder/**',
             '!<%= cfg.base %>**/node_modules/**',
         ],
         dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.styles.js',
         module: '<%= cfg.mod %>.styles',
+    },
+    prototyped_ng_offline: {
+        options: {
+            base: '<%= cfg.base %>',
+            module: '<%= cfg.mod %>.offline',
+            htmlmin: {
+                collapseWhitespace: false,
+                collapseBooleanAttributes: false,
+            },
+        },
+        src: [
+            '<%= cfg.base %>**/**.offline.min.css',
+            '!<%= cfg.base %>**/builder/**',
+            '!<%= cfg.base %>**/node_modules/**',
+        ],
+        dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.offline.js',
+        module: '<%= cfg.mod %>.offline',
     },
 };
