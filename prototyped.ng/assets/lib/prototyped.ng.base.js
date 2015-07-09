@@ -301,10 +301,10 @@ var proto;
                                     name: 'Wikipedia', url: 'https://www.wikipedia.org'
                                 },
                                 {
-                                    name: 'Wolfram Alpha', url: 'http://www.wolframalpha.com/'
+                                    name: 'Wolfram Alpha', url: 'https://www.wolframalpha.com/'
                                 },
                                 {
-                                    name: 'Global Wind Maps', url: 'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286'
+                                    name: 'Global Wind Maps', url: 'https://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286'
                                 },
                                 {
                                     name: 'Disaster Info Map', url: 'http://hisz.rsoe.hu/alertmap/index2.php'
@@ -821,6 +821,369 @@ var proto;
 })(proto || (proto = {}));
 var proto;
 (function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (providers) {
+                    var AppInfoProvider = (function () {
+                        function AppInfoProvider(appStateProvider) {
+                            this.appStateProvider = appStateProvider;
+                            this.appState = appStateProvider.appState;
+                            this.appInfo = new proto.ng.modules.common.AppInfo(navigator.appCodeName, navigator.userAgent);
+                            this.init();
+                        }
+                        AppInfoProvider.prototype.init = function () {
+                            // Define the state
+                            this.detectBrowserInfo();
+                        };
+
+                        AppInfoProvider.prototype.$get = function () {
+                            return this.appInfo;
+                        };
+
+                        AppInfoProvider.prototype.refreshUI = function (action) {
+                            this.appState.updateUI(action);
+                        };
+
+                        AppInfoProvider.prototype.detectBrowserInfo = function () {
+                            var _this = this;
+                            var info = this.appInfo;
+                            try  {
+                                // Get IE version (if defined)
+                                if (!!window['ActiveXObject']) {
+                                    info.versions.ie = 10;
+                                }
+
+                                // Sanitize codeName and userAgent
+                                this.resolveUserAgent(info);
+                                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
+                                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
+                                info.versions.nw = this.getVersionInfo('node-webkit');
+                                info.versions.njs = this.getVersionInfo('node');
+                                info.versions.v8 = this.getVersionInfo('v8');
+                                info.versions.openssl = this.getVersionInfo('openssl');
+                                info.versions.chromium = this.getVersionInfo('chromium');
+
+                                // Check for CSS extensions
+                                info.css.boostrap2 = this.selectorExists('hero-unit');
+                                info.css.boostrap3 = this.selectorExists('jumbotron');
+
+                                // Update location settings
+                                angular.extend(info.about, {
+                                    protocol: window.location.protocol,
+                                    server: {
+                                        url: window.location.href
+                                    }
+                                });
+
+                                // Detect the operating system name
+                                info.about.os.name = this.detectOSName();
+
+                                // Check for jQuery
+                                info.detects.jqry = typeof jQuery !== 'undefined';
+
+                                // Check for general header and body scripts
+                                var sources = [];
+                                $("script").each(function (i, elem) {
+                                    var src = $(elem).attr("src");
+                                    if (src)
+                                        sources.push(src);
+                                });
+
+                                // Fast check on known script names
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
+                                });
+
+                                // Get the client browser details (build a url string)
+                                var detectUrl = this.getDetectUrl();
+
+                                // Send a loaded package to a server to detect more features
+                                $.getScript(detectUrl).done(function (script, textStatus) {
+                                    _this.refreshUI(function () {
+                                        // Browser info and details loaded
+                                        var browserInfo = new window.WhichBrowser();
+                                        angular.extend(info.about, browserInfo);
+                                    });
+                                }).fail(function (jqxhr, settings, exception) {
+                                    console.error(exception);
+                                });
+
+                                // Set browser name to IE (if defined)
+                                if (navigator.appName == 'Microsoft Internet Explorer') {
+                                    info.about.browser.name = 'Internet Explorer';
+                                }
+
+                                // Check if the browser supports web db's
+                                var webDB = info.about.webdb = this.getWebDBInfo();
+                                info.about.webdb.test();
+                            } catch (ex) {
+                                console.error(ex);
+                            }
+
+                            // Return the preliminary info
+                            return info;
+                        };
+
+                        AppInfoProvider.prototype.detectOSName = function () {
+                            var osName = 'Unknown OS';
+                            var appVer = navigator.appVersion;
+                            if (appVer) {
+                                if (appVer.indexOf("Win") != -1)
+                                    osName = 'Windows';
+                                if (appVer.indexOf("Mac") != -1)
+                                    osName = 'MacOS';
+                                if (appVer.indexOf("X11") != -1)
+                                    osName = 'UNIX';
+                                if (appVer.indexOf("Linux") != -1)
+                                    osName = 'Linux';
+                                //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
+                            }
+                            return osName;
+                        };
+
+                        AppInfoProvider.prototype.getWebDBInfo = function () {
+                            var _this = this;
+                            var webDB = {
+                                db: null,
+                                version: '1',
+                                active: null,
+                                used: undefined,
+                                size: 5 * 1024 * 1024,
+                                test: function (name, desc, dbVer, dbSize) {
+                                    try  {
+                                        // Try and open a web db
+                                        webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
+                                        webDB.onSuccess(null, null);
+                                    } catch (ex) {
+                                        // Nope, something went wrong
+                                        webDB.onError(null, null);
+                                    }
+                                },
+                                onSuccess: function (tx, r) {
+                                    if (tx) {
+                                        if (r) {
+                                            console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
+                                        }
+                                        if (tx) {
+                                            console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
+                                        }
+                                    }
+                                    _this.refreshUI(function () {
+                                        webDB.active = true;
+                                        webDB.used = JSON.stringify(webDB.db).length;
+                                    });
+                                },
+                                onError: function (tx, e) {
+                                    console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
+                                    _this.refreshUI(function () {
+                                        webDB.active = false;
+                                    });
+                                }
+                            };
+                            return webDB;
+                        };
+
+                        AppInfoProvider.prototype.checkScriptLoaded = function (sources, filter) {
+                            sources.forEach(function (src) {
+                                filter(src);
+                            });
+                        };
+
+                        AppInfoProvider.prototype.getDetectUrl = function () {
+                            return (function () {
+                                var p = [], w = window, d = document, e = 0, f = 0;
+                                p.push('ua=' + encodeURIComponent(navigator.userAgent));
+                                e |= w.ActiveXObject ? 1 : 0;
+                                e |= w.opera ? 2 : 0;
+                                e |= w.chrome ? 4 : 0;
+                                e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
+                                e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
+                                e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
+                                p.push('e=' + e);
+                                f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
+                                f |= 'WebSocket' in w ? 2 : 0;
+                                f |= w.Worker ? 4 : 0;
+                                f |= w.applicationCache ? 8 : 0;
+                                f |= w.history && history.pushState ? 16 : 0;
+                                f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
+                                f |= 'FileReader' in w ? 64 : 0;
+                                p.push('f=' + f);
+                                p.push('r=' + Math.random().toString(36).substring(7));
+                                p.push('w=' + screen.width);
+                                p.push('h=' + screen.height);
+                                var s = d.createElement('script');
+                                return 'https://api.whichbrowser.net/rel/detect.js?' + p.join('&');
+                            })();
+                        };
+
+                        AppInfoProvider.prototype.resolveUserAgent = function (info) {
+                            var cn = info.codeName;
+                            var ua = info.userAgent;
+                            if (ua) {
+                                // Remove start of string in UAgent upto CName or end of string if not found.
+                                ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
+
+                                // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
+                                ua = ua.substring(cn.length);
+
+                                while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
+                                    ua = ua.substring(1);
+                                }
+
+                                // Remove the end of the string from first characrer that is not a number or point etc.
+                                var pointer = 0;
+                                while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
+                                    pointer = pointer + 1;
+                                }
+                                ua = ua.substring(0, pointer);
+
+                                if (!window.isNaN(ua)) {
+                                    if (parseInt(ua) > 0) {
+                                        info.versions.html = ua;
+                                    }
+                                    if (parseFloat(ua) >= 5) {
+                                        info.versions.css = '3.x';
+                                        info.versions.js = '5.x';
+                                    }
+                                }
+                            }
+                        };
+
+                        AppInfoProvider.prototype.getVersionInfo = function (ident) {
+                            try  {
+                                if (typeof process !== 'undefined' && process.versions) {
+                                    return process.versions[ident];
+                                }
+                            } catch (ex) {
+                            }
+                            return null;
+                        };
+
+                        AppInfoProvider.prototype.selectorExists = function (selector) {
+                            return false;
+                            //var ret = css($(selector));
+                            //return ret;
+                        };
+
+                        AppInfoProvider.prototype.css = function (a) {
+                            var sheets = document.styleSheets, o = [];
+                            for (var i in sheets) {
+                                var rules = sheets[i].rules || sheets[i].cssRules;
+                                for (var r in rules) {
+                                    if (a.is(rules[r].selectorText)) {
+                                        o.push(rules[r].selectorText);
+                                    }
+                                }
+                            }
+                            return o;
+                        };
+                        return AppInfoProvider;
+                    })();
+                    providers.AppInfoProvider = AppInfoProvider;
+                })(common.providers || (common.providers = {}));
+                var providers = common.providers;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+/// <reference path="../../imports.d.ts" />
+/// <reference path="../common/providers/AppInfoProvider.ts" />
+angular.module('prototyped.about', [
+    'prototyped.ng.runtime',
+    'prototyped.ng.views',
+    'prototyped.ng.styles'
+]).config([
+    'appStateProvider', function (appStateProvider) {
+        // Define application state
+        appStateProvider.when('/about', '/about/info').define('about', {
+            url: '/about',
+            priority: 1000,
+            state: {
+                url: '/about',
+                abstract: true
+            },
+            menuitem: {
+                label: 'About',
+                state: 'about.info',
+                icon: 'fa fa-info-circle'
+            },
+            cardview: {
+                style: 'img-about',
+                title: 'About this software',
+                desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
+            },
+            visible: function () {
+                return appStateProvider.appConfig.options.showAboutPage;
+            },
+            children: []
+        }).state('about.info', {
+            url: '/info',
+            views: {
+                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'modules/about/views/info.tpl.html',
+                    controller: 'AboutInfoController'
+                }
+            }
+        }).state('about.online', {
+            url: '^/contact',
+            views: {
+                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
+                'main@': { templateUrl: 'modules/about/views/contact.tpl.html' }
+            }
+        }).state('about.conection', {
+            url: '/conection',
+            views: {
+                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'modules/about/views/connections.tpl.html',
+                    controller: 'AboutConnectionController',
+                    controllerAs: 'connCtrl'
+                }
+            }
+        });
+    }]).controller('AboutInfoController', ['$scope', 'appInfo', proto.ng.modules.about.controllers.AboutInfoController]).controller('AboutConnectionController', ['$scope', '$location', 'appState', 'appInfo', 'navigationService', proto.ng.modules.about.controllers.AboutConnectionController]);
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                var AppConfig = (function () {
+                    function AppConfig() {
+                        this.modules = {};
+                        this.options = new common.AppOptions();
+                    }
+                    return AppConfig;
+                })();
+                common.AppConfig = AppConfig;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
     (function (_ng) {
         (function (modules) {
             (function (common) {
@@ -1173,26 +1536,6 @@ var proto;
                     return AppState;
                 })();
                 common.AppState = AppState;
-            })(modules.common || (modules.common = {}));
-            var common = modules.common;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (common) {
-                var AppConfig = (function () {
-                    function AppConfig() {
-                        this.modules = {};
-                        this.options = new common.AppOptions();
-                    }
-                    return AppConfig;
-                })();
-                common.AppConfig = AppConfig;
             })(modules.common || (modules.common = {}));
             var common = modules.common;
         })(ng.modules || (ng.modules = {}));
@@ -2176,75 +2519,6 @@ var proto;
         (function (modules) {
             (function (common) {
                 (function (filters) {
-                    function ToXmlFilter($parse, $rootScope) {
-                        function toXmlString(name, input, expanded, childExpanded) {
-                            var val = '';
-                            var sep = '';
-                            var attr = '';
-                            if ($.isArray(input)) {
-                                if (expanded) {
-                                    for (var i = 0; i < input.length; i++) {
-                                        val += toXmlString(null, input[i], childExpanded);
-                                    }
-                                } else {
-                                    name = 'Array';
-                                    attr += sep + ' length="' + input.length + '"';
-                                    val = 'Array[' + input.length + ']';
-                                }
-                            } else if ($.isPlainObject(input)) {
-                                if (expanded) {
-                                    for (var id in input) {
-                                        if (input.hasOwnProperty(id)) {
-                                            var child = input[id];
-                                            if ($.isArray(child) || $.isPlainObject(child)) {
-                                                val = toXmlString(id, child, childExpanded);
-                                            } else {
-                                                sep = ' ';
-                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    name = 'Object';
-                                    for (var id in input) {
-                                        if (input.hasOwnProperty(id)) {
-                                            var child = input[id];
-                                            if ($.isArray(child) || $.isPlainObject(child)) {
-                                                val += toXmlString(id, child, childExpanded);
-                                            } else {
-                                                sep = ' ';
-                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
-                                            }
-                                        }
-                                    }
-                                    //val = 'Object[ ' + JSON.stringify(input) + ' ]';
-                                }
-                            }
-                            if (name) {
-                                val = '<' + name + '' + attr + '>' + val + '</' + name + '>';
-                            }
-                            return val;
-                        }
-                        return function (input, rootName) {
-                            return toXmlString(rootName || 'xml', input, true);
-                        };
-                    }
-                    filters.ToXmlFilter = ToXmlFilter;
-                })(common.filters || (common.filters = {}));
-                var filters = common.filters;
-            })(modules.common || (modules.common = {}));
-            var common = modules.common;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (common) {
-                (function (filters) {
                     function FromNowFilter($filter) {
                         return function (dateString, format) {
                             try  {
@@ -2419,6 +2693,75 @@ var proto;
         (function (modules) {
             (function (common) {
                 (function (filters) {
+                    function ToXmlFilter($parse, $rootScope) {
+                        function toXmlString(name, input, expanded, childExpanded) {
+                            var val = '';
+                            var sep = '';
+                            var attr = '';
+                            if ($.isArray(input)) {
+                                if (expanded) {
+                                    for (var i = 0; i < input.length; i++) {
+                                        val += toXmlString(null, input[i], childExpanded);
+                                    }
+                                } else {
+                                    name = 'Array';
+                                    attr += sep + ' length="' + input.length + '"';
+                                    val = 'Array[' + input.length + ']';
+                                }
+                            } else if ($.isPlainObject(input)) {
+                                if (expanded) {
+                                    for (var id in input) {
+                                        if (input.hasOwnProperty(id)) {
+                                            var child = input[id];
+                                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                                val = toXmlString(id, child, childExpanded);
+                                            } else {
+                                                sep = ' ';
+                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    name = 'Object';
+                                    for (var id in input) {
+                                        if (input.hasOwnProperty(id)) {
+                                            var child = input[id];
+                                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                                val += toXmlString(id, child, childExpanded);
+                                            } else {
+                                                sep = ' ';
+                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                            }
+                                        }
+                                    }
+                                    //val = 'Object[ ' + JSON.stringify(input) + ' ]';
+                                }
+                            }
+                            if (name) {
+                                val = '<' + name + '' + attr + '>' + val + '</' + name + '>';
+                            }
+                            return val;
+                        }
+                        return function (input, rootName) {
+                            return toXmlString(rootName || 'xml', input, true);
+                        };
+                    }
+                    filters.ToXmlFilter = ToXmlFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
                     function TrustedUrlFilter($sce) {
                         return function (url) {
                             return $sce.trustAsResourceUrl(url);
@@ -2557,292 +2900,6 @@ var proto;
                         return AppConfigProvider;
                     })();
                     providers.AppConfigProvider = AppConfigProvider;
-                })(common.providers || (common.providers = {}));
-                var providers = common.providers;
-            })(modules.common || (modules.common = {}));
-            var common = modules.common;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (common) {
-                (function (providers) {
-                    var AppInfoProvider = (function () {
-                        function AppInfoProvider(appStateProvider) {
-                            this.appStateProvider = appStateProvider;
-                            this.appState = appStateProvider.appState;
-                            this.appInfo = new proto.ng.modules.common.AppInfo(navigator.appCodeName, navigator.userAgent);
-                            this.init();
-                        }
-                        AppInfoProvider.prototype.init = function () {
-                            // Define the state
-                            this.detectBrowserInfo();
-                        };
-
-                        AppInfoProvider.prototype.$get = function () {
-                            return this.appInfo;
-                        };
-
-                        AppInfoProvider.prototype.refreshUI = function (action) {
-                            this.appState.updateUI(action);
-                        };
-
-                        AppInfoProvider.prototype.detectBrowserInfo = function () {
-                            var _this = this;
-                            var info = this.appInfo;
-                            try  {
-                                // Get IE version (if defined)
-                                if (!!window['ActiveXObject']) {
-                                    info.versions.ie = 10;
-                                }
-
-                                // Sanitize codeName and userAgent
-                                this.resolveUserAgent(info);
-                                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
-                                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
-                                info.versions.nw = this.getVersionInfo('node-webkit');
-                                info.versions.njs = this.getVersionInfo('node');
-                                info.versions.v8 = this.getVersionInfo('v8');
-                                info.versions.openssl = this.getVersionInfo('openssl');
-                                info.versions.chromium = this.getVersionInfo('chromium');
-
-                                // Check for CSS extensions
-                                info.css.boostrap2 = this.selectorExists('hero-unit');
-                                info.css.boostrap3 = this.selectorExists('jumbotron');
-
-                                // Update location settings
-                                angular.extend(info.about, {
-                                    protocol: window.location.protocol,
-                                    server: {
-                                        url: window.location.href
-                                    }
-                                });
-
-                                // Detect the operating system name
-                                info.about.os.name = this.detectOSName();
-
-                                // Check for jQuery
-                                info.detects.jqry = typeof jQuery !== 'undefined';
-
-                                // Check for general header and body scripts
-                                var sources = [];
-                                $("script").each(function (i, elem) {
-                                    var src = $(elem).attr("src");
-                                    if (src)
-                                        sources.push(src);
-                                });
-
-                                // Fast check on known script names
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
-                                });
-
-                                // Get the client browser details (build a url string)
-                                var detectUrl = this.getDetectUrl();
-
-                                // Send a loaded package to a server to detect more features
-                                $.getScript(detectUrl).done(function (script, textStatus) {
-                                    _this.refreshUI(function () {
-                                        // Browser info and details loaded
-                                        var browserInfo = new window.WhichBrowser();
-                                        angular.extend(info.about, browserInfo);
-                                    });
-                                }).fail(function (jqxhr, settings, exception) {
-                                    console.error(exception);
-                                });
-
-                                // Set browser name to IE (if defined)
-                                if (navigator.appName == 'Microsoft Internet Explorer') {
-                                    info.about.browser.name = 'Internet Explorer';
-                                }
-
-                                // Check if the browser supports web db's
-                                var webDB = info.about.webdb = this.getWebDBInfo();
-                                info.about.webdb.test();
-                            } catch (ex) {
-                                console.error(ex);
-                            }
-
-                            // Return the preliminary info
-                            return info;
-                        };
-
-                        AppInfoProvider.prototype.detectOSName = function () {
-                            var osName = 'Unknown OS';
-                            var appVer = navigator.appVersion;
-                            if (appVer) {
-                                if (appVer.indexOf("Win") != -1)
-                                    osName = 'Windows';
-                                if (appVer.indexOf("Mac") != -1)
-                                    osName = 'MacOS';
-                                if (appVer.indexOf("X11") != -1)
-                                    osName = 'UNIX';
-                                if (appVer.indexOf("Linux") != -1)
-                                    osName = 'Linux';
-                                //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
-                            }
-                            return osName;
-                        };
-
-                        AppInfoProvider.prototype.getWebDBInfo = function () {
-                            var _this = this;
-                            var webDB = {
-                                db: null,
-                                version: '1',
-                                active: null,
-                                used: undefined,
-                                size: 5 * 1024 * 1024,
-                                test: function (name, desc, dbVer, dbSize) {
-                                    try  {
-                                        // Try and open a web db
-                                        webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
-                                        webDB.onSuccess(null, null);
-                                    } catch (ex) {
-                                        // Nope, something went wrong
-                                        webDB.onError(null, null);
-                                    }
-                                },
-                                onSuccess: function (tx, r) {
-                                    if (tx) {
-                                        if (r) {
-                                            console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
-                                        }
-                                        if (tx) {
-                                            console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
-                                        }
-                                    }
-                                    _this.refreshUI(function () {
-                                        webDB.active = true;
-                                        webDB.used = JSON.stringify(webDB.db).length;
-                                    });
-                                },
-                                onError: function (tx, e) {
-                                    console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
-                                    _this.refreshUI(function () {
-                                        webDB.active = false;
-                                    });
-                                }
-                            };
-                            return webDB;
-                        };
-
-                        AppInfoProvider.prototype.checkScriptLoaded = function (sources, filter) {
-                            sources.forEach(function (src) {
-                                filter(src);
-                            });
-                        };
-
-                        AppInfoProvider.prototype.getDetectUrl = function () {
-                            return (function () {
-                                var p = [], w = window, d = document, e = 0, f = 0;
-                                p.push('ua=' + encodeURIComponent(navigator.userAgent));
-                                e |= w.ActiveXObject ? 1 : 0;
-                                e |= w.opera ? 2 : 0;
-                                e |= w.chrome ? 4 : 0;
-                                e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
-                                e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
-                                e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
-                                p.push('e=' + e);
-                                f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
-                                f |= 'WebSocket' in w ? 2 : 0;
-                                f |= w.Worker ? 4 : 0;
-                                f |= w.applicationCache ? 8 : 0;
-                                f |= w.history && history.pushState ? 16 : 0;
-                                f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
-                                f |= 'FileReader' in w ? 64 : 0;
-                                p.push('f=' + f);
-                                p.push('r=' + Math.random().toString(36).substring(7));
-                                p.push('w=' + screen.width);
-                                p.push('h=' + screen.height);
-                                var s = d.createElement('script');
-                                return 'http://api.whichbrowser.net/rel/detect.js?' + p.join('&');
-                            })();
-                        };
-
-                        AppInfoProvider.prototype.resolveUserAgent = function (info) {
-                            var cn = info.codeName;
-                            var ua = info.userAgent;
-                            if (ua) {
-                                // Remove start of string in UAgent upto CName or end of string if not found.
-                                ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
-
-                                // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
-                                ua = ua.substring(cn.length);
-
-                                while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
-                                    ua = ua.substring(1);
-                                }
-
-                                // Remove the end of the string from first characrer that is not a number or point etc.
-                                var pointer = 0;
-                                while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
-                                    pointer = pointer + 1;
-                                }
-                                ua = ua.substring(0, pointer);
-
-                                if (!window.isNaN(ua)) {
-                                    if (parseInt(ua) > 0) {
-                                        info.versions.html = ua;
-                                    }
-                                    if (parseFloat(ua) >= 5) {
-                                        info.versions.css = '3.x';
-                                        info.versions.js = '5.x';
-                                    }
-                                }
-                            }
-                        };
-
-                        AppInfoProvider.prototype.getVersionInfo = function (ident) {
-                            try  {
-                                if (typeof process !== 'undefined' && process.versions) {
-                                    return process.versions[ident];
-                                }
-                            } catch (ex) {
-                            }
-                            return null;
-                        };
-
-                        AppInfoProvider.prototype.selectorExists = function (selector) {
-                            return false;
-                            //var ret = css($(selector));
-                            //return ret;
-                        };
-
-                        AppInfoProvider.prototype.css = function (a) {
-                            var sheets = document.styleSheets, o = [];
-                            for (var i in sheets) {
-                                var rules = sheets[i].rules || sheets[i].cssRules;
-                                for (var r in rules) {
-                                    if (a.is(rules[r].selectorText)) {
-                                        o.push(rules[r].selectorText);
-                                    }
-                                }
-                            }
-                            return o;
-                        };
-                        return AppInfoProvider;
-                    })();
-                    providers.AppInfoProvider = AppInfoProvider;
                 })(common.providers || (common.providers = {}));
                 var providers = common.providers;
             })(modules.common || (modules.common = {}));
@@ -3694,6 +3751,114 @@ var proto;
     var ng = proto.ng;
 })(proto || (proto = {}));
 ///<reference path="../../../imports.d.ts"/>
+///<reference path="../../common/services/NavigationService.ts"/>
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (explorer) {
+                var ExplorerLeftController = (function () {
+                    function ExplorerLeftController($rootScope, $scope, navigation) {
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.navigation = navigation;
+                        $scope.navigation = navigation;
+                    }
+                    return ExplorerLeftController;
+                })();
+                explorer.ExplorerLeftController = ExplorerLeftController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
+///<reference path="../../common/services/NavigationService.ts"/>
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (explorer) {
+                var ExplorerViewController = (function () {
+                    function ExplorerViewController($rootScope, $scope, $q, navigation) {
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.$q = $q;
+                        this.navigation = navigation;
+                    }
+                    return ExplorerViewController;
+                })();
+                explorer.ExplorerViewController = ExplorerViewController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
+///<reference path="../../common/services/NavigationService.ts"/>
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (explorer) {
+                var ExternalLinksViewController = (function () {
+                    function ExternalLinksViewController($rootScope, $sce, $q, navigation) {
+                        this.$rootScope = $rootScope;
+                        this.$sce = $sce;
+                        this.$q = $q;
+                        this.navigation = navigation;
+                        this.init();
+                    }
+                    ExternalLinksViewController.prototype.init = function () {
+                        var _this = this;
+                        if (this.navigation.externalLinks) {
+                            this.navigation.externalLinks.UpdateUI = function () {
+                                _this.$rootScope.$applyAsync(function () {
+                                });
+                            };
+                            this.navigation.externalLinks.OnSelect = function (node) {
+                                _this.$rootScope.$applyAsync(function () {
+                                    console.log(' - Loading: ' + node.data);
+                                    _this.selected = node;
+                                });
+                            };
+                        }
+                        this.$sce.trustAsHtml($('#ExternalExplorerPanel')[0]);
+                    };
+
+                    ExternalLinksViewController.prototype.trustSrc = function (src) {
+                        return this.$sce.trustAsResourceUrl(src);
+                    };
+
+                    ExternalLinksViewController.prototype.openExternal = function () {
+                        if (this.selected) {
+                            window.open(this.selected.data, this.selected.label);
+                        }
+                    };
+
+                    ExternalLinksViewController.prototype.refreshExternal = function () {
+                        var _this = this;
+                        if (this.selected) {
+                            $('#ExternalExplorerPanel').attr('src', function (i, val) {
+                                return _this.trustSrc(val);
+                            });
+                        }
+                    };
+                    return ExternalLinksViewController;
+                })();
+                explorer.ExternalLinksViewController = ExternalLinksViewController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
     (function (ng) {
@@ -3885,114 +4050,6 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
-///<reference path="../../../imports.d.ts"/>
-///<reference path="../../common/services/NavigationService.ts"/>
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (explorer) {
-                var ExplorerLeftController = (function () {
-                    function ExplorerLeftController($rootScope, $scope, navigation) {
-                        this.$rootScope = $rootScope;
-                        this.$scope = $scope;
-                        this.navigation = navigation;
-                        $scope.navigation = navigation;
-                    }
-                    return ExplorerLeftController;
-                })();
-                explorer.ExplorerLeftController = ExplorerLeftController;
-            })(modules.explorer || (modules.explorer = {}));
-            var explorer = modules.explorer;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-///<reference path="../../../imports.d.ts"/>
-///<reference path="../../common/services/NavigationService.ts"/>
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (explorer) {
-                var ExplorerViewController = (function () {
-                    function ExplorerViewController($rootScope, $scope, $q, navigation) {
-                        this.$rootScope = $rootScope;
-                        this.$scope = $scope;
-                        this.$q = $q;
-                        this.navigation = navigation;
-                    }
-                    return ExplorerViewController;
-                })();
-                explorer.ExplorerViewController = ExplorerViewController;
-            })(modules.explorer || (modules.explorer = {}));
-            var explorer = modules.explorer;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-///<reference path="../../../imports.d.ts"/>
-///<reference path="../../common/services/NavigationService.ts"/>
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (explorer) {
-                var ExternalLinksViewController = (function () {
-                    function ExternalLinksViewController($rootScope, $sce, $q, navigation) {
-                        this.$rootScope = $rootScope;
-                        this.$sce = $sce;
-                        this.$q = $q;
-                        this.navigation = navigation;
-                        this.init();
-                    }
-                    ExternalLinksViewController.prototype.init = function () {
-                        var _this = this;
-                        if (this.navigation.externalLinks) {
-                            this.navigation.externalLinks.UpdateUI = function () {
-                                _this.$rootScope.$applyAsync(function () {
-                                });
-                            };
-                            this.navigation.externalLinks.OnSelect = function (node) {
-                                _this.$rootScope.$applyAsync(function () {
-                                    console.log(' - Loading: ' + node.data);
-                                    _this.selected = node;
-                                });
-                            };
-                        }
-                        this.$sce.trustAsHtml($('#ExternalExplorerPanel')[0]);
-                    };
-
-                    ExternalLinksViewController.prototype.trustSrc = function (src) {
-                        return this.$sce.trustAsResourceUrl(src);
-                    };
-
-                    ExternalLinksViewController.prototype.openExternal = function () {
-                        if (this.selected) {
-                            window.open(this.selected.data, this.selected.label);
-                        }
-                    };
-
-                    ExternalLinksViewController.prototype.refreshExternal = function () {
-                        var _this = this;
-                        if (this.selected) {
-                            $('#ExternalExplorerPanel').attr('src', function (i, val) {
-                                return _this.trustSrc(val);
-                            });
-                        }
-                    };
-                    return ExternalLinksViewController;
-                })();
-                explorer.ExternalLinksViewController = ExternalLinksViewController;
-            })(modules.explorer || (modules.explorer = {}));
-            var explorer = modules.explorer;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 /// <reference path="../common/services/NavigationService.ts"/>
 /// <reference path="controllers/ExplorerLeftController.ts" />
@@ -4024,7 +4081,7 @@ angular.module('prototyped.explorer', [
             menuitem: {
                 label: 'Explore',
                 state: 'proto.explore',
-                icon: 'fa fa-cubes'
+                icon: 'fa fa-sitemap'
             },
             cardview: {
                 style: 'img-explore',
@@ -4085,6 +4142,62 @@ angular.module('prototyped.explorer', [
 
         $sceDelegateProvider.resourceUrlWhitelist(['**']);
     }]).service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.FileBrowserViewController]).controller('ExternalLinksViewController', ['$rootScope', '$sce', '$q', 'navigationService', proto.ng.modules.explorer.ExternalLinksViewController]);
+/// <reference path="../imports.d.ts" />
+/// <reference path="../modules/config.ng.ts" />
+/// <reference path="../modules/about/module.ng.ts" />
+// Define main module with all dependencies
+angular.module('prototyped.ng', [
+    'prototyped.ng.runtime',
+    'prototyped.ng.config',
+    'prototyped.ng.views',
+    'prototyped.ng.styles',
+    'ngRoute',
+    'ui.router',
+    'prototyped.explorer',
+    'prototyped.console',
+    'prototyped.editor',
+    'prototyped.about'
+]).config([
+    'appStateProvider', function (appStateProvider) {
+        // Configure module state
+        appStateProvider.config('prototyped.ng', {
+            active: true
+        }).when('/proto', '/proto/explore').when('/sandbox', '/samples').when('/imports', '/edge').state('proto', {
+            url: '/proto',
+            abstract: true
+        }).state('default', {
+            url: '/',
+            views: {
+                'main@': {
+                    templateUrl: 'views/default.tpl.html',
+                    controller: 'CardViewController',
+                    controllerAs: 'cardView'
+                }
+            }
+        });
+    }]).controller('CardViewController', ['appState', proto.ng.modules.common.controllers.CardViewController]).directive('appClean', ['$window', '$route', '$state', 'appState', proto.ng.modules.common.directives.AppCleanDirective]).directive('appClose', ['appNode', proto.ng.modules.common.directives.AppCloseDirective]).directive('appDebug', ['appNode', proto.ng.modules.common.directives.AppDebugDirective]).directive('appKiosk', ['appNode', proto.ng.modules.common.directives.AppKioskDirective]).directive('appFullscreen', ['appNode', proto.ng.modules.common.directives.AppFullScreenDirective]).directive('appVersion', ['appState', proto.ng.modules.common.directives.AppVersionDirective]).directive('eatClickIf', ['$parse', '$rootScope', proto.ng.modules.common.directives.EatClickIfDirective]).directive('toHtml', ['$sce', '$filter', proto.ng.modules.common.directives.ToHtmlDirective]).directive('domReplace', [proto.ng.modules.common.directives.DomReplaceDirective]).directive('resxInclude', ['$templateCache', proto.ng.modules.common.directives.ResxIncludeDirective]).directive('resxImport', ['$templateCache', '$document', proto.ng.modules.common.directives.ResxImportDirective]).directive('abnTree', ['$timeout', proto.ng.modules.common.directives.TreeViewDirective]).filter('toXml', [proto.ng.modules.common.filters.ToXmlFilter]).filter('interpolate', ['appState', proto.ng.modules.common.filters.InterpolateFilter]).filter('fromNow', ['$filter', proto.ng.modules.common.filters.FromNowFilter]).filter('isArray', [proto.ng.modules.common.filters.IsArrayFilter]).filter('isNotArray', [proto.ng.modules.common.filters.IsNotArrayFilter]).filter('typeCount', [proto.ng.modules.common.filters.TypeCountFilter]).filter('listReverse', [proto.ng.modules.common.filters.ListReverseFilter]).filter('toBytes', [proto.ng.modules.common.filters.ToByteFilter]).filter('parseBytes', [proto.ng.modules.common.filters.ParseBytesFilter]).filter('trustedUrl', ['$sce', proto.ng.modules.common.filters.TrustedUrlFilter]).run([
+    '$rootScope', '$state', 'appConfig', 'appState', function ($rootScope, $state, appConfig, appState) {
+        // Extend root scope with (global) contexts
+        angular.extend($rootScope, {
+            appConfig: appConfig,
+            appState: appState,
+            appNode: appState.node,
+            startAt: Date.now(),
+            state: $state
+        });
+
+        // Link the current state instance
+        appState.state = $state;
+
+        // Watch for navigation changes
+        $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
+            if (toState) {
+                appState.current.state = toState;
+            }
+        });
+
+        console.debug(' - Current Config: ', appConfig);
+    }]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="config.ng.ts" />
 // Define common runtime modules (shared)
@@ -4169,116 +4282,3 @@ angular.module('prototyped.sandbox', [
         templateUrl: 'views/common/docked/footer.tpl.html'
     };
 });
-/// <reference path="../../imports.d.ts" />
-/// <reference path="../common/providers/AppInfoProvider.ts" />
-angular.module('prototyped.about', [
-    'prototyped.ng.runtime',
-    'prototyped.ng.views',
-    'prototyped.ng.styles'
-]).config([
-    'appStateProvider', function (appStateProvider) {
-        // Define application state
-        appStateProvider.when('/about', '/about/info').define('about', {
-            url: '/about',
-            priority: 1000,
-            state: {
-                url: '/about',
-                abstract: true
-            },
-            menuitem: {
-                label: 'About',
-                state: 'about.info',
-                icon: 'fa fa-info-circle'
-            },
-            cardview: {
-                style: 'img-about',
-                title: 'About this software',
-                desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
-            },
-            visible: function () {
-                return appStateProvider.appConfig.options.showAboutPage;
-            },
-            children: []
-        }).state('about.info', {
-            url: '/info',
-            views: {
-                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'modules/about/views/info.tpl.html',
-                    controller: 'AboutInfoController'
-                }
-            }
-        }).state('about.online', {
-            url: '^/contact',
-            views: {
-                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
-                'main@': { templateUrl: 'modules/about/views/contact.tpl.html' }
-            }
-        }).state('about.conection', {
-            url: '/conection',
-            views: {
-                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'modules/about/views/connections.tpl.html',
-                    controller: 'AboutConnectionController',
-                    controllerAs: 'connCtrl'
-                }
-            }
-        });
-    }]).controller('AboutInfoController', ['$scope', 'appInfo', proto.ng.modules.about.controllers.AboutInfoController]).controller('AboutConnectionController', ['$scope', '$location', 'appState', 'appInfo', 'navigationService', proto.ng.modules.about.controllers.AboutConnectionController]);
-/// <reference path="../imports.d.ts" />
-/// <reference path="../modules/config.ng.ts" />
-/// <reference path="../modules/about/module.ng.ts" />
-// Define main module with all dependencies
-angular.module('prototyped.ng', [
-    'prototyped.ng.runtime',
-    'prototyped.ng.config',
-    'prototyped.ng.views',
-    'prototyped.ng.styles',
-    'ngRoute',
-    'ui.router',
-    'prototyped.explorer',
-    'prototyped.console',
-    'prototyped.editor',
-    'prototyped.about'
-]).config([
-    'appStateProvider', function (appStateProvider) {
-        // Configure module state
-        appStateProvider.config('prototyped.ng', {
-            active: true
-        }).when('/proto', '/proto/explore').when('/sandbox', '/samples').when('/imports', '/edge').state('proto', {
-            url: '/proto',
-            abstract: true
-        }).state('default', {
-            url: '/',
-            views: {
-                'main@': {
-                    templateUrl: 'views/default.tpl.html',
-                    controller: 'CardViewController',
-                    controllerAs: 'cardView'
-                }
-            }
-        });
-    }]).controller('CardViewController', ['appState', proto.ng.modules.common.controllers.CardViewController]).directive('appClean', ['$window', '$route', '$state', 'appState', proto.ng.modules.common.directives.AppCleanDirective]).directive('appClose', ['appNode', proto.ng.modules.common.directives.AppCloseDirective]).directive('appDebug', ['appNode', proto.ng.modules.common.directives.AppDebugDirective]).directive('appKiosk', ['appNode', proto.ng.modules.common.directives.AppKioskDirective]).directive('appFullscreen', ['appNode', proto.ng.modules.common.directives.AppFullScreenDirective]).directive('appVersion', ['appState', proto.ng.modules.common.directives.AppVersionDirective]).directive('eatClickIf', ['$parse', '$rootScope', proto.ng.modules.common.directives.EatClickIfDirective]).directive('toHtml', ['$sce', '$filter', proto.ng.modules.common.directives.ToHtmlDirective]).directive('domReplace', [proto.ng.modules.common.directives.DomReplaceDirective]).directive('resxInclude', ['$templateCache', proto.ng.modules.common.directives.ResxIncludeDirective]).directive('resxImport', ['$templateCache', '$document', proto.ng.modules.common.directives.ResxImportDirective]).directive('abnTree', ['$timeout', proto.ng.modules.common.directives.TreeViewDirective]).filter('toXml', [proto.ng.modules.common.filters.ToXmlFilter]).filter('interpolate', ['appState', proto.ng.modules.common.filters.InterpolateFilter]).filter('fromNow', ['$filter', proto.ng.modules.common.filters.FromNowFilter]).filter('isArray', [proto.ng.modules.common.filters.IsArrayFilter]).filter('isNotArray', [proto.ng.modules.common.filters.IsNotArrayFilter]).filter('typeCount', [proto.ng.modules.common.filters.TypeCountFilter]).filter('listReverse', [proto.ng.modules.common.filters.ListReverseFilter]).filter('toBytes', [proto.ng.modules.common.filters.ToByteFilter]).filter('parseBytes', [proto.ng.modules.common.filters.ParseBytesFilter]).filter('trustedUrl', ['$sce', proto.ng.modules.common.filters.TrustedUrlFilter]).run([
-    '$rootScope', '$state', 'appConfig', 'appState', function ($rootScope, $state, appConfig, appState) {
-        // Extend root scope with (global) contexts
-        angular.extend($rootScope, {
-            appConfig: appConfig,
-            appState: appState,
-            appNode: appState.node,
-            startAt: Date.now(),
-            state: $state
-        });
-
-        // Link the current state instance
-        appState.state = $state;
-
-        // Watch for navigation changes
-        $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
-            if (toState) {
-                appState.current.state = toState;
-            }
-        });
-
-        console.debug(' - Current Config: ', appConfig);
-    }]);

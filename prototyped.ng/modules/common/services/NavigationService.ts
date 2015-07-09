@@ -288,17 +288,17 @@ module proto.ng.modules.common.services {
                     name: 'Wikipedia', url: 'https://www.wikipedia.org'
                 },
                 {
-                    name: 'Wolfram Alpha', url: 'http://www.wolframalpha.com/',
+                    name: 'Wolfram Alpha', url: 'https://www.wolframalpha.com/',
                 },
                 {
-                    name: 'Global Wind Maps', url: 'http://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286',
+                    name: 'Global Wind Maps', url: 'https://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286',
                 },
                 {
                     name: 'Disaster Info Map', url: 'http://hisz.rsoe.hu/alertmap/index2.php',
                 }
-                //'http://map.ipviking.com/',
+                //'https://map.ipviking.com/',
                 //'https://maps.google.com',
-                //'http://www.flightradar24.com',
+                //'https://www.flightradar24.com',
             ]);
             this.addGroup(this, 'Development Resources', [
                 {

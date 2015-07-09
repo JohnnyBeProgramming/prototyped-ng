@@ -32,7 +32,7 @@ angular.module('prototyped.explorer', [
                 menuitem: {
                     label: 'Explore',
                     state: 'proto.explore',
-                    icon: 'fa fa-cubes',
+                    icon: 'fa fa-sitemap',
                 },
                 cardview: {
                     style: 'img-explore',

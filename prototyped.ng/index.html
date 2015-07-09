@@ -5,6 +5,12 @@
     <base href="/">
     <meta charset="utf-8" />
     <title>Module Sandbox</title>
+    <style>
+        @import 'https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css';
+        @import 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css';
+        @import 'https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.css';
+        @import 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css';
+    </style>
     <link rel="stylesheet" href="assets/css/app.min.css" />
     <link rel="stylesheet" href="assets/css/sandbox.min.css" />
     <link rel="stylesheet" href="assets/css/prototyped.min.css" />
@@ -32,6 +38,7 @@
                     state: $state,
                     startAt: Date.now(),
                 });
+                $state.go('default');
             }],
             setRoutes: ['appStateProvider', function (appStateProvider) {
                 appStateProvider // Set up default routes
@@ -47,7 +54,7 @@
     <!-- Define the assets and components to be loaded (async) -->
     <div class="docked-container"
          ng-init="docker = { enabled: true }"
-         ng-class="{ 'docked-full':docker.enabled === false, 'docked-left':docker.enabled === true }">
+         ng-class="{ 'docked-left':docker.enabled === false, 'docked-full':docker.enabled === true }">
         <!-- directive: docked-top -->
         <div docked:icon>
             <div class="top-spacer">
