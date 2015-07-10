@@ -27,25 +27,32 @@
             ],
             module: {
                 name: 'testApp',
-                path: 'builder/package.json',
+                path: null, //window.location.protocol != 'file:' ? 'builder/package.json' : null,
                 elem: document.body,
                 opts: {
                     showDefaultItems: true,
                     includeSandboxStyles: true,
                 },
             },
-            onStart: ['$rootScope', '$state', function ($rootScope, $state) {
-                angular.extend($rootScope, {
-                    state: $state,
-                    startAt: Date.now(),
-                });
-                $state.go('default');
-            }],
             setRoutes: ['appStateProvider', function (appStateProvider) {
                 appStateProvider // Set up default routes
                     .when('', '/')
                     .when('/', '/default')
                     .when('/index.html', '/')
+                /*
+                var appState = appStateProvider.$get();
+                if (appState) {
+                    appState.hashPre = '#';
+                    appState.html5 = false;
+                }
+                */
+            }],
+            onStart: ['$rootScope', '$state', 'appState', function ($rootScope, $state, appState) {
+                angular.extend($rootScope, {
+                    state: $state,
+                    startAt: Date.now(),
+                });
+                $state.go('default');
             }],
         };
     </script>
@@ -99,7 +106,7 @@
     <script src="assets/lib/prototyped.ng.base.js"></script>
     <script src="assets/lib/prototyped.ng.views.js"></script>
     <script src="assets/lib/prototyped.ng.styles.js"></script>
-    <script compiler-condition="false">
+    <script html-compile="false">
         // Mock the template caches (clears pre-loaded templates and load rather from source)
         angular.module(appContext.name + '.views', []).run(['$templateCache', function ($templateCache) { }]);
         angular.module(appContext.name + '.styles', []).run(['$templateCache', function ($templateCache) { }]);

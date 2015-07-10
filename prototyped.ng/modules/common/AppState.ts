@@ -23,6 +23,7 @@ module proto.ng.modules.common {
                 name: string
             }
         };
+        public hashPre: string;
         public proxy: string;
         public node: AppNode;
         public routers: IAppRoute[];

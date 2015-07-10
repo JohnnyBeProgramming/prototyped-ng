@@ -11,6 +11,9 @@
         @import 'https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.css';
         @import 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css';
     </style>
+    <link rel="stylesheet" href="assets/css/app.min.css" html-compile="false" />
+    <link rel="stylesheet" href="assets/css/sandbox.min.css" html-compile="false" />
+    <link rel="stylesheet" href="assets/css/prototyped.min.css" html-compile="false" />
     <link rel="stylesheet" href="assets/css/extended.min.css" />
     <script>
         var appContext = {
@@ -25,20 +28,13 @@
             ],
             module: {
                 name: 'testApp',
-                path: 'builder/package.json',
+                path: null, //window.location.protocol != 'file:' ? 'builder/package.json' : null,
                 elem: document.body,
                 opts: {
                     showDefaultItems: false,
                     includeSandboxStyles: true,
                 },
             },
-            onStart: ['$rootScope', '$state', function ($rootScope, $state) {
-                angular.extend($rootScope, {
-                    state: $state,
-                    startAt: Date.now(),
-                });
-                $state.go('default');
-            }],
             setRoutes: ['$locationProvider', '$urlRouterProvider', 'appStateProvider', function ($locationProvider, $urlRouterProvider, appStateProvider) {
                 appStateProvider
                     .when('', '/')
@@ -83,6 +79,13 @@
                     })
 
                 $locationProvider.html5Mode(true); // Configure HTML5 mode
+            }],
+            onStart: ['$rootScope', '$state', function ($rootScope, $state) {
+                angular.extend($rootScope, {
+                    state: $state,
+                    startAt: Date.now(),
+                });
+                $state.go('default');
             }],
         };
     </script>
@@ -137,7 +140,7 @@
     <script src="assets/lib/prototyped.ng.extended.base.js"></script>
     <script src="assets/lib/prototyped.ng.extended.views.js"></script>
     <script src="assets/lib/prototyped.ng.extended.styles.js"></script>
-    <script compiler-condition="false">
+    <script html-compile="false">
         // Mock the template caches (clears pre-loaded templates and load rather from source)
         angular.module(appContext.name + '.views', []).run(['$templateCache', function ($templateCache) { }]);
         angular.module(appContext.name + '.styles', []).run(['$templateCache', function ($templateCache) { }]);

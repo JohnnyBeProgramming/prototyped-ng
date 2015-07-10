@@ -2972,7 +2972,7 @@ var proto;
                                 // Try and figure out router mode from the initial url
                                 var pageLocation = typeof window !== 'undefined' ? window.location.href : '';
                                 if (pageLocation.indexOf('#') >= 0) {
-                                    var routePrefix = '';
+                                    var routePrefix = this.appState.hashPre || '';
                                     var routeProxies = [
                                         '/!test!',
                                         '/!debug!'
@@ -2988,6 +2988,7 @@ var proto;
 
                                     // Override the default behaviour (only if required)
                                     if (routePrefix) {
+                                        console.debug(' - Route Prefix:', routePrefix);
                                         this.$locationProvider.hashPrefix(routePrefix);
                                     }
 
