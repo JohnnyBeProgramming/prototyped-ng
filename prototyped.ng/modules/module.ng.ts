@@ -71,7 +71,7 @@ angular.module('prototyped.ng', [
     .filter('trustedUrl', ['$sce', proto.ng.modules.common.filters.TrustedUrlFilter])
 
 
-    .run(['$rootScope', '$state', 'appConfig', 'appState', function ($rootScope, $state, appConfig, appState: proto.ng.modules.common.AppState) {
+    .run(['$rootScope', '$state', '$templateCache', 'appConfig', 'appState', function ($rootScope, $state, $templateCache, appConfig, appState: proto.ng.modules.common.AppState) {
         // Extend root scope with (global) contexts
         angular.extend($rootScope, {
             appConfig: appConfig,
@@ -92,5 +92,13 @@ angular.module('prototyped.ng', [
         })
 
         console.debug(' - Current Config: ', appConfig);
+
+        if (appConfig.options.includeDefaultStyles) {
+            appState.importStyle($templateCache, 'assets/css/app.min.css');
+            appState.importStyle($templateCache, 'assets/css/prototyped.min.css');
+        }
+        if (appConfig.options.includeSandboxStyles) {
+            appState.importStyle($templateCache, 'assets/css/sandbox.min.css');
+        }
     }])
 

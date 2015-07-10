@@ -24,6 +24,6 @@ module.exports = {
             '!<%= cfg.base %>**/builder/**',
             '!<%= cfg.base %>**/node_modules/**',
         ],
-        dest: '<%= cfg.base %>/<%= cfg.lib %>/<%= cfg.mod %>.views.js'
+        dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.views.js'
     }
 };

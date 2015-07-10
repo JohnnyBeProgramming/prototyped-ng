@@ -2,101 +2,48 @@ module.exports = {
     options: {
         singleModule: true,
         htmlmin: {
-            collapseBooleanAttributes: false,
-            collapseWhitespace: false,
-            removeAttributeQuotes: false,
-            removeComments: false,
-            removeEmptyAttributes: false,
-            removeRedundantAttributes: false,
-            removeScriptTypeAttributes: false,
-            removeStyleLinkTypeAttributes: false
+            collapseWhitespace: true,
+            collapseBooleanAttributes: false
         },
         url: function (url) {
             // Remove the prefix (if exists)
-            var path = require('path');
             var prefix = require('grunt').config('cfg').base;
-            if (url && (url.indexOf(prefix) == 0)) {
-                url = url.substring(prefix.length);
+            if (prefix) {
+                if (url && (url.indexOf(prefix) == 0)) {
+                    url = url.substring(prefix.length);
+                    console.log(' + ' + url);
+                }
             }
             return url;
         },
         source: function (src) {
-            //return src['']().compress();
+            var cfg = require('grunt').config('cfg');
+            if (cfg.zip) {
+                var sp = require('../../../builder/tasks/sp.js');
+                var zip = src['']().compress().val;
+                return zip;
+            }
             return src;
         },
         bootstrap: function (module, script) {
             var cnt = script;
-            /*
-            var regx = /(\$templateCache\.put\('[^']+',)([^"]+")([^"]+")([^\)]*)/gim;
-            var match = regx.exec(cnt)
-            while (match != null) {
-                var repl = match[1] + '"' + match[3];// + ');';
-                cnt = cnt.substring(0, match.index) + repl + cnt.substring(match.index + match[0].length);
-                match = regx.exec(cnt, match.index + repl.length);
+            var cfg = require('grunt').config('cfg');
+            if (cfg.zip) {
+                var templates = require('../../../builder/tasks/templates.js');
+                cnt = templates.postCompile(cnt);
             }
-            */
             return "angular.module('" + module + "', []).run(['$templateCache', function($templateCache) { \r\n" +
-                        cnt + //cnt.replace(/(\s*\r?\n)/gim, '\r\n\t') +
-                    "\r\n}]);";
+                        cnt +
+                    "}]);";
         },
         process: function (content, filepath) {
-            // grunt.template.process                                        
-            // Define the LZW ecnoder (default encoder)
+            var cfg = require('grunt').config('cfg');
             /*
-            var lzwCompressor = {
-                encode: function (s) {
-                    var dict = {};
-                    var data = (s + "").split("");
-                    var out = [];
-                    var currChar;
-                    var phrase = data[0];
-                    var code = 256;
-                    for (var i = 1; i < data.length; i++) {
-                        currChar = data[i];
-                        if (dict[phrase + currChar] != null) {
-                            phrase += currChar;
-                        }
-                        else {
-                            out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
-                            dict[phrase + currChar] = code;
-                            code++;
-                            phrase = currChar;
-                        }
-                    }
-                    out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
-                    for (var i = 0; i < out.length; i++) {
-                        out[i] = String.fromCharCode(out[i]);
-                    }
-                    return out.join("");
-                },
-                decode: function (s) {
-                    var dict = {};
-                    var data = (s + "").split("");
-                    var currChar = data[0];
-                    var oldPhrase = currChar;
-                    var out = [currChar];
-                    var code = 256;
-                    var phrase;
-                    for (var i = 1; i < data.length; i++) {
-                        var currCode = data[i].charCodeAt(0);
-                        if (currCode < 256) {
-                            phrase = data[i];
-                        }
-                        else {
-                            phrase = dict[currCode] ? dict[currCode] : (oldPhrase + currChar);
-                        }
-                        out.push(phrase);
-                        currChar = phrase.charAt(0);
-                        dict[code] = oldPhrase + currChar;
-                        code++;
-                        oldPhrase = phrase;
-                    }
-                    return out.join("");
-                },
+            if (cfg.zip) {
+                var sp = require('../../../builder/tasks/sp.js');
+                var zip = content['']().compress().val;
+                return '<script>' + JSON.stringify(zip) + "[''](eval)</script>";
             }
-            var payload = lzwCompressor.encode(content);
-            //console.log(payload);
-            return '<script>' + JSON.stringify(payload) + '</script>';
             */
             return content;
         },
@@ -105,13 +52,35 @@ module.exports = {
         options: {
             base: '<%= cfg.base %>',
             module: '<%= cfg.mod %>.styles',
+            htmlmin: {
+                collapseWhitespace: false,
+                collapseBooleanAttributes: false,
+            },
         },
         src: [
-            '<%= cfg.base %>**/*.min.css',
+            '<%= cfg.base %>**/**.min.css',
+            '!<%= cfg.base %>**/**.offline.min.css',
             '!<%= cfg.base %>**/builder/**',
             '!<%= cfg.base %>**/node_modules/**',
         ],
         dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.styles.js',
         module: '<%= cfg.mod %>.styles',
+    },
+    module_ng_offline: {
+        options: {
+            base: '<%= cfg.base %>',
+            module: '<%= cfg.mod %>.offline',
+            htmlmin: {
+                collapseWhitespace: false,
+                collapseBooleanAttributes: false,
+            },
+        },
+        src: [
+            '<%= cfg.base %>**/**.offline.min.css',
+            '!<%= cfg.base %>**/builder/**',
+            '!<%= cfg.base %>**/node_modules/**',
+        ],
+        dest: '<%= cfg.base %><%= cfg.lib %>/<%= cfg.mod %>.offline.js',
+        module: '<%= cfg.mod %>.offline',
     },
 };

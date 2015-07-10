@@ -12,8 +12,9 @@ module.exports = function (grunt) {
             dest: '../../web/',
             mod: 'prototyped.ng.extended',
             css: 'assets/css',
-            lib: 'assets/lib'
-        },
+            lib: 'assets/lib',
+            zip: false,
+        }
     };
 
     // Load grunt tasks dynamically & from the package.json file
@@ -42,6 +43,9 @@ module.exports = function (grunt) {
         'ngtemplates',
         //'uglify',
         'concat'
+    ]);
+    grunt.registerTask('app-start', [
+        'app-run'
     ]);
 
     // Define and extent with dynamic configuration(s)

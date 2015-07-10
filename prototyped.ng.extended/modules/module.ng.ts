@@ -91,16 +91,6 @@ angular.module('prototyped.ng.extended', [
         }
     }])
 
-    .run(['$templateCache', function ($templateCache) {
-        var element = document.head;
-        var cssPath = 'assets/css/extended.min.css';
-        if ($('[resx-src="' + cssPath + '"]').length <= 0) {
-            var html = '<link resx-src="' + cssPath + '" href="' + cssPath + '" rel="stylesheet" type="text/css" />';
-            var cache = $templateCache.get(cssPath);
-            if (cache != null) {
-                html = '<style resx-src="' + cssPath + '">' + cache + '</style>';
-            }
-            console.debug(' - Attaching: ' + cssPath);
-            $(element).append(html);
-        }
+    .run(['$templateCache', 'appState', function ($templateCache, appState) {
+        appState.importStyle($templateCache, 'assets/css/extended.min.css');
     }])

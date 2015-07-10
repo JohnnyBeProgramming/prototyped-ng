@@ -118,6 +118,7 @@ module proto.ng.modules.common {
                 }
             }
         }
+
         public setUpdateAction(eventWrapper: (action?: () => void) => void) {
             this._updateUI = eventWrapper;
         }
@@ -135,6 +136,7 @@ module proto.ng.modules.common {
         public proxyActive(ident): boolean {
             return this.proxy == '/!' + ident + '!';
         }
+
         public setProxy(ident: string) {
             var loc = window.location;
             var match = /#\/!\w+!\//i.exec(loc.hash);
@@ -157,6 +159,32 @@ module proto.ng.modules.common {
                 var url = loc.protocol + '//' + loc.host + (loc.pathname || '/') + loc.hash.substring(match[0].length);
                 console.log(' - Cancel Proxy: ', url);
                 window.location.href = url;
+            }
+        }
+
+        public importStyle($templateCache, url: string, parentElem: HTMLElement = null) {
+            var element = parentElem || document.head;
+            var checks = [
+                '[src="' + url + '"]',
+                '[href="' + url + '"]',
+                '[resx-src="' + url + '"]',
+            ];
+
+            var found = false;
+            checks.forEach(function (checkXPath) {
+                if ($(checkXPath).length > 0) {
+                    found = true;
+                }
+            });
+
+            if (!found) {
+                console.debug(' - Attaching: ' + url);
+                var html = '<link resx-src="' + url + '" href="' + url + '" rel="stylesheet" type="text/css" />';
+                var cache = $templateCache.get(url);
+                if (cache != null) {
+                    html = '<style resx-src="' + url + '">' + cache + '</style>';
+                }
+                $(element).append(html);
             }
         }
     }

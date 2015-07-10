@@ -1,7 +1,6 @@
 module.exports = {
-  options: {
-    cleancss: true,
-    banner: '<%= banner %>'
+    options: {
+        cleancss: true,
   },
   prototyped_ng: {
     files: {

@@ -321,7 +321,7 @@ var proto;
                                     name: 'Font Awesome', url: 'http://fontawesome.io/icons/'
                                 },
                                 {
-                                    name: 'CSS3 Generator', url: 'https://css3generator.com/'
+                                    name: 'CSS3 Generator', url: 'http://css3generator.com/'
                                 },
                                 {
                                     name: 'Regular Expressions', url: 'https://regex101.com/'
@@ -1332,6 +1332,8 @@ var proto;
                     function AppOptions() {
                         this.showAboutPage = true;
                         this.showDefaultItems = true;
+                        this.includeDefaultStyles = true;
+                        this.includeSandboxStyles = false;
                     }
                     return AppOptions;
                 })();
@@ -1488,6 +1490,7 @@ var proto;
                             }
                         }
                     };
+
                     AppState.prototype.setUpdateAction = function (eventWrapper) {
                         this._updateUI = eventWrapper;
                     };
@@ -1509,6 +1512,7 @@ var proto;
                     AppState.prototype.proxyActive = function (ident) {
                         return this.proxy == '/!' + ident + '!';
                     };
+
                     AppState.prototype.setProxy = function (ident) {
                         var loc = window.location;
                         var match = /#\/!\w+!\//i.exec(loc.hash);
@@ -1531,6 +1535,33 @@ var proto;
                             var url = loc.protocol + '//' + loc.host + (loc.pathname || '/') + loc.hash.substring(match[0].length);
                             console.log(' - Cancel Proxy: ', url);
                             window.location.href = url;
+                        }
+                    };
+
+                    AppState.prototype.importStyle = function ($templateCache, url, parentElem) {
+                        if (typeof parentElem === "undefined") { parentElem = null; }
+                        var element = parentElem || document.head;
+                        var checks = [
+                            '[src="' + url + '"]',
+                            '[href="' + url + '"]',
+                            '[resx-src="' + url + '"]'
+                        ];
+
+                        var found = false;
+                        checks.forEach(function (checkXPath) {
+                            if ($(checkXPath).length > 0) {
+                                found = true;
+                            }
+                        });
+
+                        if (!found) {
+                            console.debug(' - Attaching: ' + url);
+                            var html = '<link resx-src="' + url + '" href="' + url + '" rel="stylesheet" type="text/css" />';
+                            var cache = $templateCache.get(url);
+                            if (cache != null) {
+                                html = '<style resx-src="' + url + '">' + cache + '</style>';
+                            }
+                            $(element).append(html);
                         }
                     };
                     return AppState;
@@ -4176,7 +4207,7 @@ angular.module('prototyped.ng', [
             }
         });
     }]).controller('CardViewController', ['appState', proto.ng.modules.common.controllers.CardViewController]).directive('appClean', ['$window', '$route', '$state', 'appState', proto.ng.modules.common.directives.AppCleanDirective]).directive('appClose', ['appNode', proto.ng.modules.common.directives.AppCloseDirective]).directive('appDebug', ['appNode', proto.ng.modules.common.directives.AppDebugDirective]).directive('appKiosk', ['appNode', proto.ng.modules.common.directives.AppKioskDirective]).directive('appFullscreen', ['appNode', proto.ng.modules.common.directives.AppFullScreenDirective]).directive('appVersion', ['appState', proto.ng.modules.common.directives.AppVersionDirective]).directive('eatClickIf', ['$parse', '$rootScope', proto.ng.modules.common.directives.EatClickIfDirective]).directive('toHtml', ['$sce', '$filter', proto.ng.modules.common.directives.ToHtmlDirective]).directive('domReplace', [proto.ng.modules.common.directives.DomReplaceDirective]).directive('resxInclude', ['$templateCache', proto.ng.modules.common.directives.ResxIncludeDirective]).directive('resxImport', ['$templateCache', '$document', proto.ng.modules.common.directives.ResxImportDirective]).directive('abnTree', ['$timeout', proto.ng.modules.common.directives.TreeViewDirective]).filter('toXml', [proto.ng.modules.common.filters.ToXmlFilter]).filter('interpolate', ['appState', proto.ng.modules.common.filters.InterpolateFilter]).filter('fromNow', ['$filter', proto.ng.modules.common.filters.FromNowFilter]).filter('isArray', [proto.ng.modules.common.filters.IsArrayFilter]).filter('isNotArray', [proto.ng.modules.common.filters.IsNotArrayFilter]).filter('typeCount', [proto.ng.modules.common.filters.TypeCountFilter]).filter('listReverse', [proto.ng.modules.common.filters.ListReverseFilter]).filter('toBytes', [proto.ng.modules.common.filters.ToByteFilter]).filter('parseBytes', [proto.ng.modules.common.filters.ParseBytesFilter]).filter('trustedUrl', ['$sce', proto.ng.modules.common.filters.TrustedUrlFilter]).run([
-    '$rootScope', '$state', 'appConfig', 'appState', function ($rootScope, $state, appConfig, appState) {
+    '$rootScope', '$state', '$templateCache', 'appConfig', 'appState', function ($rootScope, $state, $templateCache, appConfig, appState) {
         // Extend root scope with (global) contexts
         angular.extend($rootScope, {
             appConfig: appConfig,
@@ -4197,6 +4228,14 @@ angular.module('prototyped.ng', [
         });
 
         console.debug(' - Current Config: ', appConfig);
+
+        if (appConfig.options.includeDefaultStyles) {
+            appState.importStyle($templateCache, 'assets/css/app.min.css');
+            appState.importStyle($templateCache, 'assets/css/prototyped.min.css');
+        }
+        if (appConfig.options.includeSandboxStyles) {
+            appState.importStyle($templateCache, 'assets/css/sandbox.min.css');
+        }
     }]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="config.ng.ts" />

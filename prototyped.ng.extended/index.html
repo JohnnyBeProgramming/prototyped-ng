@@ -5,9 +5,12 @@
     <base href="/">
     <meta charset="utf-8" />
     <title>Module Sandbox</title>
-    <link rel="stylesheet" href="assets/css/app.min.css" />
-    <link rel="stylesheet" href="assets/css/sandbox.min.css" />
-    <link rel="stylesheet" href="assets/css/prototyped.min.css" />
+    <style>
+        @import 'https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css';
+        @import 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css';
+        @import 'https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.6.0/loading-bar.min.css';
+        @import 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css';
+    </style>
     <link rel="stylesheet" href="assets/css/extended.min.css" />
     <script>
         var appContext = {
@@ -26,6 +29,7 @@
                 elem: document.body,
                 opts: {
                     showDefaultItems: false,
+                    includeSandboxStyles: true,
                 },
             },
             onStart: ['$rootScope', '$state', function ($rootScope, $state) {
@@ -33,6 +37,7 @@
                     state: $state,
                     startAt: Date.now(),
                 });
+                $state.go('default');
             }],
             setRoutes: ['$locationProvider', '$urlRouterProvider', 'appStateProvider', function ($locationProvider, $urlRouterProvider, appStateProvider) {
                 appStateProvider
@@ -87,7 +92,7 @@
     <!-- Define the assets and components to be loaded (async) -->
     <div class="docked-container"
          ng-init="docker = { enabled: true }"
-         ng-class="{ 'docked-full':docker.enabled === false, 'docked-left':docker.enabled === true }">
+         ng-class="{ 'docked-left':docker.enabled === false, 'docked-full':docker.enabled === true }">
         <!-- directive: docked-top -->
         <div docked:icon>
             <div class="top-spacer">
@@ -132,7 +137,7 @@
     <script src="assets/lib/prototyped.ng.extended.base.js"></script>
     <script src="assets/lib/prototyped.ng.extended.views.js"></script>
     <script src="assets/lib/prototyped.ng.extended.styles.js"></script>
-    <script>
+    <script compiler-condition="false">
         // Mock the template caches (clears pre-loaded templates and load rather from source)
         angular.module(appContext.name + '.views', []).run(['$templateCache', function ($templateCache) { }]);
         angular.module(appContext.name + '.styles', []).run(['$templateCache', function ($templateCache) { }]);
