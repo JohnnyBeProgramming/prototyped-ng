@@ -1,15 +1,10 @@
 /// <reference path="../imports.d.ts" />
-
 /* -------------------------------------------------------------------------------
-    Example of a custom HTTP Server
+Example of a custom HTTP Server
 ------------------------------------------------------------------------------- */
-var http = require("http"),
-    crypto = require('crypto'),
-    url = require("url"),
-    path = require("path"),
-    fs = require("fs");
- 
-var httpServer: any = {
+var http = require("http"), crypto = require('crypto'), url = require("url"), path = require("path"), fs = require("fs");
+
+var httpServer = {
     host: 'localhost',
     port: process.argv[2] || 8008,
     path: './',
@@ -20,8 +15,8 @@ var httpServer: any = {
     },
     verbose: true,
     server: null,
-    start: () => {
-        try {
+    start: function () {
+        try  {
             console.log('-------------------------------------------------------------------------------');
             console.log(' - Starting HTTP Web server...');
             console.log('-------------------------------------------------------------------------------');
@@ -30,7 +25,7 @@ var httpServer: any = {
             httpServer.baseUrl = "http://" + httpServer.host + ":" + httpServer.port + '/';
 
             // Start the http server on the specified port
-            httpServer.server = http.createServer(httpServer.request)
+            httpServer.server = http.createServer(httpServer.request);
             httpServer.server.listen(parseInt(httpServer.port, 10));
             console.log(' - Static HTTP server running.');
 
@@ -38,7 +33,7 @@ var httpServer: any = {
                 // Create secure connection
                 var cert = fs.readFileSync(httpServer.pfxPath);
                 var opts = crypto.createCredentials({
-                    pfx: cert,
+                    pfx: cert
                 });
                 http.setSecure(cert);
                 console.log(' - Secure HTTPS server activated.');
@@ -52,17 +47,18 @@ var httpServer: any = {
         }
         return true;
     },
-    stop: () => {
+    stop: function () {
         console.log(' - Stopping HTTP server...');
-        httpServer.server.stop(() => {
+        httpServer.server.stop(function () {
             console.log(' - Server Stopped.');
         });
     },
-    request: (request, response) => {
+    request: function (request, response) {
         var uri = url.parse(request.url).pathname;
         var filename = path.join(httpServer.path, uri);
 
-        if (httpServer.verbose) console.log(' > ' + path.relative('\\', uri));
+        if (httpServer.verbose)
+            console.log(' > ' + path.relative('\\', uri));
 
         // Redirect to proxy routers (if needed)
         if (/(.*)(debug!)/i.exec(request.url)) {
@@ -74,7 +70,7 @@ var httpServer: any = {
             response.end();
             return;
         } else {
-            fs.exists(filename, (exists) => {
+            fs.exists(filename, function (exists) {
                 if (!exists) {
                     // Default document path
                     filename = path.join(httpServer.path, httpServer.defaultDocument);
@@ -84,13 +80,13 @@ var httpServer: any = {
                     filename = path.join(filename, httpServer.defaultDocument);
                 }
 
-                fs.readFile(filename, "binary", (err, file) => {
+                fs.readFile(filename, "binary", function (err, file) {
                     httpServer.respond(response, filename, err, file);
                 });
             });
         }
     },
-    respond: (response, filename, err, file) => {
+    respond: function (response, filename, err, file) {
         if (err) {
             response.writeHead(500, { "Content-Type": "text/plain" });
             response.write(err + "\n");
@@ -98,19 +94,21 @@ var httpServer: any = {
             return;
         }
 
-        if (httpServer.verbose) console.log(' < ' + path.relative(httpServer.path, filename));
+        if (httpServer.verbose)
+            console.log(' < ' + path.relative(httpServer.path, filename));
 
         var headers = {};
         var ext = path.extname(filename);
         var contentType = httpServer.mimes[ext];
-        if (contentType) headers["Content-Type"] = contentType;
+        if (contentType)
+            headers["Content-Type"] = contentType;
 
         response.writeHead(200, headers);
         response.write(file, "binary");
         response.end();
     },
-    defaultDocument: 'index.html',
+    defaultDocument: 'index.html'
 };
-// -------------------------------------------------------------------------------------------------------
 
+// -------------------------------------------------------------------------------------------------------
 module.exports = httpServer;
