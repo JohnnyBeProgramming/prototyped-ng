@@ -717,6 +717,29 @@
             padding: 1px 6px;
         }
     }
+
+    .xss-notify {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        font-size: 11px;
+        position: absolute;
+        z-index: 2110000000;
+
+        .bar {
+            border-top: solid 1px #000;
+            color: #000;
+            padding: 3px;
+        }
+
+        .info {
+            background: rgba(236, 246, 252, 0.5);
+        }
+
+        .warn {
+            background: rgba(254, 243, 183, 0.5);
+        }
+    }
 }
 
 body.debug {
