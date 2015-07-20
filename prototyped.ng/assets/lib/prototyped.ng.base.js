@@ -3091,6 +3091,169 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (services) {
+                    var PageLayoutService = (function () {
+                        function PageLayoutService($q, navigationService) {
+                            this.$q = $q;
+                            this.navigationService = navigationService;
+                            this.toggleDocked = false;
+                            this.callbacks = [];
+                            this.init();
+                        }
+                        PageLayoutService.prototype.init = function () {
+                            var _this = this;
+                            this.root = document.body;
+                            this.node = new LayoutExplorerRoot('PageLayout', this.root);
+                            this.node.filter = function (elem) {
+                                return _this.filter(elem);
+                            };
+                            this.node.excludes = [];
+                        };
+
+                        PageLayoutService.prototype.addFilter = function (func) {
+                            this.node.excludes.push(func);
+                        };
+
+                        PageLayoutService.prototype.addCallback = function (func) {
+                            this.callbacks.push(func);
+                        };
+
+                        PageLayoutService.prototype.build = function (callback) {
+                            var rootNode = this.node.parse(this.root);
+                            if (rootNode) {
+                                this.node.children = [rootNode];
+                            }
+                            if (callback)
+                                callback(rootNode);
+
+                            if (this.callbacks)
+                                this.callbacks.forEach(function (func) {
+                                    if (func)
+                                        func(rootNode);
+                                });
+                        };
+
+                        PageLayoutService.prototype.filter = function (elem) {
+                            if (!$(elem).is(':visible')) {
+                                return false;
+                            }
+                            if (!this.toggleDocked) {
+                                var isDockContainer = $(elem).hasClass('docked-container');
+                                return !isDockContainer;
+                            }
+
+                            var inspectionView = $('.inspection-view');
+                            if (inspectionView.length && inspectionView[0] == elem) {
+                                return false;
+                            }
+                            return true;
+                        };
+
+                        PageLayoutService.prototype.toggle = function () {
+                            var showDocked = !this.toggleDocked;
+                            this.toggleDocked = showDocked;
+                            this.build();
+                        };
+                        return PageLayoutService;
+                    })();
+                    services.PageLayoutService = PageLayoutService;
+
+                    var LayoutNode = (function (_super) {
+                        __extends(LayoutNode, _super);
+                        function LayoutNode(elem, cssName, level) {
+                            _super.call(this, elem.tagName, null);
+                            this.elem = elem;
+                            this.cssName = cssName;
+                            this.level = level;
+                            this.init(elem);
+                        }
+                        LayoutNode.prototype.init = function (elem) {
+                            this.x = elem.offsetLeft;
+                            this.y = elem.offsetTop;
+                            this.width = elem.offsetWidth;
+                            this.height = elem.offsetHeight;
+                        };
+                        return LayoutNode;
+                    })(proto.ng.modules.common.services.SiteNode);
+                    services.LayoutNode = LayoutNode;
+
+                    var LayoutExplorerRoot = (function (_super) {
+                        __extends(LayoutExplorerRoot, _super);
+                        function LayoutExplorerRoot(nodeName, root) {
+                            _super.call(this, nodeName, null);
+                            this.root = root;
+                            this.excludes = [];
+                        }
+                        LayoutExplorerRoot.prototype.check = function (elem) {
+                            var skipElem = false;
+
+                            if (this.excludes) {
+                                this.excludes.forEach(function (item) {
+                                    if (item == elem)
+                                        skipElem = true;
+                                });
+                            }
+
+                            if (!skipElem && this.filter) {
+                                skipElem = !this.filter(elem);
+                            }
+
+                            return !skipElem;
+                        };
+
+                        LayoutExplorerRoot.prototype.level = function (elem) {
+                            var lvl = 0;
+                            var ctx = elem;
+                            while (ctx != null && ctx != this.root) {
+                                lvl++;
+                                ctx = ctx.parentElement;
+                            }
+                            return lvl;
+                        };
+
+                        LayoutExplorerRoot.prototype.parse = function (elem, className) {
+                            if (typeof className === "undefined") { className = 'inner-region'; }
+                            if (!this.check(elem)) {
+                                return null;
+                            }
+
+                            var scope = angular.element(elem).isolateScope();
+                            if ($(elem).hasClass('ng-scope')) {
+                                className += ' ng-elem';
+                            }
+
+                            var lvl = this.level(elem);
+                            var info = new LayoutNode(elem, className, lvl);
+                            if (info.x === undefined || info.y === undefined || (info.width == 0 && info.height == 0)) {
+                                return null;
+                            }
+
+                            for (var i = 0; i < elem.childNodes.length; i++) {
+                                var child = this.parse(elem.childNodes[i]);
+                                if (child) {
+                                    info.children.push(child);
+                                }
+                            }
+
+                            return info;
+                        };
+                        return LayoutExplorerRoot;
+                    })(proto.ng.modules.common.services.SiteNode);
+                    services.LayoutExplorerRoot = LayoutExplorerRoot;
+                })(common.services || (common.services = {}));
+                var services = common.services;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../imports.d.ts" />
 // Constant object with default values
 angular.module('prototyped.ng.config', []).constant('appDefaultConfig', new proto.ng.modules.common.AppConfig()).constant('appConfigLoader', new proto.ng.modules.common.providers.AppConfigLoader()).provider('appConfig', ['appDefaultConfig', proto.ng.modules.common.providers.AppConfigProvider]);
@@ -3814,12 +3977,15 @@ var proto;
         (function (modules) {
             (function (explorer) {
                 var ExplorerViewController = (function () {
-                    function ExplorerViewController($rootScope, $scope, $q, navigation) {
+                    function ExplorerViewController($rootScope, $scope, $q, pageLayout) {
                         this.$rootScope = $rootScope;
                         this.$scope = $scope;
                         this.$q = $q;
-                        this.navigation = navigation;
+                        this.pageLayout = pageLayout;
                     }
+                    ExplorerViewController.prototype.toggleDockedRegion = function () {
+                        this.pageLayout.toggle();
+                    };
                     return ExplorerViewController;
                 })();
                 explorer.ExplorerViewController = ExplorerViewController;
@@ -4082,6 +4248,157 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (explorer) {
+                function LayoutViewerDirective() {
+                    return {
+                        restrict: 'EA',
+                        scope: {
+                            root: '=pageLayoutViewer'
+                        },
+                        replace: true,
+                        transclude: false,
+                        templateUrl: 'modules/explore/views/layout.tpl.html',
+                        controller: 'LayoutViewerController',
+                        controllerAs: 'viewCtrl',
+                        link: function (scope, element, attrs) {
+                            scope.setView(element[0]);
+                        }
+                    };
+                }
+                explorer.LayoutViewerDirective = LayoutViewerDirective;
+
+                var LayoutViewerController = (function () {
+                    function LayoutViewerController($rootScope, $scope, pageLayoutService) {
+                        var _this = this;
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.pageLayoutService = pageLayoutService;
+                        $scope.setView = function (view) {
+                            _this.view = view;
+                            _this.init(document.body);
+                        };
+                    }
+                    LayoutViewerController.prototype.init = function (root) {
+                        var _this = this;
+                        // Add the layout view to the excludes list
+                        this.pageLayoutService.addFilter(function (elem) {
+                            return elem == _this.view;
+                        });
+                        this.pageLayoutService.addCallback(function (rootNode) {
+                            _this.draw();
+                        });
+                        this.pageLayoutService.build();
+
+                        /* ToDo: get navigation working...
+                        this.navigationService['layoutNodes'] = [
+                        this.node,
+                        new proto.ng.modules.common.services.SiteNode('One', null),
+                        ];
+                        */
+                        // Load D3 libraries if not defined
+                        if (typeof d3 !== 'undefined') {
+                            this.start(d3);
+                        } else {
+                            console.log(' - Loading D3....');
+                            var url = 'https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js';
+                            $.getScript(url, function (data, textStatus, jqxhr) {
+                                console.log(' - D3 Loaded:', d3);
+                                _this.start(d3);
+                            });
+                        }
+                    };
+
+                    LayoutViewerController.prototype.start = function (d3) {
+                        var found = d3.select('#LayoutView .layoutGroup');
+                        if (found.length) {
+                            found.call(d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", function () {
+                                found.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+                            }));
+                        }
+                    };
+
+                    LayoutViewerController.prototype.draw = function () {
+                        var info = this.pageLayoutService.node;
+                        if (this.view) {
+                            // Set content with and height
+                            // Draw the background container
+                            var layout = this.drawElem(info);
+                            var background = this.drawElem({
+                                x: 0,
+                                y: 0,
+                                width: window.innerWidth,
+                                height: window.innerHeight,
+                                cssName: 'outer-region',
+                                children: [],
+                                level: -0.1
+                            });
+
+                            var group = $('<g class="layoutGroup"></g>')[0];
+                            if (background.length)
+                                group.appendChild(background[0]);
+                            if (layout)
+                                layout.forEach(function (item) {
+                                    return group.appendChild(item);
+                                });
+
+                            while (this.view.firstChild) {
+                                this.view.removeChild(this.view.firstChild);
+                            }
+                            this.view.appendChild(group);
+                            $(this.view).html(function () {
+                                return this.innerHTML;
+                            });
+
+                            if (typeof d3 !== 'undefined') {
+                                this.start(d3);
+                            }
+                        }
+                    };
+
+                    LayoutViewerController.prototype.drawElem = function (info) {
+                        var _this = this;
+                        var list = [];
+
+                        var zLevel = 8;
+                        var transform = '';
+                         {
+                            transform += 'translate(200, ' + (300 - (info.level || 0) * zLevel) + ') ';
+                            transform += 'scale(.6, .6) scale(1, .7) rotate(-30) ';
+                        }
+
+                        if (info.x !== undefined && info.y !== undefined) {
+                            var rect = $('<rect x="' + info.x + '" y="' + info.y + '" width="' + info.width + '" height="' + info.height + '" class="' + info.cssName + '" transform="' + transform + '" />');
+                            list.push(rect[0]);
+                        }
+
+                        if (info.children) {
+                            info.children.forEach(function (child) {
+                                var elems = _this.drawElem(child);
+                                if (elems && elems.length) {
+                                    elems.forEach(function (el) {
+                                        list.push(el);
+                                    });
+                                }
+                            });
+                        }
+
+                        return list;
+                    };
+                    return LayoutViewerController;
+                })();
+                explorer.LayoutViewerController = LayoutViewerController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../../imports.d.ts" />
 /// <reference path="../common/services/NavigationService.ts"/>
 /// <reference path="controllers/ExplorerLeftController.ts" />
@@ -4173,7 +4490,7 @@ angular.module('prototyped.explorer', [
         ]);
 
         $sceDelegateProvider.resourceUrlWhitelist(['**']);
-    }]).service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.FileBrowserViewController]).controller('ExternalLinksViewController', ['$rootScope', '$sce', '$q', 'navigationService', proto.ng.modules.explorer.ExternalLinksViewController]);
+    }]).service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService]).service('pageLayoutService', ['$q', 'navigationService', proto.ng.modules.common.services.PageLayoutService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).directive('pageLayoutViewer', ['$q', proto.ng.modules.explorer.LayoutViewerDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('LayoutViewerController', ['$rootScope', '$scope', 'pageLayoutService', proto.ng.modules.explorer.LayoutViewerController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'pageLayoutService', proto.ng.modules.explorer.ExplorerViewController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.FileBrowserViewController]).controller('ExternalLinksViewController', ['$rootScope', '$sce', '$q', 'navigationService', proto.ng.modules.explorer.ExternalLinksViewController]);
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />

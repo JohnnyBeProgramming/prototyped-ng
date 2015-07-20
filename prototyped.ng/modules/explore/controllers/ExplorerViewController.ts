@@ -7,7 +7,11 @@ module proto.ng.modules.explorer {
 
         public selected: proto.ng.modules.common.services.SiteNode;
 
-        constructor(private $rootScope, private $scope, private $q, public navigation: proto.ng.modules.common.services.NavigationService) {
+        constructor(private $rootScope, private $scope, private $q, public pageLayout: proto.ng.modules.common.services.PageLayoutService) {
+        }
+
+        public toggleDockedRegion() {
+            this.pageLayout.toggle();
         }
 
     }

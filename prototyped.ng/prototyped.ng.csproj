@@ -118,6 +118,7 @@
     <TypeScriptCompile Include="modules\common\providers\AppNodeProvider.ts" />
     <TypeScriptCompile Include="modules\common\providers\AppStateProvider.ts" />
     <TypeScriptCompile Include="modules\common\services\NavigationService.ts" />
+    <TypeScriptCompile Include="modules\common\services\PageLayoutService.ts" />
     <TypeScriptCompile Include="modules\config.ng.ts" />
     <TypeScriptCompile Include="modules\console\controllers\ConsoleController.ts" />
     <TypeScriptCompile Include="modules\console\module.ng.ts" />
@@ -128,6 +129,7 @@
     <TypeScriptCompile Include="modules\explore\controllers\ExplorerLeftController.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\ExplorerViewController.ts" />
     <TypeScriptCompile Include="modules\explore\controllers\ExternalLinksViewController.ts" />
+    <TypeScriptCompile Include="modules\explore\controllers\LayoutViewerController.ts" />
     <TypeScriptCompile Include="modules\explore\module.ng.ts" />
     <Content Include="modules\about\views\connections.tpl.html" />
     <Content Include="modules\about\views\contact.tpl.html" />
@@ -143,6 +145,7 @@
     <Content Include="modules\editor\views\main.tpl.html" />
     <Content Include="modules\explore\views\externals.tpl.html" />
     <Content Include="modules\console\views\main.tpl.html" />
+    <Content Include="modules\explore\views\layout.tpl.html" />
     <Content Include="views\common\components\contents.tpl.html" />
     <Content Include="views\common\components\footer.tpl.html" />
     <Content Include="views\common\components\left.tpl.html" />
@@ -208,6 +211,7 @@
   <ItemGroup>
     <Content Include="assets\less\images.offline.less" />
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>

@@ -108,11 +108,14 @@ angular.module('prototyped.explorer', [
     }])
 
     .service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService])
+    .service('pageLayoutService', ['$q', 'navigationService', proto.ng.modules.common.services.PageLayoutService])
 
     .directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective])
+    .directive('pageLayoutViewer', ['$q', proto.ng.modules.explorer.LayoutViewerDirective])
 
     .controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController])
+    .controller('LayoutViewerController', ['$rootScope', '$scope', 'pageLayoutService', proto.ng.modules.explorer.LayoutViewerController])
     .controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController])
-    .controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.ExplorerViewController])
+    .controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'pageLayoutService', proto.ng.modules.explorer.ExplorerViewController])
     .controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.FileBrowserViewController])
     .controller('ExternalLinksViewController', ['$rootScope', '$sce', '$q', 'navigationService', proto.ng.modules.explorer.ExternalLinksViewController])

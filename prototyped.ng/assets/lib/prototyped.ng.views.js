@@ -204,10 +204,64 @@ angular.module('prototyped.ng.views', []).run(['$templateCache', function($templ
     '            flex-grow: 1;\n' +
     '            flex-shrink: 0;\n' +
     '        }</style><div class="btn-group btn-group-sm dock-tight"><div class="input-group input-group-sm"><label for=txtFileName class=input-group-addon><i class="fa fa-globe"></i></label><input id=txtExternalUrl class="cmd-input form-control" tabindex=1 value="{{ linksCtrl.selected.data }}" placeholder="Location not set..." ng-readonly="true || !linksCtrl.selected.data" ng-changed="alert(this)"> <a href="" class="btn btn-default input-group-addon" ng-click=linksCtrl.refreshExternal() ng-disabled=!linksCtrl.selected><i class="fa fa-refresh"></i></a> <a href="" class="btn btn-default input-group-addon" ng-click=linksCtrl.openExternal() ng-disabled=!linksCtrl.selected><i class="fa fa-external-link"></i></a></div></div><iframe id=ExternalExplorerPanel frameborder=0 class=external-iframe ng-if=linksCtrl.selected onerror=console.error(event) ng-src="{{ linksCtrl.selected.data | trustedUrl }}">IFrame not available</iframe></div>');
+  $templateCache.put('modules/explore/views/layout.tpl.html',
+    '<svg id=LayoutView class=region-overlay><rect transform="translate(200, 300) scale(.6, .6) scale(1, .7) rotate(-30)" class=region x=0 y=0 width=1024 height="768"><rect transform="translate(200, 290) scale(.6, .6) scale(1, .7) rotate(-30)" class=region x=10 y=10 width=200 height="720"></svg>');
   $templateCache.put('modules/explore/views/left.tpl.html',
     '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-arrow-circle-left"></i>&nbsp; Site Map Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.explore\'"><abn:tree tree-data=navigation.siteExplorer.children icon-leaf="fa fa-file-o" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.externalLinks><a ui:sref=proto.links><i class="fa fa-globe"></i>&nbsp; External Links</a></li><li class=list-group-item style="padding: 6px 0; overflow-x:hidden" ng-if="navigation.externalLinks && state.current.name == \'proto.links\'"><abn:tree tree-data=navigation.externalLinks.children icon-leaf="fa fa-globe" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.fileSystem><a ui:sref=proto.browser><i class="fa fa-hdd-o"></i>&nbsp; File System Browser</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.fileSystem && state.current.name == \'proto.browser\'"><style resx:import=assets/css/images.min.css></style><div class=info-overview ng-if=!appNode.active><div class=panel-icon-lg><div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px"></div></div></div><div ng-if="appNode.active && navigation.fileSystem"><abn:tree tree-data=navigation.fileSystem.children icon-leaf="fa fa-folder" icon-expand="fa fa-folder" icon-collapse="fa fa-folder-open" expand-level=2></abn:tree></div></li><li class=list-group-item ui:sref-active=active ng-if=navigation.clientStates><a ui:sref=proto.routing><i class="fa fa-tasks"></i>&nbsp; UI State &amp; Routing</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.clientStates && state.current.name == \'proto.routing\'"><abn:tree tree-data=navigation.clientStates icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
   $templateCache.put('modules/explore/views/main.tpl.html',
-    '<div class=contents style="width: 100%"><h5>Explorer</h5><div class=thumbnail ng-if=exploreCtrl.selected><br><br><div class=row><div class=col-md-9><form class=form-horizontal><div class=form-group><label for=inputState class="col-sm-2 control-label">State</label><div class=col-sm-10><input class=form-control id=inputState placeholder=empty ng-model=exploreCtrl.selected.name readonly></div></div><div class=form-group><label for=inputPath class="col-sm-2 control-label">Path</label><div class=col-sm-10><input class=form-control id=inputPath placeholder="not set" ng-model=exploreCtrl.selected.url readonly></div></div><div class=form-group><div class="col-sm-offset-2 col-sm-10"><div class=checkbox><label><input type=checkbox ng-model=exploreCtrl.selected.abstract> Abstract</label></div></div></div><div class=form-group ng-if=exploreCtrl.selected.name><div class="col-sm-offset-2 col-sm-10"><a class="btn btn-default" ng-class="{ \'btn-primary\': !exploreCtrl.selected.abstract }" ui-sref="{{ exploreCtrl.selected.name }}" ng-disabled=exploreCtrl.selected.abstract>Got to page</a></div></div></form></div><div class=col-md-3>{{ exploreCtrl.selection.views }}</div></div></div></div>');
+    '<div class=inspection-view style="width: 100%"><style>.ui-view-main {\n' +
+    '            margin: 0 !important;\n' +
+    '            padding: 0 !important;\n' +
+    '            position: relative;\n' +
+    '        }\n' +
+    '\n' +
+    '        .ui-view-left {\n' +
+    '            margin-right: 0 !important;\n' +
+    '        }\n' +
+    '\n' +
+    '        .inspection-view {\n' +
+    '            margin: 0;\n' +
+    '            left: 0;\n' +
+    '            right: 0;\n' +
+    '            bottom: 0;\n' +
+    '            top: 0;\n' +
+    '            display: flex;\n' +
+    '            position: absolute;\n' +
+    '            flex-direction: column;\n' +
+    '        }\n' +
+    '\n' +
+    '        .inspection-contents {\n' +
+    '            margin: 0;\n' +
+    '            width: 100%;\n' +
+    '            flex-grow: 1;\n' +
+    '            flex-shrink: 0;\n' +
+    '        }\n' +
+    '\n' +
+    '        .region-overlay {\n' +
+    '            fill: none;\n' +
+    '            pointer-events: all;\n' +
+    '        }\n' +
+    '\n' +
+    '        .outer-region {\n' +
+    '            fill: rgb(190, 190, 190);\n' +
+    '            stroke: rgba(0, 0, 0, 1);\n' +
+    '            stroke-width: 2;\n' +
+    '        }\n' +
+    '\n' +
+    '        .inner-region {\n' +
+    '            fill: rgba(0, 148, 255, 0.35);\n' +
+    '            stroke: rgba(0, 0, 0, 0.35);\n' +
+    '            stroke-width: 1;\n' +
+    '        }\n' +
+    '            .inner-region.ng-elem {\n' +
+    '                fill: rgba(49, 255, 0, 0.35);\n' +
+    '                stroke: rgba(0, 0, 0, 0.75);\n' +
+    '            }\n' +
+    '\n' +
+    '            .inner-region:hover {\n' +
+    '                fill: rgba(0, 21, 255, 0.75);\n' +
+    '                stroke: rgba(0, 0, 0, 0.75);\n' +
+    '            }</style><page-layout-viewer class=inspection-contents></page-layout-viewer><span style="position: absolute; right: 8px; top: 8px"><a href="" ng-click=exploreCtrl.toggleDockedRegion()>Toggle Docked</a></span></div>');
   $templateCache.put('views/common/components/contents.tpl.html',
     '<div id=contents class=contents><div id=left class="ui-view-left ng-cloak" ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div><div id=main class=ui-view-main ui:view=main><em class=inactive-fill-text ng:if=false><i class="fa fa-spinner fa-spin"></i> Loading...</em> <b class="inactive-fill-text ng-cloak" ng:if="!(state.current.views[\'main\'] || state.current.views[\'main@\'])"><i class="fa fa-exclamation-triangle faa-flash glow-orange"></i> Page not found</b></div></div>');
   $templateCache.put('views/common/components/footer.tpl.html',
