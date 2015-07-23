@@ -722,22 +722,45 @@
         left: 0;
         right: 0;
         bottom: 0;
-        font-size: 11px;
+        font-size: 8px;
+        font-family: monospace, Courier New, Courier;
         position: absolute;
         z-index: 2110000000;
 
         .bar {
-            border-top: solid 1px #000;
             color: #000;
-            padding: 3px;
+            padding: 2px;
+            border-top: solid 1px #000;
         }
 
         .info {
+            border-top: solid 1px #0094ff;
             background: rgba(236, 246, 252, 0.5);
+
+            a {
+                color: #0094ff;
+                font-weight: normal;
+            }
         }
 
         .warn {
+            border-top: solid 1px #ffd800;
             background: rgba(254, 243, 183, 0.5);
+
+            a {
+                color: #ff6a00;
+                font-weight: bold;
+            }
+        }
+
+        .error {
+            border-top: solid 1px #ff0000;
+            background: rgba(255, 162, 162, 0.50);
+
+            a {
+                color: #A00000;
+                font-weight: bold;
+            }
         }
     }
 }

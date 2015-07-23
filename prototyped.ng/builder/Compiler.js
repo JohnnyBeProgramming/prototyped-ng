@@ -17,7 +17,7 @@ try {
         base: '../',
         dest: 'compiled/',
         clearHtml: false,
-        mergeGroups: true,
+        mergeGroups: false,
         queueActions: true,
         minifyScripts: true,
         scriptElements: true,
@@ -44,6 +44,9 @@ try {
     var protoStrPath = './node_modules/proto-js-string/StringPrototyped.js';
     var protoStr = fs.readFileSync(protoStrPath, 'utf-8').replace(/^\uFEFF/, '');
 
+    var remoteScrPath = './node_modules/proto-js-loader/ScriptLoader.js';
+    var remoteScr = fs.readFileSync(remoteScrPath, 'utf-8').replace(/^\uFEFF/, '');
+
     var files = fs.readdirSync(targetPath);
     if (files) {
         files.sort();
@@ -53,9 +56,9 @@ try {
             })
             .forEach(function (file) {
                 console.log('   + ' + file);
-                var srcPath = path.join(process.cwd(), '../') + file;
+                var srcPath = path.join(process.cwd(), options.base, file);
                 var contents = fs.readFileSync(srcPath, 'utf-8');
-                var promise = compiler.gen(file, contents)
+                var promise = compiler.gen(file, contents)                    
                     .then(function (output) {
                         var opts = compiler.ctx(options);
                         try {
@@ -64,10 +67,6 @@ try {
                             if (output) {
                                 var contents = JSON.stringify(output, null, 4);
                                 var targetPath = path.join((opts.dest || process.cwd()), 'data/');
-                                if (!fs.existsSync(targetPath)) {
-                                    fs.mkdirSync(targetPath);
-                                }
-
                                 var targetJSON = path.join(targetPath, file + '.json');
                                 if (!fs.existsSync(targetPath)) {
                                     fs.mkdirSync(targetPath);
@@ -82,12 +81,33 @@ try {
                         return output;
                     })
                     .then(function (output) {
+                        try {
+                            // -------------------------------------------------------------------------------
+                            // Generate encoded html string
+                            if (contents) {
+                                var targetPath = path.join((opts.dest || process.cwd()), 'encoded/');
+                                if (!fs.existsSync(targetPath)) {
+                                    fs.mkdirSync(targetPath);
+                                }
+
+                                var targetData = path.join(targetPath, file + '.encoded');
+                                var encodedData = 'data:text/html;charset=utf-8,' + encodeURIComponent(contents);
+                                fs.writeFileSync(targetData, encodedData);
+                            }
+                            // -------------------------------------------------------------------------------
+                        } catch (ex) {
+                            console.log('Error: ' + ex.message);
+                        }
+
+                        return output;
+                    })
+                    .then(function (output) {
                         // Convert JSON to Javascript output
                         return compiler.genScript(file, output, options);
                     })
                     .then(function (fileContents) {
                         // Generate from template (if exists)
-                        return compiler.genTemplate(fileContents, protoStr);
+                        return compiler.genTemplate(fileContents, protoStr, remoteScr);
                     })
                     .then(function (fileContents) {
                         // Try to minify the script to reduce package size
@@ -128,15 +148,17 @@ try {
                             // Minify for output href link (removes illigal chars)
                             var opts = compiler.ctx(options);
                             if (!opts.minifyScripts) {
-                                output = compiler.genMinified(output);
+                                // Get minified version
+                                output = compiler
+                                    .genMinified(output)
+                                    .replace(/( *\r\n *)/g, ' ');
+
+                            } else {
+                                // Ensure no new lines
+                                output = output
+                                    .replace(/( *\r\n *)/g, ' ')
+
                             }
-
-                            // Ensure no new lines or white spaces
-                            output = output
-                                .replace(/( +)/g, ' ')
-                                .replace(/(\/\*[\w\'\s\r\n\*]*\*\/)|(\/\/[\w\s\']*)|(\<![\-\-\s\w\>\/]*\>)/g, '')
-                                .replace(/( *\r\n *)/g, '')
-
                             targets[file] = output;
                         }
                         // -------------------------------------------------------------------------------
@@ -147,16 +169,23 @@ try {
             });
     }
 
+    var opts = compiler.ctx(options);
     var wait = q.all(promises)
         .then(function () {
             console.log('-------------------------------------------------------------------------------');
             console.log(' - Generating Index...');
 
-            var opts = compiler.ctx(options);
+            fs.writeFileSync(opts.dest + 'ScriptLoader.js', remoteScr);
+
             compiler.genIndex(opts.dest + 'index.html', targets);
 
             console.log(' - Done.');
             console.log('-------------------------------------------------------------------------------');
+        })
+        .then(function () {
+            var url = path.join(process.cwd(), opts.dest, 'index.html');
+            var childProcess = require('child_process');
+            childProcess.exec('start chrome --kiosk ' + JSON.stringify(url));
         });
 
 } catch (ex) {
