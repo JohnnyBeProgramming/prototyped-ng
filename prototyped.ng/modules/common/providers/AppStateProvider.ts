@@ -79,9 +79,13 @@
                     }
                 }
 
-                // Configure the pretty urls for HTML5 mode
-                this.$locationProvider.html5Mode(this.appState.html5);
-
+                try {
+                    // Configure the pretty urls for HTML5 mode (if available)
+                    var mode = (window.location.protocol == 'file:') ? false : this.appState.html5;
+                    this.$locationProvider.html5Mode(mode);
+                } catch (ex) {
+                    console.warn('Warning: $locationProvider.html5Mode not set.', ex.message);
+                }
             } catch (ex) {
                 throw ex;
             }

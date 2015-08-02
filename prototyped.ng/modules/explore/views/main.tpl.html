@@ -1,5 +1,11 @@
 <div class="inspection-view" style="width: 100%">
     <style>
+        .overlay-group {
+        }
+
+        .contents-group {
+        }
+
         .ui-view-main {
             margin: 0 !important;
             padding: 0 !important;
@@ -34,27 +40,68 @@
         }
 
         .outer-region {
-            fill: rgb(190, 190, 190);
+            fill: rgba(190, 190, 190, 0.75);
+            stroke: rgba(0, 0, 0, 0.75);
+            stroke-width: 2;
+        }
+
+        .window-region {
+            fill: rgba(225, 225, 225, 0.50);
             stroke: rgba(0, 0, 0, 1);
             stroke-width: 2;
         }
 
         .inner-region {
-            fill: rgba(0, 148, 255, 0.35);
+            fill: rgba(186, 186, 186, 0.5);
             stroke: rgba(0, 0, 0, 0.35);
             stroke-width: 1;
         }
+
             .inner-region.ng-elem {
-                fill: rgba(49, 255, 0, 0.35);
+                fill: rgba(118, 255, 85, 0.50);
+                stroke: rgba(48, 168, 0, 0.91);
+            }
+
+            .inner-region.ng-dataz {
+                fill: rgba(255, 0, 226, 0.50);
+                stroke: rgba(208, 0, 184, 0.71);
+            }
+
+            .inner-region.ng-link {
+                fill: rgba(0, 161, 255, 0.50);
                 stroke: rgba(0, 0, 0, 0.75);
+            }
+
+            .inner-region.ng-form {
+                fill: rgba(255, 250, 0, 0.5);
+                stroke: rgb(255, 187, 0);
+            }
+
+            .inner-region.ng-label {
+                fill: rgba(255, 187, 0, 0.25);
+                stroke: rgb(255, 216, 0);
+            }
+
+            .inner-region.ng-input {
+                fill: rgba(255, 187, 0, 0.75);
+                stroke: rgb(255, 106, 0);
+            }
+
+            .inner-region.ng-button {
+                fill: rgba(0, 38, 255, 0.75);
+                stroke: rgb(0, 18, 124);
+                stroke-width: 2px;
+            }
+
+            .inner-region.ng-submit {
+            }
+
+            .inner-region.ng-reset {
             }
 
             .inner-region:hover {
-                fill: rgba(0, 21, 255, 0.75);
-                stroke: rgba(0, 0, 0, 0.75);
+                stroke-width: 3px;
             }
-
-
     </style>
     <page-layout-viewer class="inspection-contents">
     </page-layout-viewer>

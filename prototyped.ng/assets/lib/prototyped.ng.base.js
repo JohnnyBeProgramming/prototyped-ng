@@ -1624,6 +1624,24 @@ var proto;
     })(proto.ng || (proto.ng = {}));
     var ng = proto.ng;
 })(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (controllers) {
+                    function DockedController($document, scope, element, attr) {
+                    }
+                    controllers.DockedController = DockedController;
+                })(common.controllers || (common.controllers = {}));
+                var controllers = common.controllers;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
 /// <reference path="../../../imports.d.ts" />
 var proto;
 (function (proto) {
@@ -3039,8 +3057,13 @@ var proto;
                                     }
                                 }
 
-                                // Configure the pretty urls for HTML5 mode
-                                this.$locationProvider.html5Mode(this.appState.html5);
+                                try  {
+                                    // Configure the pretty urls for HTML5 mode (if available)
+                                    var mode = (window.location.protocol == 'file:') ? false : this.appState.html5;
+                                    this.$locationProvider.html5Mode(mode);
+                                } catch (ex) {
+                                    console.warn('Warning: $locationProvider.html5Mode not set.', ex.message);
+                                }
                             } catch (ex) {
                                 throw ex;
                             }
@@ -3142,6 +3165,7 @@ var proto;
                             if (!$(elem).is(':visible')) {
                                 return false;
                             }
+
                             if (!this.toggleDocked) {
                                 var isDockContainer = $(elem).hasClass('docked-container');
                                 return !isDockContainer;
@@ -3173,8 +3197,14 @@ var proto;
                             this.init(elem);
                         }
                         LayoutNode.prototype.init = function (elem) {
-                            this.x = elem.offsetLeft;
-                            this.y = elem.offsetTop;
+                            var rect = elem.getBoundingClientRect ? elem.getBoundingClientRect() : null;
+                            if (rect) {
+                                this.x = rect.left;
+                                this.y = rect.top;
+                            } else {
+                                this.x = elem.offsetLeft;
+                                this.y = elem.offsetTop;
+                            }
                             this.width = elem.offsetWidth;
                             this.height = elem.offsetHeight;
                         };
@@ -3222,9 +3252,33 @@ var proto;
                                 return null;
                             }
 
+                            if (elem.tagName == 'A') {
+                                className += ' ng-link';
+                            }
+                            if (elem.tagName == 'FORM') {
+                                className += ' ng-form';
+                            }
+                            if (elem.tagName == 'LABEL') {
+                                className += ' ng-label';
+                            }
+                            if ($(elem).is(':input')) {
+                                className += ' ng-input';
+                            }
+                            if ($(elem).is(':button')) {
+                                className += ' ng-button';
+
+                                if ($(elem).attr('type') == 'submit') {
+                                    className += ' ng-submit';
+                                } else if ($(elem).is(':reset')) {
+                                    className += ' ng-reset';
+                                }
+                            }
+
                             var scope = angular.element(elem).isolateScope();
                             if ($(elem).hasClass('ng-scope')) {
                                 className += ' ng-elem';
+                            } else if (jQuery.hasData(elem) && !jQuery.isEmptyObject(jQuery.data(elem))) {
+                                className += ' ng-data';
                             }
 
                             var lvl = this.level(elem);
@@ -4249,6 +4303,7 @@ var proto;
     var ng = proto.ng;
 })(proto || (proto = {}));
 ///<reference path="../../../imports.d.ts"/>
+
 var proto;
 (function (proto) {
     (function (ng) {
@@ -4300,63 +4355,91 @@ var proto;
                         new proto.ng.modules.common.services.SiteNode('One', null),
                         ];
                         */
+                        $(document).scroll(function () {
+                            _this.draw();
+                        });
+
                         // Load D3 libraries if not defined
                         if (typeof d3 !== 'undefined') {
                             this.start(d3);
                         } else {
-                            console.log(' - Loading D3....');
                             var url = 'https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js';
-                            $.getScript(url, function (data, textStatus, jqxhr) {
-                                console.log(' - D3 Loaded:', d3);
-                                _this.start(d3);
-                            });
-                        }
-                    };
-
-                    LayoutViewerController.prototype.start = function (d3) {
-                        var found = d3.select('#LayoutView .layoutGroup');
-                        if (found.length) {
-                            found.call(d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", function () {
-                                found.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-                            }));
+                            if (typeof remoteScripts !== 'undefined') {
+                                remoteScripts.define(url, function () {
+                                    return typeof d3 !== 'undefined';
+                                }, function () {
+                                    _this.start(d3);
+                                });
+                            } else {
+                                $.getScript(url, function (data, textStatus, jqxhr) {
+                                    _this.start(d3);
+                                });
+                            }
                         }
                     };
 
                     LayoutViewerController.prototype.draw = function () {
                         var info = this.pageLayoutService.node;
                         if (this.view) {
-                            // Set content with and height
+                            //var overlay = this.getOverlay();
                             // Draw the background container
-                            var layout = this.drawElem(info);
-                            var background = this.drawElem({
-                                x: 0,
-                                y: 0,
-                                width: window.innerWidth,
-                                height: window.innerHeight,
+                            var contents = this.getContents();
+                            while (contents.firstChild) {
+                                contents.removeChild(contents.firstChild);
+                            }
+
+                            // Add background and window
+                            contents.appendChild(this.drawElem({
+                                x: 0 - document.body.scrollLeft,
+                                y: 0 - document.body.scrollTop,
+                                width: document.body.offsetWidth,
+                                height: document.body.offsetHeight,
                                 cssName: 'outer-region',
                                 children: [],
                                 level: -0.1
-                            });
+                            })[0]);
+                            contents.appendChild(this.drawElem({
+                                x: document.body.scrollLeft,
+                                y: document.body.scrollTop,
+                                width: window.innerWidth,
+                                height: window.innerHeight,
+                                cssName: 'window-region',
+                                children: [],
+                                level: 0.1
+                            })[0]);
 
-                            var group = $('<g class="layoutGroup"></g>')[0];
-                            if (background.length)
-                                group.appendChild(background[0]);
-                            if (layout)
-                                layout.forEach(function (item) {
-                                    return group.appendChild(item);
+                            // Add all the elements
+                            var layout = this.drawElem(info);
+                            if (layout) {
+                                layout = layout.sort(function (a, b) {
+                                    return parseFloat(a.getAttribute('z')) - parseFloat(b.getAttribute('z'));
                                 });
+                                layout.forEach(function (item, i) {
+                                    contents.appendChild(item);
+                                });
+                            }
 
                             while (this.view.firstChild) {
                                 this.view.removeChild(this.view.firstChild);
                             }
-                            this.view.appendChild(group);
+                            this.view.appendChild(this.getContents());
                             $(this.view).html(function () {
                                 return this.innerHTML;
                             });
 
+                            // Hook up the scrolling
                             if (typeof d3 !== 'undefined') {
                                 this.start(d3);
                             }
+                        }
+                    };
+
+                    LayoutViewerController.prototype.start = function (d3) {
+                        var found = d3.select('#LayoutView .contents-group');
+                        if (found.length) {
+                            found.call(d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", function () {
+                                found.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+                            }));
                         }
                     };
 
@@ -4364,7 +4447,9 @@ var proto;
                         var _this = this;
                         var list = [];
 
-                        var zLevel = 8;
+                        var zLevel = 2;
+                        var x = info.x - document.body.scrollLeft;
+                        var y = info.y - document.body.scrollTop;
                         var transform = '';
                          {
                             transform += 'translate(200, ' + (300 - (info.level || 0) * zLevel) + ') ';
@@ -4372,7 +4457,7 @@ var proto;
                         }
 
                         if (info.x !== undefined && info.y !== undefined) {
-                            var rect = $('<rect x="' + info.x + '" y="' + info.y + '" width="' + info.width + '" height="' + info.height + '" class="' + info.cssName + '" transform="' + transform + '" />');
+                            var rect = $('<rect x="' + x + '" y="' + y + '" z="' + info.level + '" width="' + info.width + '" height="' + info.height + '" class="' + info.cssName + '" transform="' + transform + '" />');
                             list.push(rect[0]);
                         }
 
@@ -4388,6 +4473,22 @@ var proto;
                         }
 
                         return list;
+                    };
+
+                    LayoutViewerController.prototype.getOverlay = function () {
+                        if (!this.overlayGroup) {
+                            this.overlayGroup = $('<g class="overlay-group"></g>')[0];
+                            this.view.appendChild(this.overlayGroup);
+                        }
+                        return this.overlayGroup;
+                    };
+
+                    LayoutViewerController.prototype.getContents = function () {
+                        if (!this.contentsGroup) {
+                            this.contentsGroup = $('<g class="contents-group"></g>')[0];
+                            this.view.appendChild(this.contentsGroup);
+                        }
+                        return this.contentsGroup;
                     };
                     return LayoutViewerController;
                 })();
@@ -4490,7 +4591,25 @@ angular.module('prototyped.explorer', [
         ]);
 
         $sceDelegateProvider.resourceUrlWhitelist(['**']);
-    }]).service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService]).service('pageLayoutService', ['$q', 'navigationService', proto.ng.modules.common.services.PageLayoutService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).directive('pageLayoutViewer', ['$q', proto.ng.modules.explorer.LayoutViewerDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('LayoutViewerController', ['$rootScope', '$scope', 'pageLayoutService', proto.ng.modules.explorer.LayoutViewerController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'pageLayoutService', proto.ng.modules.explorer.ExplorerViewController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.FileBrowserViewController]).controller('ExternalLinksViewController', ['$rootScope', '$sce', '$q', 'navigationService', proto.ng.modules.explorer.ExternalLinksViewController]);
+    }]).service('navigationService', ['$state', 'appState', proto.ng.modules.common.services.NavigationService]).service('pageLayoutService', ['$q', 'navigationService', proto.ng.modules.common.services.PageLayoutService]).directive('protoAddressBar', ['$q', proto.ng.modules.explorer.AddressBarDirective]).directive('pageLayoutViewer', ['$q', proto.ng.modules.explorer.LayoutViewerDirective]).controller('AddressBarController', ['$rootScope', '$scope', '$q', proto.ng.modules.explorer.AddressBarController]).controller('LayoutViewerController', ['$rootScope', '$scope', 'pageLayoutService', proto.ng.modules.explorer.LayoutViewerController]).controller('ExplorerLeftController', ['$rootScope', '$scope', 'navigationService', proto.ng.modules.explorer.ExplorerLeftController]).controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'pageLayoutService', proto.ng.modules.explorer.ExplorerViewController]).controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.FileBrowserViewController]).controller('ExternalLinksViewController', ['$rootScope', '$sce', '$q', 'navigationService', proto.ng.modules.explorer.ExternalLinksViewController]).run(function () {
+    function checkScroll() {
+        var element = $('.docked-container');
+        if (element) {
+            element.css({
+                top: document.body.scrollTop,
+                left: document.body.scrollLeft,
+                right: 0 - document.body.scrollLeft,
+                bottom: 0 - document.body.scrollTop
+            });
+        }
+    }
+    ;
+
+    $(document).scroll(function () {
+        checkScroll();
+    });
+    checkScroll();
+});
 /// <reference path="../imports.d.ts" />
 /// <reference path="../modules/config.ng.ts" />
 /// <reference path="../modules/about/module.ng.ts" />

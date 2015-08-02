@@ -50,7 +50,7 @@ angular.module('prototyped.explorer', [
                     { label: 'Clean & Exit', icon: 'fa fa-recycle', state: 'modules.clear', },
                 ],
                 */
-            })            
+            })
             .state('proto.browser', {
                 url: '^/browser',
                 views: {
@@ -100,7 +100,7 @@ angular.module('prototyped.explorer', [
     }])
     .config(['$sceDelegateProvider', function ($sceDelegateProvider) {
         $sceDelegateProvider.resourceUrlWhitelist([
-            // Allow same origin resource loads.
+        // Allow same origin resource loads.
             'self',
         ]);
 
@@ -119,3 +119,25 @@ angular.module('prototyped.explorer', [
     .controller('ExplorerViewController', ['$rootScope', '$scope', '$q', 'pageLayoutService', proto.ng.modules.explorer.ExplorerViewController])
     .controller('BrowserViewController', ['$rootScope', '$scope', '$q', 'navigationService', proto.ng.modules.explorer.FileBrowserViewController])
     .controller('ExternalLinksViewController', ['$rootScope', '$sce', '$q', 'navigationService', proto.ng.modules.explorer.ExternalLinksViewController])
+    
+    .run(() => {
+
+        function checkScroll() {
+            var element = $('.docked-container');
+            if (element) {
+                element.css({
+                    top: document.body.scrollTop,
+                    left: document.body.scrollLeft,
+                    right: 0 - document.body.scrollLeft,
+                    bottom: 0 - document.body.scrollTop,
+                });
+            }
+        };
+
+        $(document).scroll(function () {
+            checkScroll();
+        });
+        checkScroll();
+
+    })
+    

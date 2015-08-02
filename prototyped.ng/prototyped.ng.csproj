@@ -56,6 +56,7 @@
     <Content Include="assets\lib\vend\angular\angular-animate.js" />
     <Content Include="assets\lib\vend\angular\angular.js" />
     <Content Include="assets\lib\vend\chance\chance.min.js" />
+    <Content Include="assets\lib\vend\firebase\firebase.js" />
     <Content Include="assets\lib\vend\jquery\jquery-2.1.3.min.js" />
     <Content Include="builder\compiled\index.html" />
     <Content Include="builder\compiled\script\index.html.js" />
@@ -92,6 +93,7 @@
     <TypeScriptCompile Include="modules\common\AppState.ts" />
     <TypeScriptCompile Include="modules\common\AppConfig.ts" />
     <TypeScriptCompile Include="modules\common\controllers\CardViewController.ts" />
+    <TypeScriptCompile Include="modules\common\controllers\DockedController.ts" />
     <TypeScriptCompile Include="modules\common\directives\AppCleanDirective.ts" />
     <TypeScriptCompile Include="modules\common\directives\AppCloseDirective.ts" />
     <TypeScriptCompile Include="modules\common\directives\AppDebugDirective.ts" />

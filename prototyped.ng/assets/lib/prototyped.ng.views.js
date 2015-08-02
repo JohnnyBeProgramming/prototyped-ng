@@ -205,11 +205,17 @@ angular.module('prototyped.ng.views', []).run(['$templateCache', function($templ
     '            flex-shrink: 0;\n' +
     '        }</style><div class="btn-group btn-group-sm dock-tight"><div class="input-group input-group-sm"><label for=txtFileName class=input-group-addon><i class="fa fa-globe"></i></label><input id=txtExternalUrl class="cmd-input form-control" tabindex=1 value="{{ linksCtrl.selected.data }}" placeholder="Location not set..." ng-readonly="true || !linksCtrl.selected.data" ng-changed="alert(this)"> <a href="" class="btn btn-default input-group-addon" ng-click=linksCtrl.refreshExternal() ng-disabled=!linksCtrl.selected><i class="fa fa-refresh"></i></a> <a href="" class="btn btn-default input-group-addon" ng-click=linksCtrl.openExternal() ng-disabled=!linksCtrl.selected><i class="fa fa-external-link"></i></a></div></div><iframe id=ExternalExplorerPanel frameborder=0 class=external-iframe ng-if=linksCtrl.selected onerror=console.error(event) ng-src="{{ linksCtrl.selected.data | trustedUrl }}">IFrame not available</iframe></div>');
   $templateCache.put('modules/explore/views/layout.tpl.html',
-    '<svg id=LayoutView class=region-overlay><rect transform="translate(200, 300) scale(.6, .6) scale(1, .7) rotate(-30)" class=region x=0 y=0 width=1024 height="768"><rect transform="translate(200, 290) scale(.6, .6) scale(1, .7) rotate(-30)" class=region x=10 y=10 width=200 height="720"></svg>');
+    '<svg id=LayoutView class=region-overlay></svg>');
   $templateCache.put('modules/explore/views/left.tpl.html',
     '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-arrow-circle-left"></i>&nbsp; Site Map Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.explore\'"><abn:tree tree-data=navigation.siteExplorer.children icon-leaf="fa fa-file-o" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.externalLinks><a ui:sref=proto.links><i class="fa fa-globe"></i>&nbsp; External Links</a></li><li class=list-group-item style="padding: 6px 0; overflow-x:hidden" ng-if="navigation.externalLinks && state.current.name == \'proto.links\'"><abn:tree tree-data=navigation.externalLinks.children icon-leaf="fa fa-globe" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.fileSystem><a ui:sref=proto.browser><i class="fa fa-hdd-o"></i>&nbsp; File System Browser</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.fileSystem && state.current.name == \'proto.browser\'"><style resx:import=assets/css/images.min.css></style><div class=info-overview ng-if=!appNode.active><div class=panel-icon-lg><div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px"></div></div></div><div ng-if="appNode.active && navigation.fileSystem"><abn:tree tree-data=navigation.fileSystem.children icon-leaf="fa fa-folder" icon-expand="fa fa-folder" icon-collapse="fa fa-folder-open" expand-level=2></abn:tree></div></li><li class=list-group-item ui:sref-active=active ng-if=navigation.clientStates><a ui:sref=proto.routing><i class="fa fa-tasks"></i>&nbsp; UI State &amp; Routing</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.clientStates && state.current.name == \'proto.routing\'"><abn:tree tree-data=navigation.clientStates icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
   $templateCache.put('modules/explore/views/main.tpl.html',
-    '<div class=inspection-view style="width: 100%"><style>.ui-view-main {\n' +
+    '<div class=inspection-view style="width: 100%"><style>.overlay-group {\n' +
+    '        }\n' +
+    '\n' +
+    '        .contents-group {\n' +
+    '        }\n' +
+    '\n' +
+    '        .ui-view-main {\n' +
     '            margin: 0 !important;\n' +
     '            padding: 0 !important;\n' +
     '            position: relative;\n' +
@@ -243,24 +249,67 @@ angular.module('prototyped.ng.views', []).run(['$templateCache', function($templ
     '        }\n' +
     '\n' +
     '        .outer-region {\n' +
-    '            fill: rgb(190, 190, 190);\n' +
+    '            fill: rgba(190, 190, 190, 0.75);\n' +
+    '            stroke: rgba(0, 0, 0, 0.75);\n' +
+    '            stroke-width: 2;\n' +
+    '        }\n' +
+    '\n' +
+    '        .window-region {\n' +
+    '            fill: rgba(103, 103, 103, 0.25);\n' +
     '            stroke: rgba(0, 0, 0, 1);\n' +
     '            stroke-width: 2;\n' +
     '        }\n' +
     '\n' +
     '        .inner-region {\n' +
-    '            fill: rgba(0, 148, 255, 0.35);\n' +
+    '            fill: rgba(186, 186, 186, 0.5);\n' +
     '            stroke: rgba(0, 0, 0, 0.35);\n' +
     '            stroke-width: 1;\n' +
     '        }\n' +
+    '\n' +
     '            .inner-region.ng-elem {\n' +
-    '                fill: rgba(49, 255, 0, 0.35);\n' +
+    '                fill: rgba(118, 255, 85, 0.50);\n' +
+    '                stroke: rgba(48, 168, 0, 0.91);\n' +
+    '            }\n' +
+    '\n' +
+    '            .inner-region.ng-dataz {\n' +
+    '                fill: rgba(255, 0, 226, 0.50);\n' +
+    '                stroke: rgba(208, 0, 184, 0.71);\n' +
+    '            }\n' +
+    '\n' +
+    '            .inner-region.ng-link {\n' +
+    '                fill: rgba(0, 161, 255, 0.50);\n' +
     '                stroke: rgba(0, 0, 0, 0.75);\n' +
     '            }\n' +
     '\n' +
+    '            .inner-region.ng-form {\n' +
+    '                fill: rgba(255, 250, 0, 0.5);\n' +
+    '                stroke: rgb(255, 187, 0);\n' +
+    '            }\n' +
+    '\n' +
+    '            .inner-region.ng-label {\n' +
+    '                fill: rgba(255, 187, 0, 0.25);\n' +
+    '                stroke: rgb(255, 216, 0);\n' +
+    '            }\n' +
+    '\n' +
+    '            .inner-region.ng-input {\n' +
+    '                fill: rgba(255, 187, 0, 0.75);\n' +
+    '                stroke: rgb(255, 106, 0);\n' +
+    '            }\n' +
+    '\n' +
+    '            .inner-region.ng-button {\n' +
+    '                fill: rgba(0, 38, 255, 0.75);\n' +
+    '                stroke: rgb(0, 18, 124);\n' +
+    '                stroke-width: 2px;\n' +
+    '            }\n' +
+    '\n' +
+    '            .inner-region.ng-submit {\n' +
+    '            }\n' +
+    '\n' +
+    '            .inner-region.ng-reset {\n' +
+    '            }\n' +
+    '\n' +
     '            .inner-region:hover {\n' +
-    '                fill: rgba(0, 21, 255, 0.75);\n' +
-    '                stroke: rgba(0, 0, 0, 0.75);\n' +
+    '                stroke-width: 4px;\n' +
     '            }</style><page-layout-viewer class=inspection-contents></page-layout-viewer><span style="position: absolute; right: 8px; top: 8px"><a href="" ng-click=exploreCtrl.toggleDockedRegion()>Toggle Docked</a></span></div>');
   $templateCache.put('views/common/components/contents.tpl.html',
     '<div id=contents class=contents><div id=left class="ui-view-left ng-cloak" ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div><div id=main class=ui-view-main ui:view=main><em class=inactive-fill-text ng:if=false><i class="fa fa-spinner fa-spin"></i> Loading...</em> <b class="inactive-fill-text ng-cloak" ng:if="!(state.current.views[\'main\'] || state.current.views[\'main@\'])"><i class="fa fa-exclamation-triangle faa-flash glow-orange"></i> Page not found</b></div></div>');
@@ -271,7 +320,7 @@ angular.module('prototyped.ng.views', []).run(['$templateCache', function($templ
   $templateCache.put('views/common/components/menu.tpl.html',
     '<div id=menu class=dragable><div ui:view=menu><ul class="nav navbar-nav"><li ui:sref-active=open><a ui:sref=default>Default</a></li><li ui:sref-active=open ng:repeat="route in appState.routers | orderBy:\'(priority || 1)\'" ng:if="route.menuitem && (!route.visible || route.visible())"><a ng:if=route.menuitem.state ui:sref="{{ route.menuitem.state }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a> <a ng:if=!route.menuitem.state ng:href="{{ route.url }}"><i ng-if=route.menuitem.icon class={{route.menuitem.icon}}></i> {{ route.menuitem.label }}</a></li></ul></div></div>');
   $templateCache.put('views/common/docked/container.tpl.html',
-    '<div><div class=anim-fade docked:top></div><div docked:icon></div><div class="anim-fade view-panel" docked:left:nav>Left Navigation</div><div class="anim-fade view-panel" docked:container></div><div class=anim-fade docked:footer>Footer</div></div>');
+    '<div><div class=anim-fade docked:top></div><div docked:icon></div><div class="anim-fade view-panel" docked:left:nav></div><div class="anim-fade view-panel" docked:container></div><div class=anim-fade docked:footer></div></div>');
   $templateCache.put('views/common/docked/footer.tpl.html',
     '<div class="anim-fade bottom-spacer"><div class="mask noselect"></div><div class="view-panel bottom-container" ng:transclude></div></div>');
   $templateCache.put('views/common/docked/icon.tpl.html',

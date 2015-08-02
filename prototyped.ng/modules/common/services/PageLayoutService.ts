@@ -44,6 +44,7 @@ module proto.ng.modules.common.services {
             if (!$(elem).is(':visible')) {
                 return false;
             }
+
             if (!this.toggleDocked) {
                 var isDockContainer = $(elem).hasClass('docked-container');
                 return !isDockContainer;
@@ -76,8 +77,14 @@ module proto.ng.modules.common.services {
         }
 
         public init(elem) {
-            this.x = elem.offsetLeft;
-            this.y = elem.offsetTop;
+            var rect = elem.getBoundingClientRect ? elem.getBoundingClientRect() : null;
+            if (rect) {
+                this.x = rect.left;
+                this.y = rect.top;
+            } else {
+                this.x = elem.offsetLeft;
+                this.y = elem.offsetTop;
+            }
             this.width = elem.offsetWidth;
             this.height = elem.offsetHeight;
         }
@@ -123,9 +130,33 @@ module proto.ng.modules.common.services {
                 return null;
             }
 
+            if (elem.tagName == 'A') {
+                className += ' ng-link';
+            }
+            if (elem.tagName == 'FORM') {
+                className += ' ng-form';
+            }
+            if (elem.tagName == 'LABEL') {
+                className += ' ng-label';
+            }
+            if ($(elem).is(':input')) {
+                className += ' ng-input';
+            }
+            if ($(elem).is(':button')) {
+                className += ' ng-button';
+
+                if ($(elem).attr('type') == 'submit') {
+                    className += ' ng-submit';
+                } else if ($(elem).is(':reset')) {
+                    className += ' ng-reset';
+                }
+            }
+
             var scope = angular.element(elem).isolateScope();
             if ($(elem).hasClass('ng-scope') /*angular.isDefined(scope)*/) {
                 className += ' ng-elem';
+            } else if (jQuery.hasData(elem) && !jQuery.isEmptyObject(jQuery.data(elem))) {
+                className += ' ng-data';
             }
 
             var lvl = this.level(elem);
