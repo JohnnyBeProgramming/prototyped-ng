@@ -32,8 +32,8 @@
     "load-grunt-configs": "^0.4.2",
     "load-grunt-tasks": "3.1.0",
     "minimatch": "0.3",
-    "proto-html-compiler": "^1.0.12",
-    "proto-js-loader": "0.0.9",
+    "proto-html-compiler": "^1.0.13",
+    "proto-js-loader": "0.0.10",
     "proto-js-string": "^1.0.3",
     "time-grunt": "^1.1.0"
   }

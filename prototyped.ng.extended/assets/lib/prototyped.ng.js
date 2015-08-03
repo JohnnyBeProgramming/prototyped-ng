@@ -304,7 +304,10 @@ var proto;
                                     name: 'Wolfram Alpha', url: 'https://www.wolframalpha.com/'
                                 },
                                 {
-                                    name: 'Global Wind Maps', url: 'https://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286'
+                                    name: 'Wind and Weather', url: 'http://earth.nullschool.net/#current/wind/surface/level/overlay=temp/equirectangular'
+                                },
+                                {
+                                    name: 'Misery Index Globe', url: 'http://earth.nullschool.net/#current/wind/surface/level/overlay=misery_index/orthographic=9.09,12.21,286'
                                 },
                                 {
                                     name: 'Disaster Info Map', url: 'http://hisz.rsoe.hu/alertmap/index2.php'
@@ -845,6 +848,21 @@ var proto;
                             this.appState.updateUI(action);
                         };
 
+                        AppInfoProvider.prototype.appendBrowser = function (info) {
+                            this.refreshUI(function () {
+                                try  {
+                                    // Browser info and details loaded
+                                    if (typeof WhichBrowser !== 'undefined') {
+                                        var browserInfo = new WhichBrowser();
+                                        angular.extend(info.about, browserInfo);
+                                    }
+                                } catch (ex) {
+                                    console.error(ex);
+                                    throw ex;
+                                }
+                            });
+                        };
+
                         AppInfoProvider.prototype.detectBrowserInfo = function () {
                             var _this = this;
                             var info = this.appInfo;
@@ -914,15 +932,19 @@ var proto;
                                 var detectUrl = this.getDetectUrl();
 
                                 // Send a loaded package to a server to detect more features
-                                $.getScript(detectUrl).done(function (script, textStatus) {
-                                    _this.refreshUI(function () {
-                                        // Browser info and details loaded
-                                        var browserInfo = new window.WhichBrowser();
-                                        angular.extend(info.about, browserInfo);
+                                if (typeof remoteScripts !== 'undefined') {
+                                    remoteScripts.define(detectUrl, function () {
+                                        return typeof WhichBrowser === 'undefined';
+                                    }, function (url, details) {
+                                        _this.appendBrowser(info);
                                     });
-                                }).fail(function (jqxhr, settings, exception) {
-                                    console.error(exception);
-                                });
+                                } else {
+                                    $.getScript(detectUrl).done(function (script, textStatus) {
+                                        _this.appendBrowser(info);
+                                    }).fail(function (jqxhr, settings, exception) {
+                                        console.error(exception);
+                                    });
+                                }
 
                                 // Set browser name to IE (if defined)
                                 if (navigator.appName == 'Microsoft Internet Explorer') {
@@ -3124,7 +3146,8 @@ var proto;
                         function PageLayoutService($q, navigationService) {
                             this.$q = $q;
                             this.navigationService = navigationService;
-                            this.toggleDocked = false;
+                            this.isTilted = true;
+                            this.isDocked = false;
                             this.callbacks = [];
                             this.init();
                         }
@@ -3166,7 +3189,7 @@ var proto;
                                 return false;
                             }
 
-                            if (!this.toggleDocked) {
+                            if (!this.isDocked) {
                                 var isDockContainer = $(elem).hasClass('docked-container');
                                 return !isDockContainer;
                             }
@@ -3178,9 +3201,13 @@ var proto;
                             return true;
                         };
 
-                        PageLayoutService.prototype.toggle = function () {
-                            var showDocked = !this.toggleDocked;
-                            this.toggleDocked = showDocked;
+                        PageLayoutService.prototype.togglePerspective = function () {
+                            this.isTilted = !this.isTilted;
+                            this.build();
+                        };
+
+                        PageLayoutService.prototype.toggleDocked = function () {
+                            this.isDocked = !this.isDocked;
                             this.build();
                         };
                         return PageLayoutService;
@@ -3197,8 +3224,14 @@ var proto;
                             this.init(elem);
                         }
                         LayoutNode.prototype.init = function (elem) {
-                            this.x = elem.offsetLeft;
-                            this.y = elem.offsetTop;
+                            var rect = elem.getBoundingClientRect ? elem.getBoundingClientRect() : null;
+                            if (rect) {
+                                this.x = rect.left;
+                                this.y = rect.top;
+                            } else {
+                                this.x = elem.offsetLeft;
+                                this.y = elem.offsetTop;
+                            }
                             this.width = elem.offsetWidth;
                             this.height = elem.offsetHeight;
                         };
@@ -4031,8 +4064,12 @@ var proto;
                         this.$q = $q;
                         this.pageLayout = pageLayout;
                     }
+                    ExplorerViewController.prototype.togglePerspective = function () {
+                        this.pageLayout.togglePerspective();
+                    };
+
                     ExplorerViewController.prototype.toggleDockedRegion = function () {
-                        this.pageLayout.toggle();
+                        this.pageLayout.toggleDocked();
                     };
                     return ExplorerViewController;
                 })();
@@ -4297,6 +4334,7 @@ var proto;
     var ng = proto.ng;
 })(proto || (proto = {}));
 ///<reference path="../../../imports.d.ts"/>
+
 var proto;
 (function (proto) {
     (function (ng) {
@@ -4356,26 +4394,87 @@ var proto;
                         if (typeof d3 !== 'undefined') {
                             this.start(d3);
                         } else {
-                            console.log(' - Loading D3....');
                             var url = 'https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js';
-                            $.getScript(url, function (data, textStatus, jqxhr) {
-                                console.log(' - D3 Loaded:', d3);
-                                _this.start(d3);
-                            });
+                            if (typeof remoteScripts !== 'undefined') {
+                                remoteScripts.define(url, function () {
+                                    return typeof d3 !== 'undefined';
+                                }, function () {
+                                    _this.start(d3);
+                                });
+                            } else {
+                                $.getScript(url, function (data, textStatus, jqxhr) {
+                                    _this.start(d3);
+                                });
+                            }
                         }
+                    };
+
+                    LayoutViewerController.prototype.start = function (d3) {
+                        // Set the zoom and navigation on the canvas
+                        var targs = d3.select('#LayoutView .contents-group');
+                        var found = d3.select('#LayoutView .contents-group');
+                        if (found.call && targs.length) {
+                            found.call(d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", function () {
+                                targs.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+                            }));
+                        }
+                        return;
+
+                        // ToDo: Get keyboard navigation working...
+                        var ident = '#LayoutView .contents-group';
+                        d3.select(document.body).on('keydown', function () {
+                            var step = 200;
+                            var key = d3.event.key || d3.event.keyCode;
+                            var zoom = d3.behavior.zoom();
+                            var mapsvg = d3.select(ident);
+
+                            console.log(' - Key:' + key, mapsvg);
+
+                            switch (key) {
+                                case 'Esc':
+                                case 27:
+                                    //found.attr("transform", "translate([0 , 0]) scale(1)");
+                                    zoom.translate([0, 0]).scale(1).event(mapsvg.transition());
+                                    break;
+                                case '+':
+                                case '=':
+                                case 187:
+                                    zoom.translate([0, 0]).scale(2.0).event(mapsvg.transition());
+                                    break;
+                                case '-':
+                                case 189:
+                                    zoom.translate([0, 0]).scale(0.5).event(mapsvg.transition());
+                                    break;
+                                case 'Left':
+                                case 37:
+                                    zoom.translate([zoom.translate()[0] + step, zoom.translate()[1]]).event(mapsvg.transition());
+                                    break;
+                                case 'Right':
+                                case 39:
+                                    zoom.translate([zoom.translate()[0] - step, zoom.translate()[1]]).event(mapsvg.transition());
+                                    break;
+                                case 'Up':
+                                case 38:
+                                    zoom.translate([zoom.translate()[0], zoom.translate()[1] + step]).event(mapsvg.transition());
+                                    break;
+                                case 'Down':
+                                case 40:
+                                    zoom.translate([zoom.translate()[0], zoom.translate()[1] - step]).event(mapsvg.transition());
+                                    break;
+                            }
+                        });
                     };
 
                     LayoutViewerController.prototype.draw = function () {
                         var info = this.pageLayoutService.node;
                         if (this.view) {
-                            //var overlay = this.getOverlay();
-                            // Draw the background container
+                            // Clear the old contents
                             var contents = this.getContents();
                             while (contents.firstChild) {
                                 contents.removeChild(contents.firstChild);
                             }
 
-                            // Add background and window
+                            // Add background view
                             contents.appendChild(this.drawElem({
                                 x: 0 - document.body.scrollLeft,
                                 y: 0 - document.body.scrollTop,
@@ -4385,6 +4484,8 @@ var proto;
                                 children: [],
                                 level: -0.1
                             })[0]);
+
+                            // Add the window view
                             contents.appendChild(this.drawElem({
                                 x: document.body.scrollLeft,
                                 y: document.body.scrollTop,
@@ -4409,6 +4510,7 @@ var proto;
                             while (this.view.firstChild) {
                                 this.view.removeChild(this.view.firstChild);
                             }
+                            this.view.appendChild(this.getOverlay());
                             this.view.appendChild(this.getContents());
                             $(this.view).html(function () {
                                 return this.innerHTML;
@@ -4421,26 +4523,22 @@ var proto;
                         }
                     };
 
-                    LayoutViewerController.prototype.start = function (d3) {
-                        var found = d3.select('#LayoutView .contents-group');
-                        if (found.length) {
-                            found.call(d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", function () {
-                                found.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
-                            }));
-                        }
-                    };
-
                     LayoutViewerController.prototype.drawElem = function (info) {
                         var _this = this;
                         var list = [];
 
+                        var zLevel = 2;
                         var x = info.x - document.body.scrollLeft;
                         var y = info.y - document.body.scrollTop;
-                        var zLevel = 2;
+
                         var transform = '';
-                         {
+                        var show3D = this.pageLayoutService.isTilted;
+                        if (show3D) {
                             transform += 'translate(200, ' + (300 - (info.level || 0) * zLevel) + ') ';
                             transform += 'scale(.6, .6) scale(1, .7) rotate(-30) ';
+                        } else {
+                            transform += 'translate(100, 50) ';
+                            transform += 'scale(.7, .7) ';
                         }
 
                         if (info.x !== undefined && info.y !== undefined) {
@@ -4464,8 +4562,7 @@ var proto;
 
                     LayoutViewerController.prototype.getOverlay = function () {
                         if (!this.overlayGroup) {
-                            this.overlayGroup = $('<g class="overlay-group"></g>')[0];
-                            this.view.appendChild(this.overlayGroup);
+                            this.overlayGroup = $('<rect class="overlay-group" x="0" y="0" width="100%" height="100%"></rect>')[0];
                         }
                         return this.overlayGroup;
                     };
@@ -4473,7 +4570,6 @@ var proto;
                     LayoutViewerController.prototype.getContents = function () {
                         if (!this.contentsGroup) {
                             this.contentsGroup = $('<g class="contents-group"></g>')[0];
-                            this.view.appendChild(this.contentsGroup);
                         }
                         return this.contentsGroup;
                     };
@@ -4957,6 +5053,8 @@ angular.module('prototyped.sandbox', [
     '<ul class=list-group><li class=list-group-item ui:sref-active=active><a ui:sref=proto.explore><i class="fa fa-arrow-circle-left"></i>&nbsp; Site Map Explorer</a></li><li class=list-group-item style="padding: 6px 0" ng-if="state.current.name == \'proto.explore\'"><abn:tree tree-data=navigation.siteExplorer.children icon-leaf="fa fa-file-o" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.externalLinks><a ui:sref=proto.links><i class="fa fa-globe"></i>&nbsp; External Links</a></li><li class=list-group-item style="padding: 6px 0; overflow-x:hidden" ng-if="navigation.externalLinks && state.current.name == \'proto.links\'"><abn:tree tree-data=navigation.externalLinks.children icon-leaf="fa fa-globe" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li><li class=list-group-item ui:sref-active=active ng-if=navigation.fileSystem><a ui:sref=proto.browser><i class="fa fa-hdd-o"></i>&nbsp; File System Browser</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.fileSystem && state.current.name == \'proto.browser\'"><style resx:import=assets/css/images.min.css></style><div class=info-overview ng-if=!appNode.active><div class=panel-icon-lg><div class="img-drive-warn inactive-gray" style="height: 128px; width: 128px"></div></div></div><div ng-if="appNode.active && navigation.fileSystem"><abn:tree tree-data=navigation.fileSystem.children icon-leaf="fa fa-folder" icon-expand="fa fa-folder" icon-collapse="fa fa-folder-open" expand-level=2></abn:tree></div></li><li class=list-group-item ui:sref-active=active ng-if=navigation.clientStates><a ui:sref=proto.routing><i class="fa fa-tasks"></i>&nbsp; UI State &amp; Routing</a></li><li class=list-group-item style="padding: 6px 0" ng-if="navigation.clientStates && state.current.name == \'proto.routing\'"><abn:tree tree-data=navigation.clientStates icon-leaf="fa fa-cog" icon-expand="fa fa-plus" icon-collapse="fa fa-minus" expand-level=2></abn:tree></li></ul>');
   $templateCache.put('modules/explore/views/main.tpl.html',
     '<div class=inspection-view style="width: 100%"><style>.overlay-group {\n' +
+    '            fill: rgba(255, 255, 255, 0.1);\n' +
+    '            user-select: none;\n' +
     '        }\n' +
     '\n' +
     '        .contents-group {\n' +
@@ -5002,49 +5100,50 @@ angular.module('prototyped.sandbox', [
     '        }\n' +
     '\n' +
     '        .window-region {\n' +
-    '            fill: rgba(103, 103, 103, 0.25);\n' +
+    '            fill: rgba(225, 225, 225, 0.50);\n' +
     '            stroke: rgba(0, 0, 0, 1);\n' +
     '            stroke-width: 2;\n' +
     '        }\n' +
     '\n' +
     '        .inner-region {\n' +
-    '            fill: rgba(186, 186, 186, 0.5);\n' +
+    '            fill: rgb(186, 186, 186);\n' +
+    '            fill-opacity: 0.5;\n' +
     '            stroke: rgba(0, 0, 0, 0.35);\n' +
     '            stroke-width: 1;\n' +
     '        }\n' +
     '\n' +
     '            .inner-region.ng-elem {\n' +
-    '                fill: rgba(118, 255, 85, 0.50);\n' +
+    '                fill: rgb(118, 255, 85);\n' +
     '                stroke: rgba(48, 168, 0, 0.91);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-dataz {\n' +
-    '                fill: rgba(255, 0, 226, 0.50);\n' +
+    '                fill: rgb(255, 0, 226);\n' +
     '                stroke: rgba(208, 0, 184, 0.71);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-link {\n' +
-    '                fill: rgba(0, 161, 255, 0.50);\n' +
+    '                fill: rgb(0, 161, 255);\n' +
     '                stroke: rgba(0, 0, 0, 0.75);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-form {\n' +
-    '                fill: rgba(255, 250, 0, 0.5);\n' +
+    '                fill: rgb(255, 250, 0);\n' +
     '                stroke: rgb(255, 187, 0);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-label {\n' +
-    '                fill: rgba(255, 187, 0, 0.25);\n' +
+    '                fill: rgb(255, 187, 0);\n' +
     '                stroke: rgb(255, 216, 0);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-input {\n' +
-    '                fill: rgba(255, 187, 0, 0.75);\n' +
+    '                fill: rgb(255, 187, 0);\n' +
     '                stroke: rgb(255, 106, 0);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-button {\n' +
-    '                fill: rgba(0, 38, 255, 0.75);\n' +
+    '                fill: rgb(0, 107, 255);\n' +
     '                stroke: rgb(0, 18, 124);\n' +
     '                stroke-width: 2px;\n' +
     '            }\n' +
@@ -5056,8 +5155,9 @@ angular.module('prototyped.sandbox', [
     '            }\n' +
     '\n' +
     '            .inner-region:hover {\n' +
-    '                stroke-width: 4px;\n' +
-    '            }</style><page-layout-viewer class=inspection-contents></page-layout-viewer><span style="position: absolute; right: 8px; top: 8px"><a href="" ng-click=exploreCtrl.toggleDockedRegion()>Toggle Docked</a></span></div>');
+    '                stroke-width: 3px;\n' +
+    '                fill-opacity: 0.95;\n' +
+    '            }</style><page-layout-viewer class=inspection-contents></page-layout-viewer><span style="position: absolute; right: 8px; top: 8px"><div class="btn-group btn-group-xs" role=group aria-label=...><a href="" class="btn btn-default" ng-click=exploreCtrl.togglePerspective()>Show Perspective</a> <a href="" class="btn btn-default" ng-click=exploreCtrl.toggleDockedRegion()>Show Docked</a></div></span></div>');
   $templateCache.put('views/common/components/contents.tpl.html',
     '<div id=contents class=contents><div id=left class="ui-view-left ng-cloak" ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div><div id=main class=ui-view-main ui:view=main><em class=inactive-fill-text ng:if=false><i class="fa fa-spinner fa-spin"></i> Loading...</em> <b class="inactive-fill-text ng-cloak" ng:if="!(state.current.views[\'main\'] || state.current.views[\'main@\'])"><i class="fa fa-exclamation-triangle faa-flash glow-orange"></i> Page not found</b></div></div>');
   $templateCache.put('views/common/components/footer.tpl.html',
@@ -5126,7 +5226,7 @@ angular.module('prototyped.sandbox', [
 
 
   $templateCache.put('assets/css/images.min.css',
-    "body .img-chrome{background-image:url(https://upload.wikimedia.org/wikipedia/commons/e/e2/Google_Chrome_icon_%282011%29.svg)}body .img-chromium{background-image:url(https://upload.wikimedia.org/wikipedia/commons/5/5f/Chromium_11_Logo.svg)}body .img-firefox{background-image:url(https://upload.wikimedia.org/wikipedia/en/e/e3/Firefox-logo.svg)}body .img-iexplore{background-image:url(https://upload.wikimedia.org/wikipedia/commons/2/2f/Internet_Explorer_10_logo.svg)}body .img-opera{background-image:url(https://upload.wikimedia.org/wikipedia/commons/d/d0/Opera_O.svg)}body .img-safari{background-image:url(https://upload.wikimedia.org/wikipedia/commons/e/ee/Compass_icon_matte.svg)}body .img-seamonkey{background-image:url(https://upload.wikimedia.org/wikipedia/commons/e/e8/SeaMonkey.svg)}body .img-spartan{background-image:url(https://upload.wikimedia.org/wikipedia/en/b/b8/MSUSpartans_Logo.svg)}body .img-windows{background-image:url(https://upload.wikimedia.org/wikipedia/en/1/14/Windows_logo_-_2006.svg)}body .img-mac-os{background-image:url(http://gfx.syscheck.melasweb.com/operating%20systems/Mac%20OS.png)}body .img-apple{background-image:url(http://www.journaldugeek.com/files/2011/04/apple-logo.png)}body .img-linux,body .img-unix{background-image:url(https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)}body .img-ubuntu{background-image:url(https://design.ubuntu.com/wp-content/uploads/logo-ubuntu_cof-orange-hex.svg)}body .img-drive,body .img-drive-default{background-image:url(http://png-3.findicons.com/files/icons/749/slick_drives_remake/128/generic_slick_drives_remake_icon.png)}body .img-drive-onl{background-image:url(http://png-1.findicons.com/files/icons/749/slick_drives_remake/128/server_slick_drives_remake_icon.png)}body .img-drive-usb{background-image:url(http://png-5.findicons.com/files/icons/749/slick_drives_remake/128/usb_hd_slick_drives_remake_icon.png)}body .img-drive-ssd{background-image:url(http://png-2.findicons.com/files/icons/749/slick_drives_remake/128/ssd_slick_drives_remake_icon.png)}body .img-drive-web{background-image:url(http://png-1.findicons.com/files/icons/749/slick_drives_remake/128/idisk_slick_drives_remake_icon.png)}body .img-drive-mac{background-image:url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/apple_slick_drives_remake_icon.png)}body .img-drive-warn{background-image:url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/idisk_user_slick_drives_remake_icon.png)}body .img-drive-hist{background-image:url(http://png-5.findicons.com/files/icons/749/slick_drives_remake/128/time_machine_slick_drives_remake_icon.png)}body .img-drive-wifi{background-image:url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/airport_disc_slick_drives_remake_icon.png)}body .img-webdb{background-image:url(http://png-5.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)}body .img-server-local{background-image:url(http://png-4.findicons.com/files/icons/1406/g5_drives/128/g5_network_volume_1.png)}body .img-server{background-image:url(http://png-1.findicons.com/files/icons/719/crystal_clear_actions/128/server_256.png)}body .img-sqldb{background-image:url(http://png-5.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)}body .img-iis{background-image:url(https://downloads.chef.io/assets/images/downloads/logos/windows-84b9c41f.svg)}body .img-node{background-image:url(https://cdn.rawgit.com/ferventcoder/chocolatey-packages/master/icons/nodejs.png)}body .img-apache{background-image:url(http://www.iconattitude.com/icons/open_icon_library/apps/png/256/apache.png)}body .img-angular{background-image:url(http://svgporn.com/angular-icon.svg)}body .img-nodewebkit{background-image:url(http://oldgeeksguide.github.io/presentations/html5devconf2013/icon-node-webkit.png)}body .img-nodejs{background-image:url(https://cdn.rawgit.com/ferventcoder/chocolatey-packages/master/icons/nodejs.png)}body .img-html5,body .img-html5-ie{background-image:url(http://www.w3.org/html/logo/downloads/HTML5_Logo.svg)}body .img-js-default,body .img-js-v8{background-image:url(https://upload.wikimedia.org/wikipedia/commons/b/b6/Badge_js-strict.svg)}body .img-css3{background-image:url(http://ohdoylerules.com/content/images/css3.svg)}body .img-jquery{background-image:url(http://www.ocpf.us/images/jquery-logo.png)}body .img-terminal{background-image:url(http://png-4.findicons.com/files/icons/2212/carpelinx/128/server.png)}"
+    "body .img-chrome{background-image:url(https://upload.wikimedia.org/wikipedia/commons/e/e2/Google_Chrome_icon_%282011%29.svg)}body .img-chromium{background-image:url(https://upload.wikimedia.org/wikipedia/commons/5/5f/Chromium_11_Logo.svg)}body .img-firefox{background-image:url(https://upload.wikimedia.org/wikipedia/en/e/e3/Firefox-logo.svg)}body .img-iexplore{background-image:url(https://upload.wikimedia.org/wikipedia/commons/2/2f/Internet_Explorer_10_logo.svg)}body .img-opera{background-image:url(https://upload.wikimedia.org/wikipedia/commons/d/d0/Opera_O.svg)}body .img-safari{background-image:url(https://upload.wikimedia.org/wikipedia/commons/e/ee/Compass_icon_matte.svg)}body .img-seamonkey{background-image:url(https://upload.wikimedia.org/wikipedia/commons/e/e8/SeaMonkey.svg)}body .img-spartan{background-image:url(https://upload.wikimedia.org/wikipedia/en/b/b8/MSUSpartans_Logo.svg)}body .img-windows{background-image:url(https://upload.wikimedia.org/wikipedia/en/1/14/Windows_logo_-_2006.svg)}body .img-mac-os{background-image:url(http://gfx.syscheck.melasweb.com/operating%20systems/Mac%20OS.png)}body .img-apple{background-image:url(http://www.journaldugeek.com/files/2011/04/apple-logo.png)}body .img-linux,body .img-unix{background-image:url(https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)}body .img-ubuntu{background-image:url(https://design.ubuntu.com/wp-content/uploads/logo-ubuntu_cof-orange-hex.svg)}body .img-drive,body .img-drive-default{background-image:url(http://png-3.findicons.com/files/icons/749/slick_drives_remake/128/generic_slick_drives_remake_icon.png)}body .img-drive-onl{background-image:url(http://png-1.findicons.com/files/icons/749/slick_drives_remake/128/server_slick_drives_remake_icon.png)}body .img-drive-usb{background-image:url(http://png-5.findicons.com/files/icons/749/slick_drives_remake/128/usb_hd_slick_drives_remake_icon.png)}body .img-drive-ssd{background-image:url(http://png-2.findicons.com/files/icons/749/slick_drives_remake/128/ssd_slick_drives_remake_icon.png)}body .img-drive-web{background-image:url(http://png-1.findicons.com/files/icons/749/slick_drives_remake/128/idisk_slick_drives_remake_icon.png)}body .img-drive-mac{background-image:url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/apple_slick_drives_remake_icon.png)}body .img-drive-warn{background-image:url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/idisk_user_slick_drives_remake_icon.png)}body .img-drive-hist{background-image:url(http://png-5.findicons.com/files/icons/749/slick_drives_remake/128/time_machine_slick_drives_remake_icon.png)}body .img-drive-wifi{background-image:url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/airport_disc_slick_drives_remake_icon.png)}body .img-webdb{background-image:url(http://png-5.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)}body .img-server-local{background-image:url(http://png-4.findicons.com/files/icons/1406/g5_drives/128/g5_network_volume_1.png)}body .img-server{background-image:url(http://png-1.findicons.com/files/icons/719/crystal_clear_actions/128/server_256.png)}body .img-sqldb{background-image:url(http://png-5.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)}body .img-iis{background-image:url(https://downloads.chef.io/assets/images/downloads/logos/windows-84b9c41f.svg)}body .img-node{background-image:url(https://cdn.rawgit.com/ferventcoder/chocolatey-packages/master/icons/nodejs.png)}body .img-apache{background-image:url(http://www.iconattitude.com/icons/open_icon_library/apps/png/256/apache.png)}body .img-angular{background-image:url(http://svgporn.com/logos/angular-icon.svg)}body .img-nodewebkit{background-image:url(http://oldgeeksguide.github.io/presentations/html5devconf2013/icon-node-webkit.png)}body .img-nodejs{background-image:url(https://cdn.rawgit.com/ferventcoder/chocolatey-packages/master/icons/nodejs.png)}body .img-html5,body .img-html5-ie{background-image:url(http://www.w3.org/html/logo/downloads/HTML5_Logo.svg)}body .img-js-default,body .img-js-v8{background-image:url(https://upload.wikimedia.org/wikipedia/commons/b/b6/Badge_js-strict.svg)}body .img-css3{background-image:url(http://ohdoylerules.com/content/images/css3.svg)}body .img-jquery{background-image:url(http://www.ocpf.us/images/jquery-logo.png)}body .img-terminal{background-image:url(http://png-4.findicons.com/files/icons/2212/carpelinx/128/server.png)}"
   );
 
 
