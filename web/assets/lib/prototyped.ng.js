@@ -821,369 +821,6 @@ var proto;
 })(proto || (proto = {}));
 var proto;
 (function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (common) {
-                (function (providers) {
-                    var AppInfoProvider = (function () {
-                        function AppInfoProvider(appStateProvider) {
-                            this.appStateProvider = appStateProvider;
-                            this.appState = appStateProvider.appState;
-                            this.appInfo = new proto.ng.modules.common.AppInfo(navigator.appCodeName, navigator.userAgent);
-                            this.init();
-                        }
-                        AppInfoProvider.prototype.init = function () {
-                            // Define the state
-                            this.detectBrowserInfo();
-                        };
-
-                        AppInfoProvider.prototype.$get = function () {
-                            return this.appInfo;
-                        };
-
-                        AppInfoProvider.prototype.refreshUI = function (action) {
-                            this.appState.updateUI(action);
-                        };
-
-                        AppInfoProvider.prototype.detectBrowserInfo = function () {
-                            var _this = this;
-                            var info = this.appInfo;
-                            try  {
-                                // Get IE version (if defined)
-                                if (!!window['ActiveXObject']) {
-                                    info.versions.ie = 10;
-                                }
-
-                                // Sanitize codeName and userAgent
-                                this.resolveUserAgent(info);
-                                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
-                                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
-                                info.versions.nw = this.getVersionInfo('node-webkit');
-                                info.versions.njs = this.getVersionInfo('node');
-                                info.versions.v8 = this.getVersionInfo('v8');
-                                info.versions.openssl = this.getVersionInfo('openssl');
-                                info.versions.chromium = this.getVersionInfo('chromium');
-
-                                // Check for CSS extensions
-                                info.css.boostrap2 = this.selectorExists('hero-unit');
-                                info.css.boostrap3 = this.selectorExists('jumbotron');
-
-                                // Update location settings
-                                angular.extend(info.about, {
-                                    protocol: window.location.protocol,
-                                    server: {
-                                        url: window.location.href
-                                    }
-                                });
-
-                                // Detect the operating system name
-                                info.about.os.name = this.detectOSName();
-
-                                // Check for jQuery
-                                info.detects.jqry = typeof jQuery !== 'undefined';
-
-                                // Check for general header and body scripts
-                                var sources = [];
-                                $("script").each(function (i, elem) {
-                                    var src = $(elem).attr("src");
-                                    if (src)
-                                        sources.push(src);
-                                });
-
-                                // Fast check on known script names
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
-                                });
-                                this.checkScriptLoaded(sources, function (src) {
-                                    return info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
-                                });
-
-                                // Get the client browser details (build a url string)
-                                var detectUrl = this.getDetectUrl();
-
-                                // Send a loaded package to a server to detect more features
-                                $.getScript(detectUrl).done(function (script, textStatus) {
-                                    _this.refreshUI(function () {
-                                        // Browser info and details loaded
-                                        var browserInfo = new window.WhichBrowser();
-                                        angular.extend(info.about, browserInfo);
-                                    });
-                                }).fail(function (jqxhr, settings, exception) {
-                                    console.error(exception);
-                                });
-
-                                // Set browser name to IE (if defined)
-                                if (navigator.appName == 'Microsoft Internet Explorer') {
-                                    info.about.browser.name = 'Internet Explorer';
-                                }
-
-                                // Check if the browser supports web db's
-                                var webDB = info.about.webdb = this.getWebDBInfo();
-                                info.about.webdb.test();
-                            } catch (ex) {
-                                console.error(ex);
-                            }
-
-                            // Return the preliminary info
-                            return info;
-                        };
-
-                        AppInfoProvider.prototype.detectOSName = function () {
-                            var osName = 'Unknown OS';
-                            var appVer = navigator.appVersion;
-                            if (appVer) {
-                                if (appVer.indexOf("Win") != -1)
-                                    osName = 'Windows';
-                                if (appVer.indexOf("Mac") != -1)
-                                    osName = 'MacOS';
-                                if (appVer.indexOf("X11") != -1)
-                                    osName = 'UNIX';
-                                if (appVer.indexOf("Linux") != -1)
-                                    osName = 'Linux';
-                                //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
-                            }
-                            return osName;
-                        };
-
-                        AppInfoProvider.prototype.getWebDBInfo = function () {
-                            var _this = this;
-                            var webDB = {
-                                db: null,
-                                version: '1',
-                                active: null,
-                                used: undefined,
-                                size: 5 * 1024 * 1024,
-                                test: function (name, desc, dbVer, dbSize) {
-                                    try  {
-                                        // Try and open a web db
-                                        webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
-                                        webDB.onSuccess(null, null);
-                                    } catch (ex) {
-                                        // Nope, something went wrong
-                                        webDB.onError(null, null);
-                                    }
-                                },
-                                onSuccess: function (tx, r) {
-                                    if (tx) {
-                                        if (r) {
-                                            console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
-                                        }
-                                        if (tx) {
-                                            console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
-                                        }
-                                    }
-                                    _this.refreshUI(function () {
-                                        webDB.active = true;
-                                        webDB.used = JSON.stringify(webDB.db).length;
-                                    });
-                                },
-                                onError: function (tx, e) {
-                                    console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
-                                    _this.refreshUI(function () {
-                                        webDB.active = false;
-                                    });
-                                }
-                            };
-                            return webDB;
-                        };
-
-                        AppInfoProvider.prototype.checkScriptLoaded = function (sources, filter) {
-                            sources.forEach(function (src) {
-                                filter(src);
-                            });
-                        };
-
-                        AppInfoProvider.prototype.getDetectUrl = function () {
-                            return (function () {
-                                var p = [], w = window, d = document, e = 0, f = 0;
-                                p.push('ua=' + encodeURIComponent(navigator.userAgent));
-                                e |= w.ActiveXObject ? 1 : 0;
-                                e |= w.opera ? 2 : 0;
-                                e |= w.chrome ? 4 : 0;
-                                e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
-                                e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
-                                e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
-                                p.push('e=' + e);
-                                f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
-                                f |= 'WebSocket' in w ? 2 : 0;
-                                f |= w.Worker ? 4 : 0;
-                                f |= w.applicationCache ? 8 : 0;
-                                f |= w.history && history.pushState ? 16 : 0;
-                                f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
-                                f |= 'FileReader' in w ? 64 : 0;
-                                p.push('f=' + f);
-                                p.push('r=' + Math.random().toString(36).substring(7));
-                                p.push('w=' + screen.width);
-                                p.push('h=' + screen.height);
-                                var s = d.createElement('script');
-                                return 'https://api.whichbrowser.net/rel/detect.js?' + p.join('&');
-                            })();
-                        };
-
-                        AppInfoProvider.prototype.resolveUserAgent = function (info) {
-                            var cn = info.codeName;
-                            var ua = info.userAgent;
-                            if (ua) {
-                                // Remove start of string in UAgent upto CName or end of string if not found.
-                                ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
-
-                                // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
-                                ua = ua.substring(cn.length);
-
-                                while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
-                                    ua = ua.substring(1);
-                                }
-
-                                // Remove the end of the string from first characrer that is not a number or point etc.
-                                var pointer = 0;
-                                while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
-                                    pointer = pointer + 1;
-                                }
-                                ua = ua.substring(0, pointer);
-
-                                if (!window.isNaN(ua)) {
-                                    if (parseInt(ua) > 0) {
-                                        info.versions.html = ua;
-                                    }
-                                    if (parseFloat(ua) >= 5) {
-                                        info.versions.css = '3.x';
-                                        info.versions.js = '5.x';
-                                    }
-                                }
-                            }
-                        };
-
-                        AppInfoProvider.prototype.getVersionInfo = function (ident) {
-                            try  {
-                                if (typeof process !== 'undefined' && process.versions) {
-                                    return process.versions[ident];
-                                }
-                            } catch (ex) {
-                            }
-                            return null;
-                        };
-
-                        AppInfoProvider.prototype.selectorExists = function (selector) {
-                            return false;
-                            //var ret = css($(selector));
-                            //return ret;
-                        };
-
-                        AppInfoProvider.prototype.css = function (a) {
-                            var sheets = document.styleSheets, o = [];
-                            for (var i in sheets) {
-                                var rules = sheets[i].rules || sheets[i].cssRules;
-                                for (var r in rules) {
-                                    if (a.is(rules[r].selectorText)) {
-                                        o.push(rules[r].selectorText);
-                                    }
-                                }
-                            }
-                            return o;
-                        };
-                        return AppInfoProvider;
-                    })();
-                    providers.AppInfoProvider = AppInfoProvider;
-                })(common.providers || (common.providers = {}));
-                var providers = common.providers;
-            })(modules.common || (modules.common = {}));
-            var common = modules.common;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-/// <reference path="../../imports.d.ts" />
-/// <reference path="../common/providers/AppInfoProvider.ts" />
-angular.module('prototyped.about', [
-    'prototyped.ng.runtime',
-    'prototyped.ng.views',
-    'prototyped.ng.styles'
-]).config([
-    'appStateProvider', function (appStateProvider) {
-        // Define application state
-        appStateProvider.when('/about', '/about/info').define('about', {
-            url: '/about',
-            priority: 1000,
-            state: {
-                url: '/about',
-                abstract: true
-            },
-            menuitem: {
-                label: 'About',
-                state: 'about.info',
-                icon: 'fa fa-info-circle'
-            },
-            cardview: {
-                style: 'img-about',
-                title: 'About this software',
-                desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
-            },
-            visible: function () {
-                return appStateProvider.appConfig.options.showAboutPage;
-            },
-            children: []
-        }).state('about.info', {
-            url: '/info',
-            views: {
-                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'modules/about/views/info.tpl.html',
-                    controller: 'AboutInfoController'
-                }
-            }
-        }).state('about.online', {
-            url: '^/contact',
-            views: {
-                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
-                'main@': { templateUrl: 'modules/about/views/contact.tpl.html' }
-            }
-        }).state('about.conection', {
-            url: '/conection',
-            views: {
-                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
-                'main@': {
-                    templateUrl: 'modules/about/views/connections.tpl.html',
-                    controller: 'AboutConnectionController',
-                    controllerAs: 'connCtrl'
-                }
-            }
-        });
-    }]).controller('AboutInfoController', ['$scope', 'appInfo', proto.ng.modules.about.controllers.AboutInfoController]).controller('AboutConnectionController', ['$scope', '$location', 'appState', 'appInfo', 'navigationService', proto.ng.modules.about.controllers.AboutConnectionController]);
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (common) {
-                var AppConfig = (function () {
-                    function AppConfig() {
-                        this.modules = {};
-                        this.options = new common.AppOptions();
-                    }
-                    return AppConfig;
-                })();
-                common.AppConfig = AppConfig;
-            })(modules.common || (modules.common = {}));
-            var common = modules.common;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var proto;
-(function (proto) {
     (function (_ng) {
         (function (modules) {
             (function (common) {
@@ -1567,6 +1204,26 @@ var proto;
                     return AppState;
                 })();
                 common.AppState = AppState;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                var AppConfig = (function () {
+                    function AppConfig() {
+                        this.modules = {};
+                        this.options = new common.AppOptions();
+                    }
+                    return AppConfig;
+                })();
+                common.AppConfig = AppConfig;
             })(modules.common || (modules.common = {}));
             var common = modules.common;
         })(ng.modules || (ng.modules = {}));
@@ -2568,6 +2225,75 @@ var proto;
         (function (modules) {
             (function (common) {
                 (function (filters) {
+                    function ToXmlFilter($parse, $rootScope) {
+                        function toXmlString(name, input, expanded, childExpanded) {
+                            var val = '';
+                            var sep = '';
+                            var attr = '';
+                            if ($.isArray(input)) {
+                                if (expanded) {
+                                    for (var i = 0; i < input.length; i++) {
+                                        val += toXmlString(null, input[i], childExpanded);
+                                    }
+                                } else {
+                                    name = 'Array';
+                                    attr += sep + ' length="' + input.length + '"';
+                                    val = 'Array[' + input.length + ']';
+                                }
+                            } else if ($.isPlainObject(input)) {
+                                if (expanded) {
+                                    for (var id in input) {
+                                        if (input.hasOwnProperty(id)) {
+                                            var child = input[id];
+                                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                                val = toXmlString(id, child, childExpanded);
+                                            } else {
+                                                sep = ' ';
+                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    name = 'Object';
+                                    for (var id in input) {
+                                        if (input.hasOwnProperty(id)) {
+                                            var child = input[id];
+                                            if ($.isArray(child) || $.isPlainObject(child)) {
+                                                val += toXmlString(id, child, childExpanded);
+                                            } else {
+                                                sep = ' ';
+                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
+                                            }
+                                        }
+                                    }
+                                    //val = 'Object[ ' + JSON.stringify(input) + ' ]';
+                                }
+                            }
+                            if (name) {
+                                val = '<' + name + '' + attr + '>' + val + '</' + name + '>';
+                            }
+                            return val;
+                        }
+                        return function (input, rootName) {
+                            return toXmlString(rootName || 'xml', input, true);
+                        };
+                    }
+                    filters.ToXmlFilter = ToXmlFilter;
+                })(common.filters || (common.filters = {}));
+                var filters = common.filters;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (filters) {
                     function FromNowFilter($filter) {
                         return function (dateString, format) {
                             try  {
@@ -2742,75 +2468,6 @@ var proto;
         (function (modules) {
             (function (common) {
                 (function (filters) {
-                    function ToXmlFilter($parse, $rootScope) {
-                        function toXmlString(name, input, expanded, childExpanded) {
-                            var val = '';
-                            var sep = '';
-                            var attr = '';
-                            if ($.isArray(input)) {
-                                if (expanded) {
-                                    for (var i = 0; i < input.length; i++) {
-                                        val += toXmlString(null, input[i], childExpanded);
-                                    }
-                                } else {
-                                    name = 'Array';
-                                    attr += sep + ' length="' + input.length + '"';
-                                    val = 'Array[' + input.length + ']';
-                                }
-                            } else if ($.isPlainObject(input)) {
-                                if (expanded) {
-                                    for (var id in input) {
-                                        if (input.hasOwnProperty(id)) {
-                                            var child = input[id];
-                                            if ($.isArray(child) || $.isPlainObject(child)) {
-                                                val = toXmlString(id, child, childExpanded);
-                                            } else {
-                                                sep = ' ';
-                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    name = 'Object';
-                                    for (var id in input) {
-                                        if (input.hasOwnProperty(id)) {
-                                            var child = input[id];
-                                            if ($.isArray(child) || $.isPlainObject(child)) {
-                                                val += toXmlString(id, child, childExpanded);
-                                            } else {
-                                                sep = ' ';
-                                                attr += sep + id + '="' + toXmlString(null, child, childExpanded) + '"';
-                                            }
-                                        }
-                                    }
-                                    //val = 'Object[ ' + JSON.stringify(input) + ' ]';
-                                }
-                            }
-                            if (name) {
-                                val = '<' + name + '' + attr + '>' + val + '</' + name + '>';
-                            }
-                            return val;
-                        }
-                        return function (input, rootName) {
-                            return toXmlString(rootName || 'xml', input, true);
-                        };
-                    }
-                    filters.ToXmlFilter = ToXmlFilter;
-                })(common.filters || (common.filters = {}));
-                var filters = common.filters;
-            })(modules.common || (modules.common = {}));
-            var common = modules.common;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (common) {
-                (function (filters) {
                     function TrustedUrlFilter($sce) {
                         return function (url) {
                             return $sce.trustAsResourceUrl(url);
@@ -2949,6 +2606,298 @@ var proto;
                         return AppConfigProvider;
                     })();
                     providers.AppConfigProvider = AppConfigProvider;
+                })(common.providers || (common.providers = {}));
+                var providers = common.providers;
+            })(modules.common || (modules.common = {}));
+            var common = modules.common;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (common) {
+                (function (providers) {
+                    var AppInfoProvider = (function () {
+                        function AppInfoProvider(appStateProvider) {
+                            this.appStateProvider = appStateProvider;
+                            this.appState = appStateProvider.appState;
+                            this.appInfo = new proto.ng.modules.common.AppInfo(navigator.appCodeName, navigator.userAgent);
+                            this.init();
+                        }
+                        AppInfoProvider.prototype.init = function () {
+                            // Define the state
+                            this.detectBrowserInfo();
+                        };
+
+                        AppInfoProvider.prototype.$get = function () {
+                            return this.appInfo;
+                        };
+
+                        AppInfoProvider.prototype.refreshUI = function (action) {
+                            this.appState.updateUI(action);
+                        };
+
+                        AppInfoProvider.prototype.detectBrowserInfo = function () {
+                            var _this = this;
+                            var info = this.appInfo;
+                            try  {
+                                // Get IE version (if defined)
+                                if (!!window['ActiveXObject']) {
+                                    info.versions.ie = 10;
+                                }
+
+                                // Sanitize codeName and userAgent
+                                this.resolveUserAgent(info);
+                                info.versions.jqry = typeof jQuery !== 'undefined' ? jQuery.fn.jquery : null;
+                                info.versions.ng = typeof angular !== 'undefined' ? angular.version.full : null;
+                                info.versions.nw = this.getVersionInfo('node-webkit');
+                                info.versions.njs = this.getVersionInfo('node');
+                                info.versions.v8 = this.getVersionInfo('v8');
+                                info.versions.openssl = this.getVersionInfo('openssl');
+                                info.versions.chromium = this.getVersionInfo('chromium');
+
+                                // Check for CSS extensions
+                                info.css.boostrap2 = this.selectorExists('hero-unit');
+                                info.css.boostrap3 = this.selectorExists('jumbotron');
+
+                                // Update location settings
+                                angular.extend(info.about, {
+                                    protocol: window.location.protocol,
+                                    server: {
+                                        url: window.location.href
+                                    }
+                                });
+
+                                // Detect the operating system name
+                                info.about.os.name = this.detectOSName();
+
+                                // Check for jQuery
+                                info.detects.jqry = typeof jQuery !== 'undefined';
+
+                                // Check for general header and body scripts
+                                var sources = [];
+                                $("script").each(function (i, elem) {
+                                    var src = $(elem).attr("src");
+                                    if (src)
+                                        sources.push(src);
+                                });
+
+                                // Fast check on known script names
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.less = info.detects.less || /(.*)(less.*js)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.bootstrap = info.detects.bootstrap || /(.*)(bootstrap)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngAnimate = info.detects.ngAnimate || /(.*)(angular\-animate)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngUiRouter = info.detects.ngUiRouter || /(.*)(angular\-ui\-router)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngUiUtils = info.detects.ngUiUtils || /(.*)(angular\-ui\-utils)(.*)/i.test(src);
+                                });
+                                this.checkScriptLoaded(sources, function (src) {
+                                    return info.detects.ngUiBootstrap = info.detects.ngUiBootstrap || /(.*)(angular\-ui\-bootstrap)(.*)/i.test(src);
+                                });
+
+                                // Get the client browser details (build a url string)
+                                var detectUrl = this.getDetectUrl();
+
+                                // Send a loaded package to a server to detect more features
+                                if (typeof remoteScripts !== 'undefined') {
+                                    remoteScripts.define(detectUrl, null, function (url, state) {
+
+                                    });
+                                } else {
+                                    $.getScript(detectUrl).done(function (script, textStatus) {
+                                        _this.refreshUI(function () {
+                                            // Browser info and details loaded
+                                            var browserInfo = new window.WhichBrowser();
+                                            angular.extend(info.about, browserInfo);
+                                        });
+                                    }).fail(function (jqxhr, settings, exception) {
+                                        console.error(exception);
+                                    });
+                                }
+
+                                // Set browser name to IE (if defined)
+                                if (navigator.appName == 'Microsoft Internet Explorer') {
+                                    info.about.browser.name = 'Internet Explorer';
+                                }
+
+                                // Check if the browser supports web db's
+                                var webDB = info.about.webdb = this.getWebDBInfo();
+                                info.about.webdb.test();
+                            } catch (ex) {
+                                console.error(ex);
+                            }
+
+                            // Return the preliminary info
+                            return info;
+                        };
+
+                        AppInfoProvider.prototype.detectOSName = function () {
+                            var osName = 'Unknown OS';
+                            var appVer = navigator.appVersion;
+                            if (appVer) {
+                                if (appVer.indexOf("Win") != -1)
+                                    osName = 'Windows';
+                                if (appVer.indexOf("Mac") != -1)
+                                    osName = 'MacOS';
+                                if (appVer.indexOf("X11") != -1)
+                                    osName = 'UNIX';
+                                if (appVer.indexOf("Linux") != -1)
+                                    osName = 'Linux';
+                                //if (appVer.indexOf("Apple") != -1) osName = 'Apple';
+                            }
+                            return osName;
+                        };
+
+                        AppInfoProvider.prototype.getWebDBInfo = function () {
+                            var _this = this;
+                            var webDB = {
+                                db: null,
+                                version: '1',
+                                active: null,
+                                used: undefined,
+                                size: 5 * 1024 * 1024,
+                                test: function (name, desc, dbVer, dbSize) {
+                                    try  {
+                                        // Try and open a web db
+                                        webDB.db = openDatabase(name, webDB.version, desc, webDB.size);
+                                        webDB.onSuccess(null, null);
+                                    } catch (ex) {
+                                        // Nope, something went wrong
+                                        webDB.onError(null, null);
+                                    }
+                                },
+                                onSuccess: function (tx, r) {
+                                    if (tx) {
+                                        if (r) {
+                                            console.info(' - [ WebDB ] Result: ' + JSON.stringify(r));
+                                        }
+                                        if (tx) {
+                                            console.info(' - [ WebDB ] Trans: ' + JSON.stringify(tx));
+                                        }
+                                    }
+                                    _this.refreshUI(function () {
+                                        webDB.active = true;
+                                        webDB.used = JSON.stringify(webDB.db).length;
+                                    });
+                                },
+                                onError: function (tx, e) {
+                                    console.warn(' - [ WebDB ] Warning, not available: ' + e.message);
+                                    _this.refreshUI(function () {
+                                        webDB.active = false;
+                                    });
+                                }
+                            };
+                            return webDB;
+                        };
+
+                        AppInfoProvider.prototype.checkScriptLoaded = function (sources, filter) {
+                            sources.forEach(function (src) {
+                                filter(src);
+                            });
+                        };
+
+                        AppInfoProvider.prototype.getDetectUrl = function () {
+                            return (function () {
+                                var p = [], w = window, d = document, e = 0, f = 0;
+                                p.push('ua=' + encodeURIComponent(navigator.userAgent));
+                                e |= w.ActiveXObject ? 1 : 0;
+                                e |= w.opera ? 2 : 0;
+                                e |= w.chrome ? 4 : 0;
+                                e |= 'getBoxObjectFor' in d || 'mozInnerScreenX' in w ? 8 : 0;
+                                e |= ('WebKitCSSMatrix' in w || 'WebKitPoint' in w || 'webkitStorageInfo' in w || 'webkitURL' in w) ? 16 : 0;
+                                e |= (e & 16 && ({}.toString).toString().indexOf("\n") === -1) ? 32 : 0;
+                                p.push('e=' + e);
+                                f |= 'sandbox' in d.createElement('iframe') ? 1 : 0;
+                                f |= 'WebSocket' in w ? 2 : 0;
+                                f |= w.Worker ? 4 : 0;
+                                f |= w.applicationCache ? 8 : 0;
+                                f |= w.history && history.pushState ? 16 : 0;
+                                f |= d.documentElement.webkitRequestFullScreen ? 32 : 0;
+                                f |= 'FileReader' in w ? 64 : 0;
+                                p.push('f=' + f);
+                                p.push('r=' + Math.random().toString(36).substring(7));
+                                p.push('w=' + screen.width);
+                                p.push('h=' + screen.height);
+                                var s = d.createElement('script');
+                                return 'https://api.whichbrowser.net/rel/detect.js?' + p.join('&');
+                            })();
+                        };
+
+                        AppInfoProvider.prototype.resolveUserAgent = function (info) {
+                            var cn = info.codeName;
+                            var ua = info.userAgent;
+                            if (ua) {
+                                // Remove start of string in UAgent upto CName or end of string if not found.
+                                ua = ua.substring((ua + cn).toLowerCase().indexOf(cn.toLowerCase()));
+
+                                // Remove CName from start of string. (Eg. '/5.0 (Windows; U...)
+                                ua = ua.substring(cn.length);
+
+                                while (ua.substring(0, 1) == " " || ua.substring(0, 1) == "/") {
+                                    ua = ua.substring(1);
+                                }
+
+                                // Remove the end of the string from first characrer that is not a number or point etc.
+                                var pointer = 0;
+                                while ("0123456789.+-".indexOf((ua + "?").substring(pointer, pointer + 1)) >= 0) {
+                                    pointer = pointer + 1;
+                                }
+                                ua = ua.substring(0, pointer);
+
+                                if (!window.isNaN(ua)) {
+                                    if (parseInt(ua) > 0) {
+                                        info.versions.html = ua;
+                                    }
+                                    if (parseFloat(ua) >= 5) {
+                                        info.versions.css = '3.x';
+                                        info.versions.js = '5.x';
+                                    }
+                                }
+                            }
+                        };
+
+                        AppInfoProvider.prototype.getVersionInfo = function (ident) {
+                            try  {
+                                if (typeof process !== 'undefined' && process.versions) {
+                                    return process.versions[ident];
+                                }
+                            } catch (ex) {
+                            }
+                            return null;
+                        };
+
+                        AppInfoProvider.prototype.selectorExists = function (selector) {
+                            return false;
+                            //var ret = css($(selector));
+                            //return ret;
+                        };
+
+                        AppInfoProvider.prototype.css = function (a) {
+                            var sheets = document.styleSheets, o = [];
+                            for (var i in sheets) {
+                                var rules = sheets[i].rules || sheets[i].cssRules;
+                                for (var r in rules) {
+                                    if (a.is(rules[r].selectorText)) {
+                                        o.push(rules[r].selectorText);
+                                    }
+                                }
+                            }
+                            return o;
+                        };
+                        return AppInfoProvider;
+                    })();
+                    providers.AppInfoProvider = AppInfoProvider;
                 })(common.providers || (common.providers = {}));
                 var providers = common.providers;
             })(modules.common || (modules.common = {}));
@@ -3124,7 +3073,8 @@ var proto;
                         function PageLayoutService($q, navigationService) {
                             this.$q = $q;
                             this.navigationService = navigationService;
-                            this.toggleDocked = false;
+                            this.isTilted = true;
+                            this.isDocked = false;
                             this.callbacks = [];
                             this.init();
                         }
@@ -3178,9 +3128,13 @@ var proto;
                             return true;
                         };
 
-                        PageLayoutService.prototype.toggle = function () {
-                            var showDocked = !this.toggleDocked;
-                            this.toggleDocked = showDocked;
+                        PageLayoutService.prototype.togglePerspective = function () {
+                            this.isTilted = !this.isTilted;
+                            this.build();
+                        };
+
+                        PageLayoutService.prototype.toggleDocked = function () {
+                            this.isDocked = !this.isDocked;
                             this.build();
                         };
                         return PageLayoutService;
@@ -3197,8 +3151,14 @@ var proto;
                             this.init(elem);
                         }
                         LayoutNode.prototype.init = function (elem) {
-                            this.x = elem.offsetLeft;
-                            this.y = elem.offsetTop;
+                            var rect = elem.getBoundingClientRect ? elem.getBoundingClientRect() : null;
+                            if (rect) {
+                                this.x = rect.left;
+                                this.y = rect.top;
+                            } else {
+                                this.x = elem.offsetLeft;
+                                this.y = elem.offsetTop;
+                            }
                             this.width = elem.offsetWidth;
                             this.height = elem.offsetHeight;
                         };
@@ -3994,117 +3954,6 @@ var proto;
     var ng = proto.ng;
 })(proto || (proto = {}));
 ///<reference path="../../../imports.d.ts"/>
-///<reference path="../../common/services/NavigationService.ts"/>
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (explorer) {
-                var ExplorerLeftController = (function () {
-                    function ExplorerLeftController($rootScope, $scope, navigation) {
-                        this.$rootScope = $rootScope;
-                        this.$scope = $scope;
-                        this.navigation = navigation;
-                        $scope.navigation = navigation;
-                    }
-                    return ExplorerLeftController;
-                })();
-                explorer.ExplorerLeftController = ExplorerLeftController;
-            })(modules.explorer || (modules.explorer = {}));
-            var explorer = modules.explorer;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-///<reference path="../../../imports.d.ts"/>
-///<reference path="../../common/services/NavigationService.ts"/>
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (explorer) {
-                var ExplorerViewController = (function () {
-                    function ExplorerViewController($rootScope, $scope, $q, pageLayout) {
-                        this.$rootScope = $rootScope;
-                        this.$scope = $scope;
-                        this.$q = $q;
-                        this.pageLayout = pageLayout;
-                    }
-                    ExplorerViewController.prototype.toggleDockedRegion = function () {
-                        this.pageLayout.toggle();
-                    };
-                    return ExplorerViewController;
-                })();
-                explorer.ExplorerViewController = ExplorerViewController;
-            })(modules.explorer || (modules.explorer = {}));
-            var explorer = modules.explorer;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-///<reference path="../../../imports.d.ts"/>
-///<reference path="../../common/services/NavigationService.ts"/>
-var proto;
-(function (proto) {
-    (function (ng) {
-        (function (modules) {
-            (function (explorer) {
-                var ExternalLinksViewController = (function () {
-                    function ExternalLinksViewController($rootScope, $sce, $q, navigation) {
-                        this.$rootScope = $rootScope;
-                        this.$sce = $sce;
-                        this.$q = $q;
-                        this.navigation = navigation;
-                        this.init();
-                    }
-                    ExternalLinksViewController.prototype.init = function () {
-                        var _this = this;
-                        if (this.navigation.externalLinks) {
-                            this.navigation.externalLinks.UpdateUI = function () {
-                                _this.$rootScope.$applyAsync(function () {
-                                });
-                            };
-                            this.navigation.externalLinks.OnSelect = function (node) {
-                                _this.$rootScope.$applyAsync(function () {
-                                    console.log(' - Loading: ' + node.data);
-                                    _this.selected = node;
-                                });
-                            };
-                        }
-                        this.$sce.trustAsHtml($('#ExternalExplorerPanel')[0]);
-                    };
-
-                    ExternalLinksViewController.prototype.trustSrc = function (src) {
-                        return this.$sce.trustAsResourceUrl(src);
-                    };
-
-                    ExternalLinksViewController.prototype.openExternal = function () {
-                        if (this.selected) {
-                            window.open(this.selected.data, this.selected.label);
-                        }
-                    };
-
-                    ExternalLinksViewController.prototype.refreshExternal = function () {
-                        var _this = this;
-                        if (this.selected) {
-                            $('#ExternalExplorerPanel').attr('src', function (i, val) {
-                                return _this.trustSrc(val);
-                            });
-                        }
-                    };
-                    return ExternalLinksViewController;
-                })();
-                explorer.ExternalLinksViewController = ExternalLinksViewController;
-            })(modules.explorer || (modules.explorer = {}));
-            var explorer = modules.explorer;
-        })(ng.modules || (ng.modules = {}));
-        var modules = ng.modules;
-    })(proto.ng || (proto.ng = {}));
-    var ng = proto.ng;
-})(proto || (proto = {}));
-///<reference path="../../../imports.d.ts"/>
 var proto;
 (function (proto) {
     (function (ng) {
@@ -4297,6 +4146,122 @@ var proto;
     var ng = proto.ng;
 })(proto || (proto = {}));
 ///<reference path="../../../imports.d.ts"/>
+///<reference path="../../common/services/NavigationService.ts"/>
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (explorer) {
+                var ExplorerLeftController = (function () {
+                    function ExplorerLeftController($rootScope, $scope, navigation) {
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.navigation = navigation;
+                        $scope.navigation = navigation;
+                    }
+                    return ExplorerLeftController;
+                })();
+                explorer.ExplorerLeftController = ExplorerLeftController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
+///<reference path="../../common/services/NavigationService.ts"/>
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (explorer) {
+                var ExplorerViewController = (function () {
+                    function ExplorerViewController($rootScope, $scope, $q, pageLayout) {
+                        this.$rootScope = $rootScope;
+                        this.$scope = $scope;
+                        this.$q = $q;
+                        this.pageLayout = pageLayout;
+                    }
+                    ExplorerViewController.prototype.togglePerspective = function () {
+                        this.pageLayout.togglePerspective();
+                    };
+
+                    ExplorerViewController.prototype.toggleDockedRegion = function () {
+                        this.pageLayout.toggleDocked();
+                    };
+                    return ExplorerViewController;
+                })();
+                explorer.ExplorerViewController = ExplorerViewController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
+///<reference path="../../common/services/NavigationService.ts"/>
+var proto;
+(function (proto) {
+    (function (ng) {
+        (function (modules) {
+            (function (explorer) {
+                var ExternalLinksViewController = (function () {
+                    function ExternalLinksViewController($rootScope, $sce, $q, navigation) {
+                        this.$rootScope = $rootScope;
+                        this.$sce = $sce;
+                        this.$q = $q;
+                        this.navigation = navigation;
+                        this.init();
+                    }
+                    ExternalLinksViewController.prototype.init = function () {
+                        var _this = this;
+                        if (this.navigation.externalLinks) {
+                            this.navigation.externalLinks.UpdateUI = function () {
+                                _this.$rootScope.$applyAsync(function () {
+                                });
+                            };
+                            this.navigation.externalLinks.OnSelect = function (node) {
+                                _this.$rootScope.$applyAsync(function () {
+                                    console.log(' - Loading: ' + node.data);
+                                    _this.selected = node;
+                                });
+                            };
+                        }
+                        this.$sce.trustAsHtml($('#ExternalExplorerPanel')[0]);
+                    };
+
+                    ExternalLinksViewController.prototype.trustSrc = function (src) {
+                        return this.$sce.trustAsResourceUrl(src);
+                    };
+
+                    ExternalLinksViewController.prototype.openExternal = function () {
+                        if (this.selected) {
+                            window.open(this.selected.data, this.selected.label);
+                        }
+                    };
+
+                    ExternalLinksViewController.prototype.refreshExternal = function () {
+                        var _this = this;
+                        if (this.selected) {
+                            $('#ExternalExplorerPanel').attr('src', function (i, val) {
+                                return _this.trustSrc(val);
+                            });
+                        }
+                    };
+                    return ExternalLinksViewController;
+                })();
+                explorer.ExternalLinksViewController = ExternalLinksViewController;
+            })(modules.explorer || (modules.explorer = {}));
+            var explorer = modules.explorer;
+        })(ng.modules || (ng.modules = {}));
+        var modules = ng.modules;
+    })(proto.ng || (proto.ng = {}));
+    var ng = proto.ng;
+})(proto || (proto = {}));
+///<reference path="../../../imports.d.ts"/>
+
 var proto;
 (function (proto) {
     (function (ng) {
@@ -4356,13 +4321,74 @@ var proto;
                         if (typeof d3 !== 'undefined') {
                             this.start(d3);
                         } else {
-                            console.log(' - Loading D3....');
                             var url = 'https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js';
-                            $.getScript(url, function (data, textStatus, jqxhr) {
-                                console.log(' - D3 Loaded:', d3);
-                                _this.start(d3);
-                            });
+                            if (typeof remoteScripts !== 'undefined') {
+                                remoteScripts.define(url, function () {
+                                    return typeof d3 !== 'undefined';
+                                }, function () {
+                                    _this.start(d3);
+                                });
+                            } else {
+                                $.getScript(url, function (data, textStatus, jqxhr) {
+                                    _this.start(d3);
+                                });
+                            }
                         }
+                    };
+
+                    LayoutViewerController.prototype.start = function (d3) {
+                        // Set the zoom and navigation on the canvas
+                        var ident = '#LayoutView .contents-group';
+                        var found = d3.select(ident);
+                        if (found.length) {
+                            found.call(d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", function () {
+                                found.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+                            }));
+                        }
+                        return;
+
+                        // ToDo: Get keyboard navigation working...
+                        d3.select(document.body).on('keydown', function () {
+                            var step = 200;
+                            var key = d3.event.key || d3.event.keyCode;
+                            var zoom = d3.behavior.zoom();
+                            var mapsvg = d3.select(ident);
+
+                            console.log(' - Key:' + key, mapsvg);
+
+                            switch (key) {
+                                case 'Esc':
+                                case 27:
+                                    //found.attr("transform", "translate([0 , 0]) scale(1)");
+                                    zoom.translate([0, 0]).scale(1).event(mapsvg.transition());
+                                    break;
+                                case '+':
+                                case '=':
+                                case 187:
+                                    zoom.translate([0, 0]).scale(2.0).event(mapsvg.transition());
+                                    break;
+                                case '-':
+                                case 189:
+                                    zoom.translate([0, 0]).scale(0.5).event(mapsvg.transition());
+                                    break;
+                                case 'Left':
+                                case 37:
+                                    zoom.translate([zoom.translate()[0] + step, zoom.translate()[1]]).event(mapsvg.transition());
+                                    break;
+                                case 'Right':
+                                case 39:
+                                    zoom.translate([zoom.translate()[0] - step, zoom.translate()[1]]).event(mapsvg.transition());
+                                    break;
+                                case 'Up':
+                                case 38:
+                                    zoom.translate([zoom.translate()[0], zoom.translate()[1] + step]).event(mapsvg.transition());
+                                    break;
+                                case 'Down':
+                                case 40:
+                                    zoom.translate([zoom.translate()[0], zoom.translate()[1] - step]).event(mapsvg.transition());
+                                    break;
+                            }
+                        });
                     };
 
                     LayoutViewerController.prototype.draw = function () {
@@ -4421,26 +4447,22 @@ var proto;
                         }
                     };
 
-                    LayoutViewerController.prototype.start = function (d3) {
-                        var found = d3.select('#LayoutView .contents-group');
-                        if (found.length) {
-                            found.call(d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", function () {
-                                found.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
-                            }));
-                        }
-                    };
-
                     LayoutViewerController.prototype.drawElem = function (info) {
                         var _this = this;
                         var list = [];
 
+                        var zLevel = 2;
                         var x = info.x - document.body.scrollLeft;
                         var y = info.y - document.body.scrollTop;
-                        var zLevel = 2;
+
                         var transform = '';
-                         {
+                        var show3D = this.pageLayoutService.isTilted;
+                        if (show3D) {
                             transform += 'translate(200, ' + (300 - (info.level || 0) * zLevel) + ') ';
                             transform += 'scale(.6, .6) scale(1, .7) rotate(-30) ';
+                        } else {
+                            transform += 'translate(100, 50) ';
+                            transform += 'scale(.7, .7) ';
                         }
 
                         if (info.x !== undefined && info.y !== undefined) {
@@ -4598,70 +4620,6 @@ angular.module('prototyped.explorer', [
     checkScroll();
 });
 /// <reference path="../imports.d.ts" />
-/// <reference path="../modules/config.ng.ts" />
-/// <reference path="../modules/about/module.ng.ts" />
-// Define main module with all dependencies
-angular.module('prototyped.ng', [
-    'prototyped.ng.runtime',
-    'prototyped.ng.config',
-    'prototyped.ng.views',
-    'prototyped.ng.styles',
-    'ngRoute',
-    'ui.router',
-    'prototyped.explorer',
-    'prototyped.console',
-    'prototyped.editor',
-    'prototyped.about'
-]).config([
-    'appStateProvider', function (appStateProvider) {
-        // Configure module state
-        appStateProvider.config('prototyped.ng', {
-            active: true
-        }).when('/proto', '/proto/explore').when('/sandbox', '/samples').when('/imports', '/edge').state('proto', {
-            url: '/proto',
-            abstract: true
-        }).state('default', {
-            url: '/',
-            views: {
-                'main@': {
-                    templateUrl: 'views/default.tpl.html',
-                    controller: 'CardViewController',
-                    controllerAs: 'cardView'
-                }
-            }
-        });
-    }]).controller('CardViewController', ['appState', proto.ng.modules.common.controllers.CardViewController]).directive('appClean', ['$window', '$route', '$state', 'appState', proto.ng.modules.common.directives.AppCleanDirective]).directive('appClose', ['appNode', proto.ng.modules.common.directives.AppCloseDirective]).directive('appDebug', ['appNode', proto.ng.modules.common.directives.AppDebugDirective]).directive('appKiosk', ['appNode', proto.ng.modules.common.directives.AppKioskDirective]).directive('appFullscreen', ['appNode', proto.ng.modules.common.directives.AppFullScreenDirective]).directive('appVersion', ['appState', proto.ng.modules.common.directives.AppVersionDirective]).directive('eatClickIf', ['$parse', '$rootScope', proto.ng.modules.common.directives.EatClickIfDirective]).directive('toHtml', ['$sce', '$filter', proto.ng.modules.common.directives.ToHtmlDirective]).directive('domReplace', [proto.ng.modules.common.directives.DomReplaceDirective]).directive('resxInclude', ['$templateCache', proto.ng.modules.common.directives.ResxIncludeDirective]).directive('resxImport', ['$templateCache', '$document', proto.ng.modules.common.directives.ResxImportDirective]).directive('abnTree', ['$timeout', proto.ng.modules.common.directives.TreeViewDirective]).filter('toXml', [proto.ng.modules.common.filters.ToXmlFilter]).filter('interpolate', ['appState', proto.ng.modules.common.filters.InterpolateFilter]).filter('fromNow', ['$filter', proto.ng.modules.common.filters.FromNowFilter]).filter('isArray', [proto.ng.modules.common.filters.IsArrayFilter]).filter('isNotArray', [proto.ng.modules.common.filters.IsNotArrayFilter]).filter('typeCount', [proto.ng.modules.common.filters.TypeCountFilter]).filter('listReverse', [proto.ng.modules.common.filters.ListReverseFilter]).filter('toBytes', [proto.ng.modules.common.filters.ToByteFilter]).filter('parseBytes', [proto.ng.modules.common.filters.ParseBytesFilter]).filter('trustedUrl', ['$sce', proto.ng.modules.common.filters.TrustedUrlFilter]).run([
-    '$rootScope', '$state', '$templateCache', 'appConfig', 'appState', function ($rootScope, $state, $templateCache, appConfig, appState) {
-        // Extend root scope with (global) contexts
-        angular.extend($rootScope, {
-            appConfig: appConfig,
-            appState: appState,
-            appNode: appState.node,
-            startAt: Date.now(),
-            state: $state
-        });
-
-        // Link the current state instance
-        appState.state = $state;
-
-        // Watch for navigation changes
-        $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
-            if (toState) {
-                appState.current.state = toState;
-            }
-        });
-
-        console.debug(' - Current Config: ', appConfig);
-
-        if (appConfig.options.includeDefaultStyles) {
-            appState.importStyle($templateCache, 'assets/css/app.min.css');
-            appState.importStyle($templateCache, 'assets/css/prototyped.min.css');
-        }
-        if (appConfig.options.includeSandboxStyles) {
-            appState.importStyle($templateCache, 'assets/css/sandbox.min.css');
-        }
-    }]);
-/// <reference path="../imports.d.ts" />
 /// <reference path="config.ng.ts" />
 // Define common runtime modules (shared)
 angular.module('prototyped.ng.runtime', [
@@ -4745,6 +4703,127 @@ angular.module('prototyped.sandbox', [
         templateUrl: 'views/common/docked/footer.tpl.html'
     };
 });
+/// <reference path="../../imports.d.ts" />
+/// <reference path="../common/providers/AppInfoProvider.ts" />
+angular.module('prototyped.about', [
+    'prototyped.ng.runtime',
+    'prototyped.ng.views',
+    'prototyped.ng.styles'
+]).config([
+    'appStateProvider', function (appStateProvider) {
+        // Define application state
+        appStateProvider.when('/about', '/about/info').define('about', {
+            url: '/about',
+            priority: 1000,
+            state: {
+                url: '/about',
+                abstract: true
+            },
+            menuitem: {
+                label: 'About',
+                state: 'about.info',
+                icon: 'fa fa-info-circle'
+            },
+            cardview: {
+                style: 'img-about',
+                title: 'About this software',
+                desc: 'Originally created for fast, rapid prototyping in AngularJS, quickly grew into something more...'
+            },
+            visible: function () {
+                return appStateProvider.appConfig.options.showAboutPage;
+            },
+            children: []
+        }).state('about.info', {
+            url: '/info',
+            views: {
+                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'modules/about/views/info.tpl.html',
+                    controller: 'AboutInfoController'
+                }
+            }
+        }).state('about.online', {
+            url: '^/contact',
+            views: {
+                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
+                'main@': { templateUrl: 'modules/about/views/contact.tpl.html' }
+            }
+        }).state('about.conection', {
+            url: '/conection',
+            views: {
+                'left@': { templateUrl: 'modules/about/views/left.tpl.html' },
+                'main@': {
+                    templateUrl: 'modules/about/views/connections.tpl.html',
+                    controller: 'AboutConnectionController',
+                    controllerAs: 'connCtrl'
+                }
+            }
+        });
+    }]).controller('AboutInfoController', ['$scope', 'appInfo', proto.ng.modules.about.controllers.AboutInfoController]).controller('AboutConnectionController', ['$scope', '$location', 'appState', 'appInfo', 'navigationService', proto.ng.modules.about.controllers.AboutConnectionController]);
+/// <reference path="../imports.d.ts" />
+/// <reference path="../modules/config.ng.ts" />
+/// <reference path="../modules/about/module.ng.ts" />
+// Define main module with all dependencies
+angular.module('prototyped.ng', [
+    'prototyped.ng.runtime',
+    'prototyped.ng.config',
+    'prototyped.ng.views',
+    'prototyped.ng.styles',
+    'ngRoute',
+    'ui.router',
+    'prototyped.explorer',
+    'prototyped.console',
+    'prototyped.editor',
+    'prototyped.about'
+]).config([
+    'appStateProvider', function (appStateProvider) {
+        // Configure module state
+        appStateProvider.config('prototyped.ng', {
+            active: true
+        }).when('/proto', '/proto/explore').when('/sandbox', '/samples').when('/imports', '/edge').state('proto', {
+            url: '/proto',
+            abstract: true
+        }).state('default', {
+            url: '/',
+            views: {
+                'main@': {
+                    templateUrl: 'views/default.tpl.html',
+                    controller: 'CardViewController',
+                    controllerAs: 'cardView'
+                }
+            }
+        });
+    }]).controller('CardViewController', ['appState', proto.ng.modules.common.controllers.CardViewController]).directive('appClean', ['$window', '$route', '$state', 'appState', proto.ng.modules.common.directives.AppCleanDirective]).directive('appClose', ['appNode', proto.ng.modules.common.directives.AppCloseDirective]).directive('appDebug', ['appNode', proto.ng.modules.common.directives.AppDebugDirective]).directive('appKiosk', ['appNode', proto.ng.modules.common.directives.AppKioskDirective]).directive('appFullscreen', ['appNode', proto.ng.modules.common.directives.AppFullScreenDirective]).directive('appVersion', ['appState', proto.ng.modules.common.directives.AppVersionDirective]).directive('eatClickIf', ['$parse', '$rootScope', proto.ng.modules.common.directives.EatClickIfDirective]).directive('toHtml', ['$sce', '$filter', proto.ng.modules.common.directives.ToHtmlDirective]).directive('domReplace', [proto.ng.modules.common.directives.DomReplaceDirective]).directive('resxInclude', ['$templateCache', proto.ng.modules.common.directives.ResxIncludeDirective]).directive('resxImport', ['$templateCache', '$document', proto.ng.modules.common.directives.ResxImportDirective]).directive('abnTree', ['$timeout', proto.ng.modules.common.directives.TreeViewDirective]).filter('toXml', [proto.ng.modules.common.filters.ToXmlFilter]).filter('interpolate', ['appState', proto.ng.modules.common.filters.InterpolateFilter]).filter('fromNow', ['$filter', proto.ng.modules.common.filters.FromNowFilter]).filter('isArray', [proto.ng.modules.common.filters.IsArrayFilter]).filter('isNotArray', [proto.ng.modules.common.filters.IsNotArrayFilter]).filter('typeCount', [proto.ng.modules.common.filters.TypeCountFilter]).filter('listReverse', [proto.ng.modules.common.filters.ListReverseFilter]).filter('toBytes', [proto.ng.modules.common.filters.ToByteFilter]).filter('parseBytes', [proto.ng.modules.common.filters.ParseBytesFilter]).filter('trustedUrl', ['$sce', proto.ng.modules.common.filters.TrustedUrlFilter]).run([
+    '$rootScope', '$state', '$templateCache', 'appConfig', 'appState', function ($rootScope, $state, $templateCache, appConfig, appState) {
+        // Extend root scope with (global) contexts
+        angular.extend($rootScope, {
+            appConfig: appConfig,
+            appState: appState,
+            appNode: appState.node,
+            startAt: Date.now(),
+            state: $state
+        });
+
+        // Link the current state instance
+        appState.state = $state;
+
+        // Watch for navigation changes
+        $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState, fromParams) {
+            if (toState) {
+                appState.current.state = toState;
+            }
+        });
+
+        console.debug(' - Current Config: ', appConfig);
+
+        if (appConfig.options.includeDefaultStyles) {
+            appState.importStyle($templateCache, 'assets/css/app.min.css');
+            appState.importStyle($templateCache, 'assets/css/prototyped.min.css');
+        }
+        if (appConfig.options.includeSandboxStyles) {
+            appState.importStyle($templateCache, 'assets/css/sandbox.min.css');
+        }
+    }]);
 ;angular.module('prototyped.ng.views', []).run(['$templateCache', function($templateCache) {
   $templateCache.put('modules/about/views/connections.tpl.html',
     '<div ng:cloak style="width: 100%"><style resx:import=assets/css/images.min.css></style><style>.results {\n' +
@@ -5002,49 +5081,50 @@ angular.module('prototyped.sandbox', [
     '        }\n' +
     '\n' +
     '        .window-region {\n' +
-    '            fill: rgba(103, 103, 103, 0.25);\n' +
+    '            fill: rgba(225, 225, 225, 0.50);\n' +
     '            stroke: rgba(0, 0, 0, 1);\n' +
     '            stroke-width: 2;\n' +
     '        }\n' +
     '\n' +
     '        .inner-region {\n' +
-    '            fill: rgba(186, 186, 186, 0.5);\n' +
+    '            fill: rgb(186, 186, 186);\n' +
+    '            fill-opacity: 0.5;\n' +
     '            stroke: rgba(0, 0, 0, 0.35);\n' +
     '            stroke-width: 1;\n' +
     '        }\n' +
     '\n' +
     '            .inner-region.ng-elem {\n' +
-    '                fill: rgba(118, 255, 85, 0.50);\n' +
+    '                fill: rgb(118, 255, 85);\n' +
     '                stroke: rgba(48, 168, 0, 0.91);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-dataz {\n' +
-    '                fill: rgba(255, 0, 226, 0.50);\n' +
+    '                fill: rgb(255, 0, 226);\n' +
     '                stroke: rgba(208, 0, 184, 0.71);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-link {\n' +
-    '                fill: rgba(0, 161, 255, 0.50);\n' +
+    '                fill: rgb(0, 161, 255);\n' +
     '                stroke: rgba(0, 0, 0, 0.75);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-form {\n' +
-    '                fill: rgba(255, 250, 0, 0.5);\n' +
+    '                fill: rgb(255, 250, 0);\n' +
     '                stroke: rgb(255, 187, 0);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-label {\n' +
-    '                fill: rgba(255, 187, 0, 0.25);\n' +
+    '                fill: rgb(255, 187, 0);\n' +
     '                stroke: rgb(255, 216, 0);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-input {\n' +
-    '                fill: rgba(255, 187, 0, 0.75);\n' +
+    '                fill: rgb(255, 187, 0);\n' +
     '                stroke: rgb(255, 106, 0);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-button {\n' +
-    '                fill: rgba(0, 38, 255, 0.75);\n' +
+    '                fill: rgb(0, 107, 255);\n' +
     '                stroke: rgb(0, 18, 124);\n' +
     '                stroke-width: 2px;\n' +
     '            }\n' +
@@ -5056,8 +5136,9 @@ angular.module('prototyped.sandbox', [
     '            }\n' +
     '\n' +
     '            .inner-region:hover {\n' +
-    '                stroke-width: 4px;\n' +
-    '            }</style><page-layout-viewer class=inspection-contents></page-layout-viewer><span style="position: absolute; right: 8px; top: 8px"><a href="" ng-click=exploreCtrl.toggleDockedRegion()>Toggle Docked</a></span></div>');
+    '                stroke-width: 3px;\n' +
+    '                fill-opacity: 0.95;\n' +
+    '            }</style><page-layout-viewer class=inspection-contents></page-layout-viewer><span style="position: absolute; right: 8px; top: 8px"><a href="" ng-click=exploreCtrl.togglePerspective()>Toggle Perspective</a> | <a href="" ng-click=exploreCtrl.toggleDockedRegion()>Toggle Docked</a></span></div>');
   $templateCache.put('views/common/components/contents.tpl.html',
     '<div id=contents class=contents><div id=left class="ui-view-left ng-cloak" ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div><div id=main class=ui-view-main ui:view=main><em class=inactive-fill-text ng:if=false><i class="fa fa-spinner fa-spin"></i> Loading...</em> <b class="inactive-fill-text ng-cloak" ng:if="!(state.current.views[\'main\'] || state.current.views[\'main@\'])"><i class="fa fa-exclamation-triangle faa-flash glow-orange"></i> Page not found</b></div></div>');
   $templateCache.put('views/common/components/footer.tpl.html',
@@ -5126,7 +5207,7 @@ angular.module('prototyped.sandbox', [
 
 
   $templateCache.put('assets/css/images.min.css',
-    "body .img-chrome{background-image:url(https://upload.wikimedia.org/wikipedia/commons/e/e2/Google_Chrome_icon_%282011%29.svg)}body .img-chromium{background-image:url(https://upload.wikimedia.org/wikipedia/commons/5/5f/Chromium_11_Logo.svg)}body .img-firefox{background-image:url(https://upload.wikimedia.org/wikipedia/en/e/e3/Firefox-logo.svg)}body .img-iexplore{background-image:url(https://upload.wikimedia.org/wikipedia/commons/2/2f/Internet_Explorer_10_logo.svg)}body .img-opera{background-image:url(https://upload.wikimedia.org/wikipedia/commons/d/d0/Opera_O.svg)}body .img-safari{background-image:url(https://upload.wikimedia.org/wikipedia/commons/e/ee/Compass_icon_matte.svg)}body .img-seamonkey{background-image:url(https://upload.wikimedia.org/wikipedia/commons/e/e8/SeaMonkey.svg)}body .img-spartan{background-image:url(https://upload.wikimedia.org/wikipedia/en/b/b8/MSUSpartans_Logo.svg)}body .img-windows{background-image:url(https://upload.wikimedia.org/wikipedia/en/1/14/Windows_logo_-_2006.svg)}body .img-mac-os{background-image:url(http://gfx.syscheck.melasweb.com/operating%20systems/Mac%20OS.png)}body .img-apple{background-image:url(http://www.journaldugeek.com/files/2011/04/apple-logo.png)}body .img-linux,body .img-unix{background-image:url(https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)}body .img-ubuntu{background-image:url(https://design.ubuntu.com/wp-content/uploads/logo-ubuntu_cof-orange-hex.svg)}body .img-drive,body .img-drive-default{background-image:url(http://png-3.findicons.com/files/icons/749/slick_drives_remake/128/generic_slick_drives_remake_icon.png)}body .img-drive-onl{background-image:url(http://png-1.findicons.com/files/icons/749/slick_drives_remake/128/server_slick_drives_remake_icon.png)}body .img-drive-usb{background-image:url(http://png-5.findicons.com/files/icons/749/slick_drives_remake/128/usb_hd_slick_drives_remake_icon.png)}body .img-drive-ssd{background-image:url(http://png-2.findicons.com/files/icons/749/slick_drives_remake/128/ssd_slick_drives_remake_icon.png)}body .img-drive-web{background-image:url(http://png-1.findicons.com/files/icons/749/slick_drives_remake/128/idisk_slick_drives_remake_icon.png)}body .img-drive-mac{background-image:url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/apple_slick_drives_remake_icon.png)}body .img-drive-warn{background-image:url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/idisk_user_slick_drives_remake_icon.png)}body .img-drive-hist{background-image:url(http://png-5.findicons.com/files/icons/749/slick_drives_remake/128/time_machine_slick_drives_remake_icon.png)}body .img-drive-wifi{background-image:url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/airport_disc_slick_drives_remake_icon.png)}body .img-webdb{background-image:url(http://png-5.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)}body .img-server-local{background-image:url(http://png-4.findicons.com/files/icons/1406/g5_drives/128/g5_network_volume_1.png)}body .img-server{background-image:url(http://png-1.findicons.com/files/icons/719/crystal_clear_actions/128/server_256.png)}body .img-sqldb{background-image:url(http://png-5.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)}body .img-iis{background-image:url(https://downloads.chef.io/assets/images/downloads/logos/windows-84b9c41f.svg)}body .img-node{background-image:url(https://cdn.rawgit.com/ferventcoder/chocolatey-packages/master/icons/nodejs.png)}body .img-apache{background-image:url(http://www.iconattitude.com/icons/open_icon_library/apps/png/256/apache.png)}body .img-angular{background-image:url(http://svgporn.com/angular-icon.svg)}body .img-nodewebkit{background-image:url(http://oldgeeksguide.github.io/presentations/html5devconf2013/icon-node-webkit.png)}body .img-nodejs{background-image:url(https://cdn.rawgit.com/ferventcoder/chocolatey-packages/master/icons/nodejs.png)}body .img-html5,body .img-html5-ie{background-image:url(http://www.w3.org/html/logo/downloads/HTML5_Logo.svg)}body .img-js-default,body .img-js-v8{background-image:url(https://upload.wikimedia.org/wikipedia/commons/b/b6/Badge_js-strict.svg)}body .img-css3{background-image:url(http://ohdoylerules.com/content/images/css3.svg)}body .img-jquery{background-image:url(http://www.ocpf.us/images/jquery-logo.png)}body .img-terminal{background-image:url(http://png-4.findicons.com/files/icons/2212/carpelinx/128/server.png)}"
+    "body .img-chrome{background-image:url(https://upload.wikimedia.org/wikipedia/commons/e/e2/Google_Chrome_icon_%282011%29.svg)}body .img-chromium{background-image:url(https://upload.wikimedia.org/wikipedia/commons/5/5f/Chromium_11_Logo.svg)}body .img-firefox{background-image:url(https://upload.wikimedia.org/wikipedia/en/e/e3/Firefox-logo.svg)}body .img-iexplore{background-image:url(https://upload.wikimedia.org/wikipedia/commons/2/2f/Internet_Explorer_10_logo.svg)}body .img-opera{background-image:url(https://upload.wikimedia.org/wikipedia/commons/d/d0/Opera_O.svg)}body .img-safari{background-image:url(https://upload.wikimedia.org/wikipedia/commons/e/ee/Compass_icon_matte.svg)}body .img-seamonkey{background-image:url(https://upload.wikimedia.org/wikipedia/commons/e/e8/SeaMonkey.svg)}body .img-spartan{background-image:url(https://upload.wikimedia.org/wikipedia/en/b/b8/MSUSpartans_Logo.svg)}body .img-windows{background-image:url(https://upload.wikimedia.org/wikipedia/en/1/14/Windows_logo_-_2006.svg)}body .img-mac-os{background-image:url(http://gfx.syscheck.melasweb.com/operating%20systems/Mac%20OS.png)}body .img-apple{background-image:url(http://www.journaldugeek.com/files/2011/04/apple-logo.png)}body .img-linux,body .img-unix{background-image:url(https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg)}body .img-ubuntu{background-image:url(https://design.ubuntu.com/wp-content/uploads/logo-ubuntu_cof-orange-hex.svg)}body .img-drive,body .img-drive-default{background-image:url(http://png-3.findicons.com/files/icons/749/slick_drives_remake/128/generic_slick_drives_remake_icon.png)}body .img-drive-onl{background-image:url(http://png-1.findicons.com/files/icons/749/slick_drives_remake/128/server_slick_drives_remake_icon.png)}body .img-drive-usb{background-image:url(http://png-5.findicons.com/files/icons/749/slick_drives_remake/128/usb_hd_slick_drives_remake_icon.png)}body .img-drive-ssd{background-image:url(http://png-2.findicons.com/files/icons/749/slick_drives_remake/128/ssd_slick_drives_remake_icon.png)}body .img-drive-web{background-image:url(http://png-1.findicons.com/files/icons/749/slick_drives_remake/128/idisk_slick_drives_remake_icon.png)}body .img-drive-mac{background-image:url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/apple_slick_drives_remake_icon.png)}body .img-drive-warn{background-image:url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/idisk_user_slick_drives_remake_icon.png)}body .img-drive-hist{background-image:url(http://png-5.findicons.com/files/icons/749/slick_drives_remake/128/time_machine_slick_drives_remake_icon.png)}body .img-drive-wifi{background-image:url(http://png-4.findicons.com/files/icons/749/slick_drives_remake/128/airport_disc_slick_drives_remake_icon.png)}body .img-webdb{background-image:url(http://png-5.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)}body .img-server-local{background-image:url(http://png-4.findicons.com/files/icons/1406/g5_drives/128/g5_network_volume_1.png)}body .img-server{background-image:url(http://png-1.findicons.com/files/icons/719/crystal_clear_actions/128/server_256.png)}body .img-sqldb{background-image:url(http://png-5.findicons.com/files/icons/1035/human_o2/128/network_server_database.png)}body .img-iis{background-image:url(https://downloads.chef.io/assets/images/downloads/logos/windows-84b9c41f.svg)}body .img-node{background-image:url(https://cdn.rawgit.com/ferventcoder/chocolatey-packages/master/icons/nodejs.png)}body .img-apache{background-image:url(http://www.iconattitude.com/icons/open_icon_library/apps/png/256/apache.png)}body .img-angular{background-image:url(http://svgporn.com/logos/angular-icon.svg)}body .img-nodewebkit{background-image:url(http://oldgeeksguide.github.io/presentations/html5devconf2013/icon-node-webkit.png)}body .img-nodejs{background-image:url(https://cdn.rawgit.com/ferventcoder/chocolatey-packages/master/icons/nodejs.png)}body .img-html5,body .img-html5-ie{background-image:url(http://www.w3.org/html/logo/downloads/HTML5_Logo.svg)}body .img-js-default,body .img-js-v8{background-image:url(https://upload.wikimedia.org/wikipedia/commons/b/b6/Badge_js-strict.svg)}body .img-css3{background-image:url(http://ohdoylerules.com/content/images/css3.svg)}body .img-jquery{background-image:url(http://www.ocpf.us/images/jquery-logo.png)}body .img-terminal{background-image:url(http://png-4.findicons.com/files/icons/2212/carpelinx/128/server.png)}"
   );
 
 

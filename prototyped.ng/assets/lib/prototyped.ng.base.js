@@ -304,7 +304,10 @@ var proto;
                                     name: 'Wolfram Alpha', url: 'https://www.wolframalpha.com/'
                                 },
                                 {
-                                    name: 'Global Wind Maps', url: 'https://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286'
+                                    name: 'Wind and Weather', url: 'http://earth.nullschool.net/#current/wind/surface/level/overlay=temp/equirectangular'
+                                },
+                                {
+                                    name: 'Misery Index Globe', url: 'http://earth.nullschool.net/#current/wind/surface/level/overlay=misery_index/orthographic=9.09,12.21,286'
                                 },
                                 {
                                     name: 'Disaster Info Map', url: 'http://hisz.rsoe.hu/alertmap/index2.php'
@@ -845,6 +848,21 @@ var proto;
                             this.appState.updateUI(action);
                         };
 
+                        AppInfoProvider.prototype.appendBrowser = function (info) {
+                            this.refreshUI(function () {
+                                try  {
+                                    // Browser info and details loaded
+                                    if (typeof WhichBrowser !== 'undefined') {
+                                        var browserInfo = new WhichBrowser();
+                                        angular.extend(info.about, browserInfo);
+                                    }
+                                } catch (ex) {
+                                    console.error(ex);
+                                    throw ex;
+                                }
+                            });
+                        };
+
                         AppInfoProvider.prototype.detectBrowserInfo = function () {
                             var _this = this;
                             var info = this.appInfo;
@@ -914,15 +932,19 @@ var proto;
                                 var detectUrl = this.getDetectUrl();
 
                                 // Send a loaded package to a server to detect more features
-                                $.getScript(detectUrl).done(function (script, textStatus) {
-                                    _this.refreshUI(function () {
-                                        // Browser info and details loaded
-                                        var browserInfo = new window.WhichBrowser();
-                                        angular.extend(info.about, browserInfo);
+                                if (typeof remoteScripts !== 'undefined') {
+                                    remoteScripts.define(detectUrl, function () {
+                                        return typeof WhichBrowser === 'undefined';
+                                    }, function (url, details) {
+                                        _this.appendBrowser(info);
                                     });
-                                }).fail(function (jqxhr, settings, exception) {
-                                    console.error(exception);
-                                });
+                                } else {
+                                    $.getScript(detectUrl).done(function (script, textStatus) {
+                                        _this.appendBrowser(info);
+                                    }).fail(function (jqxhr, settings, exception) {
+                                        console.error(exception);
+                                    });
+                                }
 
                                 // Set browser name to IE (if defined)
                                 if (navigator.appName == 'Microsoft Internet Explorer') {
@@ -3124,7 +3146,8 @@ var proto;
                         function PageLayoutService($q, navigationService) {
                             this.$q = $q;
                             this.navigationService = navigationService;
-                            this.toggleDocked = false;
+                            this.isTilted = true;
+                            this.isDocked = false;
                             this.callbacks = [];
                             this.init();
                         }
@@ -3166,7 +3189,7 @@ var proto;
                                 return false;
                             }
 
-                            if (!this.toggleDocked) {
+                            if (!this.isDocked) {
                                 var isDockContainer = $(elem).hasClass('docked-container');
                                 return !isDockContainer;
                             }
@@ -3178,9 +3201,13 @@ var proto;
                             return true;
                         };
 
-                        PageLayoutService.prototype.toggle = function () {
-                            var showDocked = !this.toggleDocked;
-                            this.toggleDocked = showDocked;
+                        PageLayoutService.prototype.togglePerspective = function () {
+                            this.isTilted = !this.isTilted;
+                            this.build();
+                        };
+
+                        PageLayoutService.prototype.toggleDocked = function () {
+                            this.isDocked = !this.isDocked;
                             this.build();
                         };
                         return PageLayoutService;
@@ -4037,8 +4064,12 @@ var proto;
                         this.$q = $q;
                         this.pageLayout = pageLayout;
                     }
+                    ExplorerViewController.prototype.togglePerspective = function () {
+                        this.pageLayout.togglePerspective();
+                    };
+
                     ExplorerViewController.prototype.toggleDockedRegion = function () {
-                        this.pageLayout.toggle();
+                        this.pageLayout.toggleDocked();
                     };
                     return ExplorerViewController;
                 })();
@@ -4378,17 +4409,72 @@ var proto;
                         }
                     };
 
+                    LayoutViewerController.prototype.start = function (d3) {
+                        // Set the zoom and navigation on the canvas
+                        var targs = d3.select('#LayoutView .contents-group');
+                        var found = d3.select('#LayoutView .contents-group');
+                        if (found.call && targs.length) {
+                            found.call(d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", function () {
+                                targs.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+                            }));
+                        }
+                        return;
+
+                        // ToDo: Get keyboard navigation working...
+                        var ident = '#LayoutView .contents-group';
+                        d3.select(document.body).on('keydown', function () {
+                            var step = 200;
+                            var key = d3.event.key || d3.event.keyCode;
+                            var zoom = d3.behavior.zoom();
+                            var mapsvg = d3.select(ident);
+
+                            console.log(' - Key:' + key, mapsvg);
+
+                            switch (key) {
+                                case 'Esc':
+                                case 27:
+                                    //found.attr("transform", "translate([0 , 0]) scale(1)");
+                                    zoom.translate([0, 0]).scale(1).event(mapsvg.transition());
+                                    break;
+                                case '+':
+                                case '=':
+                                case 187:
+                                    zoom.translate([0, 0]).scale(2.0).event(mapsvg.transition());
+                                    break;
+                                case '-':
+                                case 189:
+                                    zoom.translate([0, 0]).scale(0.5).event(mapsvg.transition());
+                                    break;
+                                case 'Left':
+                                case 37:
+                                    zoom.translate([zoom.translate()[0] + step, zoom.translate()[1]]).event(mapsvg.transition());
+                                    break;
+                                case 'Right':
+                                case 39:
+                                    zoom.translate([zoom.translate()[0] - step, zoom.translate()[1]]).event(mapsvg.transition());
+                                    break;
+                                case 'Up':
+                                case 38:
+                                    zoom.translate([zoom.translate()[0], zoom.translate()[1] + step]).event(mapsvg.transition());
+                                    break;
+                                case 'Down':
+                                case 40:
+                                    zoom.translate([zoom.translate()[0], zoom.translate()[1] - step]).event(mapsvg.transition());
+                                    break;
+                            }
+                        });
+                    };
+
                     LayoutViewerController.prototype.draw = function () {
                         var info = this.pageLayoutService.node;
                         if (this.view) {
-                            //var overlay = this.getOverlay();
-                            // Draw the background container
+                            // Clear the old contents
                             var contents = this.getContents();
                             while (contents.firstChild) {
                                 contents.removeChild(contents.firstChild);
                             }
 
-                            // Add background and window
+                            // Add background view
                             contents.appendChild(this.drawElem({
                                 x: 0 - document.body.scrollLeft,
                                 y: 0 - document.body.scrollTop,
@@ -4398,6 +4484,8 @@ var proto;
                                 children: [],
                                 level: -0.1
                             })[0]);
+
+                            // Add the window view
                             contents.appendChild(this.drawElem({
                                 x: document.body.scrollLeft,
                                 y: document.body.scrollTop,
@@ -4422,6 +4510,7 @@ var proto;
                             while (this.view.firstChild) {
                                 this.view.removeChild(this.view.firstChild);
                             }
+                            this.view.appendChild(this.getOverlay());
                             this.view.appendChild(this.getContents());
                             $(this.view).html(function () {
                                 return this.innerHTML;
@@ -4434,15 +4523,6 @@ var proto;
                         }
                     };
 
-                    LayoutViewerController.prototype.start = function (d3) {
-                        var found = d3.select('#LayoutView .contents-group');
-                        if (found.length) {
-                            found.call(d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", function () {
-                                found.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
-                            }));
-                        }
-                    };
-
                     LayoutViewerController.prototype.drawElem = function (info) {
                         var _this = this;
                         var list = [];
@@ -4450,10 +4530,15 @@ var proto;
                         var zLevel = 2;
                         var x = info.x - document.body.scrollLeft;
                         var y = info.y - document.body.scrollTop;
+
                         var transform = '';
-                         {
+                        var show3D = this.pageLayoutService.isTilted;
+                        if (show3D) {
                             transform += 'translate(200, ' + (300 - (info.level || 0) * zLevel) + ') ';
                             transform += 'scale(.6, .6) scale(1, .7) rotate(-30) ';
+                        } else {
+                            transform += 'translate(100, 50) ';
+                            transform += 'scale(.7, .7) ';
                         }
 
                         if (info.x !== undefined && info.y !== undefined) {
@@ -4477,8 +4562,7 @@ var proto;
 
                     LayoutViewerController.prototype.getOverlay = function () {
                         if (!this.overlayGroup) {
-                            this.overlayGroup = $('<g class="overlay-group"></g>')[0];
-                            this.view.appendChild(this.overlayGroup);
+                            this.overlayGroup = $('<rect class="overlay-group" x="0" y="0" width="100%" height="100%"></rect>')[0];
                         }
                         return this.overlayGroup;
                     };
@@ -4486,7 +4570,6 @@ var proto;
                     LayoutViewerController.prototype.getContents = function () {
                         if (!this.contentsGroup) {
                             this.contentsGroup = $('<g class="contents-group"></g>')[0];
-                            this.view.appendChild(this.contentsGroup);
                         }
                         return this.contentsGroup;
                     };

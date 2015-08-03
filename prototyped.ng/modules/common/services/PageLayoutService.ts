@@ -6,7 +6,9 @@ module proto.ng.modules.common.services {
         public root: any;
         public selected: SiteNode;
         public node: LayoutExplorerRoot;
-        private toggleDocked: boolean = false;
+        public isTilted: boolean = true;
+        public isDocked: boolean = false;
+
         private callbacks: any[] = [];
 
         constructor(private $q: any, private navigationService: proto.ng.modules.common.services.NavigationService) {
@@ -45,7 +47,7 @@ module proto.ng.modules.common.services {
                 return false;
             }
 
-            if (!this.toggleDocked) {
+            if (!this.isDocked) {
                 var isDockContainer = $(elem).hasClass('docked-container');
                 return !isDockContainer;
             }
@@ -57,11 +59,16 @@ module proto.ng.modules.common.services {
             return true;
         }
 
-        public toggle() {
-            var showDocked = !this.toggleDocked;
-            this.toggleDocked = showDocked;
+        public togglePerspective() {
+            this.isTilted = !this.isTilted;
             this.build();
         }
+
+        public toggleDocked() {
+            this.isDocked = !this.isDocked;
+            this.build();
+        }
+
     }
 
     export class LayoutNode extends proto.ng.modules.common.services.SiteNode {

@@ -255,49 +255,50 @@ angular.module('prototyped.ng.views', []).run(['$templateCache', function($templ
     '        }\n' +
     '\n' +
     '        .window-region {\n' +
-    '            fill: rgba(103, 103, 103, 0.25);\n' +
+    '            fill: rgba(225, 225, 225, 0.50);\n' +
     '            stroke: rgba(0, 0, 0, 1);\n' +
     '            stroke-width: 2;\n' +
     '        }\n' +
     '\n' +
     '        .inner-region {\n' +
-    '            fill: rgba(186, 186, 186, 0.5);\n' +
+    '            fill: rgb(186, 186, 186);\n' +
+    '            fill-opacity: 0.5;\n' +
     '            stroke: rgba(0, 0, 0, 0.35);\n' +
     '            stroke-width: 1;\n' +
     '        }\n' +
     '\n' +
     '            .inner-region.ng-elem {\n' +
-    '                fill: rgba(118, 255, 85, 0.50);\n' +
+    '                fill: rgb(118, 255, 85);\n' +
     '                stroke: rgba(48, 168, 0, 0.91);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-dataz {\n' +
-    '                fill: rgba(255, 0, 226, 0.50);\n' +
+    '                fill: rgb(255, 0, 226);\n' +
     '                stroke: rgba(208, 0, 184, 0.71);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-link {\n' +
-    '                fill: rgba(0, 161, 255, 0.50);\n' +
+    '                fill: rgb(0, 161, 255);\n' +
     '                stroke: rgba(0, 0, 0, 0.75);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-form {\n' +
-    '                fill: rgba(255, 250, 0, 0.5);\n' +
+    '                fill: rgb(255, 250, 0);\n' +
     '                stroke: rgb(255, 187, 0);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-label {\n' +
-    '                fill: rgba(255, 187, 0, 0.25);\n' +
+    '                fill: rgb(255, 187, 0);\n' +
     '                stroke: rgb(255, 216, 0);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-input {\n' +
-    '                fill: rgba(255, 187, 0, 0.75);\n' +
+    '                fill: rgb(255, 187, 0);\n' +
     '                stroke: rgb(255, 106, 0);\n' +
     '            }\n' +
     '\n' +
     '            .inner-region.ng-button {\n' +
-    '                fill: rgba(0, 38, 255, 0.75);\n' +
+    '                fill: rgb(0, 107, 255);\n' +
     '                stroke: rgb(0, 18, 124);\n' +
     '                stroke-width: 2px;\n' +
     '            }\n' +
@@ -309,8 +310,9 @@ angular.module('prototyped.ng.views', []).run(['$templateCache', function($templ
     '            }\n' +
     '\n' +
     '            .inner-region:hover {\n' +
-    '                stroke-width: 4px;\n' +
-    '            }</style><page-layout-viewer class=inspection-contents></page-layout-viewer><span style="position: absolute; right: 8px; top: 8px"><a href="" ng-click=exploreCtrl.toggleDockedRegion()>Toggle Docked</a></span></div>');
+    '                stroke-width: 3px;\n' +
+    '                fill-opacity: 0.95;\n' +
+    '            }</style><page-layout-viewer class=inspection-contents></page-layout-viewer><span style="position: absolute; right: 8px; top: 8px"><a href="" ng-click=exploreCtrl.togglePerspective()>Toggle Perspective</a> | <a href="" ng-click=exploreCtrl.toggleDockedRegion()>Toggle Docked</a></span></div>');
   $templateCache.put('views/common/components/contents.tpl.html',
     '<div id=contents class=contents><div id=left class="ui-view-left ng-cloak" ui:view=left ng:show="state.current.views[\'left\'] || state.current.views[\'left@\']"><em>Left View</em></div><div id=main class=ui-view-main ui:view=main><em class=inactive-fill-text ng:if=false><i class="fa fa-spinner fa-spin"></i> Loading...</em> <b class="inactive-fill-text ng-cloak" ng:if="!(state.current.views[\'main\'] || state.current.views[\'main@\'])"><i class="fa fa-exclamation-triangle faa-flash glow-orange"></i> Page not found</b></div></div>');
   $templateCache.put('views/common/components/footer.tpl.html',

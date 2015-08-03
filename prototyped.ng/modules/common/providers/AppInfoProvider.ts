@@ -1,4 +1,7 @@
-﻿module proto.ng.modules.common.providers {
+﻿
+declare var WhichBrowser: any;
+
+module proto.ng.modules.common.providers {
 
     export class AppInfoProvider {
 
@@ -22,6 +25,21 @@
 
         private refreshUI(action: () => void) {
             this.appState.updateUI(action);
+        }
+
+        private appendBrowser(info) {
+            this.refreshUI(() => {
+                try {
+                    // Browser info and details loaded
+                    if (typeof WhichBrowser !== 'undefined') {
+                        var browserInfo = new WhichBrowser();
+                        angular.extend(info.about, browserInfo);
+                    }
+                } catch (ex) {
+                    console.error(ex);
+                    throw ex;
+                }
+            });
         }
 
         public detectBrowserInfo(): any {
@@ -78,17 +96,19 @@
                 var detectUrl = this.getDetectUrl();
 
                 // Send a loaded package to a server to detect more features
-                $.getScript(detectUrl)
-                    .done((script, textStatus) => {
-                        this.refreshUI(() => {
-                            // Browser info and details loaded
-                            var browserInfo = new window.WhichBrowser();
-                            angular.extend(info.about, browserInfo);
-                        });
-                    })
-                    .fail((jqxhr, settings, exception) => {
-                        console.error(exception);
+                if (typeof remoteScripts !== 'undefined') {
+                    remoteScripts.define(detectUrl, () => typeof WhichBrowser === 'undefined', (url, details) => {
+                        this.appendBrowser(info);
                     });
+                } else {
+                    $.getScript(detectUrl)
+                        .done((script, textStatus) => {
+                            this.appendBrowser(info);
+                        })
+                        .fail((jqxhr, settings, exception) => {
+                            console.error(exception);
+                        });
+                }
 
                 // Set browser name to IE (if defined)
                 if (navigator.appName == 'Microsoft Internet Explorer') {

@@ -71,18 +71,74 @@ module proto.ng.modules.explorer {
             }
         }
 
+        private start(d3: any) {
+
+            // Set the zoom and navigation on the canvas
+            var targs = d3.select('#LayoutView .contents-group');
+            var found = d3.select('#LayoutView .contents-group');
+            if (found.call && targs.length) {
+                found.call(d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", () => {
+                    targs.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+                }));
+            }
+            return;
+
+            // ToDo: Get keyboard navigation working...
+            var ident = '#LayoutView .contents-group';
+            d3.select(document.body).on('keydown', function () {
+                var step = 200;
+                var key = d3.event.key || d3.event.keyCode; // safari doesn't know .key
+                var zoom = d3.behavior.zoom();
+                var mapsvg = d3.select(ident);
+
+                console.log(' - Key:' + key, mapsvg);
+
+                switch (key) {
+                    case 'Esc':
+                    case 27:
+                        //found.attr("transform", "translate([0 , 0]) scale(1)");
+                        zoom.translate([0, 0]).scale(1).event(mapsvg.transition());
+                        break;
+                    case '+':
+                    case '=':
+                    case 187:
+                        zoom.translate([0, 0]).scale(2.0).event(mapsvg.transition());
+                        break;
+                    case '-':
+                    case 189:
+                        zoom.translate([0, 0]).scale(0.5).event(mapsvg.transition());
+                        break;
+                    case 'Left':
+                    case 37:
+                        zoom.translate([zoom.translate()[0] + step, zoom.translate()[1]]).event(mapsvg.transition());
+                        break;
+                    case 'Right':
+                    case 39:
+                        zoom.translate([zoom.translate()[0] - step, zoom.translate()[1]]).event(mapsvg.transition());
+                        break;
+                    case 'Up':
+                    case 38:
+                        zoom.translate([zoom.translate()[0], zoom.translate()[1] + step]).event(mapsvg.transition());
+                        break;
+                    case 'Down':
+                    case 40:
+                        zoom.translate([zoom.translate()[0], zoom.translate()[1] - step]).event(mapsvg.transition());
+                        break;
+
+                }
+            });
+        }
+
         private draw() {
             var info = this.pageLayoutService.node;
             if (this.view) {
-                //var overlay = this.getOverlay();
-
-                // Draw the background container
+                // Clear the old contents
                 var contents = this.getContents();
                 while (contents.firstChild) {
                     contents.removeChild(contents.firstChild);
                 }
 
-                // Add background and window
+                // Add background view
                 contents.appendChild(this.drawElem(<proto.ng.modules.common.services.LayoutNode>{
                     x: 0 - document.body.scrollLeft,
                     y: 0 - document.body.scrollTop,
@@ -92,6 +148,8 @@ module proto.ng.modules.explorer {
                     children: [],
                     level: -0.1,
                 })[0]);
+
+                // Add the window view
                 contents.appendChild(this.drawElem(<proto.ng.modules.common.services.LayoutNode>{
                     x: document.body.scrollLeft,
                     y: document.body.scrollTop,
@@ -117,6 +175,7 @@ module proto.ng.modules.explorer {
                 while (this.view.firstChild) {
                     this.view.removeChild(this.view.firstChild);
                 }
+                this.view.appendChild(this.getOverlay());
                 this.view.appendChild(this.getContents());
                 $(this.view).html(function () { return this.innerHTML; });
 
@@ -127,25 +186,21 @@ module proto.ng.modules.explorer {
             }
         }
 
-        private start(d3: any) {
-            var found = d3.select('#LayoutView .contents-group');
-            if (found.length) {
-                found.call(d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", () => {
-                    found.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
-                }));
-            }
-        }
-
         private drawElem(info): any[] {
             var list = [];
 
             var zLevel = 2;
             var x = info.x - document.body.scrollLeft;
             var y = info.y - document.body.scrollTop;
+
             var transform = '';
-            {
+            var show3D = this.pageLayoutService.isTilted;
+            if (show3D) {
                 transform += 'translate(200, ' + (300 - (info.level || 0) * zLevel) + ') ';
                 transform += 'scale(.6, .6) scale(1, .7) rotate(-30) ';
+            } else {
+                transform += 'translate(100, 50) ';
+                transform += 'scale(.7, .7) ';
             }
 
             if (info.x !== undefined && info.y !== undefined) {
@@ -169,8 +224,7 @@ module proto.ng.modules.explorer {
 
         private getOverlay(): any {
             if (!this.overlayGroup) {
-                this.overlayGroup = $('<g class="overlay-group"></g>')[0];
-                this.view.appendChild(this.overlayGroup);
+                this.overlayGroup = $('<rect class="overlay-group" x="0" y="0" width="100%" height="100%"></rect>')[0];
             }
             return this.overlayGroup;
         }
@@ -178,7 +232,6 @@ module proto.ng.modules.explorer {
         private getContents(): any {
             if (!this.contentsGroup) {
                 this.contentsGroup = $('<g class="contents-group"></g>')[0];
-                this.view.appendChild(this.contentsGroup);
             }
             return this.contentsGroup;
         }

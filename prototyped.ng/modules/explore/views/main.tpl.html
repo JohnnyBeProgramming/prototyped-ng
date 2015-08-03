@@ -1,6 +1,8 @@
 <div class="inspection-view" style="width: 100%">
     <style>
         .overlay-group {
+            fill: rgba(255, 255, 255, 0.1);
+            user-select: none;
         }
 
         .contents-group {
@@ -52,43 +54,44 @@
         }
 
         .inner-region {
-            fill: rgba(186, 186, 186, 0.5);
+            fill: rgb(186, 186, 186);
+            fill-opacity: 0.5;
             stroke: rgba(0, 0, 0, 0.35);
             stroke-width: 1;
         }
 
             .inner-region.ng-elem {
-                fill: rgba(118, 255, 85, 0.50);
+                fill: rgb(118, 255, 85);
                 stroke: rgba(48, 168, 0, 0.91);
             }
 
             .inner-region.ng-dataz {
-                fill: rgba(255, 0, 226, 0.50);
+                fill: rgb(255, 0, 226);
                 stroke: rgba(208, 0, 184, 0.71);
             }
 
             .inner-region.ng-link {
-                fill: rgba(0, 161, 255, 0.50);
+                fill: rgb(0, 161, 255);
                 stroke: rgba(0, 0, 0, 0.75);
             }
 
             .inner-region.ng-form {
-                fill: rgba(255, 250, 0, 0.5);
+                fill: rgb(255, 250, 0);
                 stroke: rgb(255, 187, 0);
             }
 
             .inner-region.ng-label {
-                fill: rgba(255, 187, 0, 0.25);
+                fill: rgb(255, 187, 0);
                 stroke: rgb(255, 216, 0);
             }
 
             .inner-region.ng-input {
-                fill: rgba(255, 187, 0, 0.75);
+                fill: rgb(255, 187, 0);
                 stroke: rgb(255, 106, 0);
             }
 
             .inner-region.ng-button {
-                fill: rgba(0, 38, 255, 0.75);
+                fill: rgb(0, 107, 255);
                 stroke: rgb(0, 18, 124);
                 stroke-width: 2px;
             }
@@ -101,11 +104,15 @@
 
             .inner-region:hover {
                 stroke-width: 3px;
+                fill-opacity: 0.95;
             }
     </style>
     <page-layout-viewer class="inspection-contents">
     </page-layout-viewer>
     <span style="position: absolute; right: 8px; top: 8px">
-        <a href="" ng-click="exploreCtrl.toggleDockedRegion()"> Toggle Docked</a>
+        <div class="btn-group btn-group-xs" role="group" aria-label="...">
+            <a href="" class="btn btn-default" ng-click="exploreCtrl.togglePerspective()">Show Perspective</a>
+            <a href="" class="btn btn-default" ng-click="exploreCtrl.toggleDockedRegion()">Show Docked</a>
+        </div>
     </span>
 </div>

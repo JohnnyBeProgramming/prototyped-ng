@@ -10,10 +10,13 @@ module proto.ng.modules.explorer {
         constructor(private $rootScope, private $scope, private $q, public pageLayout: proto.ng.modules.common.services.PageLayoutService) {
         }
 
-        public toggleDockedRegion() {
-            this.pageLayout.toggle();
+        public togglePerspective() {
+            this.pageLayout.togglePerspective();
         }
 
+        public toggleDockedRegion() {
+            this.pageLayout.toggleDocked();
+        }
     }
 
 } 

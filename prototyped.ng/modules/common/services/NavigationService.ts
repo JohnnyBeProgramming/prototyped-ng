@@ -291,7 +291,10 @@ module proto.ng.modules.common.services {
                     name: 'Wolfram Alpha', url: 'https://www.wolframalpha.com/',
                 },
                 {
-                    name: 'Global Wind Maps', url: 'https://earth.nullschool.net/#current/wind/isobaric/1000hPa/orthographic=344.96,20.39,286',
+                    name: 'Wind and Weather', url: 'http://earth.nullschool.net/#current/wind/surface/level/overlay=temp/equirectangular',
+                },
+                {
+                    name: 'Misery Index Globe', url: 'http://earth.nullschool.net/#current/wind/surface/level/overlay=misery_index/orthographic=9.09,12.21,286',
                 },
                 {
                     name: 'Disaster Info Map', url: 'http://hisz.rsoe.hu/alertmap/index2.php',
